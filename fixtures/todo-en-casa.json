@@ -1,0 +1,78 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "Todo a mano en casa",
+  "description": "Multisig 2 de 3. En casa: Coldcard Q con K1 en memoria + placa de metal con K2 + SeedSigner. Muy cómodo para firmar desde un solo sitio… y para un atacante con una llave inglesa.",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "provenance": {
+        "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Q" }, { "kind": "dice", "count": 99 }],
+        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Q" }
+      }
+    },
+    {
+      "id": "k2",
+      "label": "K2",
+      "provenance": {
+        "sources": [{ "kind": "dice", "count": 99 }],
+        "generatedBy": { "vendor": "SeedSigner" },
+        "independentlyVerified": true
+      }
+    },
+    {
+      "id": "k3",
+      "label": "K3",
+      "provenance": {
+        "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }],
+        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4" }
+      }
+    }
+  ],
+  "policy": {
+    "type": "thresh",
+    "k": 2,
+    "of": [{ "type": "key", "key": "k1" }, { "type": "key", "key": "k2" }, { "type": "key", "key": "k3" }]
+  },
+  "devices": [
+    {
+      "id": "ccq",
+      "label": "Coldcard Q",
+      "vendor": "Coinkite",
+      "model": "Coldcard Q",
+      "kind": "stateful",
+      "holds": ["k1"],
+      "pinProtected": true,
+      "acceptsExternalSeed": true,
+      "registeredWallet": true,
+      "location": "casa"
+    },
+    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "location": "casa" }
+  ],
+  "artifacts": [
+    { "id": "metal-k2", "label": "Placa de metal K2", "medium": "metal", "contents": [{ "type": "seed", "key": "k2" }], "location": "casa" },
+    { "id": "desc-casa", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "casa" },
+    { "id": "metal-k1", "label": "Placa de metal K1", "medium": "metal", "contents": [{ "type": "seed", "key": "k1" }], "location": "banco" },
+    { "id": "desc-banco", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "banco" },
+    { "id": "arandelas-k3", "label": "Arandelas K3", "medium": "washers", "contents": [{ "type": "seed", "key": "k3" }], "location": "padres" },
+    { "id": "desc-padres", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "padres" }
+  ],
+  "people": [
+    { "id": "yo", "name": "Yo", "role": "owner", "knows": [{ "type": "pin", "device": "ccq" }] },
+    { "id": "pareja", "name": "Pareja", "role": "heir" }
+  ],
+  "locations": [
+    { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },
+    {
+      "id": "banco",
+      "name": "Caja del banco",
+      "access": [{ "person": "yo" }, { "person": "pareja", "when": { "type": "after-death", "person": "yo" } }]
+    },
+    {
+      "id": "padres",
+      "name": "Casa de mis padres",
+      "access": [{ "person": "yo" }, { "person": "pareja", "when": { "type": "after-death", "person": "yo" } }]
+    }
+  ]
+}

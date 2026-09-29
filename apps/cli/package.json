@@ -1,0 +1,13 @@
+{
+  "name": "@llave-inglesa/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "llave-inglesa": "./src/main.ts"
+  },
+  "dependencies": {
+    "@llave-inglesa/domain": "0.0.0",
+    "@llave-inglesa/engine": "0.0.0"
+  }
+}

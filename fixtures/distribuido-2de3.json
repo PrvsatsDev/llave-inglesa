@@ -1,0 +1,41 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "Distribuido 2 de 3",
+  "description": "Multisig 2 de 3 con cada semilla en un sitio distinto y firma con SeedSigner. Menos cómodo, pero ninguna ubicación ni persona aislada basta para robar.",
+  "keys": [
+    { "id": "k1", "label": "K1", "provenance": { "sources": [{ "kind": "dice", "count": 99 }], "generatedBy": { "vendor": "SeedSigner" }, "independentlyVerified": true } },
+    { "id": "k2", "label": "K2", "provenance": { "sources": [{ "kind": "device-rng", "vendor": "Blockstream", "model": "Jade" }, { "kind": "dice", "count": 99 }], "generatedBy": { "vendor": "Blockstream", "model": "Jade" } } },
+    { "id": "k3", "label": "K3", "provenance": { "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }, { "kind": "coin", "count": 256 }], "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4" } } }
+  ],
+  "policy": {
+    "type": "thresh",
+    "k": 2,
+    "of": [{ "type": "key", "key": "k1" }, { "type": "key", "key": "k2" }, { "type": "key", "key": "k3" }]
+  },
+  "devices": [
+    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "location": "casa" }
+  ],
+  "artifacts": [
+    { "id": "metal-k1", "label": "Placa de metal K1", "medium": "metal", "contents": [{ "type": "seed", "key": "k1" }], "location": "casa" },
+    { "id": "desc-casa", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "casa" },
+    { "id": "metal-k2", "label": "Placa de metal K2", "medium": "metal", "contents": [{ "type": "seed", "key": "k2" }], "location": "banco" },
+    { "id": "desc-banco", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "banco" },
+    { "id": "arandelas-k3", "label": "Arandelas K3", "medium": "washers", "contents": [{ "type": "seed", "key": "k3" }], "location": "casa-hermano" },
+    { "id": "desc-hermano", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "casa-hermano" }
+  ],
+  "people": [
+    { "id": "yo", "name": "Yo", "role": "owner" },
+    { "id": "pareja", "name": "Pareja", "role": "heir" },
+    { "id": "hermano", "name": "Hermano", "role": "custodian" }
+  ],
+  "locations": [
+    { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },
+    {
+      "id": "banco",
+      "name": "Caja del banco",
+      "access": [{ "person": "yo" }, { "person": "pareja", "when": { "type": "after-death", "person": "yo" } }]
+    },
+    { "id": "casa-hermano", "name": "Casa de mi hermano", "access": [{ "person": "yo" }, { "person": "hermano" }] }
+  ]
+}

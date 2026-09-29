@@ -1,0 +1,42 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "Single-sig + passphrase",
+  "description": "Una Coldcard en casa, semilla en metal en el banco y passphrase memorizada con copia en papel en casa de los padres.",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": true,
+      "provenance": {
+        "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }],
+        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4" }
+      }
+    }
+  ],
+  "policy": { "type": "key", "key": "k1" },
+  "devices": [
+    { "id": "mk4", "label": "Coldcard Mk4", "vendor": "Coinkite", "model": "Coldcard Mk4", "kind": "stateful", "holds": ["k1"], "pinProtected": true, "location": "casa" }
+  ],
+  "artifacts": [
+    { "id": "metal-k1", "label": "Placa de metal K1", "medium": "metal", "contents": [{ "type": "seed", "key": "k1" }], "location": "banco" },
+    { "id": "papel-pass", "label": "Passphrase en papel", "medium": "paper", "contents": [{ "type": "passphrase", "key": "k1" }], "location": "padres" }
+  ],
+  "people": [
+    { "id": "yo", "name": "Yo", "role": "owner", "knows": [{ "type": "pin", "device": "mk4" }, { "type": "passphrase", "key": "k1" }] },
+    { "id": "pareja", "name": "Pareja", "role": "heir" }
+  ],
+  "locations": [
+    { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },
+    {
+      "id": "banco",
+      "name": "Caja del banco",
+      "access": [{ "person": "yo" }, { "person": "pareja", "when": { "type": "after-death", "person": "yo" } }]
+    },
+    {
+      "id": "padres",
+      "name": "Casa de mis padres",
+      "access": [{ "person": "yo" }, { "person": "pareja", "when": { "type": "after-death", "person": "yo" } }]
+    }
+  ]
+}
