@@ -1,24 +1,47 @@
 import { ChevronDown, Redo2, Undo2, Wrench } from 'lucide-react';
-import { useDocument } from '../store/document.ts';
-import { useScenario } from '../store/scenario.ts';
-import { useSelection } from '../store/selection.ts';
 import { examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { policyText } from '../lib/text.ts';
+import { loadExample } from '../storage/actions.ts';
+import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
+import { FileMenu } from './FileMenu.tsx';
 import { KeyChip } from './KeyChip.tsx';
 import styles from './Header.module.css';
+
+const CURRENT = '__actual';
+
+function originText(origin: DocumentOrigin): string {
+  switch (origin.kind) {
+    case 'example': return 'ejemplo';
+    case 'new': return 'nuevo';
+    case 'file': return origin.name;
+    case 'local': return 'guardado en el navegador';
+  }
+}
+
+/** Estado de guardado, siempre con texto (no solo color). */
+function SaveStatus() {
+  const origin = useDocument((s) => s.origin);
+  const dirty = useDocument(hasUnsavedChanges);
+  if (origin.kind === 'example' && !dirty) return null;
+  const state = dirty ? 'dirty' : 'saved';
+  return (
+    <span className={`${styles.status} ${styles[state]}`} title={dirty ? 'Guarda con Ctrl+S (cifrado, en este navegador)' : undefined}>
+      <span className={styles.statusDot} aria-hidden />
+      {dirty ? 'Sin guardar' : 'Guardado'}
+    </span>
+  );
+}
 
 export function Header() {
   const model = useDocument((s) => s.model);
   const origin = useDocument((s) => s.origin);
-  const loadExample = useDocument((s) => s.loadExample);
   const canUndo = useDocument((s) => s.past.length > 0);
   const canRedo = useDocument((s) => s.future.length > 0);
   const undo = useDocument((s) => s.undo);
   const redo = useDocument((s) => s.redo);
-  const select = useSelection((s) => s.select);
-  const clearScenario = useScenario((s) => s.set);
   const label = (id: string) => model.keys.find((k) => k.id === id)?.label ?? id;
+  const value = origin.kind === 'example' ? origin.id : CURRENT;
 
   return (
     <header className={styles.header}>
@@ -31,24 +54,27 @@ export function Header() {
 
       <div className={styles.divider} aria-hidden />
 
+      <FileMenu />
+
       <label className={styles.select}>
-        <select
-          value={origin.id}
-          onChange={(e) => {
-            select(null);
-            clearScenario(null);
-            loadExample(e.target.value);
-          }}
-          aria-label="Esquema de ejemplo"
-        >
-          {examples.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.model.name}
+        <select value={value} onChange={(e) => void loadExample(e.target.value)} aria-label="Documento abierto o ejemplo">
+          {origin.kind !== 'example' && (
+            <option value={CURRENT}>
+              {model.name} ({originText(origin)})
             </option>
-          ))}
+          )}
+          <optgroup label="Ejemplos">
+            {examples.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.model.name}
+              </option>
+            ))}
+          </optgroup>
         </select>
         <ChevronDown size={14} className={styles.chevron} aria-hidden />
       </label>
+
+      <SaveStatus />
 
       <div className={styles.policy}>
         <span className={styles.policyLabel}>Política</span>

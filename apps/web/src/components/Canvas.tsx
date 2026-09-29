@@ -14,11 +14,11 @@ import styles from './Canvas.module.css';
 const nodeTypes: NodeTypes = { location: LocationNode, person: PersonNode };
 
 export function Canvas() {
-  const origin = useDocument((s) => s.origin);
+  const generation = useDocument((s) => s.generation);
   return (
     <main className={styles.canvas} aria-label="Mapa de custodia">
       {/* Cambiar de documento remonta el lienzo: layout y encuadre desde cero. */}
-      <Graph key={origin.id} />
+      <Graph key={generation} />
       <Scoreboard />
       <Legend />
       <ScenarioBanner />

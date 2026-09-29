@@ -30,12 +30,12 @@ const DEBOUNCE_MS = 120;
 /** Recalcula el análisis en el worker cada vez que cambia el modelo (si es válido). */
 export function useLiveAnalysis() {
   const model = useDocument((s) => s.model);
-  const originId = useDocument((s) => s.origin.id);
+  const generation = useDocument((s) => s.generation);
 
   // Al cambiar de documento no tiene sentido comparar con el anterior.
   useEffect(() => {
     useAnalysis.setState({ analysis: null, previous: null });
-  }, [originId]);
+  }, [generation]);
 
   useEffect(() => {
     if (!parseModel(model).ok) {

@@ -5,6 +5,7 @@ import {
   activeHolds,
   isActiveSecret,
   addArtifact,
+  blankModel,
   addDevice,
   addKey,
   addLocation,
@@ -41,6 +42,11 @@ const errors = (m: CustodyModel) => [
 ];
 
 describe('operaciones de edición', () => {
+  it('el esquema en blanco es válido y sin avisos', () => {
+    const r = parseModel(blankModel());
+    expect(r.ok && r.warnings).toEqual([]);
+  });
+
   it('uniqueId genera slugs legibles y sin colisiones', () => {
     expect(uniqueId(casa, 'Casa de mis Padres')).toBe('casa-de-mis-padres');
     expect(uniqueId(casa, 'Casa')).toBe('casa-2');

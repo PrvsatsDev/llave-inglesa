@@ -48,6 +48,23 @@ export function stripSecrets(model: CustodyModel, remove: (s: SecretRef) => bool
   };
 }
 
+// ---------- Documento nuevo ----------
+
+/** Punto de partida para un esquema propio: una key, un titular y una ubicación. */
+export function blankModel(): CustodyModel {
+  return {
+    format: 'llave-inglesa',
+    version: 1,
+    name: 'Mi esquema',
+    keys: [{ id: 'k1', label: 'K1', passphrase: false, provenance: { sources: [{ kind: 'unknown' }], independentlyVerified: false } }],
+    policy: { type: 'key', key: 'k1' },
+    devices: [],
+    artifacts: [],
+    people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [] }],
+    locations: [{ id: 'casa', name: 'Casa', kind: 'physical', access: [{ person: 'yo', when: { type: 'always' } }] }],
+  };
+}
+
 // ---------- Metadatos y política ----------
 
 export function updateMeta(model: CustodyModel, patch: { name?: string; description?: string }): CustodyModel {
