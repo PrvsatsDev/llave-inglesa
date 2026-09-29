@@ -1,4 +1,30 @@
 import type { EntropySource, Issue, Key, Policy } from '@llave-inglesa/domain';
+import type { AttackAtom, EntropyOrigin, LossEvent } from '@llave-inglesa/engine';
+
+type Label = (id: string) => string;
+
+export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen desconocido' : o.vendor);
+
+export function attackText(a: AttackAtom, label: Label): string {
+  switch (a.type) {
+    case 'burglary': return `Intrusión en ${label(a.location)}`;
+    case 'coercion': return a.location ? `Llave inglesa a ${label(a.person)} en ${label(a.location)}` : `Llave inglesa a ${label(a.person)}`;
+    case 'insider': return `Traición de ${label(a.person)}`;
+    case 'entropy-compromise': return `RNG comprometido: ${originText(a.origin)}`;
+  }
+}
+
+export function lossText(e: LossEvent, label: Label): string {
+  switch (e.type) {
+    case 'destroy-location': return `Destrucción de ${label(e.location)}`;
+    case 'item-loss': return `Pérdida de ${label(e.item)}`;
+    case 'death': return `Fallecimiento de ${label(e.person)}`;
+    case 'incapacity': return `Incapacidad de ${label(e.person)}`;
+    case 'forget': return `${label(e.person)} olvida lo memorizado`;
+  }
+}
+
+export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 const ISSUE_TEXT: Record<Issue['code'], string> = {
   'schema': 'Hay un campo con un valor no válido',

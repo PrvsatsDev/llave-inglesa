@@ -58,7 +58,7 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
-  --c: var(--key-1);
+  --c: var(--text-muted);
 }
 
 .filled {

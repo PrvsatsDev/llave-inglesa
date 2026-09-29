@@ -51,6 +51,20 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
     expect(simulateAttack(noPin, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(true);
   });
 
+  it('la llave inglesa como única vía es débil, pero no tanto como robar sin confrontación', () => {
+    expect(a.security.minEffort).toBe(2);
+    expect(a.security.cheapRoutes).toBe(1);
+    expect(a.security.score).toBeGreaterThan(25);
+  });
+
+  it('sin PIN la seguridad cae por debajo de 25: vías más fáciles y más numerosas', () => {
+    const noPin = analyze(updateDevice(model, 'ccq', { pinProtected: false }));
+    expect(noPin.security.minEffort).toBe(1.5);
+    expect(noPin.security.cheapRoutes).toBeGreaterThan(1);
+    expect(noPin.security.score).toBeLessThan(25);
+    expect(noPin.security.cheapest).toContainEqual([{ type: 'burglary', location: 'casa' }]);
+  });
+
   it('la herencia funciona: la pareja recupera con casa + banco', () => {
     expect(a.inheritance.status).toBe('ok');
     expect(a.inheritance.locations).toHaveLength(2);
@@ -62,6 +76,10 @@ describe('distribuido 2 de 3', () => {
 
   it('ninguna acción aislada permite robar', () => {
     expect(a.security.minSize).toBe(2);
+  });
+
+  it('es más seguro que tenerlo todo en casa', () => {
+    expect(a.security.score).toBeGreaterThan(analyze(loadFixture('todo-en-casa')).security.score);
   });
 
   it('firmar exige visitar dos ubicaciones', () => {

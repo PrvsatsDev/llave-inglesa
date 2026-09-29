@@ -32,13 +32,18 @@
   --warn: #ffc857;
   --warn-soft: rgb(255 200 87 / 0.14);
 
-  /* Identidad de cada key (K1, K2…). Distintos entre sí y de los estados. */
-  --key-1: #60a5fa;
-  --key-2: #c084fc;
-  --key-3: #f472b6;
-  --key-4: #22d3ee;
-  --key-5: #bef264;
-  --key-6: #e7c99a;
+  /*
+   * Identidad de cada key (K1, K2…). Los tres primeros están validados en todas las
+   * parejas (daltonismo incluido) sobre la superficie oscura, y evitan el rojo/verde
+   * de estado y el naranja de acento. A partir de K4 no hay un tono distinguible
+   * más: la identidad la lleva la etiqueta, que SIEMPRE acompaña al color.
+   */
+  --key-1: #3987e5;
+  --key-2: #c98500;
+  --key-3: #d55181;
+  --key-4: #9085e9;
+  --key-5: #16a3b8;
+  --key-6: #8a93a6;
 
   --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;

@@ -82,7 +82,9 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
         <span className={styles.locationName}>{data.name}</span>
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">
           {data.keys.map((k) => (
-            <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`} />
+            <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`}>
+              {k.label}
+            </span>
           ))}
         </span>
       </header>

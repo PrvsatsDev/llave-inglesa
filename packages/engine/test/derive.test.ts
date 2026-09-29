@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createWorld, derive, explain, minimalCuts, type Holdings, type SigningMode } from '../src/index.ts';
+import { createWorld, derive, explain, minimalCuts, securityScore, type Holdings, type SigningMode } from '../src/index.ts';
 import { base, parse } from './helpers.ts';
 
 const everything: Holdings = { people: ['yo'], locations: ['casa'] };
@@ -72,6 +72,16 @@ describe('reglas del motor', () => {
     const walk = (n: NonNullable<typeof tree>) => (n.children.length ? n.children.forEach(walk) : leaves.push(n.justification.rule));
     walk(tree!);
     expect(new Set(leaves)).toEqual(new Set(['location-access']));
+  });
+});
+
+describe('puntuación de seguridad', () => {
+  it('más esfuerzo nunca puntúa peor, y más vías baratas nunca puntúan mejor', () => {
+    for (let e = 0; e < 7; e += 0.5) {
+      expect(securityScore(e + 0.5, 1)).toBeGreaterThanOrEqual(securityScore(e, 1));
+      expect(securityScore(e, 3)).toBeLessThanOrEqual(securityScore(e, 1));
+    }
+    expect(securityScore(null, 0)).toBe(100);
   });
 });
 

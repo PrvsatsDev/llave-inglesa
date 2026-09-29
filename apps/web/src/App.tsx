@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Canvas } from './components/Canvas.tsx';
 import { Header } from './components/Header.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
+import { useLiveAnalysis } from './store/analysis.ts';
 import { useDocument } from './store/document.ts';
 import { useSelection } from './store/selection.ts';
 import styles from './App.module.css';
@@ -36,6 +37,7 @@ function useShortcuts() {
 
 export function App() {
   useShortcuts();
+  useLiveAnalysis();
   return (
     <ReactFlowProvider>
       <div className={styles.shell}>

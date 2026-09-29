@@ -6,6 +6,7 @@ import { PersonNode } from '../graph/PersonNode.tsx';
 import { useDocument } from '../store/document.ts';
 import { useSelection } from '../store/selection.ts';
 import { Legend } from './Legend.tsx';
+import { Scoreboard } from './Scoreboard.tsx';
 import styles from './Canvas.module.css';
 
 const nodeTypes: NodeTypes = { location: LocationNode, person: PersonNode };
@@ -16,6 +17,7 @@ export function Canvas() {
     <main className={styles.canvas} aria-label="Mapa de custodia">
       {/* Cambiar de documento remonta el lienzo: layout y encuadre desde cero. */}
       <Graph key={origin.id} />
+      <Scoreboard />
       <Legend />
     </main>
   );
@@ -46,7 +48,8 @@ function Graph() {
       nodeTypes={nodeTypes}
       colorMode="dark"
       fitView
-      fitViewOptions={{ padding: 0.15 }}
+      // Margen superior extra para que el marcador flotante no tape la fila de ubicaciones.
+      fitViewOptions={{ padding: { top: '190px', bottom: '40px', left: '40px', right: '40px' } }}
       minZoom={0.2}
       maxZoom={2}
       nodesConnectable={false}

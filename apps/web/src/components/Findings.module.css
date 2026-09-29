@@ -1,0 +1,78 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.header svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+  font-size: var(--text-sm);
+}
+
+.atomWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.atom {
+  font-weight: 600;
+}
+
+.meta {
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.plus {
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.more,
+.empty {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.empty {
+  color: var(--safe);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.critical {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}

@@ -5,6 +5,7 @@ import { issueText, provenanceText } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
+import { Findings } from './Findings.tsx';
 import { Button, Field, Section, Segmented, TextArea, TextInput } from './inspector/fields.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
 import { KeyChip } from './KeyChip.tsx';
@@ -107,6 +108,8 @@ function Summary({ model }: { model: CustodyModel }) {
         </div>
         <p className={styles.hint}>Los dispositivos y backups se añaden desde cada ubicación. Pulsa cualquier elemento del mapa para editarlo.</p>
       </Section>
+
+      <Findings model={model} />
 
       <Section title="Validación">
         {issues.length === 0 ? (

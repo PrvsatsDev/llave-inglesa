@@ -1,9 +1,68 @@
+import type { AttackAtom } from './attacks.ts';
+
 /**
  * Puntuaciones 0–100. Deliberadamente simples y explicables: cada una sale
- * de UNA métrica objetiva que se muestra junto al número.
+ * de métricas objetivas que se muestran junto al número. Todos los parámetros
+ * viven aquí para poder ajustarlos sin tocar el resto del motor.
  */
 
-/** Seguridad y resiliencia: cuántas cosas tienen que salir mal a la vez. */
+/**
+ * Esfuerzo y riesgo que supone cada tipo de ataque para el atacante.
+ * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
+ */
+export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
+  /** Entrar sin nadie presente: sigiloso, sin confrontación. */
+  burglary: 1.5,
+  /** Alguien de confianza: ya tiene acceso y conocimiento. */
+  insider: 1.5,
+  /** Llave inglesa: violento, arriesgado, exige presencia física. */
+  coercion: 2,
+  /** Cadena de suministro / RNG con puerta trasera: sofisticado. */
+  'entropy-compromise': 3,
+};
+
+export function attackEffort(cut: readonly AttackAtom[]): number {
+  return cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0);
+}
+
+/** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */
+const EFFORT_CURVE: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [1.5, 35],
+  [2, 45],
+  [3, 65],
+  [4, 80],
+  [5, 90],
+  [6, 100],
+];
+
+/** Tener varias vías igual de baratas es peor que tener una sola. */
+export const EXPOSURE = {
+  /** Una vía cuenta como "igual de barata" si cuesta como mucho esto más que la más barata. */
+  margin: 0.5,
+  penaltyPerExtraRoute: 4,
+  maxPenalty: 12,
+} as const;
+
+function interpolate(curve: readonly (readonly [number, number])[], x: number): number {
+  const last = curve[curve.length - 1]!;
+  if (x >= last[0]) return last[1];
+  for (let i = 1; i < curve.length; i++) {
+    const [x1, y1] = curve[i]!;
+    const [x0, y0] = curve[i - 1]!;
+    if (x <= x1) return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+  }
+  return last[1];
+}
+
+/** Seguridad: esfuerzo del robo más barato, menos la exposición por vías alternativas. */
+export function securityScore(minEffort: number | null, cheapRoutes: number): number {
+  if (minEffort === null) return 100; // ningún robo dentro del límite buscado
+  const penalty = Math.min(EXPOSURE.maxPenalty, EXPOSURE.penaltyPerExtraRoute * Math.max(0, cheapRoutes - 1));
+  return Math.max(minEffort > 0 ? 5 : 0, Math.round(interpolate(EFFORT_CURVE, minEffort) - penalty));
+}
+
+/** Resiliencia: cuántas desgracias tienen que ocurrir a la vez. */
 export function cutScore(minSize: number | null): number {
   if (minSize === null) return 100; // ningún corte dentro del límite buscado
   return [0, 25, 60, 85][minSize] ?? 100;
