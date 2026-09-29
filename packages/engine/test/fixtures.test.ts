@@ -1,3 +1,4 @@
+import { updateDevice } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { analyze, simulateAttack, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
@@ -38,6 +39,16 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
 
   it('la incapacidad del titular deja a la pareja sin acceso al banco: pérdida', () => {
     expect(a.resilience.cuts).toContainEqual([{ type: 'incapacity', person: 'yo' }]);
+  });
+
+  it('desactivar y reactivar el PIN deja el análisis igual (nada se pierde)', () => {
+    const roundTrip = updateDevice(updateDevice(model, 'ccq', { pinProtected: false }), 'ccq', { pinProtected: true });
+    expect(analyze(roundTrip)).toEqual(a);
+  });
+
+  it('sin PIN, un ladrón en casa ya puede robar', () => {
+    const noPin = updateDevice(model, 'ccq', { pinProtected: false });
+    expect(simulateAttack(noPin, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(true);
   });
 
   it('la herencia funciona: la pareja recupera con casa + banco', () => {

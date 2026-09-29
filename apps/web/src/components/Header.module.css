@@ -106,8 +106,36 @@
   overflow: hidden;
 }
 
-.offline {
+.history {
   margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.historyButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+
+.historyButton:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.historyButton:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.offline {
   display: inline-flex;
   align-items: center;
   gap: 8px;

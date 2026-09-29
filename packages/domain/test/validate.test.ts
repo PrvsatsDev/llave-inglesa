@@ -38,18 +38,16 @@ describe('parseModel', () => {
     expect(codes({ ...valid, policy: { type: 'thresh', k: 2, of: [{ type: 'key', key: 'k1' }] } })).toContain('threshold-out-of-range');
   });
 
-  it('rechaza un stateless con keys dentro', () => {
-    const devices = [{ id: 'ss', label: 'SS', vendor: 'SeedSigner', kind: 'stateless', holds: ['k1'], location: 'casa' }];
-    expect(codes({ ...valid, devices })).toContain('stateless-holds-keys');
-  });
-
   it('exige un titular', () => {
     expect(codes({ ...valid, people: [{ id: 'yo', name: 'Yo', role: 'heir' }] })).toContain('no-owner');
   });
 
-  it('avisa (sin bloquear) de una passphrase en una key sin passphrase', () => {
-    const r = parseModel({ ...valid, people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'passphrase', key: 'k1' }] }] });
-    expect(r.ok).toBe(true);
-    expect(codes({ ...valid, people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'passphrase', key: 'k1' }] }] })).toEqual(['passphrase-not-enabled']);
+  it('acepta sin avisos las referencias latentes (desactivadas)', () => {
+    const devices = [
+      { id: 'ss', label: 'SS', vendor: 'SeedSigner', kind: 'stateless', holds: ['k1'], location: 'casa' },
+      { id: 'cc', label: 'CC', vendor: 'Coinkite', kind: 'stateful', holds: ['k1'], pinProtected: false, location: 'casa' },
+    ];
+    const people = [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'passphrase', key: 'k1' }, { type: 'pin', device: 'cc' }] }];
+    expect(codes({ ...valid, devices, people })).toEqual([]);
   });
 });

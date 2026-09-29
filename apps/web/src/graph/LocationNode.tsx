@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { isSelected, useSelection } from '../store/selection.ts';
 import type { ItemIcon, ItemView, LocationNode as LocationNodeType } from './build.ts';
 import { LOCATION_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
@@ -34,8 +35,16 @@ const ICONS: Record<ItemIcon, LucideIcon> = {
 function ItemRow({ item }: { item: ItemView }) {
   const Icon = ICONS[item.icon];
   const isDevice = item.icon === 'stateful' || item.icon === 'stateless';
+  const selected = useSelection((s) => isSelected(s.selected, item.kind, item.id));
+  const select = useSelection((s) => s.select);
   return (
-    <li className={styles.item}>
+    <li
+      className={`${styles.item} ${selected ? styles.itemSelected : ''}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        select({ kind: item.kind, id: item.id });
+      }}
+    >
       <span className={`${styles.itemIcon} ${isDevice ? styles.deviceIcon : ''}`} aria-hidden>
         <Icon size={15} strokeWidth={1.75} />
       </span>
@@ -64,7 +73,8 @@ function ItemRow({ item }: { item: ItemView }) {
   );
 }
 
-export function LocationNode({ data, selected }: NodeProps<LocationNodeType>) {
+export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
+  const selected = useSelection((s) => isSelected(s.selected, 'location', id));
   return (
     <div className={`${styles.location} ${selected ? styles.selected : ''}`} style={{ width: LOCATION_WIDTH }}>
       <header className={styles.locationHeader}>

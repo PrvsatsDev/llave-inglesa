@@ -72,8 +72,18 @@
   border-radius: var(--radius);
 }
 
+.item {
+  cursor: pointer;
+}
+
 .item:hover {
   background: var(--surface-hover);
+}
+
+.itemSelected,
+.itemSelected:hover {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .itemIcon {

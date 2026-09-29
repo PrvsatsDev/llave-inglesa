@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Brain, Crown, User } from 'lucide-react';
+import { isSelected, useSelection } from '../store/selection.ts';
 import type { PersonNode as PersonNodeType } from './build.ts';
 import { PERSON_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
@@ -12,7 +13,8 @@ const ROLE = {
   other: 'Otra persona',
 } as const;
 
-export function PersonNode({ data, selected }: NodeProps<PersonNodeType>) {
+export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
+  const selected = useSelection((s) => isSelected(s.selected, 'person', id));
   const Avatar = data.role === 'owner' ? Crown : User;
   return (
     <div className={`${styles.person} ${styles[data.role]} ${selected ? styles.selected : ''}`} style={{ width: PERSON_WIDTH }}>

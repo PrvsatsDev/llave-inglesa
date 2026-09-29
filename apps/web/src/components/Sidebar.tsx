@@ -1,57 +1,149 @@
-import { BadgeCheck, KeyRound } from 'lucide-react';
-import { useDocument } from '../store/document.ts';
+import { addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel } from '@llave-inglesa/domain';
+import { AlertTriangle, BadgeCheck, CircleCheck, MapPin, Plus, UserPlus, XCircle } from 'lucide-react';
 import { keyColor } from '../lib/key-colors.ts';
-import { provenanceText } from '../lib/text.ts';
+import { issueText, provenanceText } from '../lib/text.ts';
+import { useValidation } from '../lib/validation.ts';
+import { useDocument } from '../store/document.ts';
+import { useSelection, type Selection } from '../store/selection.ts';
+import { Button, Field, Section, Segmented, TextArea, TextInput } from './inspector/fields.tsx';
+import { Inspector } from './inspector/Inspector.tsx';
 import { KeyChip } from './KeyChip.tsx';
 import styles from './Sidebar.module.css';
 
+function exists(model: CustodyModel, s: Selection | null): boolean {
+  if (!s) return false;
+  const lists = { location: model.locations, person: model.people, device: model.devices, artifact: model.artifacts, key: model.keys };
+  return lists[s.kind].some((e) => e.id === s.id);
+}
+
 export function Sidebar() {
   const model = useDocument((s) => s.model);
+  const selected = useSelection((s) => s.selected);
+  return (
+    <aside className={styles.sidebar} aria-label={exists(model, selected) ? 'Inspector' : 'Resumen del esquema'}>
+      {exists(model, selected) ? <Inspector /> : <Summary model={model} />}
+    </aside>
+  );
+}
 
-  const stats = [
-    { label: 'Keys', value: model.keys.length },
-    { label: 'Dispositivos', value: model.devices.length },
-    { label: 'Backups', value: model.artifacts.length },
-    { label: 'Personas', value: model.people.length },
-    { label: 'Ubicaciones', value: model.locations.length },
-  ];
+function Summary({ model }: { model: CustodyModel }) {
+  const apply = useDocument((s) => s.apply);
+  const select = useSelection((s) => s.select);
+  const { valid, issues } = useValidation(model);
+  const label = indexModel(model).label;
+
+  const create = (make: (m: CustodyModel) => { model: CustodyModel; id: string }, kind: Selection['kind']) => {
+    let id = '';
+    apply((m) => {
+      const r = make(m);
+      id = r.id;
+      return r.model;
+    });
+    select({ kind, id });
+  };
+
+  const policy = model.policy;
+  const n = policy.type === 'thresh' ? policy.of.length : 1;
 
   return (
-    <aside className={styles.sidebar} aria-label="Resumen del esquema">
-      <section className={styles.section}>
-        <h2 className={styles.title}>{model.name}</h2>
-        {model.description && <p className={styles.description}>{model.description}</p>}
-        <dl className={styles.stats}>
-          {stats.map((s) => (
-            <div key={s.label} className={styles.stat}>
-              <dt>{s.label}</dt>
-              <dd>{s.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+    <>
+      <Section>
+        <Field label="Nombre del esquema">
+          {(id) => <TextInput id={id} value={model.name} onChange={(name) => apply((m) => updateMeta(m, { name }), 'meta:name')} />}
+        </Field>
+        <Field label="Descripción">
+          {(id) => (
+            <TextArea
+              id={id}
+              value={model.description ?? ''}
+              placeholder="Para qué sirve este esquema, notas…"
+              onChange={(description) => apply((m) => updateMeta(m, { description: description || undefined }), 'meta:description')}
+            />
+          )}
+        </Field>
+      </Section>
 
-      <section className={styles.section}>
-        <h3 className={styles.heading}>
-          <KeyRound size={14} aria-hidden /> Keys
-        </h3>
+      <Section title="Política de gasto">
+        {policy.type === 'thresh' ? (
+          <>
+            <Segmented
+              label="Firmas necesarias"
+              value={String(policy.k)}
+              options={Array.from({ length: n }, (_, i) => ({ value: String(i + 1), label: `${i + 1} de ${n}` }))}
+              onChange={(k) => apply((m) => setThreshold(m, Number(k)))}
+            />
+            <p className={styles.hint}>Cuántas keys hacen falta para gastar.</p>
+          </>
+        ) : (
+          <p className={styles.hint}>Single-sig: basta con una key. Añade otra para convertirlo en multisig.</p>
+        )}
+      </Section>
+
+      <Section title="Keys" action={<Button icon={Plus} onClick={() => create(addKey, 'key')}>Key</Button>}>
         <ul className={styles.keyList}>
           {model.keys.map((k) => (
-            <li key={k.id} className={styles.keyItem}>
-              <div className={styles.keyRow}>
-                <KeyChip label={k.label} color={keyColor(model, k.id)} />
-                {k.passphrase && <span className={styles.badge}>+ passphrase</span>}
-                {k.provenance.independentlyVerified && (
-                  <span className={`${styles.badge} ${styles.verified}`} title="Derivación verificada con una herramienta independiente">
-                    <BadgeCheck size={12} aria-hidden /> verificada
-                  </span>
-                )}
-              </div>
-              <p className={styles.provenance}>{provenanceText(k)}</p>
+            <li key={k.id}>
+              <button className={styles.keyItem} onClick={() => select({ kind: 'key', id: k.id })}>
+                <span className={styles.keyRow}>
+                  <KeyChip label={k.label} color={keyColor(model, k.id)} />
+                  {k.passphrase && <span className={styles.badge}>+ passphrase</span>}
+                  {k.provenance.independentlyVerified && (
+                    <span className={`${styles.badge} ${styles.verified}`} title="Derivación verificada con una herramienta independiente">
+                      <BadgeCheck size={12} aria-hidden /> verificada
+                    </span>
+                  )}
+                </span>
+                <span className={styles.provenance}>{provenanceText(k)}</span>
+              </button>
             </li>
           ))}
         </ul>
-      </section>
-    </aside>
+      </Section>
+
+      <Section title="Añadir al mapa">
+        <div className={styles.addRow}>
+          <Button icon={MapPin} onClick={() => create((m) => addLocation(m), 'location')}>Ubicación</Button>
+          <Button icon={UserPlus} onClick={() => create((m) => addPerson(m), 'person')}>Persona</Button>
+        </div>
+        <p className={styles.hint}>Los dispositivos y backups se añaden desde cada ubicación. Pulsa cualquier elemento del mapa para editarlo.</p>
+      </Section>
+
+      <Section title="Validación">
+        {issues.length === 0 ? (
+          <p className={`${styles.status} ${styles.ok}`}>
+            <CircleCheck size={14} aria-hidden /> El modelo es coherente
+          </p>
+        ) : (
+          <ul className={styles.issues}>
+            {issues.map((i, n) => (
+              <li key={n} className={i.severity === 'error' ? styles.error : styles.warning}>
+                {i.severity === 'error' ? <XCircle size={14} aria-hidden /> : <AlertTriangle size={14} aria-hidden />}
+                {issueText(i, label)}
+              </li>
+            ))}
+          </ul>
+        )}
+        {!valid && <p className={styles.hint}>Corrige los errores para que el análisis pueda ejecutarse.</p>}
+      </Section>
+
+      <Section title="Contenido">
+        <dl className={styles.stats}>
+          {(
+            [
+              ['Keys', model.keys.length],
+              ['Dispositivos', model.devices.length],
+              ['Backups', model.artifacts.length],
+              ['Personas', model.people.length],
+              ['Ubicaciones', model.locations.length],
+            ] as const
+          ).map(([name, value]) => (
+            <div key={name} className={styles.stat}>
+              <dt>{name}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+    </>
   );
 }

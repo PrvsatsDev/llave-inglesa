@@ -4,6 +4,7 @@ import { buildGraph, type AccessEdge, type GraphNode } from '../graph/build.ts';
 import { LocationNode } from '../graph/LocationNode.tsx';
 import { PersonNode } from '../graph/PersonNode.tsx';
 import { useDocument } from '../store/document.ts';
+import { useSelection } from '../store/selection.ts';
 import { Legend } from './Legend.tsx';
 import styles from './Canvas.module.css';
 
@@ -25,6 +26,7 @@ function Graph() {
   const graph = useMemo(() => buildGraph(model), [model]);
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<AccessEdge>(graph.edges);
+  const select = useSelection((s) => s.select);
 
   // Si el modelo cambia, se actualizan los datos pero se respetan las posiciones movidas a mano.
   useEffect(() => {
@@ -49,6 +51,10 @@ function Graph() {
       maxZoom={2}
       nodesConnectable={false}
       edgesFocusable={false}
+      elementsSelectable={false}
+      deleteKeyCode={null}
+      onNodeClick={(_, node) => select({ kind: node.type === 'location' ? 'location' : 'person', id: node.id })}
+      onPaneClick={() => select(null)}
     >
       <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--border-strong)" />
       <Controls showInteractive={false} position="bottom-left" />

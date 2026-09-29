@@ -1,4 +1,26 @@
-import type { EntropySource, Key, Policy } from '@llave-inglesa/domain';
+import type { EntropySource, Issue, Key, Policy } from '@llave-inglesa/domain';
+
+const ISSUE_TEXT: Record<Issue['code'], string> = {
+  'schema': 'Hay un campo con un valor no válido',
+  'duplicate-id': 'Hay dos elementos con el mismo identificador',
+  'unknown-reference': 'Algo hace referencia a un elemento que no existe',
+  'stateful-holds-nothing': 'Hay un dispositivo que no guarda ninguna key',
+  'threshold-out-of-range': 'El umbral de la política es mayor que el número de keys',
+  'key-repeated-in-policy': 'Una key aparece dos veces en la política',
+  'key-not-in-policy': 'Hay una key que no participa en la política',
+  'no-owner': 'Falta una persona con rol de titular',
+};
+
+export function issueText(issue: Issue, label: (id: string) => string): string {
+  const base = ISSUE_TEXT[issue.code];
+  if (issue.code === 'schema') {
+    const field = issue.path.at(-1);
+    if (field === 'name' || field === 'label') return 'Hay un nombre vacío';
+    if (field === 'fingerprint') return 'El fingerprint debe tener 8 caracteres hexadecimales';
+    return base;
+  }
+  return issue.ref ? `${base}: ${label(issue.ref)}` : base;
+}
 
 /** Textos de presentación en español para la web. */
 

@@ -114,14 +114,11 @@ export function formatIssue(i: Issue): string {
     'schema': `formato inválido: ${i.detail ?? ''}`,
     'duplicate-id': `id repetido${ref}`,
     'unknown-reference': `referencia a algo que no existe${ref}`,
-    'stateless-holds-keys': `un dispositivo stateless no puede guardar keys${ref}`,
     'stateful-holds-nothing': `dispositivo stateful sin ninguna key dentro${ref}`,
     'threshold-out-of-range': 'el umbral es mayor que el número de opciones',
     'key-repeated-in-policy': `key repetida en la política${ref}`,
     'key-not-in-policy': `key que no participa en la política${ref}`,
     'no-owner': 'no hay ninguna persona con rol de titular',
-    'pin-without-protection': `se indica un PIN para un dispositivo sin PIN${ref}`,
-    'passphrase-not-enabled': `se indica una passphrase para una key sin passphrase${ref}`,
   };
   const tag = i.severity === 'error' ? red('error') : yellow('aviso');
   return `${tag} ${dim(where)} ${text[i.code]}`;
