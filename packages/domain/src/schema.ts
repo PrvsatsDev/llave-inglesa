@@ -22,6 +22,8 @@ export const SecretRefSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('pin'), device: IdSchema }),
   /** Descriptor / configuración del wallet: contiene la política y todas las xpubs. */
   z.object({ type: z.literal('descriptor') }),
+  /** Contraseña con la que está cifrado un backup (p. ej. un fichero en la nube). */
+  z.object({ type: z.literal('password'), artifact: IdSchema }),
 ]);
 export type SecretRef = z.infer<typeof SecretRefSchema>;
 
@@ -112,12 +114,20 @@ export const AccessConditionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('always') }),
   /** Solo tras el fallecimiento de alguien (p. ej. caja del banco para herederos). */
   z.object({ type: z.literal('after-death'), person: IdSchema }),
+  /** Si esa persona queda incapacitada o fallece (poder notarial preventivo, tutela…). */
+  z.object({ type: z.literal('incapacity-or-death'), person: IdSchema }),
 ]);
 export type AccessCondition = z.infer<typeof AccessConditionSchema>;
 
 export const LocationSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
+  /**
+   * physical: casa, banco… (intrusión / incendio).
+   * device: portátil, disco (robo o malware / avería).
+   * cloud: cuenta en la nube (hackeo remoto / pérdida de la cuenta).
+   */
+  kind: z.enum(['physical', 'device', 'cloud']).default('physical'),
   access: z
     .array(z.object({ person: IdSchema, when: AccessConditionSchema.default({ type: 'always' }) }))
     .default([]),

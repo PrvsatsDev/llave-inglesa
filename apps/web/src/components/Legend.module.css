@@ -1,0 +1,96 @@
+.legend {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 5;
+  min-width: 200px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.toggle svg {
+  transition: transform var(--duration) var(--ease);
+  transform: rotate(-90deg);
+}
+
+.toggle svg.open {
+  transform: none;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0 12px 12px;
+  list-style: none;
+}
+
+.list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  --c: var(--text-muted);
+}
+
+.filled {
+  background: var(--c);
+  box-shadow: 0 0 6px var(--c);
+}
+
+.ring {
+  border: 2px solid var(--c);
+}
+
+.hollow {
+  border: 1px dashed var(--c);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.line {
+  width: 18px;
+  flex-shrink: 0;
+  border-top: 2px solid var(--text-muted);
+}
+
+.dashed {
+  border-top-style: dashed;
+}
+
+@media (max-width: 760px) {
+  .legend {
+    min-width: 0;
+  }
+}

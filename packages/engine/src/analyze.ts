@@ -3,8 +3,8 @@ import { attackAtoms, attackHoldings, type AttackAtom } from './attacks.ts';
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
-import { cutScore, inheritanceScore, usabilityScore } from './score.ts';
-import { accessibleLocations, canAct, createWorld, type LossEvent, type World } from './world.ts';
+import { attackEffort, cutScore, EXPOSURE, inheritanceScore, lockoutPenalty, securityScore, usabilityScore } from './score.ts';
+import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
 
 export interface AnalyzeOptions {
   /** Tamaño máximo de combinación a explorar en los cortes. */
@@ -16,15 +16,34 @@ export interface CutReport<A> {
   /** Tamaño del corte más pequeño, o null si no hay ninguno hasta `searchedUpTo`. */
   minSize: number | null;
   searchedUpTo: number;
-  /** Todos los cortes mínimos encontrados, ordenados por tamaño. */
+  /** Todos los cortes mínimos encontrados, del más barato al más caro. */
   cuts: A[][];
+  /** Los cortes que determinan la puntuación (los más baratos). */
+  cheapest: A[][];
+}
+
+export interface SecurityReport extends CutReport<AttackAtom> {
+  /** Esfuerzo del robo más barato (suma de ATTACK_EFFORT), o null si no hay. */
+  minEffort: number | null;
+  /** Vías de robo igual de baratas o casi (penalizan por exposición). */
+  cheapRoutes: number;
+}
+
+export interface ResilienceReport extends CutReport<LossEvent> {
+  recoverableNow: boolean;
+  /**
+   * Bloqueos temporales: combinaciones que impiden mover los fondos mientras
+   * alguien está incapacitado, pero que se resuelven cuando fallece.
+   */
+  lockouts: LossEvent[][];
+  lockoutMinSize: number | null;
 }
 
 export interface Analysis {
-  /** ¿Qué combinación de ataques permite robar? */
-  security: CutReport<AttackAtom>;
+  /** ¿Qué combinación de ataques permite robar, y con qué esfuerzo? */
+  security: SecurityReport;
   /** ¿Qué combinación de pérdidas deja los fondos inaccesibles para siempre? */
-  resilience: CutReport<LossEvent> & { recoverableNow: boolean };
+  resilience: ResilienceReport;
   /** ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? */
   usability: { score: number; locations: Id[] | null };
   /** Tras el fallecimiento de los titulares, ¿pueden los herederos recuperar los fondos? */
@@ -61,29 +80,60 @@ export function minimalLocationSet(
 
 function cutReport<A>(cuts: A[][], searchedUpTo: number): CutReport<A> {
   const minSize = cuts[0]?.length ?? null;
-  return { score: cutScore(minSize), minSize, searchedUpTo, cuts };
+  return { score: cutScore(minSize), minSize, searchedUpTo, cuts, cheapest: cuts.filter((c) => c.length === minSize) };
+}
+
+function securityReport(found: AttackAtom[][], searchedUpTo: number): SecurityReport {
+  const cuts = found
+    .map((cut) => ({ cut, effort: attackEffort(cut) }))
+    .sort((a, b) => a.effort - b.effort || a.cut.length - b.cut.length);
+  const minEffort = cuts[0]?.effort ?? null;
+  const cheapRoutes = minEffort === null ? 0 : cuts.filter((c) => c.effort <= minEffort + EXPOSURE.margin).length;
+  return {
+    score: securityScore(minEffort, cheapRoutes),
+    minSize: found.length ? Math.min(...found.map((c) => c.length)) : null,
+    searchedUpTo,
+    cuts: cuts.map((c) => c.cut),
+    cheapest: cuts.filter((c) => c.effort === minEffort).map((c) => c.cut),
+    minEffort,
+    cheapRoutes,
+  };
 }
 
 export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Analysis {
   const maxCutSize = options.maxCutSize ?? 3;
   const intact = createWorld(model);
 
-  const security = cutReport(
+  const security = securityReport(
     minimalCuts(attackAtoms(intact), (atoms) => derive(intact, attackHoldings(intact, atoms), 'any').canSpend, maxCutSize),
     maxCutSize,
   );
 
-  const recoverable = (world: World) => derive(world, legitHoldings(world), 'any').canSpend;
-  const recoverableNow = recoverable(intact);
-  const resilience = recoverableNow
-    ? {
-        ...cutReport(
-          minimalCuts(lossAtoms(intact), (events) => !recoverable(createWorld(model, events, intact.index)), maxCutSize),
-          maxCutSize,
-        ),
-        recoverableNow,
-      }
-    : { score: 0, minSize: 0, searchedUpTo: 0, cuts: [[]], recoverableNow };
+  const recoverable = (events: readonly LossEvent[]) => {
+    const world = createWorld(model, events, intact.index);
+    return derive(world, legitHoldings(world), 'any').canSpend;
+  };
+  // Permanente: ni ahora ni cuando las personas incapacitadas acaben falleciendo.
+  const lostForever = (events: LossEvent[]) => !recoverable(events) && !recoverable(eventually(events));
+  const blockedNow = (events: LossEvent[]) => !recoverable(events);
+
+  const recoverableNow = recoverable([]);
+  let resilience: ResilienceReport;
+  if (recoverableNow) {
+    const atoms = lossAtoms(intact);
+    const losses = cutReport(minimalCuts(atoms, lostForever, maxCutSize), maxCutSize);
+    const lockouts = minimalCuts(atoms, blockedNow, maxCutSize).filter((cut) => !lostForever(cut));
+    const lockoutMinSize = lockouts[0]?.length ?? null;
+    resilience = {
+      ...losses,
+      score: Math.max(0, losses.score - lockoutPenalty(lockoutMinSize)),
+      recoverableNow,
+      lockouts,
+      lockoutMinSize,
+    };
+  } else {
+    resilience = { score: 0, minSize: 0, searchedUpTo: 0, cuts: [[]], cheapest: [[]], recoverableNow, lockouts: [], lockoutMinSize: null };
+  }
 
   const owners = model.people.filter((p) => p.role === 'owner' && canAct(intact, p.id)).map((p) => p.id);
   const ownerLocations = [...new Set(owners.flatMap((p) => accessibleLocations(intact, p)))];

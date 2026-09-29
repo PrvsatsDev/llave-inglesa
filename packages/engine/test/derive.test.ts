@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createWorld, derive, explain, minimalCuts, type Holdings, type SigningMode } from '../src/index.ts';
+import { createWorld, derive, explain, minimalCuts, securityScore, type Holdings, type SigningMode } from '../src/index.ts';
 import { base, parse } from './helpers.ts';
 
 const everything: Holdings = { people: ['yo'], locations: ['casa'] };
@@ -65,6 +65,30 @@ describe('reglas del motor', () => {
     expect(run(model).canSpend).toBe(false);
   });
 
+  it('descriptor cifrado en la nube: el hackeo solo no basta, hace falta la contraseña', () => {
+    const model = parse(
+      base({
+        keys: [{ id: 'k1', label: 'K1' }, { id: 'k2', label: 'K2' }, { id: 'k3', label: 'K3' }],
+        policy: { type: 'thresh', k: 2, of: ['k1', 'k2', 'k3'].map((key) => ({ type: 'key' as const, key })) },
+        artifacts: [
+          seedPlate('k1'),
+          seedPlate('k2'),
+          { id: 'desc', label: 'Descriptor', medium: 'digital', contents: [{ type: 'descriptor' }], lockedBy: [{ type: 'password', artifact: 'desc' }], location: 'nube' },
+        ],
+        people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'password', artifact: 'desc' }] }],
+        locations: [
+          { id: 'casa', name: 'Casa', access: [{ person: 'yo' }] },
+          { id: 'nube', name: 'Nube', kind: 'cloud', access: [{ person: 'yo' }] },
+        ],
+      }),
+    );
+    const world = createWorld(model);
+    const thief = derive(world, { people: [], locations: ['casa', 'nube'] }, 'any');
+    expect(thief.has({ kind: 'secret', secret: { type: 'descriptor' } })).toBe(false);
+    expect(thief.canSpend).toBe(false);
+    expect(derive(world, { people: ['yo'], locations: ['casa', 'nube'] }, 'any').canSpend).toBe(true);
+  });
+
   it('explica la cadena completa hasta los hechos base', () => {
     const d = run(base({ artifacts: [seedPlate('k1'), seedPlate('k2')] }));
     const tree = explain(d, 'spend');
@@ -72,6 +96,16 @@ describe('reglas del motor', () => {
     const walk = (n: NonNullable<typeof tree>) => (n.children.length ? n.children.forEach(walk) : leaves.push(n.justification.rule));
     walk(tree!);
     expect(new Set(leaves)).toEqual(new Set(['location-access']));
+  });
+});
+
+describe('puntuación de seguridad', () => {
+  it('más esfuerzo nunca puntúa peor, y más vías baratas nunca puntúan mejor', () => {
+    for (let e = 0; e < 7; e += 0.5) {
+      expect(securityScore(e + 0.5, 1)).toBeGreaterThanOrEqual(securityScore(e, 1));
+      expect(securityScore(e, 3)).toBeLessThanOrEqual(securityScore(e, 1));
+    }
+    expect(securityScore(null, 0)).toBe(100);
   });
 });
 

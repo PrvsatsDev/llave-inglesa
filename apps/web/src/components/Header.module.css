@@ -1,0 +1,196 @@
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 0 18px var(--accent-soft);
+}
+
+.wordmark {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--text-md);
+  letter-spacing: -0.02em;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.select select {
+  appearance: none;
+  max-width: 260px;
+  padding: 6px 30px 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 600;
+  font-size: var(--text-md);
+  cursor: pointer;
+  text-overflow: ellipsis;
+  transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+
+.select select:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.select option {
+  background: var(--surface);
+}
+
+.chevron {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+.policy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.policyLabel {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.policyValue {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.keys {
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.status {
+  --c: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.dirty {
+  --c: var(--warn);
+}
+
+.saved {
+  --c: var(--safe);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.history {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.historyButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+
+.historyButton:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.historyButton:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.offlineDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--safe);
+  box-shadow: 0 0 8px var(--safe);
+}
+
+@media (max-width: 760px) {
+  .policyLabel,
+  .keys,
+  .divider,
+  .wordmark {
+    display: none;
+  }
+
+  .header {
+    gap: var(--space-3);
+  }
+}

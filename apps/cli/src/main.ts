@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { analyze, explain, simulateAttack, simulateLosses, type Analysis } from '@llave-inglesa/engine';
-import { bold, dim, formatIssue, Formatter, green, red, scoreBar } from './format.ts';
+import { bold, dim, formatIssue, Formatter, green, red, scoreBar, yellow } from './format.ts';
 
 const USAGE = 'Uso: llave-inglesa analyze <modelo.json>';
 
@@ -37,7 +37,11 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
 
   section('Puntuación');
   const sizeText = (n: number | null, upTo: number) => (n === null ? `ninguna combinación de ≤${upTo}` : `${n} a la vez`);
-  out.push(`  Seguridad    ${scoreBar(a.security.score)}  ${dim('robo con ' + sizeText(a.security.minSize, a.security.searchedUpTo))}`);
+  const sec = a.security;
+  const secText = sec.minEffort === null
+    ? `ningún robo con ≤${sec.searchedUpTo} ataques`
+    : `robo con esfuerzo ${sec.minEffort}` + (sec.cheapRoutes > 1 ? ` · ${sec.cheapRoutes} vías igual de baratas` : '');
+  out.push(`  Seguridad    ${scoreBar(sec.score)}  ${dim(secText)}`);
   out.push(`  Resiliencia  ${scoreBar(a.resilience.score)}  ${dim('pérdida con ' + sizeText(a.resilience.minSize, a.resilience.searchedUpTo))}`);
   out.push(`  Usabilidad   ${scoreBar(a.usability.score)}  ${dim(a.usability.locations ? `firmar visitando ${a.usability.locations.length} ubicación(es)` : 'el titular no puede firmar de forma segura')}`);
   const inh = a.inheritance;
@@ -45,10 +49,10 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
   out.push(`  Herencia     ${scoreBar(inh.score)}  ${dim(inhText)}`);
 
   section('🕵️  Formas más baratas de robar');
-  const thefts = bySize(a.security.cuts, a.security.minSize);
+  const thefts = a.security.cheapest;
   if (thefts.length === 0) out.push(green(`  Ninguna combinación de hasta ${a.security.searchedUpTo} ataques permite robar.`));
   thefts.forEach((cut) => out.push(red('  • ' + cut.map((x) => fmt.attack(x)).join('  +  '))));
-  if (a.security.cuts.length > thefts.length) out.push(dim(`  (+${a.security.cuts.length - thefts.length} combinaciones mínimas más grandes)`));
+  if (a.security.cuts.length > thefts.length) out.push(dim(`  (+${a.security.cuts.length - thefts.length} combinaciones mínimas más costosas)`));
   const firstTheft = thefts[0];
   if (firstTheft) {
     out.push('', dim('  Por qué:'));
@@ -62,6 +66,12 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
   else if (losses.length === 0) out.push(green(`  Ninguna combinación de hasta ${a.resilience.searchedUpTo} pérdidas deja los fondos inaccesibles.`));
   losses.forEach((cut) => out.push(red('  • ' + cut.map((x) => fmt.loss(x)).join('  +  '))));
   if (a.resilience.cuts.length > losses.length) out.push(dim(`  (+${a.resilience.cuts.length - losses.length} combinaciones mínimas más grandes)`));
+
+  const lockouts = bySize(a.resilience.lockouts, a.resilience.lockoutMinSize);
+  if (lockouts.length > 0) {
+    section('⏳ Bloqueos temporales (se resuelven tras el fallecimiento)');
+    lockouts.forEach((cut) => out.push(yellow('  • ' + cut.map((x) => fmt.loss(x)).join('  +  '))));
+  }
 
   section('✍️  Firma del día a día');
   if (a.usability.locations) {

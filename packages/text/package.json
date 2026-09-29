@@ -1,0 +1,13 @@
+{
+  "name": "@llave-inglesa/text",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@llave-inglesa/domain": "0.0.0",
+    "@llave-inglesa/engine": "0.0.0"
+  }
+}

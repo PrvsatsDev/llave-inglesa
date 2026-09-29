@@ -6,14 +6,11 @@ export type IssueCode =
   | 'schema'
   | 'duplicate-id'
   | 'unknown-reference'
-  | 'stateless-holds-keys'
   | 'stateful-holds-nothing'
   | 'threshold-out-of-range'
   | 'key-repeated-in-policy'
   | 'key-not-in-policy'
-  | 'no-owner'
-  | 'pin-without-protection'
-  | 'passphrase-not-enabled';
+  | 'no-owner';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -68,24 +65,25 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   const devices = new Map(model.devices.map((d) => [d.id, d]));
   const people = new Set(model.people.map((p) => p.id));
   const locations = new Set(model.locations.map((l) => l.id));
+  const artifacts = new Set(model.artifacts.map((a) => a.id));
 
   const ref = (known: { has(id: Id): boolean }, id: Id, path: (string | number)[]) => {
     if (!known.has(id)) report('error', 'unknown-reference', path, id);
   };
 
   const secret = (s: SecretRef, path: (string | number)[]) => {
+    // El PIN de un dispositivo sin PIN o la passphrase de una key sin ella son latentes, no errores.
     switch (s.type) {
       case 'seed':
       case 'xpub':
-        ref(keys, s.key, [...path, 'key']);
-        break;
       case 'passphrase':
         ref(keys, s.key, [...path, 'key']);
-        if (keys.get(s.key)?.passphrase === false) report('warning', 'passphrase-not-enabled', path, s.key);
         break;
       case 'pin':
         ref(devices, s.device, [...path, 'device']);
-        if (devices.get(s.device)?.pinProtected === false) report('warning', 'pin-without-protection', path, s.device);
+        break;
+      case 'password':
+        ref(artifacts, s.artifact, [...path, 'artifact']);
         break;
       case 'descriptor':
         break;
@@ -111,7 +109,6 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   model.devices.forEach((d, i) => {
     ref(locations, d.location, ['devices', i, 'location']);
     d.holds.forEach((k, j) => ref(keys, k, ['devices', i, 'holds', j]));
-    if (d.kind === 'stateless' && d.holds.length > 0) report('error', 'stateless-holds-keys', ['devices', i, 'holds'], d.id);
     if (d.kind === 'stateful' && d.holds.length === 0) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
   });
 
@@ -126,7 +123,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   model.locations.forEach((l, i) =>
     l.access.forEach((a, j) => {
       ref(people, a.person, ['locations', i, 'access', j, 'person']);
-      if (a.when.type === 'after-death') ref(people, a.when.person, ['locations', i, 'access', j, 'when', 'person']);
+      if (a.when.type !== 'always') ref(people, a.when.person, ['locations', i, 'access', j, 'when', 'person']);
     }),
   );
 

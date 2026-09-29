@@ -1,4 +1,4 @@
-import type { Artifact, CustodyModel, Device, Id, Key, Location, Person, Policy } from './schema.ts';
+import type { Artifact, CustodyModel, Device, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 
 export type Item = { kind: 'device'; value: Device } | { kind: 'artifact'; value: Artifact };
 
@@ -15,6 +15,22 @@ export interface ModelIndex {
   itemsAt(location: Id): readonly Item[];
   /** Nombre legible de cualquier entidad. */
   label(id: Id): string;
+}
+
+/**
+ * Una referencia es latente cuando lo que nombra está desactivado: el PIN de un
+ * dispositivo sin PIN o la passphrase de una key sin passphrase. Se conserva, pero no cuenta.
+ */
+export function isActiveSecret(model: CustodyModel, s: SecretRef): boolean {
+  if (s.type === 'pin') return model.devices.some((d) => d.id === s.device && d.pinProtected);
+  if (s.type === 'passphrase') return model.keys.some((k) => k.id === s.key && k.passphrase);
+  if (s.type === 'password') return model.artifacts.some((a) => a.lockedBy.some((l) => l.type === 'password' && l.artifact === s.artifact));
+  return true;
+}
+
+/** Keys que un dispositivo guarda de verdad (un stateless conserva las suyas como latentes). */
+export function activeHolds(device: Device): readonly Id[] {
+  return device.kind === 'stateful' ? device.holds : [];
 }
 
 export function policyKeys(policy: Policy): Id[] {
