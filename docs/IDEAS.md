@@ -19,6 +19,14 @@ pensarse antes de implementarla.
   - PDF del descriptor (para imprimir y guardar como backup).
   - PDF de herencia (carta/manual para los herederos).
 
+- **Resistencia del soporte de cada backup.** No es lo mismo papel que metal ante un
+  incendio o una inundación. Idea a pensar: separar "destrucción de la ubicación" en
+  tipos de desastre (incendio, inundación…) y que cada soporte sobreviva o no a cada
+  uno (p. ej. el papel no sobrevive a ninguno; una placa de acero, a ambos). Enlaza
+  con la *resiliencia ponderada* de abajo.
+- **Vídeo de presentación** con animaciones usando la propia aplicación. Idea
+  ambiciosa, "lo mismo no lo hacemos".
+
 ## Simplificaciones conscientes del motor (para iterar)
 
 - **PIN de coacción** (duress PIN / brick-me PIN de Coldcard y similares).
