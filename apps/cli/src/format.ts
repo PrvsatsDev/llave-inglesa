@@ -1,5 +1,6 @@
-import { indexModel, type CustodyModel, type Issue, type ModelIndex, type Policy, type SecretRef } from '@llave-inglesa/domain';
-import type { AttackAtom, EntropyOrigin, ExplanationNode, Fact, Justification, LossEvent } from '@llave-inglesa/engine';
+import { indexModel, type CustodyModel, type Issue, type ModelIndex } from '@llave-inglesa/domain';
+import type { AttackAtom, ExplanationNode, LossEvent } from '@llave-inglesa/engine';
+import { attackText, factText, lossText, policyText, ruleText } from '@llave-inglesa/text';
 
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 const paint = (code: number) => (s: string) => (useColor ? `\x1b[${code}m${s}\x1b[0m` : s);
@@ -9,7 +10,7 @@ export const red = paint(31);
 export const green = paint(32);
 export const yellow = paint(33);
 
-/** Textos en español para todo lo que produce el motor. */
+/** Presentación en terminal. Los textos salen de @llave-inglesa/text. */
 export class Formatter {
   private readonly index: ModelIndex;
 
@@ -17,94 +18,29 @@ export class Formatter {
     this.index = indexModel(model);
   }
 
-  private name = (id: string) => this.index.label(id);
-
-  policy(p: Policy = this.model.policy): string {
-    if (p.type === 'key') return this.name(p.key);
-    return `${p.k} de ${p.of.length} (${p.of.map((c) => this.policy(c)).join(', ')})`;
-  }
-
-  origin(o: EntropyOrigin): string {
-    return o.kind === 'unknown' ? 'origen desconocido' : o.vendor;
+  policy(): string {
+    return policyText(this.model.policy, this.index.label);
   }
 
   attack(a: AttackAtom): string {
-    switch (a.type) {
-      case 'burglary':
-        return `Intrusión en ${this.name(a.location)} sin nadie presente`;
-      case 'coercion':
-        return a.location
-          ? `Llave inglesa: coacción a ${this.name(a.person)} en ${this.name(a.location)}`
-          : `Llave inglesa: coacción a ${this.name(a.person)}`;
-      case 'insider':
-        return `Traición de ${this.name(a.person)}`;
-      case 'entropy-compromise':
-        return `RNG comprometido: ${this.origin(a.origin)}`;
-    }
+    return attackText(a, this.index.label);
   }
 
   loss(e: LossEvent): string {
-    switch (e.type) {
-      case 'destroy-location': return `Destrucción de ${this.name(e.location)} (incendio, inundación…)`;
-      case 'item-loss': return `Pérdida o avería de ${this.name(e.item)}`;
-      case 'death': return `Fallecimiento de ${this.name(e.person)}`;
-      case 'incapacity': return `Incapacidad de ${this.name(e.person)}`;
-      case 'forget': return `${this.name(e.person)} olvida lo que tenía memorizado`;
-    }
-  }
-
-  secret(s: SecretRef): string {
-    switch (s.type) {
-      case 'seed': return `semilla de ${this.name(s.key)}`;
-      case 'passphrase': return `passphrase de ${this.name(s.key)}`;
-      case 'xpub': return `xpub de ${this.name(s.key)}`;
-      case 'pin': return `PIN de ${this.name(s.device)}`;
-      case 'descriptor': return 'descriptor del wallet';
-    }
-  }
-
-  fact(f: Fact): string {
-    switch (f.kind) {
-      case 'item': {
-        const item = this.index.items.get(f.item);
-        return item ? `${item.value.label} (${this.name(item.value.location)})` : f.item;
-      }
-      case 'secret': return this.secret(f.secret);
-      case 'unlocked': return `${this.name(f.device)} desbloqueado`;
-      case 'sign': return `firma con ${this.name(f.key)}`;
-      case 'spend': return 'PUEDE GASTAR LOS FONDOS';
-    }
-  }
-
-  rule(j: Justification): string {
-    const v = j.via ?? {};
-    switch (j.rule) {
-      case 'location-access': return `al alcance en ${this.name(v.location ?? '?')}`;
-      case 'memory': return `lo sabe ${this.name(v.person ?? '?')}`;
-      case 'entropy-compromise': return `predecible: RNG de ${(v.origins ?? []).map((o) => this.origin(o)).join(' + ')}`;
-      case 'read-artifact': return 'escrito ahí';
-      case 'descriptor-xpubs': return 'incluida en el descriptor';
-      case 'unlock-device': return 'desbloqueado';
-      case 'device-sign': return 'firma el dispositivo';
-      case 'device-xpub': return 'la exporta el dispositivo';
-      case 'device-wallet': return `multisig registrado en ${this.name(v.device ?? '?')}`;
-      case 'seed-xpub': return 'derivada de la semilla';
-      case 'seed-sign': return 'tecleando la semilla en cualquier software';
-      case 'seed-sign-on-device': return `cargando la semilla en ${this.name(v.device ?? '?')}`;
-      case 'spend': return `política ${this.policy()} satisfecha`;
-    }
+    return lossText(e, this.index.label);
   }
 
   tree(node: ExplanationNode, prefix = '', last = true, root = true): string[] {
     const connector = root ? '' : last ? '└─ ' : '├─ ';
-    const label = node.fact.kind === 'spend' ? bold(this.fact(node.fact)) : this.fact(node.fact);
-    const why = node.repeated ? dim('  (ver arriba)') : node.justification.rule === 'unlock-device' ? '' : dim(`  ← ${this.rule(node.justification)}`);
+    const text = factText(node.fact, this.index);
+    const label = node.fact.kind === 'spend' ? bold(text.toUpperCase()) : text;
+    const reason = ruleText(node.justification, this.index, this.model.policy);
+    const why = node.repeated ? dim('  (ver arriba)') : reason ? dim(`  ← ${reason}`) : '';
     const lines = [`${prefix}${connector}${label}${why}`];
     const childPrefix = root ? prefix : prefix + (last ? '   ' : '│  ');
     node.children.forEach((child, i) => lines.push(...this.tree(child, childPrefix, i === node.children.length - 1, false)));
     return lines;
   }
-
 }
 
 export function formatIssue(i: Issue): string {

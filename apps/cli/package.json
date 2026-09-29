@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@llave-inglesa/domain": "0.0.0",
-    "@llave-inglesa/engine": "0.0.0"
+    "@llave-inglesa/engine": "0.0.0",
+    "@llave-inglesa/text": "0.0.0"
   }
 }
