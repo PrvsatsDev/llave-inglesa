@@ -1,0 +1,267 @@
+/* ---------- Ubicación ---------- */
+
+.location {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+
+.location:hover {
+  border-color: var(--border-strong);
+}
+
+.selected {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+}
+
+.locationHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, var(--surface-raised), var(--surface));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.locationPin {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.locationName {
+  font-weight: 700;
+  font-size: var(--text-md);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.keyTags {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+.keyTag {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--key-color);
+  box-shadow: 0 0 10px var(--key-color);
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+}
+
+.item:hover {
+  background: var(--surface-hover);
+}
+
+.itemIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.deviceIcon {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.itemText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemSubtitle {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.inlineIcon {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  max-width: 110px;
+}
+
+.emptyLocation {
+  margin: 0;
+  padding: 14px;
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+/* ---------- Insignias de secretos ---------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.keyBadge {
+  color: var(--key-color);
+  border-color: color-mix(in srgb, var(--key-color) 35%, transparent);
+  background: color-mix(in srgb, var(--key-color) 10%, transparent);
+}
+
+.keyDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.holds .keyDot,
+.seed .keyDot {
+  background: var(--key-color);
+  box-shadow: 0 0 6px var(--key-color);
+}
+
+.passphrase .keyDot {
+  border: 2px solid var(--key-color);
+}
+
+.xpub .keyDot {
+  border: 1px dashed var(--key-color);
+}
+
+/* ---------- Persona ---------- */
+
+.person {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.person:hover {
+  border-color: var(--border-strong);
+}
+
+.personHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.owner .avatar {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-soft);
+}
+
+.personText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.personName {
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1.2;
+}
+
+.role {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.owner .role {
+  color: var(--accent);
+}
+
+.knows {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.knowsIcon {
+  color: var(--text-faint);
+  margin-right: 2px;
+}
+
+/* ---------- Conexiones ---------- */
+
+.handle {
+  opacity: 0;
+  pointer-events: none;
+}

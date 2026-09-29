@@ -48,7 +48,8 @@ textarea {
 }
 
 /* React Flow: integrarlo en los tokens */
-.react-flow {
+.react-flow,
+.react-flow.dark {
   --xy-background-color: var(--bg-canvas);
   --xy-controls-button-background-color: var(--surface);
   --xy-controls-button-background-color-hover: var(--surface-hover);
@@ -56,6 +57,25 @@ textarea {
   --xy-controls-button-color-hover: var(--text);
   --xy-controls-button-border-color: var(--border);
   --xy-attribution-background-color: transparent;
+  --xy-edge-stroke-default: var(--text-faint);
+  --xy-edge-stroke-width-default: 1.5;
+  --xy-edge-label-background-color-default: var(--bg-canvas);
+  --xy-edge-label-color-default: var(--text-muted);
+}
+
+/* Líneas de acceso persona → ubicación */
+.react-flow__edge.access-conditional .react-flow__edge-path {
+  stroke-dasharray: 6 5;
+}
+
+.react-flow__edge-textbg {
+  rx: 4;
+}
+
+.react-flow__edge-text {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .react-flow__controls {
