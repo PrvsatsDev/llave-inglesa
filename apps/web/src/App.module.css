@@ -1,0 +1,22 @@
+.shell {
+  display: grid;
+  grid-template-areas:
+    'header header'
+    'canvas sidebar';
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+  grid-template-rows: var(--header-height) minmax(0, 1fr);
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-areas:
+      'header'
+      'canvas'
+      'sidebar';
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--header-height) minmax(360px, 60vh) auto;
+    height: auto;
+    min-height: 100%;
+  }
+}
