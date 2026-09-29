@@ -1,4 +1,4 @@
-import { updateDevice } from '@llave-inglesa/domain';
+import { updateDevice, updateLocation } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { analyze, simulateAttack, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
@@ -37,8 +37,19 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
     expect(d.signable.size).toBe(0);
   });
 
-  it('la incapacidad del titular deja a la pareja sin acceso al banco: pérdida', () => {
-    expect(a.resilience.cuts).toContainEqual([{ type: 'incapacity', person: 'yo' }]);
+  it('la incapacidad del titular bloquea los fondos, pero no los pierde: se recuperan al fallecer', () => {
+    expect(a.resilience.cuts).not.toContainEqual([{ type: 'incapacity', person: 'yo' }]);
+    expect(a.resilience.lockouts).toContainEqual([{ type: 'incapacity', person: 'yo' }]);
+    expect(a.resilience.lockoutMinSize).toBe(1);
+  });
+
+  it('con acceso al banco "si queda incapacitado o fallece", ya no hay bloqueo', () => {
+    const withPoa = updateLocation(model, 'banco', {
+      access: [{ person: 'yo', when: { type: 'always' } }, { person: 'pareja', when: { type: 'incapacity-or-death', person: 'yo' } }],
+    });
+    const b = analyze(withPoa);
+    expect(b.resilience.lockouts).not.toContainEqual([{ type: 'incapacity', person: 'yo' }]);
+    expect(b.resilience.score).toBeGreaterThan(a.resilience.score);
   });
 
   it('desactivar y reactivar el PIN deja el análisis igual (nada se pierde)', () => {

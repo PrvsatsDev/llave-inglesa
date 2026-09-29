@@ -119,7 +119,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   model.locations.forEach((l, i) =>
     l.access.forEach((a, j) => {
       ref(people, a.person, ['locations', i, 'access', j, 'person']);
-      if (a.when.type === 'after-death') ref(people, a.when.person, ['locations', i, 'access', j, 'when', 'person']);
+      if (a.when.type !== 'always') ref(people, a.when.person, ['locations', i, 'access', j, 'when', 'person']);
     }),
   );
 

@@ -112,6 +112,8 @@ export const AccessConditionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('always') }),
   /** Solo tras el fallecimiento de alguien (p. ej. caja del banco para herederos). */
   z.object({ type: z.literal('after-death'), person: IdSchema }),
+  /** Si esa persona queda incapacitada o fallece (poder notarial preventivo, tutela…). */
+  z.object({ type: z.literal('incapacity-or-death'), person: IdSchema }),
 ]);
 export type AccessCondition = z.infer<typeof AccessConditionSchema>;
 

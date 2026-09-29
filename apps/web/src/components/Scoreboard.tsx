@@ -32,7 +32,14 @@ function metrics(a: Analysis): Metric[] {
       : `robo más barato: esfuerzo ${sec.minEffort.toLocaleString('es')}` + (sec.cheapRoutes > 1 ? ` · ${sec.cheapRoutes} vías` : '');
   return [
     { id: 'security', label: 'Seguridad', score: sec.score, detail: secDetail },
-    { id: 'resilience', label: 'Resiliencia', score: a.resilience.score, detail: cut(a.resilience.minSize, a.resilience.searchedUpTo, 'pérdida') },
+    {
+      id: 'resilience',
+      label: 'Resiliencia',
+      score: a.resilience.score,
+      detail:
+        cut(a.resilience.minSize, a.resilience.searchedUpTo, 'pérdida') +
+        (a.resilience.lockoutMinSize ? ` · bloqueo temporal con ${plural(a.resilience.lockoutMinSize, 'suceso', 'sucesos')}` : ''),
+    },
     {
       id: 'usability',
       label: 'Usabilidad',

@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { analyze, explain, simulateAttack, simulateLosses, type Analysis } from '@llave-inglesa/engine';
-import { bold, dim, formatIssue, Formatter, green, red, scoreBar } from './format.ts';
+import { bold, dim, formatIssue, Formatter, green, red, scoreBar, yellow } from './format.ts';
 
 const USAGE = 'Uso: llave-inglesa analyze <modelo.json>';
 
@@ -66,6 +66,12 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
   else if (losses.length === 0) out.push(green(`  Ninguna combinación de hasta ${a.resilience.searchedUpTo} pérdidas deja los fondos inaccesibles.`));
   losses.forEach((cut) => out.push(red('  • ' + cut.map((x) => fmt.loss(x)).join('  +  '))));
   if (a.resilience.cuts.length > losses.length) out.push(dim(`  (+${a.resilience.cuts.length - losses.length} combinaciones mínimas más grandes)`));
+
+  const lockouts = bySize(a.resilience.lockouts, a.resilience.lockoutMinSize);
+  if (lockouts.length > 0) {
+    section('⏳ Bloqueos temporales (se resuelven tras el fallecimiento)');
+    lockouts.forEach((cut) => out.push(yellow('  • ' + cut.map((x) => fmt.loss(x)).join('  +  '))));
+  }
 
   section('✍️  Firma del día a día');
   if (a.usability.locations) {

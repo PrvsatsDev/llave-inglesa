@@ -1,6 +1,6 @@
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
 import { attackEffort } from '@llave-inglesa/engine';
-import { Flame, Skull } from 'lucide-react';
+import { Flame, Hourglass, Skull } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { attackText, lossText } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
@@ -9,8 +9,9 @@ import styles from './Findings.module.css';
 
 const MAX_SHOWN = 5;
 
-function CutList<A>({ cuts, total, text, meta, empty }: {
+function CutList<A>({ cuts, total, text, meta, empty, tone = 'danger' }: {
   cuts: A[][];
+  tone?: 'danger' | 'warn';
   total: number;
   text(a: A): string;
   meta?(cut: A[]): ReactNode;
@@ -21,7 +22,7 @@ function CutList<A>({ cuts, total, text, meta, empty }: {
     <>
       <ul className={styles.list}>
         {cuts.slice(0, MAX_SHOWN).map((cut, i) => (
-          <li key={i} className={styles.cut}>
+          <li key={i} className={`${styles.cut} ${styles[tone]}`}>
             {cut.map((atom, j) => (
               <span key={j} className={styles.atomWrap}>
                 {j > 0 && <span className={styles.plus}>+</span>}
@@ -77,6 +78,21 @@ export function Findings({ model }: { model: CustodyModel }) {
           <p className={styles.critical}>Ya ahora mismo nadie puede recuperar los fondos.</p>
         )}
       </Section>
+      {resilience.lockouts.length > 0 && (
+        <Section title="Bloqueos temporales">
+          <div className={styles.header}>
+            <Hourglass size={14} aria-hidden />
+            <span>Los fondos quedarían inmovilizados mientras dure la incapacidad; se recuperan tras el fallecimiento.</span>
+          </div>
+          <CutList
+            cuts={resilience.lockouts.filter((c) => c.length === resilience.lockoutMinSize)}
+            total={resilience.lockouts.length}
+            text={(e) => lossText(e, label)}
+            empty=""
+            tone="warn"
+          />
+        </Section>
+      )}
     </>
   );
 }

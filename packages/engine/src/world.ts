@@ -54,7 +54,19 @@ export function knowledgeOf(world: World, person: Id): readonly SecretRef[] {
 }
 
 export function conditionHolds(world: World, condition: AccessCondition): boolean {
-  return condition.type === 'always' || world.dead.has(condition.person);
+  switch (condition.type) {
+    case 'always':
+      return true;
+    case 'after-death':
+      return world.dead.has(condition.person);
+    case 'incapacity-or-death':
+      return world.dead.has(condition.person) || world.incapacitated.has(condition.person);
+  }
+}
+
+/** Lo que acabará pasando: una incapacidad termina, tarde o temprano, en fallecimiento. */
+export function eventually(events: readonly LossEvent[]): LossEvent[] {
+  return events.map((e) => (e.type === 'incapacity' ? { type: 'death', person: e.person } : e));
 }
 
 export function accessibleLocations(world: World, person: Id): Id[] {

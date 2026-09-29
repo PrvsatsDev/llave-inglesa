@@ -68,6 +68,15 @@ export function cutScore(minSize: number | null): number {
   return [0, 25, 60, 85][minSize] ?? 100;
 }
 
+/**
+ * Un bloqueo temporal no pierde los fondos, pero puede inmovilizarlos durante años
+ * (p. ej. un ictus). Resta algo a la resiliencia según lo fácil que sea que ocurra.
+ */
+export function lockoutPenalty(minSize: number | null): number {
+  if (minSize === null) return 0;
+  return [0, 10, 5][minSize] ?? 0;
+}
+
 /** Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura. */
 export function usabilityScore(locations: number | null): number {
   if (locations === null) return 0;

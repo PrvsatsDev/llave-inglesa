@@ -148,7 +148,7 @@ export function updatePerson(model: CustodyModel, id: Id, patch: Patch<Person>):
   return { ...model, people: replace(model.people, id, (p) => ({ ...p, ...patch })) };
 }
 
-/** Elimina a la persona, sus accesos y los accesos condicionados a su fallecimiento. */
+/** Elimina a la persona, sus accesos y los accesos condicionados a lo que le ocurra. */
 export function removePerson(model: CustodyModel, id: Id): CustodyModel {
   const remaining = model.people.filter((p) => p.id !== id);
   if (!remaining.some((p) => p.role === 'owner')) return model;
@@ -157,7 +157,7 @@ export function removePerson(model: CustodyModel, id: Id): CustodyModel {
     people: remaining,
     locations: model.locations.map((l) => ({
       ...l,
-      access: l.access.filter((a) => a.person !== id && !(a.when.type === 'after-death' && a.when.person === id)),
+      access: l.access.filter((a) => a.person !== id && !(a.when.type !== 'always' && a.when.person === id)),
     })),
   };
 }

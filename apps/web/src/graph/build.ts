@@ -104,18 +104,10 @@ export function buildGraph(model: CustodyModel): Graph {
 
   const edges: AccessEdge[] = model.locations.flatMap((l) =>
     l.access.map((a): AccessEdge => {
-      const conditional = a.when.type !== 'always';
-      return {
-        id: `access:${a.person}:${l.id}`,
-        source: a.person,
-        target: l.id,
-        sourceHandle: 'top',
-        targetHandle: 'bottom',
-        data: { conditional },
-        ...(conditional && a.when.type === 'after-death'
-          ? { label: `tras fallecer ${label(a.when.person)}`, className: 'access-conditional' }
-          : { className: 'access-always' }),
-      };
+      const base = { id: `access:${a.person}:${l.id}`, source: a.person, target: l.id, sourceHandle: 'top', targetHandle: 'bottom' };
+      if (a.when.type === 'always') return { ...base, data: { conditional: false }, className: 'access-always' };
+      const text = a.when.type === 'after-death' ? `tras fallecer ${label(a.when.person)}` : `si ${label(a.when.person)} no puede actuar`;
+      return { ...base, data: { conditional: true }, label: text, className: 'access-conditional' };
     }),
   );
 

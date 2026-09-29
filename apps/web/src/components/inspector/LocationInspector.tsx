@@ -7,9 +7,13 @@ import styles from './fields.module.css';
 
 type Access = Location['access'][number];
 
-const conditionValue = (a: Access) => (a.when.type === 'always' ? 'always' : `after-death:${a.when.person}`);
-const parseCondition = (v: string): Access['when'] =>
-  v === 'always' ? { type: 'always' } : { type: 'after-death', person: v.slice('after-death:'.length) };
+/** Codifica la condición como valor de <select>: "always" o "tipo:persona". */
+const conditionValue = (a: Access) => (a.when.type === 'always' ? 'always' : `${a.when.type}:${a.when.person}`);
+function parseCondition(v: string): Access['when'] {
+  if (v === 'always') return { type: 'always' };
+  const [type, person = ''] = v.split(':') as ['after-death' | 'incapacity-or-death', string];
+  return { type, person };
+}
 
 export function LocationInspector({ model, location }: { model: CustodyModel; location: Location }) {
   const apply = useDocument((s) => s.apply);
@@ -54,6 +58,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         }
       >
         {location.access.length === 0 && <p className={styles.hint}>Nadie tiene acceso: lo que haya aquí es inalcanzable.</p>}
+        <p className={styles.hint}>"No puede actuar" = incapacidad o fallecimiento (p. ej. poder notarial preventivo o tutela).</p>
         <ul className={styles.list}>
           {location.access.map((a, i) => {
             const others = model.people.filter((p) => p.id !== a.person);
@@ -72,7 +77,10 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
                     value={conditionValue(a)}
                     options={[
                       { value: 'always', label: 'Siempre' },
-                      ...others.map((p) => ({ value: `after-death:${p.id}`, label: `Tras fallecer ${p.name}` })),
+                      ...others.flatMap((p) => [
+                        { value: `after-death:${p.id}`, label: `Tras fallecer ${p.name}` },
+                        { value: `incapacity-or-death:${p.id}`, label: `Si ${p.name} no puede actuar` },
+                      ]),
                     ]}
                     onChange={(v) => change({ when: parseCondition(v) })}
                   />

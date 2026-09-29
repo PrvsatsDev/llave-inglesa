@@ -3,8 +3,8 @@ import { attackAtoms, attackHoldings, type AttackAtom } from './attacks.ts';
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
-import { attackEffort, cutScore, EXPOSURE, inheritanceScore, securityScore, usabilityScore } from './score.ts';
-import { accessibleLocations, canAct, createWorld, type LossEvent, type World } from './world.ts';
+import { attackEffort, cutScore, EXPOSURE, inheritanceScore, lockoutPenalty, securityScore, usabilityScore } from './score.ts';
+import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
 
 export interface AnalyzeOptions {
   /** Tamaño máximo de combinación a explorar en los cortes. */
@@ -29,11 +29,21 @@ export interface SecurityReport extends CutReport<AttackAtom> {
   cheapRoutes: number;
 }
 
+export interface ResilienceReport extends CutReport<LossEvent> {
+  recoverableNow: boolean;
+  /**
+   * Bloqueos temporales: combinaciones que impiden mover los fondos mientras
+   * alguien está incapacitado, pero que se resuelven cuando fallece.
+   */
+  lockouts: LossEvent[][];
+  lockoutMinSize: number | null;
+}
+
 export interface Analysis {
   /** ¿Qué combinación de ataques permite robar, y con qué esfuerzo? */
   security: SecurityReport;
   /** ¿Qué combinación de pérdidas deja los fondos inaccesibles para siempre? */
-  resilience: CutReport<LossEvent> & { recoverableNow: boolean };
+  resilience: ResilienceReport;
   /** ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? */
   usability: { score: number; locations: Id[] | null };
   /** Tras el fallecimiento de los titulares, ¿pueden los herederos recuperar los fondos? */
@@ -99,17 +109,31 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     maxCutSize,
   );
 
-  const recoverable = (world: World) => derive(world, legitHoldings(world), 'any').canSpend;
-  const recoverableNow = recoverable(intact);
-  const resilience = recoverableNow
-    ? {
-        ...cutReport(
-          minimalCuts(lossAtoms(intact), (events) => !recoverable(createWorld(model, events, intact.index)), maxCutSize),
-          maxCutSize,
-        ),
-        recoverableNow,
-      }
-    : { score: 0, minSize: 0, searchedUpTo: 0, cuts: [[]], cheapest: [[]], recoverableNow };
+  const recoverable = (events: readonly LossEvent[]) => {
+    const world = createWorld(model, events, intact.index);
+    return derive(world, legitHoldings(world), 'any').canSpend;
+  };
+  // Permanente: ni ahora ni cuando las personas incapacitadas acaben falleciendo.
+  const lostForever = (events: LossEvent[]) => !recoverable(events) && !recoverable(eventually(events));
+  const blockedNow = (events: LossEvent[]) => !recoverable(events);
+
+  const recoverableNow = recoverable([]);
+  let resilience: ResilienceReport;
+  if (recoverableNow) {
+    const atoms = lossAtoms(intact);
+    const losses = cutReport(minimalCuts(atoms, lostForever, maxCutSize), maxCutSize);
+    const lockouts = minimalCuts(atoms, blockedNow, maxCutSize).filter((cut) => !lostForever(cut));
+    const lockoutMinSize = lockouts[0]?.length ?? null;
+    resilience = {
+      ...losses,
+      score: Math.max(0, losses.score - lockoutPenalty(lockoutMinSize)),
+      recoverableNow,
+      lockouts,
+      lockoutMinSize,
+    };
+  } else {
+    resilience = { score: 0, minSize: 0, searchedUpTo: 0, cuts: [[]], cheapest: [[]], recoverableNow, lockouts: [], lockoutMinSize: null };
+  }
 
   const owners = model.people.filter((p) => p.role === 'owner' && canAct(intact, p.id)).map((p) => p.id);
   const ownerLocations = [...new Set(owners.flatMap((p) => accessibleLocations(intact, p)))];
