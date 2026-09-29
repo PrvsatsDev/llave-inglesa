@@ -1,6 +1,7 @@
 import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyModel, type Device, type Id, type Person, type SecretRef } from '@llave-inglesa/domain';
 import type { Edge, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
+import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
 import { layoutGraph } from './layout.ts';
 
 /** Vista de un secreto como insignia visual. */
@@ -21,12 +22,15 @@ export type ItemView = {
   pinProtected: boolean;
   registeredWallet: boolean;
   encrypted: boolean;
+  /** Estado bajo el escenario activo (ausente si no hay escenario). */
+  state?: ItemState;
 };
 
 export type KeyTag = { id: Id; label: string; color: string };
+export type Tone = ScenarioView['tone'];
 
-export type LocationNodeData = { name: string; items: ItemView[]; keys: KeyTag[] };
-export type PersonNodeData = { name: string; role: Person['role']; knows: SecretBadge[] };
+export type LocationNodeData = { name: string; items: ItemView[]; keys: KeyTag[]; state?: LocationState; tone?: Tone };
+export type PersonNodeData = { name: string; role: Person['role']; knows: SecretBadge[]; state?: PersonState; tone?: Tone };
 
 export type LocationNode = Node<LocationNodeData, 'location'>;
 export type PersonNode = Node<PersonNodeData, 'person'>;
@@ -127,5 +131,23 @@ export function buildGraph(model: CustodyModel): Graph {
     })),
   ];
 
+  return { nodes, edges };
+}
+
+/** Superpone un escenario al grafo: estados por elemento y aristas implicadas resaltadas. */
+export function applyScenario(graph: Graph, view: ScenarioView | null): Graph {
+  if (!view) return graph;
+  const { tone } = view;
+  const nodes = graph.nodes.map((n): GraphNode => {
+    if (n.type === 'location') {
+      const items = n.data.items.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim' }));
+      return { ...n, data: { ...n.data, items, state: view.locations.get(n.id) ?? 'dim', tone } };
+    }
+    return { ...n, data: { ...n.data, state: view.people.get(n.id) ?? 'dim', tone } };
+  });
+  const edges = graph.edges.map((e): AccessEdge => {
+    const hot = view.edges.has(e.id);
+    return { ...e, animated: hot, className: `${e.className ?? ''} ${hot ? `edge-${tone}` : 'edge-dim'}` };
+  });
   return { nodes, edges };
 }

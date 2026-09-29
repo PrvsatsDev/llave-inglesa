@@ -5,6 +5,7 @@ import { Header } from './components/Header.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
 import { useLiveAnalysis } from './store/analysis.ts';
 import { useDocument } from './store/document.ts';
+import { useScenario } from './store/scenario.ts';
 import { useSelection } from './store/selection.ts';
 import styles from './App.module.css';
 
@@ -16,7 +17,10 @@ function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        useSelection.getState().select(null);
+        // Primero se cierra la ficha abierta; si no hay ninguna, se sale de la simulación.
+        const selection = useSelection.getState();
+        if (selection.selected) selection.select(null);
+        else useScenario.getState().set(null);
         return;
       }
       // Dentro de un campo de texto, Ctrl+Z es el deshacer nativo del campo.

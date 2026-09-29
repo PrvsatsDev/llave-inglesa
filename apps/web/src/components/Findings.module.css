@@ -21,6 +21,10 @@
 }
 
 .cut {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -82,4 +86,32 @@
   color: var(--danger);
   font-size: var(--text-sm);
   font-weight: 600;
+}
+
+.cut:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.active,
+.active:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.warn.active,
+.warn.active:hover {
+  background: var(--warn-soft);
+  border-color: var(--warn);
+}
+
+.play {
+  flex-shrink: 0;
+  margin-left: 6px;
+  color: var(--text-faint);
+}
+
+.cut:hover .play,
+.active .play {
+  color: var(--text);
 }

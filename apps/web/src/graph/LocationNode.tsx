@@ -39,6 +39,7 @@ function ItemRow({ item }: { item: ItemView }) {
   const select = useSelection((s) => s.select);
   return (
     <li
+      data-state={item.state}
       className={`${styles.item} ${selected ? styles.itemSelected : ''}`}
       onClick={(e) => {
         e.stopPropagation();
@@ -76,10 +77,16 @@ function ItemRow({ item }: { item: ItemView }) {
 export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
   const selected = useSelection((s) => isSelected(s.selected, 'location', id));
   return (
-    <div className={`${styles.location} ${selected ? styles.selected : ''}`} style={{ width: LOCATION_WIDTH }}>
+    <div
+      data-state={data.state}
+      data-tone={data.tone}
+      className={`${styles.location} ${selected ? styles.selected : ''}`}
+      style={{ width: LOCATION_WIDTH }}
+    >
       <header className={styles.locationHeader}>
         <MapPin size={14} className={styles.locationPin} aria-hidden />
         <span className={styles.locationName}>{data.name}</span>
+        {data.state === 'destroyed' && <span className={styles.stateTag}>Destruida</span>}
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">
           {data.keys.map((k) => (
             <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`}>

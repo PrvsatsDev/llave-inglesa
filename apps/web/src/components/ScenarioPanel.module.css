@@ -1,0 +1,44 @@
+.tree,
+.children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.children {
+  margin: 4px 0 0 6px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border-strong);
+}
+
+.node {
+  padding: 3px 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.fact {
+  font-weight: 600;
+}
+
+.root {
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.reason {
+  display: block;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.summary strong {
+  color: var(--text);
+}

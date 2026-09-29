@@ -5,7 +5,9 @@ import { issueText, provenanceText } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
+import { useScenarioView } from '../store/scenario.ts';
 import { Findings } from './Findings.tsx';
+import { ScenarioPanel } from './ScenarioPanel.tsx';
 import { Button, Field, Section, Segmented, TextArea, TextInput } from './inspector/fields.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
 import { KeyChip } from './KeyChip.tsx';
@@ -17,12 +19,18 @@ function exists(model: CustodyModel, s: Selection | null): boolean {
   return lists[s.kind].some((e) => e.id === s.id);
 }
 
+/** Prioridad: ficha de lo seleccionado > simulación activa > resumen del esquema. */
 export function Sidebar() {
   const model = useDocument((s) => s.model);
   const selected = useSelection((s) => s.selected);
+  const view = useScenarioView();
+  const mode = exists(model, selected) ? 'inspector' : view ? 'scenario' : 'summary';
+  const labels = { inspector: 'Inspector', scenario: 'Simulación', summary: 'Resumen del esquema' };
   return (
-    <aside className={styles.sidebar} aria-label={exists(model, selected) ? 'Inspector' : 'Resumen del esquema'}>
-      {exists(model, selected) ? <Inspector /> : <Summary model={model} />}
+    <aside className={styles.sidebar} aria-label={labels[mode]}>
+      {mode === 'inspector' && <Inspector />}
+      {mode === 'scenario' && view && <ScenarioPanel model={model} view={view} />}
+      {mode === 'summary' && <Summary model={model} />}
     </aside>
   );
 }

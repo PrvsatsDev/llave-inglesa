@@ -13,11 +13,26 @@ const ROLE = {
   other: 'Otra persona',
 } as const;
 
+/** Etiqueta del papel de la persona en el escenario activo. */
+const STATE: Partial<Record<NonNullable<PersonNodeType['data']['state']>, string>> = {
+  coerced: 'Coacción',
+  attacker: 'Traición',
+  dead: 'Fallecimiento',
+  incapacitated: 'Incapacidad',
+  forgot: 'Olvido',
+};
+
 export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
   const selected = useSelection((s) => isSelected(s.selected, 'person', id));
   const Avatar = data.role === 'owner' ? Crown : User;
+  const stateTag = data.state && STATE[data.state];
   return (
-    <div className={`${styles.person} ${styles[data.role]} ${selected ? styles.selected : ''}`} style={{ width: PERSON_WIDTH }}>
+    <div
+      data-state={data.state}
+      data-tone={data.tone}
+      className={`${styles.person} ${styles[data.role]} ${selected ? styles.selected : ''}`}
+      style={{ width: PERSON_WIDTH }}
+    >
       <Handle type="source" position={Position.Top} id="top" className={styles.handle} isConnectable={false} />
       <div className={styles.personHeader}>
         <span className={styles.avatar} aria-hidden>
@@ -27,6 +42,7 @@ export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
           <span className={styles.personName}>{data.name}</span>
           <span className={styles.role}>{ROLE[data.role]}</span>
         </span>
+        {stateTag && <span className={styles.stateTag}>{stateTag}</span>}
       </div>
       {data.knows.length > 0 && (
         <div className={styles.knows}>

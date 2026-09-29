@@ -68,6 +68,25 @@ textarea {
   stroke-dasharray: 6 5;
 }
 
+/* Escenario activo: aristas implicadas resaltadas, el resto atenuadas */
+.react-flow__edge.edge-attack .react-flow__edge-path {
+  stroke: var(--danger);
+  stroke-width: 2.5;
+}
+
+.react-flow__edge.edge-recovery .react-flow__edge-path {
+  stroke: var(--safe);
+  stroke-width: 2.5;
+}
+
+.react-flow__edge.edge-dim {
+  opacity: 0.2;
+}
+
+.react-flow__edge-path {
+  transition: stroke 260ms, stroke-width 260ms;
+}
+
 .react-flow__edge-textbg {
   rx: 4;
 }

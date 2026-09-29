@@ -1,11 +1,13 @@
 import { Background, BackgroundVariant, Controls, ReactFlow, useEdgesState, useNodesState, type NodeTypes } from '@xyflow/react';
 import { useEffect, useMemo } from 'react';
-import { buildGraph, type AccessEdge, type GraphNode } from '../graph/build.ts';
+import { applyScenario, buildGraph, type AccessEdge, type GraphNode } from '../graph/build.ts';
 import { LocationNode } from '../graph/LocationNode.tsx';
 import { PersonNode } from '../graph/PersonNode.tsx';
 import { useDocument } from '../store/document.ts';
+import { useScenarioView } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
 import { Legend } from './Legend.tsx';
+import { ScenarioBanner } from './ScenarioBanner.tsx';
 import { Scoreboard } from './Scoreboard.tsx';
 import styles from './Canvas.module.css';
 
@@ -19,13 +21,16 @@ export function Canvas() {
       <Graph key={origin.id} />
       <Scoreboard />
       <Legend />
+      <ScenarioBanner />
     </main>
   );
 }
 
 function Graph() {
   const model = useDocument((s) => s.model);
-  const graph = useMemo(() => buildGraph(model), [model]);
+  const base = useMemo(() => buildGraph(model), [model]);
+  const view = useScenarioView();
+  const graph = useMemo(() => applyScenario(base, view), [base, view]);
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<AccessEdge>(graph.edges);
   const select = useSelection((s) => s.select);

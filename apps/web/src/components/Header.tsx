@@ -1,5 +1,6 @@
 import { ChevronDown, Redo2, Undo2, Wrench } from 'lucide-react';
 import { useDocument } from '../store/document.ts';
+import { useScenario } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
 import { examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
@@ -16,6 +17,7 @@ export function Header() {
   const undo = useDocument((s) => s.undo);
   const redo = useDocument((s) => s.redo);
   const select = useSelection((s) => s.select);
+  const clearScenario = useScenario((s) => s.set);
   const label = (id: string) => model.keys.find((k) => k.id === id)?.label ?? id;
 
   return (
@@ -34,6 +36,7 @@ export function Header() {
           value={origin.id}
           onChange={(e) => {
             select(null);
+            clearScenario(null);
             loadExample(e.target.value);
           }}
           aria-label="Esquema de ejemplo"
