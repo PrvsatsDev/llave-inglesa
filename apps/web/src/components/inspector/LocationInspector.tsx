@@ -2,10 +2,22 @@ import { addArtifact, addDevice, removeLocation, updateLocation, type CustodyMod
 import { Camera, Cpu, MapPin, Plus, RectangleHorizontal, X } from 'lucide-react';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
-import { Button, DeleteButton, Field, PanelHeader, Section, Select, TextInput } from './fields.tsx';
+import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, TextInput } from './fields.tsx';
 import styles from './fields.module.css';
 
 type Access = Location['access'][number];
+
+const KIND_OPTIONS = [
+  { value: 'physical', label: 'Física' },
+  { value: 'device', label: 'Dispositivo' },
+  { value: 'cloud', label: 'Nube' },
+] as const;
+
+const KIND_HINT: Record<Location['kind'], string> = {
+  physical: 'Casa, caja del banco… Se ataca con una intrusión y se pierde con un incendio o una inundación.',
+  device: 'Portátil, disco duro… Se ataca con robo o malware y se pierde con una avería o un robo.',
+  cloud: 'Una cuenta en la nube. Se ataca en remoto (hackeo) y se pierde si se cierra o pierdes el acceso. Cifra lo que guardes aquí.',
+};
 
 /** Codifica la condición como valor de <select>: "always" o "tipo:persona". */
 const conditionValue = (a: Access) => (a.when.type === 'always' ? 'always' : `${a.when.type}:${a.when.person}`);
@@ -45,6 +57,8 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         <Field label="Nombre">
           {(fid) => <TextInput id={fid} value={location.name} onChange={(name) => apply((m) => updateLocation(m, id, { name }), `location:${id}:name`)} />}
         </Field>
+        <Segmented label="Tipo de ubicación" value={location.kind} options={KIND_OPTIONS} onChange={(kind) => apply((m) => updateLocation(m, id, { kind }))} />
+        <p className={styles.hint}>{KIND_HINT[location.kind]}</p>
       </Section>
 
       <Section

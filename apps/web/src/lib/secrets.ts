@@ -11,6 +11,9 @@ export function secretOptions(model: CustodyModel): SecretRef[] {
     ]),
     { type: 'descriptor' },
     ...model.devices.filter((d) => d.pinProtected).map((d): SecretRef => ({ type: 'pin', device: d.id })),
+    ...model.artifacts
+      .filter((a) => a.lockedBy.some((l) => l.type === 'password' && l.artifact === a.id))
+      .map((a): SecretRef => ({ type: 'password', artifact: a.id })),
   ];
 }
 

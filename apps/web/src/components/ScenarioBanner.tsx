@@ -21,9 +21,9 @@ export function ScenarioBanner() {
   const clear = useScenario((s) => s.set);
   if (!view) return null;
 
-  const label = indexModel(model).label;
+  const index = indexModel(model);
   const { icon: Icon, text, level } = OUTCOME[view.outcome];
-  const steps = view.scenario.kind === 'attack' ? view.scenario.atoms.map((a) => attackText(a, label)) : view.scenario.events.map((e) => lossText(e, label));
+  const steps = view.scenario.kind === 'attack' ? view.scenario.atoms.map((a) => attackText(a, index)) : view.scenario.events.map((e) => lossText(e, index));
 
   return (
     <div className={`${styles.banner} ${styles[level]}`} role="status" aria-live="polite">

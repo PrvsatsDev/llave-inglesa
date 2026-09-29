@@ -58,7 +58,7 @@ function CutList<A>({ cuts, total, text, meta, empty, tone = 'danger', toScenari
 /** Lanza cualquier ataque o desgracia individual (luego se pueden combinar en el panel). */
 function TryScenario({ model }: { model: CustodyModel }) {
   const setScenario = useScenario((s) => s.set);
-  const label = indexModel(model).label;
+  const index = indexModel(model);
   const world = createWorld(model);
   const attacks = attackAtoms(world);
   const losses = lossAtoms(world);
@@ -69,7 +69,7 @@ function TryScenario({ model }: { model: CustodyModel }) {
           <Select
             id={id}
             value=""
-            options={[{ value: '', label: 'Elige un ataque…' }, ...attacks.map((a, i) => ({ value: String(i), label: attackText(a, label) }))]}
+            options={[{ value: '', label: 'Elige un ataque…' }, ...attacks.map((a, i) => ({ value: String(i), label: attackText(a, index) }))]}
             onChange={(v) => v !== '' && setScenario({ kind: 'attack', atoms: [attacks[Number(v)]!] })}
           />
         )}
@@ -79,7 +79,7 @@ function TryScenario({ model }: { model: CustodyModel }) {
           <Select
             id={id}
             value=""
-            options={[{ value: '', label: 'Elige una desgracia…' }, ...losses.map((e, i) => ({ value: String(i), label: lossText(e, label) }))]}
+            options={[{ value: '', label: 'Elige una desgracia…' }, ...losses.map((e, i) => ({ value: String(i), label: lossText(e, index) }))]}
             onChange={(v) => v !== '' && setScenario({ kind: 'loss', events: [losses[Number(v)]!] })}
           />
         )}
@@ -92,7 +92,7 @@ function TryScenario({ model }: { model: CustodyModel }) {
 export function Findings({ model }: { model: CustodyModel }) {
   const analysis = useAnalysis((s) => s.analysis);
   if (!analysis) return null;
-  const label = indexModel(model).label;
+  const index = indexModel(model);
   const { security, resilience } = analysis;
   // Las vías "casi igual de baratas" también cuentan para la puntuación: se muestran todas.
   const cheapThefts = security.minEffort === null ? [] : security.cuts.slice(0, security.cheapRoutes);
@@ -107,7 +107,7 @@ export function Findings({ model }: { model: CustodyModel }) {
         <CutList
           cuts={cheapThefts}
           total={security.cuts.length}
-          text={(a) => attackText(a, label)}
+          text={(a) => attackText(a, index)}
           meta={(cut) => `esfuerzo ${attackEffort(cut).toLocaleString('es')}`}
           empty={`Ninguna combinación de hasta ${security.searchedUpTo} ataques lo consigue.`}
           toScenario={(atoms) => ({ kind: 'attack', atoms })}
@@ -122,7 +122,7 @@ export function Findings({ model }: { model: CustodyModel }) {
           <CutList
             cuts={resilience.cheapest}
             total={resilience.cuts.length}
-            text={(e) => lossText(e, label)}
+            text={(e) => lossText(e, index)}
             empty={`Ninguna combinación de hasta ${resilience.searchedUpTo} desgracias lo consigue.`}
             toScenario={(events) => ({ kind: 'loss', events })}
           />
@@ -139,7 +139,7 @@ export function Findings({ model }: { model: CustodyModel }) {
           <CutList
             cuts={resilience.lockouts.filter((c) => c.length === resilience.lockoutMinSize)}
             total={resilience.lockouts.length}
-            text={(e) => lossText(e, label)}
+            text={(e) => lossText(e, index)}
             empty=""
             tone="warn"
             toScenario={(events) => ({ kind: 'loss', events })}

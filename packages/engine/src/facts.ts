@@ -19,6 +19,8 @@ export function secretId(s: SecretRef): string {
       return `${s.type}:${s.key}`;
     case 'pin':
       return `pin:${s.device}`;
+    case 'password':
+      return `password:${s.artifact}`;
     case 'descriptor':
       return 'descriptor';
   }

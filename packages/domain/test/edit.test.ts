@@ -17,6 +17,7 @@ import {
   removeKey,
   removeLocation,
   removePerson,
+  setArtifactPassword,
   setThreshold,
   uniqueId,
   updateDevice,
@@ -106,6 +107,17 @@ describe('operaciones de edición', () => {
     const d = updateDevice(casa, 'ccq', { kind: 'stateless' }).devices.find((x) => x.id === 'ccq')!;
     expect(activeHolds(d)).toEqual([]);
     expect(activeHolds({ ...d, kind: 'stateful' })).toEqual(['k1']);
+  });
+
+  it('cifrar un backup con contraseña: activa la contraseña como secreto; eliminarlo la olvida', () => {
+    const pwd = { type: 'password', artifact: 'desc-casa' } as const;
+    let m = setArtifactPassword(casa, 'desc-casa', true);
+    expect(m.artifacts.find((a) => a.id === 'desc-casa')!.lockedBy).toEqual([pwd]);
+    expect(isActiveSecret(m, pwd)).toBe(true);
+    m = updatePerson(m, 'yo', { knows: [...m.people[0]!.knows, pwd] });
+    expect(errors(m)).toEqual([]);
+    expect(isActiveSecret(setArtifactPassword(m, 'desc-casa', false), pwd)).toBe(false);
+    expect(removeArtifact(m, 'desc-casa').people[0]!.knows).not.toContainEqual(pwd);
   });
 
   it('eliminar sí limpia: borrar el dispositivo quita su PIN de la memoria', () => {

@@ -111,10 +111,10 @@ export function removeKey(model: CustodyModel, id: Id): CustodyModel {
 
 // ---------- Ubicaciones ----------
 
-export function addLocation(model: CustodyModel, name = 'Nueva ubicación'): Created {
+export function addLocation(model: CustodyModel, name = 'Nueva ubicación', kind: Location['kind'] = 'physical'): Created {
   const id = uniqueId(model, name);
   const owners = model.people.filter((p) => p.role === 'owner');
-  const location: Location = { id, name, access: owners.map((p) => ({ person: p.id, when: { type: 'always' } })) };
+  const location: Location = { id, name, kind, access: owners.map((p) => ({ person: p.id, when: { type: 'always' } })) };
   return { model: { ...model, locations: [...model.locations, location] }, id };
 }
 
@@ -126,6 +126,7 @@ export function updateLocation(model: CustodyModel, id: Id, patch: Patch<Locatio
 export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
   if (model.locations.length <= 1) return model;
   const goneDevices = new Set(model.devices.filter((d) => d.location === id).map((d) => d.id));
+  const goneArtifacts = new Set(model.artifacts.filter((a) => a.location === id).map((a) => a.id));
   return stripSecrets(
     {
       ...model,
@@ -133,7 +134,7 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
       devices: model.devices.filter((d) => d.location !== id),
       artifacts: model.artifacts.filter((a) => a.location !== id),
     },
-    (s) => s.type === 'pin' && goneDevices.has(s.device),
+    (s) => (s.type === 'pin' && goneDevices.has(s.device)) || (s.type === 'password' && goneArtifacts.has(s.artifact)),
   );
 }
 
@@ -218,6 +219,22 @@ export function updateArtifact(model: CustodyModel, id: Id, patch: Patch<Artifac
   return { ...model, artifacts: replace(model.artifacts, id, (a) => ({ ...a, ...patch })) };
 }
 
+/** Elimina el backup y su contraseña de donde se supiera o estuviera apuntada. */
 export function removeArtifact(model: CustodyModel, id: Id): CustodyModel {
-  return { ...model, artifacts: model.artifacts.filter((a) => a.id !== id) };
+  return stripSecrets(
+    { ...model, artifacts: model.artifacts.filter((a) => a.id !== id) },
+    (s) => s.type === 'password' && s.artifact === id,
+  );
+}
+
+/** Activa o desactiva el cifrado con contraseña propia de un backup. */
+export function setArtifactPassword(model: CustodyModel, id: Id, enabled: boolean): CustodyModel {
+  const own = (s: SecretRef) => s.type === 'password' && s.artifact === id;
+  return {
+    ...model,
+    artifacts: replace(model.artifacts, id, (a) => ({
+      ...a,
+      lockedBy: enabled ? [...a.lockedBy.filter((s) => !own(s)), { type: 'password', artifact: id }] : a.lockedBy.filter((s) => !own(s)),
+    })),
+  };
 }

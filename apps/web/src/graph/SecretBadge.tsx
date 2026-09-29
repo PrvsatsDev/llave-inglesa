@@ -1,4 +1,4 @@
-import { FileCode2, Lock } from 'lucide-react';
+import { Asterisk, FileCode2, Lock } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type { SecretBadge as Badge } from './build.ts';
 import styles from './nodes.module.css';
@@ -21,6 +21,12 @@ export function SecretBadge({ badge, withDevice = false }: { badge: Badge; withD
       return (
         <span className={styles.badge} title={`PIN de ${badge.label}`}>
           <Lock size={10} aria-hidden /> PIN{withDevice && ` ${badge.label}`}
+        </span>
+      );
+    case 'password':
+      return (
+        <span className={styles.badge} title={`Contraseña de ${badge.label}`}>
+          <Asterisk size={10} aria-hidden /> contraseña{withDevice && ` ${badge.label}`}
         </span>
       );
     case 'descriptor':

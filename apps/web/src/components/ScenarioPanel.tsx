@@ -79,14 +79,14 @@ export function ScenarioPanel({ model, view }: { model: CustodyModel; view: Scen
           <Steps<AttackAtom>
             steps={scenario.atoms}
             all={attackAtoms(world)}
-            text={(a) => attackText(a, index.label)}
+            text={(a) => attackText(a, index)}
             onChange={(atoms) => setScenario({ kind: 'attack', atoms })}
           />
         ) : (
           <Steps<LossEvent>
             steps={scenario.events}
             all={lossAtoms(world)}
-            text={(e) => lossText(e, index.label)}
+            text={(e) => lossText(e, index)}
             onChange={(events) => setScenario({ kind: 'loss', events })}
           />
         )}

@@ -23,11 +23,11 @@ export class Formatter {
   }
 
   attack(a: AttackAtom): string {
-    return attackText(a, this.index.label);
+    return attackText(a, this.index);
   }
 
   loss(e: LossEvent): string {
-    return lossText(e, this.index.label);
+    return lossText(e, this.index);
   }
 
   tree(node: ExplanationNode, prefix = '', last = true, root = true): string[] {

@@ -1,4 +1,4 @@
-import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyModel, type Device, type Id, type Person, type SecretRef } from '@llave-inglesa/domain';
+import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyModel, type Device, type Id, type Location, type Person, type SecretRef } from '@llave-inglesa/domain';
 import type { Edge, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
@@ -8,6 +8,7 @@ import { layoutGraph } from './layout.ts';
 export type SecretBadge =
   | { kind: 'holds' | 'seed' | 'passphrase' | 'xpub'; key: Id; label: string; color: string }
   | { kind: 'pin'; device: Id; label: string }
+  | { kind: 'password'; artifact: Id; label: string }
   | { kind: 'descriptor' };
 
 export type ItemIcon = 'stateful' | 'stateless' | 'paper' | 'metal' | 'washers' | 'digital' | 'other' | 'descriptor';
@@ -29,7 +30,14 @@ export type ItemView = {
 export type KeyTag = { id: Id; label: string; color: string };
 export type Tone = ScenarioView['tone'];
 
-export type LocationNodeData = { name: string; items: ItemView[]; keys: KeyTag[]; state?: LocationState; tone?: Tone };
+export type LocationNodeData = {
+  name: string;
+  kind: Location['kind'];
+  items: ItemView[];
+  keys: KeyTag[];
+  state?: LocationState;
+  tone?: Tone;
+};
 export type PersonNodeData = { name: string; role: Person['role']; knows: SecretBadge[]; state?: PersonState; tone?: Tone };
 
 export type LocationNode = Node<LocationNodeData, 'location'>;
@@ -58,6 +66,8 @@ export function secretBadge(model: CustodyModel, s: SecretRef, label = indexMode
       return { kind: s.type, key: s.key, label: label(s.key), color: keyColor(model, s.key) };
     case 'pin':
       return { kind: 'pin', device: s.device, label: label(s.device) };
+    case 'password':
+      return { kind: 'password', artifact: s.artifact, label: label(s.artifact) };
     case 'descriptor':
       return { kind: 'descriptor' };
   }
@@ -87,7 +97,7 @@ export function buildGraph(model: CustodyModel): Graph {
     kind: 'artifact',
     id: a.id,
     label: a.label,
-    subtitle: MEDIUM[a.medium],
+    subtitle: a.lockedBy.length > 0 ? `${MEDIUM[a.medium]} · cifrado` : MEDIUM[a.medium],
     icon: a.contents.every((c) => c.type === 'descriptor') ? 'descriptor' : a.medium,
     badges: a.contents.filter(active).map(badge),
     pinProtected: false,
@@ -103,7 +113,7 @@ export function buildGraph(model: CustodyModel): Graph {
       ),
     );
     const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id) }));
-    return { id: l.id, data: { name: l.name, items, keys } };
+    return { id: l.id, data: { name: l.name, kind: l.kind, items, keys } };
   });
 
   const edges: AccessEdge[] = model.locations.flatMap((l) =>

@@ -2,16 +2,18 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
   Camera,
   Circle,
+  Cloud,
   Cpu,
   FileCode2,
   FileText,
   HardDrive,
+  Laptop,
   Lock,
+  LockKeyhole,
   MapPin,
   Network,
   Package,
   RectangleHorizontal,
-  ShieldAlert,
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
@@ -53,7 +55,7 @@ function ItemRow({ item }: { item: ItemView }) {
         <span className={styles.itemLabel}>
           {item.label}
           {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label="con PIN" />}
-          {item.encrypted && <ShieldAlert size={11} className={styles.inlineIcon} aria-label="cifrado" />}
+          {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label="cifrado" />}
         </span>
         <span className={styles.itemSubtitle}>
           {item.subtitle}
@@ -74,7 +76,10 @@ function ItemRow({ item }: { item: ItemView }) {
   );
 }
 
+const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
+
 export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
+  const LocationIcon = LOCATION_ICONS[data.kind];
   const selected = useSelection((s) => isSelected(s.selected, 'location', id));
   return (
     <div
@@ -84,7 +89,7 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
       style={{ width: LOCATION_WIDTH }}
     >
       <header className={styles.locationHeader}>
-        <MapPin size={14} className={styles.locationPin} aria-hidden />
+        <LocationIcon size={14} className={styles.locationPin} aria-hidden />
         <span className={styles.locationName}>{data.name}</span>
         {data.state === 'destroyed' && <span className={styles.stateTag}>Destruida</span>}
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">

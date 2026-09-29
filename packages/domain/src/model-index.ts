@@ -24,6 +24,7 @@ export interface ModelIndex {
 export function isActiveSecret(model: CustodyModel, s: SecretRef): boolean {
   if (s.type === 'pin') return model.devices.some((d) => d.id === s.device && d.pinProtected);
   if (s.type === 'passphrase') return model.keys.some((k) => k.id === s.key && k.passphrase);
+  if (s.type === 'password') return model.artifacts.some((a) => a.lockedBy.some((l) => l.type === 'password' && l.artifact === s.artifact));
   return true;
 }
 

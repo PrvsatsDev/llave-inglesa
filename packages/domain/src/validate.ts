@@ -65,6 +65,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   const devices = new Map(model.devices.map((d) => [d.id, d]));
   const people = new Set(model.people.map((p) => p.id));
   const locations = new Set(model.locations.map((l) => l.id));
+  const artifacts = new Set(model.artifacts.map((a) => a.id));
 
   const ref = (known: { has(id: Id): boolean }, id: Id, path: (string | number)[]) => {
     if (!known.has(id)) report('error', 'unknown-reference', path, id);
@@ -80,6 +81,9 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
         break;
       case 'pin':
         ref(devices, s.device, [...path, 'device']);
+        break;
+      case 'password':
+        ref(artifacts, s.artifact, [...path, 'artifact']);
         break;
       case 'descriptor':
         break;

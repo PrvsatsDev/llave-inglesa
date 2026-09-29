@@ -42,18 +42,31 @@ export function provenanceText(key: Key): string {
 
 export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen desconocido' : o.vendor);
 
-export function attackText(a: AttackAtom, label: Label): string {
+const locationKind = (index: ModelIndex, id: string) => index.locations.get(id)?.kind ?? 'physical';
+
+/** El mismo átomo se cuenta distinto según la ubicación: no se "entra" en una nube. */
+export function attackText(a: AttackAtom, index: ModelIndex): string {
+  const label = index.label;
   switch (a.type) {
-    case 'burglary': return `Intrusión en ${label(a.location)}`;
+    case 'burglary': {
+      const kind = locationKind(index, a.location);
+      const verb = kind === 'cloud' ? 'Hackeo de' : kind === 'device' ? 'Robo o malware en' : 'Intrusión en';
+      return `${verb} ${label(a.location)}`;
+    }
     case 'coercion': return a.location ? `Llave inglesa a ${label(a.person)} en ${label(a.location)}` : `Llave inglesa a ${label(a.person)}`;
     case 'insider': return `Traición de ${label(a.person)}`;
     case 'entropy-compromise': return `RNG comprometido: ${originText(a.origin)}`;
   }
 }
 
-export function lossText(e: LossEvent, label: Label): string {
+export function lossText(e: LossEvent, index: ModelIndex): string {
+  const label = index.label;
   switch (e.type) {
-    case 'destroy-location': return `Destrucción de ${label(e.location)}`;
+    case 'destroy-location': {
+      const kind = locationKind(index, e.location);
+      const what = kind === 'cloud' ? 'Pérdida de la cuenta' : kind === 'device' ? 'Avería o robo de' : 'Destrucción de';
+      return `${what} ${label(e.location)}`;
+    }
     case 'item-loss': return `Pérdida de ${label(e.item)}`;
     case 'death': return `Fallecimiento de ${label(e.person)}`;
     case 'incapacity': return `Incapacidad de ${label(e.person)}`;
@@ -69,6 +82,7 @@ export function secretText(s: SecretRef, label: Label): string {
     case 'passphrase': return `passphrase de ${label(s.key)}`;
     case 'xpub': return `xpub de ${label(s.key)}`;
     case 'pin': return `PIN de ${label(s.device)}`;
+    case 'password': return `contraseña de ${label(s.artifact)}`;
     case 'descriptor': return 'descriptor del wallet';
   }
 }
