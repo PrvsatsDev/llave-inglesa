@@ -61,6 +61,16 @@
   color: var(--text);
 }
 
+.privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--warn);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
 .close {
   display: grid;
   place-items: center;

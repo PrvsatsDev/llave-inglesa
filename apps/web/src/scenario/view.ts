@@ -1,4 +1,4 @@
-import { parseModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
+import { indexModel, parseModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import {
   accessibleLocations,
   attackHoldings,
@@ -47,6 +47,11 @@ export interface ScenarioView {
   people: ReadonlyMap<Id, PersonState>;
   /** Aristas de acceso persona→ubicación que intervienen. */
   edges: ReadonlySet<string>;
+  /**
+   * El atacante conoce las xpubs de TODAS las keys: puede calcular tus direcciones y ver
+   * saldo e historial (watch-only), aunque no pueda gastar. Hecho del que lo obtiene, si aplica.
+   */
+  exposure: { exposed: boolean; via: FactId | null };
 }
 
 export const accessEdgeId = (person: Id, location: Id) => `access:${person}:${location}`;
@@ -64,6 +69,15 @@ function usedFacts(d: Derivation): Set<FactId> {
     if (node) walk(node);
   });
   return used;
+}
+
+/** ¿Conoce el actor todas las xpubs? Devuelve también de dónde las saca (descriptor, dispositivo…). */
+function balanceExposure(model: CustodyModel, d: Derivation): ScenarioView['exposure'] {
+  const keys = indexModel(model).policyKeys;
+  const ids = keys.map((key) => factId({ kind: 'secret', secret: { type: 'xpub', key } }));
+  if (!ids.every((id) => d.facts.has(id))) return { exposed: false, via: null };
+  const descriptor = factId({ kind: 'secret', secret: { type: 'descriptor' } });
+  return { exposed: true, via: d.facts.has(descriptor) ? descriptor : ids[0]! };
 }
 
 function referencesExist(model: CustodyModel, s: Scenario): boolean {
@@ -119,6 +133,7 @@ function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'at
     locations: new Map(model.locations.map((l) => [l.id, reached.has(l.id) ? 'reached' : 'dim'])),
     people,
     edges,
+    exposure: balanceExposure(model, derivation),
   };
 }
 
@@ -164,5 +179,6 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
     ),
     people,
     edges,
+    exposure: { exposed: false, via: null },
   };
 }

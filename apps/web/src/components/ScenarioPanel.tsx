@@ -1,6 +1,6 @@
 import { indexModel, type CustodyModel, type ModelIndex } from '@llave-inglesa/domain';
-import { attackAtoms, createWorld, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
-import { Flame, Skull, X } from 'lucide-react';
+import { attackAtoms, createWorld, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
+import { Eye, EyeOff, Flame, Skull, X } from 'lucide-react';
 import { attackText, factText, lossText, ruleText } from '../lib/text.ts';
 import type { ScenarioView } from '../scenario/view.ts';
 import { useScenario } from '../store/scenario.ts';
@@ -62,6 +62,38 @@ function Steps<A>({ steps, all, text, onChange }: { steps: A[]; all: A[]; text(a
   );
 }
 
+/** Ver no es gastar: con todas las xpubs el atacante conoce tu saldo y tu historial. */
+function Privacy({ model, view, index }: { model: CustodyModel; view: ScenarioView; index: ModelIndex }) {
+  const { exposed, via } = view.exposure;
+  const origin = via ? explain(view.derivation, via) : null;
+  return (
+    <Section title="Privacidad">
+      {exposed ? (
+        <>
+          <p className={`${styles.note} ${styles.noteWarn}`}>
+            <Eye size={14} aria-hidden />
+            <span>
+              {view.outcome === 'stolen' ? 'Además, ' : 'Aunque no pueda gastar, '}
+              conoce todas las xpubs: puede calcular tus direcciones y ver <strong>tu saldo y todo tu historial</strong> de
+              transacciones. Saber cuánto tienes también te convierte en un objetivo más atractivo para una llave inglesa.
+            </span>
+          </p>
+          {origin && (
+            <ul className={styles.tree}>
+              <Tree node={origin} index={index} model={model} />
+            </ul>
+          )}
+        </>
+      ) : (
+        <p className={styles.note}>
+          <EyeOff size={14} aria-hidden />
+          <span>No puede ver tus fondos: le faltan xpubs para calcular tus direcciones.</span>
+        </p>
+      )}
+    </Section>
+  );
+}
+
 export function ScenarioPanel({ model, view }: { model: CustodyModel; view: ScenarioView }) {
   const setScenario = useScenario((s) => s.set);
   const index = indexModel(model);
@@ -91,6 +123,8 @@ export function ScenarioPanel({ model, view }: { model: CustodyModel; view: Scen
           />
         )}
       </Section>
+
+      {scenario.kind === 'attack' && <Privacy model={model} view={view} index={index} />}
 
       <Section title="Por qué">
         {view.explanation ? (

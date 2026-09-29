@@ -38,6 +38,25 @@ describe('scenarioView: ataques', () => {
   });
 });
 
+describe('scenarioView: privacidad', () => {
+  it('la llave inglesa en casa roba y además expone el saldo (vía el descriptor)', () => {
+    const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] })!;
+    expect(v.exposure).toEqual({ exposed: true, via: 'secret:descriptor' });
+  });
+
+  it('una intrusión en el banco no roba, pero el descriptor filtra el saldo', () => {
+    const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'burglary', location: 'banco' }] })!;
+    expect(v.outcome).toBe('safe');
+    expect(v.exposure.exposed).toBe(true);
+  });
+
+  it('un RNG comprometido da dos semillas pero no la tercera xpub: ni roba ni ve', () => {
+    const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'Coinkite' } }] })!;
+    expect(v.outcome).toBe('safe');
+    expect(v.exposure.exposed).toBe(false);
+  });
+});
+
 describe('scenarioView: desgracias', () => {
   it('incapacidad del titular: bloqueo temporal', () => {
     const v = scenarioView(casa, { kind: 'loss', events: [{ type: 'incapacity', person: 'yo' }] })!;

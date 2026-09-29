@@ -42,3 +42,36 @@
 .summary strong {
   color: var(--text);
 }
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.noteWarn {
+  background: var(--warn-soft);
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+  color: var(--text);
+}
+
+.noteWarn svg {
+  color: var(--warn);
+}
+
+.note strong {
+  color: var(--text);
+}

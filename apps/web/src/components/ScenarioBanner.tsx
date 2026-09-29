@@ -1,5 +1,5 @@
 import { indexModel } from '@llave-inglesa/domain';
-import { CircleCheck, Hourglass, Skull, X, XCircle, type LucideIcon } from 'lucide-react';
+import { CircleCheck, Eye, Hourglass, Skull, X, XCircle, type LucideIcon } from 'lucide-react';
 import { attackText, lossText } from '../lib/text.ts';
 import type { Outcome } from '../scenario/view.ts';
 import { useDocument } from '../store/document.ts';
@@ -32,6 +32,11 @@ export function ScenarioBanner() {
         <span className={styles.kicker}>{view.scenario.kind === 'attack' ? 'Simulando ataque' : 'Simulando desgracia'}</span>
         <span className={styles.steps}>{steps.join(' + ')}</span>
         <span className={styles.outcome}>{text}</span>
+        {view.exposure.exposed && (
+          <span className={styles.privacy}>
+            <Eye size={12} aria-hidden /> {view.outcome === 'stolen' ? 'Y además' : 'Pero'} ve tu saldo y tu historial
+          </span>
+        )}
       </div>
       <button className={styles.close} onClick={() => clear(null)} aria-label="Salir de la simulación" title="Salir (Esc)">
         <X size={16} />
