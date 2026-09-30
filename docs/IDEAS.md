@@ -32,8 +32,6 @@ pensarse antes de implementarla.
   inspector y simulación comparten panel y hay muchas secciones. Revisarlo entero
   cuando la fase 2 esté cerrada.
 - **Guía de uso** que lo explique todo, partiendo de [CAPACIDADES.md](CAPACIDADES.md).
-- **Ver todas las vías de robo y de pérdida**, no solo las más baratas: hoy las demás
-  son un contador ("+N combinaciones más costosas") y no se pueden consultar.
 - **Resaltar en el mapa los dispositivos comprometidos** en una simulación de firmware
   malicioso o de extracción física (hoy estos ataques no iluminan nada).
 

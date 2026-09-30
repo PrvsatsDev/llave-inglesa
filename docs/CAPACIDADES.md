@@ -63,7 +63,7 @@ Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada p
 
 ## 6. Interfaz
 
-- **Web** (offline, sin red): mapa de ubicaciones, personas y objetos; panel derecho con resumen del esquema (política, keys, validación, formas más baratas de robar y de perderlo todo, bloqueos, probar un escenario), inspector de cada elemento y simulación de escenarios sobre el mapa. Deshacer/rehacer, guardado cifrado en el navegador, exportación cifrada (`.llave`) o en claro (`.json`).
+- **Web** (offline, sin red): mapa de ubicaciones, personas y objetos; panel derecho con resumen del esquema (política, keys, validación, formas más baratas de robar y de perderlo todo, bloqueos, probar un escenario; cada lista se despliega para ver **todas** las combinaciones, con su esfuerzo o cuántos sucesos a la vez, y cualquiera se simula en el mapa), inspector de cada elemento y simulación de escenarios sobre el mapa. Deshacer/rehacer, guardado cifrado en el navegador, exportación cifrada (`.llave`) o en claro (`.json`).
 - **CLI**: `npm run analyze -- fichero.json` imprime puntuaciones, vías más baratas con su porqué, pérdidas y bloqueos.
 - **Ejemplos** (`fixtures/`): todo en casa, distribuido 2 de 3, single-sig con passphrase.
 
@@ -75,4 +75,3 @@ Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada p
 - El catálogo no se actualiza solo; una versión completa y posterior a la corregida se da por buena aunque no exista.
 - Todas las desgracias pesan igual; el soporte del backup (papel/metal) aún no cambia su resistencia.
 - Sin timelocks todavía; la política ya es un árbol preparado para ellos.
-- En la web solo se ven las vías más baratas; las demás, como contador.
