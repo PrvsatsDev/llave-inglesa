@@ -45,6 +45,8 @@ export type RuleId =
   | 'entropy-compromise'
   /** Semilla adivinable por un fallo de entropía publicado. */
   | 'known-weak-entropy'
+  /** Semilla extraída del hardware de un dispositivo robado, pese al PIN. */
+  | 'physical-extraction'
   | 'read-artifact'
   | 'descriptor-xpubs'
   | 'unlock-device'

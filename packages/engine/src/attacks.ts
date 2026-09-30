@@ -1,7 +1,14 @@
-import type { Id } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, type Device, type Id } from '@llave-inglesa/domain';
 import type { CompromisedSeed, Holdings } from './derive.ts';
 import { entropyOrigins, keyCompromise, originKey, weakEntropyKeys, type EntropyOrigin } from './entropy.ts';
-import { accessibleLocations, type World } from './world.ts';
+import { accessibleLocations, itemsAvailableAt, type World } from './world.ts';
+
+/** Aviso de extracción física que afecta al dispositivo (con su firmware actual), o null. */
+export function extractionAdvisory(device: Device): string | null {
+  const catalog = catalogModelByName(device.model);
+  if (!catalog) return null;
+  return advisoriesFor(catalog.id, device.firmware).find((m) => m.advisory.kind === 'physical-extraction')?.advisory.id ?? null;
+}
 
 /** Acción atómica de un adversario. Un ataque real es una combinación de átomos. */
 export type AttackAtom =
@@ -64,6 +71,15 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   });
   for (const [advisory, keys] of weakEntropyKeys(world.model)) {
     if (advisories.has(advisory)) keys.forEach((key) => compromisedSeeds.push({ key, advisory }));
+  }
+  // Extracción física: con el dispositivo en la mano, sus semillas salen aunque tenga PIN.
+  // Solo en ataques: un hack de hardware no cuenta como plan de recuperación.
+  for (const location of locations) {
+    for (const item of itemsAvailableAt(world, location)) {
+      if (item.kind !== 'device' || item.value.kind !== 'stateful') continue;
+      const advisory = extractionAdvisory(item.value);
+      if (advisory) item.value.holds.forEach((key) => compromisedSeeds.push({ key, advisory, device: item.value.id }));
+    }
   }
   return { people: [...people], locations: [...locations], compromisedSeeds };
 }

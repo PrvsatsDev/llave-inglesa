@@ -20,7 +20,10 @@ export interface Holdings {
   compromisedSeeds?: readonly CompromisedSeed[];
 }
 
-export type CompromisedSeed = { key: Id; origins: EntropyOrigin[] } | { key: Id; advisory: string };
+export type CompromisedSeed =
+  | { key: Id; origins: EntropyOrigin[] }
+  /** Fallo publicado: de entropía (sin nada más) o de extracción física (teniendo `device`). */
+  | { key: Id; advisory: string; device?: Id };
 
 export interface Derivation {
   readonly facts: ReadonlyMap<FactId, DerivedFact>;
@@ -59,6 +62,7 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
   for (const c of holdings.compromisedSeeds ?? []) {
     const seed = secret({ type: 'seed', key: c.key });
     if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
+    else if (c.device) add(seed, { rule: 'physical-extraction', premises: [factId({ kind: 'item', item: c.device })], via: { device: c.device, advisory: c.advisory } });
     else add(seed, { rule: 'known-weak-entropy', premises: [], via: { advisory: c.advisory } });
   }
 
