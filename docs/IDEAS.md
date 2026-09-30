@@ -20,6 +20,13 @@ pensarse antes de implementarla.
   tipos de desastre (incendio, inundación…) y que cada soporte sobreviva o no a cada
   uno (p. ej. el papel no sobrevive a ninguno; una placa de acero, a ambos). Enlaza
   con la *resiliencia ponderada* de abajo.
+- **Fortaleza de la passphrase.** Hoy basta con que exista para que proteja, pero
+  una passphrase "1234" no protege nada. Idea a pensar: indicar su fortaleza
+  aproximada (sin escribirla nunca: p. ej. "palabra corta", "frase de varias
+  palabras", "aleatoria larga") y que una débil se pueda adivinar por fuerza bruta
+  cuando el atacante ya tiene la semilla. Importa sobre todo en los casos en que la
+  passphrase es lo único que queda: semilla adivinable por un fallo publicado
+  (Coldcard 2026) o extracción física (Trezor One/T).
 - **Vídeo de presentación** con animaciones usando la propia aplicación. Idea
   ambiciosa, "lo mismo no lo hacemos".
 
