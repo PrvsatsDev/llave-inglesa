@@ -1,5 +1,6 @@
 {
   "name": "llave-inglesa",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "description": "Simulador offline de esquemas de custodia Bitcoin: backups, multisig, herencia y ataques.",

@@ -9,10 +9,6 @@ pensarse antes de implementarla.
   modelo, stateful/stateless, si acepta semillas externas, si registra multisig…)
   para elegir en vez de escribirlo a mano. Incluir **firmwares con vulnerabilidades
   o compromisos conocidos**, para que cuenten en el análisis.
-- **Licencia MIT** para el repositorio.
-- **Entropía con monedas: semilla-moneda.** Al elegir "moneda" como fuente de
-  entropía, nombrar y referenciar el proyecto *semilla-moneda* de Estudio Bitcoin.
-  (Pendiente: confirmar enlace y cómo citarlo.)
 - **Introducir las xpubs y generar el descriptor.** Opción de pegar las xpubs (y
   fingerprints/derivaciones) de cada key para construir el descriptor real.
 - **PDFs a partir de esa información:**

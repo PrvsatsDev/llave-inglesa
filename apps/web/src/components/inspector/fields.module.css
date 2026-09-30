@@ -97,6 +97,16 @@
   font-weight: 600;
 }
 
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--accent-strong);
+}
+
 .hint {
   margin: 0;
   color: var(--text-faint);
