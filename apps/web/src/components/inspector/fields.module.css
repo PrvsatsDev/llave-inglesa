@@ -409,3 +409,33 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
 }
+
+.advisory {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.advisorySevere {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.advisoryIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--warn);
+}
+
+.advisorySevere .advisoryIcon {
+  color: var(--danger);
+}
+
+.advisoryText {
+  margin: 2px 0;
+}

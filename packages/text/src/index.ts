@@ -1,4 +1,4 @@
-import type { EntropySource, Issue, Key, ModelIndex, Policy, SecretRef } from '@llave-inglesa/domain';
+import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Policy, SecretRef } from '@llave-inglesa/domain';
 import type { AttackAtom, EntropyOrigin, Fact, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
@@ -143,4 +143,48 @@ export function issueText(issue: Issue, label: Label): string {
     return issue.detail ? `${base} (${issue.detail})` : base;
   }
   return issue.ref ? `${base}: ${label(issue.ref)}` : base;
+}
+
+// ---------- Catálogo de hardware ----------
+
+export const ADVISORY_TITLE: Record<string, string> = {
+  'coldcard-rng-2026': 'Coldcard: semillas con entropía débil (RNG)',
+  'trezor-glitch-2020': 'Trezor One/T: extracción de la semilla con acceso físico',
+  'trezor-safe3-donjon-2025': 'Trezor Safe 3: firmware del microcontrolador manipulable',
+  'jade-register-descriptor-2025': 'Jade: explotable desde un ordenador con malware',
+  'bitbox02-2026-08': 'BitBox02: explotable desde un ordenador con malware',
+};
+
+export const ADVISORY_KIND: Record<AdvisoryKind, string> = {
+  'weak-entropy': 'La semilla generada con este firmware es predecible: actualizar no la arregla, hay que migrar a una semilla nueva.',
+  'physical-extraction': 'Con el dispositivo en la mano se puede sacar la semilla aunque tenga PIN.',
+  'host-exploit': 'Un ordenador o móvil con malware conectado por USB o Bluetooth puede atacar el dispositivo.',
+  'supply-chain': 'Podría llegar manipulado sin que su comprobación de autenticidad lo detecte.',
+};
+
+export function mitigationText(m: Mitigation): string {
+  switch (m.type) {
+    case 'dice': return `mezclar al menos ${m.minRolls} tiradas de dado`;
+    case 'passphrase': return 'passphrase';
+    case 'qr-only': return 'usarlo solo por QR';
+  }
+}
+
+export function advisoryText(match: AdvisoryMatch): { title: string; detail: string; mitigations: string | null } {
+  const a = match.advisory;
+  const fixed = [...new Set(a.affects.map((r) => r.fixedIn).filter(Boolean))];
+  const detail = [
+    ADVISORY_KIND[a.kind],
+    a.exploited ? 'Ya se ha explotado para robar fondos.' : null,
+    fixed.length > 0 ? `Corregido en ${fixed.join(', ')}.` : 'No se puede corregir por firmware.',
+    match.reason === 'unknown-firmware' ? 'Sin saber la versión de firmware, asumimos que está afectado.' : null,
+    match.reason === 'unrecognized-firmware' ? 'Esa versión de firmware no es de este modelo: revísala. Mientras, asumimos que está afectado.' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return {
+    title: ADVISORY_TITLE[a.id] ?? a.id,
+    detail,
+    mitigations: a.mitigations.length > 0 ? `Mitiga: ${a.mitigations.map(mitigationText).join(' o ')}.` : null,
+  };
 }

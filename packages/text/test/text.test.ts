@@ -1,6 +1,6 @@
-import { indexModel, parseModel, type CustodyModel } from '@llave-inglesa/domain';
+import { ADVISORIES, advisoriesFor, indexModel, parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { attackText, lossText, secretText } from '../src/index.ts';
+import { ADVISORY_TITLE, advisoryText, attackText, lossText, secretText } from '../src/index.ts';
 
 const result = parseModel({
   format: 'llave-inglesa',
@@ -34,5 +34,30 @@ describe('textos según el tipo de ubicación', () => {
 
   it('contraseñas', () => {
     expect(secretText({ type: 'password', artifact: 'desc' }, index.label)).toBe('contraseña de Descriptor');
+  });
+});
+
+describe('avisos del catálogo', () => {
+  it('todos los avisos tienen título', () => {
+    for (const a of ADVISORIES) expect(ADVISORY_TITLE[a.id], a.id).toBeDefined();
+  });
+
+  it('Coldcard sin firmware: afectado por defecto, explotado y con mitigaciones', () => {
+    const t = advisoryText(advisoriesFor('coldcard-q')[0]!);
+    expect(t.title).toContain('Coldcard');
+    expect(t.detail).toContain('Ya se ha explotado');
+    expect(t.detail).toContain('Sin saber la versión');
+    expect(t.detail).toContain('1.5.0');
+    expect(t.mitigations).toBe('Mitiga: mezclar al menos 50 tiradas de dado o passphrase.');
+  });
+
+  it('versión de otro modelo', () => {
+    expect(advisoryText(advisoriesFor('coldcard-q', '5.5.2')[0]!).detail).toContain('no es de este modelo');
+  });
+
+  it('sin arreglo por firmware', () => {
+    const t = advisoryText(advisoriesFor('trezor-one', '1.12.1')[0]!);
+    expect(t.detail).toContain('No se puede corregir por firmware.');
+    expect(t.detail).not.toContain('Sin saber la versión');
   });
 });

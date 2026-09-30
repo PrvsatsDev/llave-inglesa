@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { ADVISORIES, HARDWARE_MODELS, advisoriesFor, compareFirmware, findModel, parseFirmware } from '../src/index.ts';
+import { ADVISORIES, HARDWARE_MODELS, advisoriesFor, catalogModelByName, compareFirmware, findModel, parseFirmware } from '../src/index.ts';
 
 const ids = (matches: ReturnType<typeof advisoriesFor>) => matches.map((m) => m.advisory.id);
 
@@ -26,6 +26,14 @@ describe('catálogo: integridad', () => {
       expect(a.disclosed).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(a.sources.length).toBeGreaterThan(0);
     }
+  });
+
+  it('encuentra modelos por nombre, como los guardan los fixtures', () => {
+    expect(catalogModelByName('Coldcard Mk4')?.id).toBe('coldcard-mk4');
+    expect(catalogModelByName('  coldcard   q ')?.id).toBe('coldcard-q');
+    expect(catalogModelByName('Jade')?.id).toBe('jade');
+    expect(catalogModelByName('Mi cacharro')).toBeUndefined();
+    expect(catalogModelByName(undefined)).toBeUndefined();
   });
 
   it('los stateless aceptan semilla externa', () => {
@@ -70,11 +78,26 @@ describe('advisoriesFor', () => {
   });
 
   it('firmware desconocido: afectado, pero sin certeza', () => {
-    expect(advisoriesFor('coldcard-q')).toEqual([{ advisory: ADVISORIES.find((a) => a.id === 'coldcard-rng-2026'), certain: false }]);
+    expect(advisoriesFor('coldcard-q')).toEqual([{ advisory: ADVISORIES.find((a) => a.id === 'coldcard-rng-2026'), reason: 'unknown-firmware' }]);
+  });
+
+  it('una versión de otro modelo no se da por buena', () => {
+    const reasons = (model: string, fw: string) => advisoriesFor(model, fw).map((m) => m.reason);
+    expect(reasons('coldcard-q', '5.5.2')).toEqual(['unrecognized-firmware']); // versión de Mk4 en una Q
+    expect(reasons('coldcard-q', '5.6.0')).toEqual(['unrecognized-firmware']);
+    expect(reasons('coldcard-mk4', '1.5.0Q')).toEqual(['unrecognized-firmware']);
+    expect(reasons('coldcard-mk4', 'beta')).toEqual(['unknown-firmware']);
+    expect(reasons('coldcard-q', '6.6.0QX')).toEqual([]);
+  });
+
+  it('las series de firmware se pueden leer', () => {
+    for (const m of HARDWARE_MODELS) for (const l of m.firmwareLines ?? []) {
+      expect(compareFirmware(parseFirmware(l.from)!, parseFirmware(l.before)!), m.id).toBeLessThan(0);
+    }
   });
 
   it('sin arreglo por firmware: afecta a cualquier versión, con certeza', () => {
-    expect(advisoriesFor('trezor-one', '1.12.1')).toEqual([{ advisory: ADVISORIES.find((a) => a.id === 'trezor-glitch-2020'), certain: true }]);
+    expect(advisoriesFor('trezor-one', '1.12.1')).toEqual([{ advisory: ADVISORIES.find((a) => a.id === 'trezor-glitch-2020'), reason: 'affected' }]);
   });
 
   it('modelos sin avisos y la Tapsigner no heredan los de Coldcard', () => {

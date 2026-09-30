@@ -27,6 +27,11 @@ export interface CatalogModel {
   /** Implementa anti-exfil / anti-klepto: un firmware malicioso no puede filtrar la semilla en las firmas. */
   antiExfil: boolean;
   duress: readonly DuressKind[];
+  /**
+   * Series de firmware conocidas (`from` incluido, `before` excluido). Si se definen,
+   * una versión fuera de todas no se da por buena: probablemente sea de otro modelo.
+   */
+  firmwareLines?: readonly { from: string; before: string }[];
 }
 
 const model = (
@@ -51,6 +56,12 @@ const TREZOR = { duress: ['wipe'] } as const; // wipe code
 const LEDGER = { registersMultisig: true, duress: ['decoy'] } as const; // passphrase ligada a un segundo PIN
 const COLDCARD = { registersMultisig: true, duress: ['decoy', 'wipe'] } as const; // duress PIN y brick-me PIN
 const JADE = { registersMultisig: true, acceptsExternalSeed: true, antiExfil: true, duress: ['wipe'] } as const;
+/** Coldcard: serie normal y serie Edge (…X / …QX). */
+const coldcardLines = (normal: string, normalBefore: string) => [
+  { from: normal, before: normalBefore },
+  { from: '6.0.0', before: '7.0.0' },
+];
+
 const STATELESS = { kind: 'stateless', acceptsExternalSeed: true } as const;
 
 export const HARDWARE_MODELS: readonly CatalogModel[] = [
@@ -69,9 +80,9 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
 
   model('coldcard-mk2', 'Coinkite', 'Coldcard Mk2', { ...COLDCARD, discontinued: true }),
   model('coldcard-mk3', 'Coinkite', 'Coldcard Mk3', { ...COLDCARD, discontinued: true }),
-  model('coldcard-mk4', 'Coinkite', 'Coldcard Mk4', { ...COLDCARD, acceptsExternalSeed: true }),
-  model('coldcard-mk5', 'Coinkite', 'Coldcard Mk5', { ...COLDCARD, acceptsExternalSeed: true }),
-  model('coldcard-q', 'Coinkite', 'Coldcard Q', { ...COLDCARD, acceptsExternalSeed: true }),
+  model('coldcard-mk4', 'Coinkite', 'Coldcard Mk4', { ...COLDCARD, acceptsExternalSeed: true, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
+  model('coldcard-mk5', 'Coinkite', 'Coldcard Mk5', { ...COLDCARD, acceptsExternalSeed: true, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
+  model('coldcard-q', 'Coinkite', 'Coldcard Q', { ...COLDCARD, acceptsExternalSeed: true, firmwareLines: coldcardLines('1.0.0', '2.0.0') }),
   model('tapsigner', 'Coinkite', 'Tapsigner'),
 
   model('bitbox01', 'BitBox', 'BitBox01', { discontinued: true }),
@@ -191,6 +202,18 @@ export const ADVISORIES: readonly Advisory[] = [
 
 export const findModel = (id: string): CatalogModel | undefined => HARDWARE_MODELS.find((m) => m.id === id);
 
+const normalizeName = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
+
+/**
+ * Modelo del catálogo por su nombre (sin distinguir mayúsculas ni espacios).
+ * Los documentos guardan el nombre, no el id: así siguen valiendo los escritos a mano.
+ */
+export function catalogModelByName(name: string | undefined): CatalogModel | undefined {
+  if (!name) return undefined;
+  const n = normalizeName(name);
+  return HARDWARE_MODELS.find((m) => normalizeName(m.name) === n);
+}
+
 // ---------- Versiones de firmware ----------
 
 /**
@@ -216,23 +239,36 @@ function inRange(v: readonly number[], r: FirmwareRange): boolean {
   return true;
 }
 
+/**
+ * - affected: la versión está en un rango afectado (o no hay arreglo por firmware).
+ * - unknown-firmware: no se sabe la versión y el modelo tiene versiones afectadas.
+ * - unrecognized-firmware: la versión no es de ninguna serie conocida del modelo.
+ * En los dos últimos casos se asume lo peor.
+ */
+export type MatchReason = 'affected' | 'unknown-firmware' | 'unrecognized-firmware';
+
 export interface AdvisoryMatch {
   advisory: Advisory;
-  /** false: no se sabe el firmware y el modelo tiene versiones afectadas (ante la duda, lo peor). */
-  certain: boolean;
+  reason: MatchReason;
+}
+
+function recognized(v: readonly number[], lines: CatalogModel['firmwareLines']): boolean {
+  return !lines || lines.some((l) => compareFirmware(v, parseFirmware(l.from)!) >= 0 && compareFirmware(v, parseFirmware(l.before)!) < 0);
 }
 
 /** Avisos que afectan a un modelo con un firmware dado (o desconocido). */
 export function advisoriesFor(modelId: string, firmware?: string): AdvisoryMatch[] {
   const version = firmware ? parseFirmware(firmware) : null;
+  const known = version !== null && recognized(version, findModel(modelId)?.firmwareLines);
   const matches: AdvisoryMatch[] = [];
   for (const advisory of ADVISORIES) {
     const ranges = advisory.affects.filter((r) => r.models.includes(modelId));
     if (ranges.length === 0) continue;
     const unfixable = ranges.some((r) => !r.from && !r.fixedIn);
-    if (unfixable) matches.push({ advisory, certain: true });
-    else if (!version) matches.push({ advisory, certain: false });
-    else if (ranges.some((r) => inRange(version, r))) matches.push({ advisory, certain: true });
+    if (unfixable) matches.push({ advisory, reason: 'affected' });
+    else if (!version) matches.push({ advisory, reason: 'unknown-firmware' });
+    else if (!known) matches.push({ advisory, reason: 'unrecognized-firmware' });
+    else if (ranges.some((r) => inRange(version, r))) matches.push({ advisory, reason: 'affected' });
   }
   return matches;
 }
