@@ -43,6 +43,17 @@ export function attackAtoms(world: World): AttackAtom[] {
   return atoms;
 }
 
+/**
+ * Las mismas holdings, pero las personas coaccionadas dan el PIN de coacción en vez del
+ * real en los dispositivos que lo tienen configurado. Quien además traiciona da el bueno.
+ */
+export function withDuress(world: World, atoms: readonly AttackAtom[], holdings: Holdings): Holdings {
+  const traitors = new Set(atoms.flatMap((a) => (a.type === 'insider' ? [a.person] : [])));
+  const coerced = [...new Set(atoms.flatMap((a) => (a.type === 'coercion' && !traitors.has(a.person) ? [a.person] : [])))];
+  const devices = world.model.devices.filter((d) => d.pinProtected && d.duressPin).map((d) => d.id);
+  return { ...holdings, withheldPins: coerced.flatMap((person) => devices.map((device) => ({ person, device }))) };
+}
+
 export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Holdings {
   const people = new Set<Id>();
   const locations = new Set<Id>();

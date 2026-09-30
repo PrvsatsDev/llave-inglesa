@@ -11,6 +11,14 @@ const KIND_OPTIONS = [
   { value: 'stateless', label: 'Stateless' },
 ] as const;
 
+function duressHint(catalog: CatalogModel | undefined): string {
+  const kinds = catalog?.duress ?? [];
+  if (kinds.includes('decoy') && kinds.includes('wipe')) return 'Bajo amenaza das otro PIN que abre un wallet señuelo o borra el dispositivo.';
+  if (kinds.includes('decoy')) return 'Bajo amenaza das otro PIN que abre un wallet señuelo.';
+  if (kinds.includes('wipe')) return 'Bajo amenaza das otro PIN que borra el dispositivo.';
+  return 'Bajo amenaza das otro PIN (señuelo o borrado).';
+}
+
 export function DeviceInspector({ model, device }: { model: CustodyModel; device: Device }) {
   const apply = useDocument((s) => s.apply);
   const select = useSelection((s) => s.select);
@@ -124,6 +132,14 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
 
       <Section title="Seguridad y funciones">
         <Switch checked={device.pinProtected} onChange={(pinProtected) => patch({ pinProtected })} label="Protegido por PIN" hint="Quien sepa el PIN se indica en la ficha de cada persona." />
+        {device.pinProtected && (!catalog || catalog.duress.length > 0) && (
+          <Switch
+            checked={device.duressPin}
+            onChange={(duressPin) => patch({ duressPin })}
+            label="PIN de coacción configurado"
+            hint={`${duressHint(catalog)} Encarece la llave inglesa, pero no la evita: un atacante informado puede saber que existe.`}
+          />
+        )}
         {device.kind === 'stateful' && (
           <>
             <Switch

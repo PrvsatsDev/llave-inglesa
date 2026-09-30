@@ -25,8 +25,14 @@ export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
   'malicious-firmware': 3,
 };
 
-export function attackEffort(cut: readonly AttackAtom[]): number {
-  return cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0);
+/**
+ * Recargo cuando el robo exige vencer un PIN de coacción (el coaccionado puede dar el falso).
+ * No lo anula: un atacante informado puede saber que existe.
+ */
+export const DURESS_SURCHARGE = 1;
+
+export function attackEffort(cut: readonly AttackAtom[], beatsDuress = false): number {
+  return cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
 }
 
 /** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */

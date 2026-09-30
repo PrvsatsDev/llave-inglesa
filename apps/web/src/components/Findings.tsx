@@ -1,5 +1,5 @@
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
-import { attackAtoms, attackEffort, createWorld, lossAtoms } from '@llave-inglesa/engine';
+import { attackAtoms, createWorld, lossAtoms } from '@llave-inglesa/engine';
 import { ChevronDown, ChevronUp, Flame, Hourglass, Play, Skull } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { attackText, lossText } from '../lib/text.ts';
@@ -115,6 +115,11 @@ export function Findings({ model }: { model: CustodyModel }) {
   const { security, resilience } = analysis;
   // Las vías "casi igual de baratas" también cuentan para la puntuación: se muestran todas.
   const cheapThefts = security.minEffort === null ? [] : security.cuts.slice(0, security.cheapRoutes);
+  const route = new Map(security.cuts.map((cut, i) => [cut, { effort: security.efforts[i]!, duress: security.beatsDuress[i]! }]));
+  const theftMeta = (cut: (typeof security.cuts)[number]) => {
+    const r = route.get(cut)!;
+    return `esfuerzo ${r.effort.toLocaleString('es')}${r.duress ? ' · vence un PIN de coacción' : ''}`;
+  };
 
   return (
     <>
@@ -127,7 +132,7 @@ export function Findings({ model }: { model: CustodyModel }) {
           cuts={cheapThefts}
           all={security.cuts}
           text={(a) => attackText(a, index)}
-          meta={(cut) => `esfuerzo ${attackEffort(cut).toLocaleString('es')}`}
+          meta={theftMeta}
           empty={`Ninguna combinación de hasta ${security.searchedUpTo} ataques lo consigue.`}
           restTitle="Más costosas"
           toScenario={(atoms) => ({ kind: 'attack', atoms })}

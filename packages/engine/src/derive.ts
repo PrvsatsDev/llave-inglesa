@@ -18,6 +18,8 @@ export interface Holdings {
   locations: readonly Id[];
   /** Semillas obtenidas sin acceso físico (RNG comprometido o fallo de entropía conocido). */
   compromisedSeeds?: readonly CompromisedSeed[];
+  /** PINs que una persona coaccionada no revela de verdad (da el de coacción). */
+  withheldPins?: readonly { person: Id; device: Id }[];
 }
 
 export type CompromisedSeed =
@@ -58,8 +60,12 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       add({ kind: 'item', item: item.value.id }, { rule: 'location-access', premises: [], via: { location } });
     }
   }
+  const withheld = new Set((holdings.withheldPins ?? []).map((w) => `${w.person}:${w.device}`));
   for (const person of holdings.people) {
-    for (const s of knowledgeOf(world, person)) add(secret(s), { rule: 'memory', premises: [], via: { person } });
+    for (const s of knowledgeOf(world, person)) {
+      if (s.type === 'pin' && withheld.has(`${person}:${s.device}`)) continue;
+      add(secret(s), { rule: 'memory', premises: [], via: { person } });
+    }
   }
   for (const c of holdings.compromisedSeeds ?? []) {
     const seed = secret({ type: 'seed', key: c.key });

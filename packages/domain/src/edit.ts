@@ -192,6 +192,7 @@ export function addDevice(model: CustodyModel, location: Id, kind: Device['kind'
     kind,
     holds: [],
     pinProtected: kind === 'stateful',
+    duressPin: false,
     acceptsExternalSeed: false,
     registeredWallet: false,
     location,

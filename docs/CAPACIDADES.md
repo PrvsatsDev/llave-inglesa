@@ -12,7 +12,7 @@ Nunca material secreto real: solo qué existe, dónde está y quién sabe qué.
 |---|---|
 | **Política** | Árbol tipo Miniscript: `key` y `thresh` (k de n, anidable). Single-sig = una key. |
 | **Key** | Nombre, fingerprint (opcional), si requiere **passphrase**, y su **procedencia**: fuentes de entropía mezcladas (RNG de dispositivo o software, dados, moneda, cartas, desconocido; con nº de tiradas), dónde se generó (modelo del catálogo u otro, o "calculada a mano"), **firmware con el que se generó** y si se **verificó de forma independiente**. |
-| **Dispositivo** | Modelo (del catálogo o escrito a mano), **firmware instalado**, stateful/stateless, keys que guarda, **keys que se firman con él** (stateless o semilla externa; "sin indicar" = cualquiera en un stateless), PIN, si firma con semillas externas, si tiene el multisig registrado, ubicación. |
+| **Dispositivo** | Modelo (del catálogo o escrito a mano), **firmware instalado**, stateful/stateless, keys que guarda, **keys que se firman con él** (stateless o semilla externa; "sin indicar" = cualquiera en un stateless), PIN, **PIN de coacción configurado** (si el modelo lo admite), si firma con semillas externas, si tiene el multisig registrado, ubicación. |
 | **Backup** | Soporte (papel, metal, arandelas, digital, otro), contenido (semilla, passphrase, xpub, PIN, descriptor, contraseña) y secretos que lo bloquean (p. ej. cifrado con contraseña). |
 | **Persona** | Rol (titular, heredero, custodio, otro) y qué sabe de memoria. |
 | **Ubicación** | Tipo (física, dispositivo como un portátil, nube) y quién puede entrar y **cuándo**: siempre, tras el fallecimiento de alguien, o si alguien queda incapacitado o fallece (poder notarial). |
@@ -38,6 +38,8 @@ Un robo es una **combinación** de ataques; se buscan todas las combinaciones m�
 | RNG con fallo aún desconocido (por fabricante o de origen desconocido) | 3 | Semillas generadas con ese RNG, salvo que otra fuente buena o una verificación independiente las proteja. |
 | Firmware malicioso (por fabricante) | 3 | Semillas que pasan por sus dispositivos (guardadas o cargadas), filtradas en las firmas. **Anti-exfil lo mitiga.** |
 | Semilla adivinable por un fallo publicado (por aviso) | 0,5 | Todas las semillas generadas con firmware afectado, a la vez. **128 bits de entropía propia lo mitigan.** |
+
+**PIN de coacción**: si un robo solo funciona porque el coaccionado revela el PIN real de un dispositivo con PIN de coacción configurado, cuesta **+1** (no lo anula: un atacante informado sabe que existe). No afecta a la traición, ni si el PIN también está apuntado en un sitio al alcance. Cada vía muestra su esfuerzo y si vence un PIN de coacción.
 
 Además, **extracción física**: robar un dispositivo con ese aviso (Trezor One/T) da sus semillas aunque tenga PIN. Solo en ataques, nunca como vía de recuperación.
 

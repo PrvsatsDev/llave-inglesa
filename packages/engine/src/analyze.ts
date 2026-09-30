@@ -1,5 +1,5 @@
 import type { CustodyModel, Id } from '@llave-inglesa/domain';
-import { attackAtoms, attackHoldings, type AttackAtom } from './attacks.ts';
+import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './attacks.ts';
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
@@ -27,6 +27,10 @@ export interface SecurityReport extends CutReport<AttackAtom> {
   minEffort: number | null;
   /** Vías de robo igual de baratas o casi (penalizan por exposición). */
   cheapRoutes: number;
+  /** Esfuerzo de cada corte de `cuts` (mismo orden). */
+  efforts: number[];
+  /** Si cada corte exige vencer un PIN de coacción (mismo orden). */
+  beatsDuress: boolean[];
 }
 
 export interface ResilienceReport extends CutReport<LossEvent> {
@@ -83,9 +87,19 @@ function cutReport<A>(cuts: A[][], searchedUpTo: number): CutReport<A> {
   return { score: cutScore(minSize), minSize, searchedUpTo, cuts, cheapest: cuts.filter((c) => c.length === minSize) };
 }
 
-function securityReport(found: AttackAtom[][], searchedUpTo: number): SecurityReport {
+/** ¿Este robo solo funciona si el coaccionado da el PIN real de un dispositivo con PIN de coacción? */
+function needsDuressPin(world: World, cut: readonly AttackAtom[]): boolean {
+  if (!cut.some((a) => a.type === 'coercion')) return false;
+  if (!world.model.devices.some((d) => d.pinProtected && d.duressPin)) return false;
+  return !derive(world, withDuress(world, cut, attackHoldings(world, cut)), 'any').canSpend;
+}
+
+function securityReport(world: World, found: AttackAtom[][], searchedUpTo: number): SecurityReport {
   const cuts = found
-    .map((cut) => ({ cut, effort: attackEffort(cut) }))
+    .map((cut) => {
+      const beatsDuress = needsDuressPin(world, cut);
+      return { cut, beatsDuress, effort: attackEffort(cut, beatsDuress) };
+    })
     .sort((a, b) => a.effort - b.effort || a.cut.length - b.cut.length);
   const minEffort = cuts[0]?.effort ?? null;
   const cheapRoutes = minEffort === null ? 0 : cuts.filter((c) => c.effort <= minEffort + EXPOSURE.margin).length;
@@ -97,6 +111,8 @@ function securityReport(found: AttackAtom[][], searchedUpTo: number): SecurityRe
     cheapest: cuts.filter((c) => c.effort === minEffort).map((c) => c.cut),
     minEffort,
     cheapRoutes,
+    efforts: cuts.map((c) => c.effort),
+    beatsDuress: cuts.map((c) => c.beatsDuress),
   };
 }
 
@@ -105,6 +121,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
   const intact = createWorld(model);
 
   const security = securityReport(
+    intact,
     minimalCuts(attackAtoms(intact), (atoms) => derive(intact, attackHoldings(intact, atoms), 'any').canSpend, maxCutSize),
     maxCutSize,
   );

@@ -96,6 +96,8 @@ export const DeviceSchema = z.object({
   loads: z.array(IdSchema).optional(),
   /** Protegido por PIN. Por defecto `false`: ante la duda, asumimos lo peor. */
   pinProtected: z.boolean().default(false),
+  /** Tiene configurado un PIN de coacción (señuelo o borrado): bajo amenaza se puede dar ese. */
+  duressPin: z.boolean().default(false),
   /** Puede firmar con una semilla cargada temporalmente. Implícito en los stateless. */
   acceptsExternalSeed: z.boolean().default(false),
   /** Tiene registrada la configuración multisig (y por tanto todas las xpubs). */
