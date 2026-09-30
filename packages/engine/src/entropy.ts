@@ -1,4 +1,4 @@
-import type { CustodyModel, EntropySource, Key } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, type CustodyModel, type EntropySource, type Id, type Key } from '@llave-inglesa/domain';
 
 /**
  * Origen de entropía que un atacante podría comprometer en remoto
@@ -60,4 +60,38 @@ export function keyCompromise(key: Key, compromised: ReadonlySet<string>): Entro
     return [...unique.values()];
   }
   return null;
+}
+
+/** Bits de entropía propia (dados, moneda, cartas) mezclados en la semilla. Sin número de tiradas: 0. */
+export function ownEntropyBits(sources: readonly EntropySource[]): number {
+  let bits = 0;
+  for (const s of sources) {
+    if (s.kind !== 'dice' && s.kind !== 'coin' && s.kind !== 'cards') continue;
+    const n = s.count ?? 0;
+    if (s.kind === 'dice') bits += n * Math.log2(6);
+    else if (s.kind === 'coin') bits += n;
+    else for (let i = 0; i < Math.min(n, 52); i++) bits += Math.log2(52 - i); // cartas sin reemplazo
+  }
+  return bits;
+}
+
+/**
+ * Avisos de entropía débil conocida (p. ej. Coldcard 2026) y las keys que exponen.
+ * Cuenta el firmware con el que se GENERÓ la semilla; si no se sabe, se asume afectado.
+ * La entropía propia suficiente lo mitiga; la passphrase ya la exige el motor al usar la key.
+ */
+export function weakEntropyKeys(model: CustodyModel): Map<string, Id[]> {
+  const found = new Map<string, Id[]>();
+  for (const key of model.keys) {
+    const gen = key.provenance.generatedBy;
+    const catalog = catalogModelByName(gen?.model);
+    if (!gen || !catalog) continue;
+    for (const { advisory } of advisoriesFor(catalog.id, gen.firmware)) {
+      if (advisory.kind !== 'weak-entropy') continue;
+      const mitigated = advisory.mitigations.some((m) => m.type === 'own-entropy' && ownEntropyBits(key.provenance.sources) >= m.minBits);
+      if (mitigated) continue;
+      found.set(advisory.id, [...(found.get(advisory.id) ?? []), key.id]);
+    }
+  }
+  return found;
 }

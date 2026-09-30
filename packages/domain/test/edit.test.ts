@@ -74,6 +74,14 @@ describe('operaciones de edición', () => {
     expect(errors(m)).toEqual([]);
   });
 
+  it('borrar una key la quita de las que se cargan en un stateless; "sin indicar" sigue sin indicar', () => {
+    const seedsigner = casa.devices.find((d) => d.kind === 'stateless')!;
+    const withLoads = updateDevice(casa, seedsigner.id, { loads: ['k1', 'k2'] });
+    expect(removeKey(withLoads, 'k1').devices.find((d) => d.id === seedsigner.id)!.loads).toEqual(['k2']);
+    const unknown = updateDevice(casa, seedsigner.id, { loads: undefined });
+    expect(removeKey(unknown, 'k1').devices.find((d) => d.id === seedsigner.id)!.loads).toBeUndefined();
+  });
+
   it('no deja borrar la última key, ubicación ni titular', () => {
     const single = fixture('singlesig-passphrase');
     expect(removeKey(single, 'k1')).toBe(single);

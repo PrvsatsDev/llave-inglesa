@@ -10,7 +10,7 @@
       "passphrase": true,
       "provenance": {
         "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }],
-        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4" }
+        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4", "firmware": "5.6.0" }
       }
     }
   ],

@@ -16,9 +16,18 @@ export interface Holdings {
   people: readonly Id[];
   /** Ubicaciones cuyo contenido tiene físicamente. */
   locations: readonly Id[];
-  /** Semillas obtenidas sin acceso físico (RNG comprometido). */
-  compromisedSeeds?: readonly { key: Id; origins: EntropyOrigin[] }[];
+  /** Semillas obtenidas sin acceso físico (RNG comprometido o fallo de entropía conocido). */
+  compromisedSeeds?: readonly CompromisedSeed[];
+  /** PINs que una persona coaccionada no revela de verdad (da el de coacción). */
+  withheldPins?: readonly { person: Id; device: Id }[];
 }
+
+export type CompromisedSeed =
+  | { key: Id; origins: EntropyOrigin[] }
+  /** Fallo publicado: de entropía (sin nada más) o de extracción física (teniendo `device`). */
+  | { key: Id; advisory: string; device?: Id }
+  /** Filtrada en las firmas por un firmware malicioso de ese fabricante. */
+  | { key: Id; firmware: string };
 
 export interface Derivation {
   readonly facts: ReadonlyMap<FactId, DerivedFact>;
@@ -51,11 +60,19 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       add({ kind: 'item', item: item.value.id }, { rule: 'location-access', premises: [], via: { location } });
     }
   }
+  const withheld = new Set((holdings.withheldPins ?? []).map((w) => `${w.person}:${w.device}`));
   for (const person of holdings.people) {
-    for (const s of knowledgeOf(world, person)) add(secret(s), { rule: 'memory', premises: [], via: { person } });
+    for (const s of knowledgeOf(world, person)) {
+      if (s.type === 'pin' && withheld.has(`${person}:${s.device}`)) continue;
+      add(secret(s), { rule: 'memory', premises: [], via: { person } });
+    }
   }
-  for (const { key, origins } of holdings.compromisedSeeds ?? []) {
-    add(secret({ type: 'seed', key }), { rule: 'entropy-compromise', premises: [], via: { origins } });
+  for (const c of holdings.compromisedSeeds ?? []) {
+    const seed = secret({ type: 'seed', key: c.key });
+    if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
+    else if ('firmware' in c) add(seed, { rule: 'malicious-firmware', premises: [], via: { vendor: c.firmware } });
+    else if (c.device) add(seed, { rule: 'physical-extraction', premises: [factId({ kind: 'item', item: c.device })], via: { device: c.device, advisory: c.advisory } });
+    else add(seed, { rule: 'known-weak-entropy', premises: [], via: { advisory: c.advisory } });
   }
 
   const descriptorId = factId(secret({ type: 'descriptor' }));

@@ -85,8 +85,13 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
 describe('distribuido 2 de 3', () => {
   const a = analyze(loadFixture('distribuido-2de3'));
 
-  it('ninguna acción aislada permite robar', () => {
-    expect(a.security.minSize).toBe(2);
+  it('ninguna ubicación ni persona aislada permite robar', () => {
+    const single = a.security.cuts.filter((c) => c.length === 1).flat();
+    expect(single.filter((atom) => atom.type === 'burglary' || atom.type === 'coercion' || atom.type === 'insider')).toEqual([]);
+  });
+
+  it('pero las tres semillas pasan por el mismo SeedSigner: su firmware malicioso basta', () => {
+    expect(a.security.cuts).toContainEqual([{ type: 'malicious-firmware', vendor: 'SeedSigner' }]);
   });
 
   it('es más seguro que tenerlo todo en casa', () => {

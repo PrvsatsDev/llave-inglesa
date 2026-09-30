@@ -1,7 +1,7 @@
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
-import { attackAtoms, attackEffort, createWorld, lossAtoms } from '@llave-inglesa/engine';
-import { Flame, Hourglass, Play, Skull } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { attackAtoms, createWorld, lossAtoms } from '@llave-inglesa/engine';
+import { ChevronDown, ChevronUp, Flame, Hourglass, Play, Skull } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { attackText, lossText } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
 import { useAnalysis } from '../store/analysis.ts';
@@ -11,26 +11,40 @@ import styles from './Findings.module.css';
 
 const MAX_SHOWN = 5;
 
-function CutList<A>({ cuts, total, text, meta, empty, tone = 'danger', toScenario }: {
+const atOnce = (cut: readonly unknown[]) => (cut.length === 1 ? '1 suceso' : `${cut.length} a la vez`);
+
+/**
+ * Combinaciones: primero las que marcan la puntuación (`cuts`, como mucho MAX_SHOWN) y,
+ * al desplegar, todas las de `all` en su orden, con `restTitle` antes de las demás.
+ */
+function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', toScenario }: {
   cuts: A[][];
-  total: number;
+  all: A[][];
   text(a: A): string;
-  meta?(cut: A[]): ReactNode;
+  meta(cut: A[]): ReactNode;
   empty: string;
+  restTitle: string;
   tone?: 'danger' | 'warn';
   toScenario(cut: A[]): Scenario;
 }) {
   const active = useScenario((s) => s.active);
   const setScenario = useScenario((s) => s.set);
+  const [expanded, setExpanded] = useState(false);
   if (cuts.length === 0) return <p className={styles.empty}>{empty}</p>;
+  const main = new Set(cuts);
+  const shown = cuts.slice(0, MAX_SHOWN);
+  const hidden = all.length - shown.length;
+  const visible = expanded ? all : shown;
+  const firstRest = visible.findIndex((cut) => !main.has(cut));
   return (
     <>
       <ul className={styles.list}>
-        {cuts.slice(0, MAX_SHOWN).map((cut, i) => {
+        {visible.map((cut, i) => {
           const scenario = toScenario(cut);
           const on = sameScenario(active, scenario);
           return (
             <li key={i}>
+              {i === firstRest && <p className={styles.restTitle}>{restTitle}</p>}
               <button
                 className={`${styles.cut} ${styles[tone]} ${on ? styles.active : ''}`}
                 onClick={() => setScenario(on ? null : scenario)}
@@ -43,14 +57,19 @@ function CutList<A>({ cuts, total, text, meta, empty, tone = 'danger', toScenari
                     <span className={styles.atom}>{text(atom)}</span>
                   </span>
                 ))}
-                {meta && <span className={styles.meta}>{meta(cut)}</span>}
+                <span className={styles.meta}>{meta(cut)}</span>
                 <Play size={12} className={styles.play} aria-hidden />
               </button>
             </li>
           );
         })}
       </ul>
-      {total > MAX_SHOWN && <p className={styles.more}>{total} combinaciones mínimas en total</p>}
+      {hidden > 0 && (
+        <button className={styles.more} onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
+          {expanded ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+          {expanded ? 'Ocultar las demás' : `Ver las ${hidden} restantes`}
+        </button>
+      )}
     </>
   );
 }
@@ -96,6 +115,11 @@ export function Findings({ model }: { model: CustodyModel }) {
   const { security, resilience } = analysis;
   // Las vías "casi igual de baratas" también cuentan para la puntuación: se muestran todas.
   const cheapThefts = security.minEffort === null ? [] : security.cuts.slice(0, security.cheapRoutes);
+  const route = new Map(security.cuts.map((cut, i) => [cut, { effort: security.efforts[i]!, duress: security.beatsDuress[i]! }]));
+  const theftMeta = (cut: (typeof security.cuts)[number]) => {
+    const r = route.get(cut)!;
+    return `esfuerzo ${r.effort.toLocaleString('es')}${r.duress ? ' · vence un PIN de coacción' : ''}`;
+  };
 
   return (
     <>
@@ -106,10 +130,11 @@ export function Findings({ model }: { model: CustodyModel }) {
         </div>
         <CutList
           cuts={cheapThefts}
-          total={security.cuts.length}
+          all={security.cuts}
           text={(a) => attackText(a, index)}
-          meta={(cut) => `esfuerzo ${attackEffort(cut).toLocaleString('es')}`}
+          meta={theftMeta}
           empty={`Ninguna combinación de hasta ${security.searchedUpTo} ataques lo consigue.`}
+          restTitle="Más costosas"
           toScenario={(atoms) => ({ kind: 'attack', atoms })}
         />
       </Section>
@@ -121,9 +146,11 @@ export function Findings({ model }: { model: CustodyModel }) {
         {resilience.recoverableNow ? (
           <CutList
             cuts={resilience.cheapest}
-            total={resilience.cuts.length}
+            all={resilience.cuts}
             text={(e) => lossText(e, index)}
+            meta={(cut) => atOnce(cut)}
             empty={`Ninguna combinación de hasta ${resilience.searchedUpTo} desgracias lo consigue.`}
+            restTitle="Hacen falta más desgracias a la vez"
             toScenario={(events) => ({ kind: 'loss', events })}
           />
         ) : (
@@ -138,9 +165,11 @@ export function Findings({ model }: { model: CustodyModel }) {
           </div>
           <CutList
             cuts={resilience.lockouts.filter((c) => c.length === resilience.lockoutMinSize)}
-            total={resilience.lockouts.length}
+            all={resilience.lockouts}
             text={(e) => lossText(e, index)}
+            meta={(cut) => atOnce(cut)}
             empty=""
+            restTitle="Hacen falta más sucesos a la vez"
             tone="warn"
             toScenario={(events) => ({ kind: 'loss', events })}
           />

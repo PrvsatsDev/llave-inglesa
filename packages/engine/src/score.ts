@@ -19,10 +19,20 @@ export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
   coercion: 2,
   /** Cadena de suministro / RNG con puerta trasera: sofisticado. */
   'entropy-compromise': 3,
+  /** Fallo de entropía publicado: se adivina en remoto, sin tocar nada (ya se ha explotado). */
+  'known-weak-entropy': 0.5,
+  /** Actualización maliciosa o fabricante comprometido, y que el usuario firme: sofisticado. */
+  'malicious-firmware': 3,
 };
 
-export function attackEffort(cut: readonly AttackAtom[]): number {
-  return cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0);
+/**
+ * Recargo cuando el robo exige vencer un PIN de coacción (el coaccionado puede dar el falso).
+ * No lo anula: un atacante informado puede saber que existe.
+ */
+export const DURESS_SURCHARGE = 1;
+
+export function attackEffort(cut: readonly AttackAtom[], beatsDuress = false): number {
+  return cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
 }
 
 /** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */

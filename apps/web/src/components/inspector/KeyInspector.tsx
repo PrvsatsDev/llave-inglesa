@@ -1,8 +1,9 @@
-import { activeHolds, indexModel, removeKey, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
+import { activeHolds, advisoriesFor, catalogModelByName, indexModel, removeKey, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
 import { KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Select, Switch, TextInput } from './fields.tsx';
+import { AdvisoryList, HardwareModelSelect } from './Hardware.tsx';
 import styles from './fields.module.css';
 
 type SourceKind = EntropySource['kind'];
@@ -73,6 +74,8 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
   const patch = (p: Partial<Key>, field?: string) => apply((m) => updateKey(m, id, p), field && `key:${id}:${field}`);
   const setProvenance = (p: Partial<Provenance>, field?: string) => patch({ provenance: { ...key.provenance, ...p } }, field && `provenance:${field}`);
   const { sources, generatedBy, independentlyVerified } = key.provenance;
+  const generatorModel = catalogModelByName(generatedBy?.model);
+  const generatorAdvisories = generatorModel ? advisoriesFor(generatorModel.id, generatedBy?.firmware).filter((m) => m.advisory.kind === 'weak-entropy') : [];
 
   const index = indexModel(model);
   const places = [
@@ -154,16 +157,43 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
           hint="Sin dispositivo ni software que haya derivado la semilla."
         />
         {generatedBy && (
-          <div className={styles.twoCols}>
-            <Field label="Generada en (fabricante)">
-              {(fid) => <TextInput id={fid} value={generatedBy.vendor} onChange={(vendor) => setProvenance({ generatedBy: { ...generatedBy, vendor } }, 'vendor')} />}
-            </Field>
-            <Field label="Modelo">
+          <>
+            <Field label="Generada en">
               {(fid) => (
-                <TextInput id={fid} value={generatedBy.model ?? ''} placeholder="opcional" onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, model: v || undefined } }, 'model')} />
+                <HardwareModelSelect
+                  id={fid}
+                  value={generatorModel}
+                  onChange={(m) =>
+                    setProvenance({ generatedBy: m ? { vendor: m.vendor, model: m.name, firmware: generatedBy.firmware } : { vendor: generatedBy.vendor, firmware: generatedBy.firmware } })
+                  }
+                />
               )}
             </Field>
-          </div>
+            {!generatorModel && (
+              <div className={styles.twoCols}>
+                <Field label="Fabricante o software">
+                  {(fid) => <TextInput id={fid} value={generatedBy.vendor} onChange={(vendor) => setProvenance({ generatedBy: { ...generatedBy, vendor } }, 'vendor')} />}
+                </Field>
+                <Field label="Nombre del modelo">
+                  {(fid) => (
+                    <TextInput id={fid} value={generatedBy.model ?? ''} placeholder="opcional" onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, model: v || undefined } }, 'model')} />
+                  )}
+                </Field>
+              </div>
+            )}
+            <Field label="Firmware con el que se generó">
+              {(fid) => (
+                <TextInput
+                  id={fid}
+                  value={generatedBy.firmware ?? ''}
+                  placeholder="p. ej. 5.6.0"
+                  onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, firmware: v || undefined } }, 'firmware')}
+                />
+              )}
+            </Field>
+            <p className={styles.hint}>Cuenta el firmware de cuando se generó la semilla, no el que tenga ahora el dispositivo.</p>
+            <AdvisoryList matches={generatorAdvisories} />
+          </>
         )}
         <Switch
           checked={independentlyVerified}

@@ -9,7 +9,7 @@
       "label": "K1",
       "provenance": {
         "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Q" }, { "kind": "dice", "count": 99 }],
-        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Q" }
+        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Q", "firmware": "1.5.0Q" }
       }
     },
     {
@@ -26,7 +26,7 @@
       "label": "K3",
       "provenance": {
         "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }],
-        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4" }
+        "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4", "firmware": "5.6.0" }
       }
     }
   ],
@@ -48,7 +48,7 @@
       "registeredWallet": true,
       "location": "casa"
     },
-    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "location": "casa" }
+    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "loads": ["k2"], "location": "casa" }
   ],
   "artifacts": [
     { "id": "metal-k2", "label": "Placa de metal K2", "medium": "metal", "contents": [{ "type": "seed", "key": "k2" }], "location": "casa" },

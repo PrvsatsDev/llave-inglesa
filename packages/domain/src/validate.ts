@@ -109,6 +109,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   model.devices.forEach((d, i) => {
     ref(locations, d.location, ['devices', i, 'location']);
     d.holds.forEach((k, j) => ref(keys, k, ['devices', i, 'holds', j]));
+    d.loads?.forEach((k, j) => ref(keys, k, ['devices', i, 'loads', j]));
     if (d.kind === 'stateful' && d.holds.length === 0) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
   });
 

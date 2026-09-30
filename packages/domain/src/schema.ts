@@ -55,7 +55,14 @@ export const ProvenanceSchema = z.object({
   /** Fuentes de entropía mezcladas para generar la semilla. */
   sources: z.array(EntropySourceSchema).min(1),
   /** Dispositivo/software que mezcló la entropía y derivó la semilla. Ausente = calculada a mano. */
-  generatedBy: z.object({ vendor: z.string().min(1), model: z.string().optional() }).optional(),
+  generatedBy: z
+    .object({
+      vendor: z.string().min(1),
+      model: z.string().optional(),
+      /** Firmware con el que se GENERÓ la semilla (el que cuenta para los avisos de entropía). */
+      firmware: z.string().optional(),
+    })
+    .optional(),
   /** La derivación se comprobó con una herramienta independiente (p. ej. dados verificados en otro equipo). */
   independentlyVerified: z.boolean().default(false),
 });
@@ -76,12 +83,21 @@ export const DeviceSchema = z.object({
   label: z.string().min(1),
   vendor: z.string().min(1),
   model: z.string().optional(),
+  /** Versión de firmware instalada ahora. */
+  firmware: z.string().optional(),
   /** stateful: guarda keys dentro (Coldcard, Jade…). stateless: hay que cargarle la semilla (SeedSigner…). */
   kind: z.enum(['stateful', 'stateless']),
   /** Keys que guarda en memoria (solo stateful). */
   holds: z.array(IdSchema).default([]),
+  /**
+   * Keys cuyas semillas se cargan en él para firmar (stateless o semilla externa).
+   * Ausente = sin indicar: en un stateless se asume que cualquier semilla puede pasar por él.
+   */
+  loads: z.array(IdSchema).optional(),
   /** Protegido por PIN. Por defecto `false`: ante la duda, asumimos lo peor. */
   pinProtected: z.boolean().default(false),
+  /** Tiene configurado un PIN de coacción (señuelo o borrado): bajo amenaza se puede dar ese. */
+  duressPin: z.boolean().default(false),
   /** Puede firmar con una semilla cargada temporalmente. Implícito en los stateless. */
   acceptsExternalSeed: z.boolean().default(false),
   /** Tiene registrada la configuración multisig (y por tanto todas las xpubs). */
