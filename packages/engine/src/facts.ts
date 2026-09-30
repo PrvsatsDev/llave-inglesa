@@ -47,6 +47,8 @@ export type RuleId =
   | 'known-weak-entropy'
   /** Semilla extraída del hardware de un dispositivo robado, pese al PIN. */
   | 'physical-extraction'
+  /** Semilla filtrada en las firmas por un firmware malicioso. */
+  | 'malicious-firmware'
   | 'read-artifact'
   | 'descriptor-xpubs'
   | 'unlock-device'
@@ -64,7 +66,7 @@ export interface Justification {
   rule: RuleId;
   /** Hechos de los que depende (siempre derivados antes: el grafo es acíclico). */
   premises: FactId[];
-  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string };
+  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string };
 }
 
 export interface DerivedFact {

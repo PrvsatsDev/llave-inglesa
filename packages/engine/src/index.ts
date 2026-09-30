@@ -3,6 +3,7 @@ export * from './attacks.ts';
 export * from './cuts.ts';
 export * from './derive.ts';
 export * from './entropy.ts';
+export * from './firmware.ts';
 export * from './explain.ts';
 export * from './facts.ts';
 export * from './losses.ts';

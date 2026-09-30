@@ -89,6 +89,11 @@ export const DeviceSchema = z.object({
   kind: z.enum(['stateful', 'stateless']),
   /** Keys que guarda en memoria (solo stateful). */
   holds: z.array(IdSchema).default([]),
+  /**
+   * Keys cuyas semillas se cargan en él para firmar (stateless o semilla externa).
+   * Ausente = sin indicar: en un stateless se asume que cualquier semilla puede pasar por él.
+   */
+  loads: z.array(IdSchema).optional(),
   /** Protegido por PIN. Por defecto `false`: ante la duda, asumimos lo peor. */
   pinProtected: z.boolean().default(false),
   /** Puede firmar con una semilla cargada temporalmente. Implícito en los stateless. */

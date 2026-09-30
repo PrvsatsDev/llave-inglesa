@@ -2,7 +2,7 @@ import { advisoriesFor, catalogModelByName, removeDevice, updateDevice, type Cat
 import { Camera, Cpu } from 'lucide-react';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
-import { DeleteButton, Field, PanelHeader, Section, SecretToggles, Segmented, Select, Switch, TextInput } from './fields.tsx';
+import { Button, DeleteButton, Field, PanelHeader, Section, SecretToggles, Segmented, Select, Switch, TextInput } from './fields.tsx';
 import { AdvisoryList, catalogFeatures, HardwareModelSelect } from './Hardware.tsx';
 import styles from './fields.module.css';
 
@@ -20,6 +20,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
   // Reutilizamos el selector de secretos: cada key se muestra como "guardada en el dispositivo".
   const keyOptions = model.keys.map((k): SecretRef => ({ type: 'seed', key: k.id }));
   const held = device.holds.map((key): SecretRef => ({ type: 'seed', key }));
+  const loaded = (device.loads ?? []).map((key): SecretRef => ({ type: 'seed', key }));
 
   const catalog = catalogModelByName(device.model);
   // La entropía débil depende del firmware con el que se generó cada key: se avisa en la key.
@@ -85,6 +86,39 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
               patch({ holds });
             }}
           />
+        </Section>
+      )}
+
+      {(device.kind === 'stateless' || device.acceptsExternalSeed) && (
+        <Section
+          title="Keys que firmas con él"
+          action={
+            device.kind === 'stateless' &&
+            device.loads && (
+              <Button onClick={() => patch({ loads: undefined })} title="Volver a asumir que cualquier semilla puede pasar por él">
+                Sin indicar
+              </Button>
+            )
+          }
+        >
+          <SecretToggles
+            model={model}
+            options={keyOptions}
+            selected={loaded}
+            onToggle={(s) => {
+              if (s.type !== 'seed') return;
+              const current = device.loads ?? [];
+              patch({ loads: current.includes(s.key) ? current.filter((k) => k !== s.key) : [...current, s.key] });
+            }}
+          />
+          <p className={styles.hint}>
+            {device.loads === undefined && device.kind === 'stateless'
+              ? 'Sin indicar: asumimos que cualquier semilla que tengas escrita puede pasar por él.'
+              : 'Semillas que cargas en él para firmar.'}{' '}
+            {catalog?.antiExfil
+              ? 'Tiene anti-exfil: un firmware malicioso no podría filtrarlas en las firmas (si el software con el que firmas lo usa).'
+              : 'Un firmware malicioso podría filtrarlas en las firmas.'}
+          </p>
         </Section>
       )}
 

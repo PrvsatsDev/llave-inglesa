@@ -58,6 +58,7 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     case 'insider': return `Traición de ${label(a.person)}`;
     case 'entropy-compromise': return `RNG con fallo aún desconocido: ${originText(a.origin)}`;
     case 'known-weak-entropy': return `Semilla adivinable por un fallo publicado: ${advisoryShortName(a.advisory)}`;
+    case 'malicious-firmware': return `Firmware malicioso: ${a.vendor}`;
   }
 }
 
@@ -111,6 +112,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'memory': return `lo sabe ${name(v.person)}`;
     case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;
     case 'known-weak-entropy': return `adivinable por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
+    case 'malicious-firmware': return `filtrada en las firmas por un firmware malicioso de ${v.vendor}`;
     case 'physical-extraction': return `extraída del hardware de ${name(v.device)} pese al PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
     case 'descriptor-xpubs': return 'incluida en el descriptor';

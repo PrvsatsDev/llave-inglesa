@@ -48,7 +48,7 @@
       "registeredWallet": true,
       "location": "casa"
     },
-    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "location": "casa" }
+    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "loads": ["k2"], "location": "casa" }
   ],
   "artifacts": [
     { "id": "metal-k2", "label": "Placa de metal K2", "medium": "metal", "contents": [{ "type": "seed", "key": "k2" }], "location": "casa" },

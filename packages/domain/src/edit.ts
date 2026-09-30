@@ -120,7 +120,7 @@ export function removeKey(model: CustodyModel, id: Id): CustodyModel {
       ...model,
       keys: model.keys.filter((k) => k.id !== id),
       policy,
-      devices: model.devices.map((d) => ({ ...d, holds: d.holds.filter((k) => k !== id) })),
+      devices: model.devices.map((d) => ({ ...d, holds: d.holds.filter((k) => k !== id), ...(d.loads && { loads: d.loads.filter((k) => k !== id) }) })),
     },
     (s) => (s.type === 'seed' || s.type === 'passphrase' || s.type === 'xpub') && s.key === id,
   );

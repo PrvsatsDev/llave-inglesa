@@ -21,6 +21,8 @@ export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
   'entropy-compromise': 3,
   /** Fallo de entropía publicado: se adivina en remoto, sin tocar nada (ya se ha explotado). */
   'known-weak-entropy': 0.5,
+  /** Actualización maliciosa o fabricante comprometido, y que el usuario firme: sofisticado. */
+  'malicious-firmware': 3,
 };
 
 export function attackEffort(cut: readonly AttackAtom[]): number {
