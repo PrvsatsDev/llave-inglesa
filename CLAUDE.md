@@ -28,6 +28,7 @@ apps/web          React + React Flow + zustand; el motor corre en un Web Worker
 apps/cli          Informe en terminal
 fixtures/         Esquemas de ejemplo, usados por la web y por los tests
 docs/IDEAS.md     Ideas pendientes: ninguna es definitiva, se discuten antes de implementarlas
+docs/CAPACIDADES.md  Inventario de todo lo que la herramienta soporta (base de la futura guía)
 ```
 
 ## Principios (no romperlos)
@@ -45,6 +46,8 @@ docs/IDEAS.md     Ideas pendientes: ninguna es definitiva, se discuten antes de 
 - **Colores**: todo por tokens en `apps/web/src/styles/tokens.css`. Los colores de key están
   validados para daltonismo (K1–K3) y nunca aparecen sin su etiqueta "Kn". El estado nunca
   va solo en color (icono + texto).
+- **Inventario al día**: todo cambio de comportamiento (modelo, motor, catálogo, interfaz)
+  actualiza `docs/CAPACIDADES.md` en el mismo commit, incluidos sus límites conocidos.
 - **Tests**: propiedades con fast-check (monotonía del motor, editar nunca rompe el modelo) y
   los fixtures como casos de referencia. Añadir tests con cada cambio de comportamiento.
 

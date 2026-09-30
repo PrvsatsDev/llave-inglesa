@@ -5,10 +5,6 @@ pensarse antes de implementarla.
 
 ## Propuestas del usuario (2026-09-29)
 
-- **Catálogo de hardware wallets.** Listado de dispositivos conocidos (fabricante,
-  modelo, stateful/stateless, si acepta semillas externas, si registra multisig…)
-  para elegir en vez de escribirlo a mano. Incluir **firmwares con vulnerabilidades
-  o compromisos conocidos**, para que cuenten en el análisis.
 - **Introducir las xpubs y generar el descriptor.** Opción de pegar las xpubs (y
   fingerprints/derivaciones) de cada key para construir el descriptor real.
 - **PDFs a partir de esa información:**
@@ -30,12 +26,19 @@ pensarse antes de implementarla.
 - **Vídeo de presentación** con animaciones usando la propia aplicación. Idea
   ambiciosa, "lo mismo no lo hacemos".
 
+## Interfaz y documentación (2026-09-30)
+
+- **Repaso de UX del panel derecho.** Cuesta encontrar lo que se busca: resumen,
+  inspector y simulación comparten panel y hay muchas secciones. Revisarlo entero
+  cuando la fase 2 esté cerrada.
+- **Guía de uso** que lo explique todo, partiendo de [CAPACIDADES.md](CAPACIDADES.md).
+- **Ver todas las vías de robo y de pérdida**, no solo las más baratas: hoy las demás
+  son un contador ("+N combinaciones más costosas") y no se pueden consultar.
+- **Resaltar en el mapa los dispositivos comprometidos** en una simulación de firmware
+  malicioso o de extracción física (hoy estos ataques no iluminan nada).
+
 ## Simplificaciones conscientes del motor (para iterar)
 
-- **PIN de coacción** (duress PIN / brick-me PIN de Coldcard y similares).
-- **Firmware comprometido**, distinto de "RNG comprometido": un dispositivo que
-  filtra o manipula, no solo que genera mala entropía. Enlaza con el catálogo de
-  hardware wallets.
 - **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras.
 - **Resiliencia ponderada**: hoy todas las desgracias pesan igual (un incendio
   cuenta lo mismo que olvidar una contraseña).
