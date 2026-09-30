@@ -116,8 +116,8 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
 export type AdvisoryKind = 'weak-entropy' | 'physical-extraction' | 'host-exploit' | 'supply-chain';
 
 export type Mitigation =
-  /** Mezclar al menos `minRolls` tiradas de dado propias al generar la semilla. */
-  | { type: 'dice'; minRolls: number }
+  /** Mezclar al menos `minBits` de entropía propia (dados, moneda, cartas) al generar la semilla. */
+  | { type: 'own-entropy'; minBits: number }
   /** Passphrase BIP39: no se guarda en el dispositivo. */
   | { type: 'passphrase' }
   /** Usar el dispositivo solo por QR (sin USB ni Bluetooth). */
@@ -155,7 +155,7 @@ export const ADVISORIES: readonly Advisory[] = [
       { models: ['coldcard-q'], fixedIn: '1.5.0' },
       { models: ['coldcard-mk4', 'coldcard-mk5', 'coldcard-q'], from: '6.0.0', fixedIn: '6.6.0' }, // Edge (…X, …QX)
     ],
-    mitigations: [{ type: 'dice', minRolls: 50 }, { type: 'passphrase' }],
+    mitigations: [{ type: 'own-entropy', minBits: 128 }, { type: 'passphrase' }], // 50 dados ≈ 129 bits
     sources: [
       'https://blog.coinkite.com/coldcard-mk3-seed-generation-warning/',
       'https://engineering.block.xyz/blog/predictable-rng-fallback-and-32-bit-reseed-in-coldcard-firmware',
@@ -218,10 +218,10 @@ export function catalogModelByName(name: string | undefined): CatalogModel | und
 
 /**
  * Parte numérica de una versión: "5.6.0" → [5,6,0]; también "1.5.0Q", "6.6.0QX", "5.0.3-mk3".
- * null si no empieza por un número.
+ * null si no es una versión completa (x.y.z): "5" o "5.6" no bastan para saber si está corregida.
  */
 export function parseFirmware(version: string): number[] | null {
-  const m = /^\s*v?(\d+(?:\.\d+)*)/i.exec(version);
+  const m = /^\s*v?(\d+\.\d+\.\d+(?:\.\d+)*)/i.exec(version);
   return m ? m[1]!.split('.').map(Number) : null;
 }
 
@@ -241,8 +241,8 @@ function inRange(v: readonly number[], r: FirmwareRange): boolean {
 
 /**
  * - affected: la versión está en un rango afectado (o no hay arreglo por firmware).
- * - unknown-firmware: no se sabe la versión y el modelo tiene versiones afectadas.
- * - unrecognized-firmware: la versión no es de ninguna serie conocida del modelo.
+ * - unknown-firmware: no se indica la versión y el modelo tiene versiones afectadas.
+ * - unrecognized-firmware: la versión está incompleta o no es de ninguna serie conocida del modelo.
  * En los dos últimos casos se asume lo peor.
  */
 export type MatchReason = 'affected' | 'unknown-firmware' | 'unrecognized-firmware';
@@ -258,7 +258,8 @@ function recognized(v: readonly number[], lines: CatalogModel['firmwareLines']):
 
 /** Avisos que afectan a un modelo con un firmware dado (o desconocido). */
 export function advisoriesFor(modelId: string, firmware?: string): AdvisoryMatch[] {
-  const version = firmware ? parseFirmware(firmware) : null;
+  const given = !!firmware?.trim();
+  const version = given ? parseFirmware(firmware!) : null;
   const known = version !== null && recognized(version, findModel(modelId)?.firmwareLines);
   const matches: AdvisoryMatch[] = [];
   for (const advisory of ADVISORIES) {
@@ -266,7 +267,7 @@ export function advisoriesFor(modelId: string, firmware?: string): AdvisoryMatch
     if (ranges.length === 0) continue;
     const unfixable = ranges.some((r) => !r.from && !r.fixedIn);
     if (unfixable) matches.push({ advisory, reason: 'affected' });
-    else if (!version) matches.push({ advisory, reason: 'unknown-firmware' });
+    else if (!given) matches.push({ advisory, reason: 'unknown-firmware' });
     else if (!known) matches.push({ advisory, reason: 'unrecognized-firmware' });
     else if (ranges.some((r) => inRange(version, r))) matches.push({ advisory, reason: 'affected' });
   }

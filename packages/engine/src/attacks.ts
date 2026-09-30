@@ -1,6 +1,6 @@
 import type { Id } from '@llave-inglesa/domain';
-import type { Holdings } from './derive.ts';
-import { entropyOrigins, keyCompromise, originKey, type EntropyOrigin } from './entropy.ts';
+import type { CompromisedSeed, Holdings } from './derive.ts';
+import { entropyOrigins, keyCompromise, originKey, weakEntropyKeys, type EntropyOrigin } from './entropy.ts';
 import { accessibleLocations, type World } from './world.ts';
 
 /** Acción atómica de un adversario. Un ataque real es una combinación de átomos. */
@@ -12,7 +12,9 @@ export type AttackAtom =
   /** Alguien de confianza actúa por su cuenta con lo que sabe y los sitios a los que accede. */
   | { type: 'insider'; person: Id }
   /** RNG defectuoso o con puerta trasera de un fabricante (o de origen desconocido). */
-  | { type: 'entropy-compromise'; origin: EntropyOrigin };
+  | { type: 'entropy-compromise'; origin: EntropyOrigin }
+  /** Fallo de entropía publicado (p. ej. Coldcard 2026): las semillas afectadas se pueden adivinar. */
+  | { type: 'known-weak-entropy'; advisory: string };
 
 export function attackAtoms(world: World): AttackAtom[] {
   const { model } = world;
@@ -26,6 +28,7 @@ export function attackAtoms(world: World): AttackAtom[] {
     if (p.role !== 'owner') atoms.push({ type: 'insider', person: p.id });
   }
   for (const origin of entropyOrigins(model)) atoms.push({ type: 'entropy-compromise', origin });
+  for (const advisory of weakEntropyKeys(model).keys()) atoms.push({ type: 'known-weak-entropy', advisory });
   return atoms;
 }
 
@@ -33,6 +36,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   const people = new Set<Id>();
   const locations = new Set<Id>();
   const origins = new Set<string>();
+  const advisories = new Set<string>();
   for (const a of atoms) {
     switch (a.type) {
       case 'burglary':
@@ -49,11 +53,17 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'entropy-compromise':
         origins.add(originKey(a.origin));
         break;
+      case 'known-weak-entropy':
+        advisories.add(a.advisory);
+        break;
     }
   }
-  const compromisedSeeds = world.model.keys.flatMap((key) => {
+  const compromisedSeeds: CompromisedSeed[] = world.model.keys.flatMap((key) => {
     const cause = keyCompromise(key, origins);
     return cause ? [{ key: key.id, origins: cause }] : [];
   });
+  for (const [advisory, keys] of weakEntropyKeys(world.model)) {
+    if (advisories.has(advisory)) keys.forEach((key) => compromisedSeeds.push({ key, advisory }));
+  }
   return { people: [...people], locations: [...locations], compromisedSeeds };
 }

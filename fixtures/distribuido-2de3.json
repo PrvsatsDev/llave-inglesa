@@ -6,7 +6,7 @@
   "keys": [
     { "id": "k1", "label": "K1", "provenance": { "sources": [{ "kind": "dice", "count": 99 }], "generatedBy": { "vendor": "SeedSigner" }, "independentlyVerified": true } },
     { "id": "k2", "label": "K2", "provenance": { "sources": [{ "kind": "device-rng", "vendor": "Blockstream", "model": "Jade" }, { "kind": "dice", "count": 99 }], "generatedBy": { "vendor": "Blockstream", "model": "Jade" } } },
-    { "id": "k3", "label": "K3", "provenance": { "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }, { "kind": "coin", "count": 256 }], "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4" } } }
+    { "id": "k3", "label": "K3", "provenance": { "sources": [{ "kind": "device-rng", "vendor": "Coinkite", "model": "Coldcard Mk4" }, { "kind": "coin", "count": 256 }], "generatedBy": { "vendor": "Coinkite", "model": "Coldcard Mk4", "firmware": "5.6.0" } } }
   ],
   "policy": {
     "type": "thresh",

@@ -19,6 +19,8 @@ export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
   coercion: 2,
   /** Cadena de suministro / RNG con puerta trasera: sofisticado. */
   'entropy-compromise': 3,
+  /** Fallo de entropía publicado: se adivina en remoto, sin tocar nada (ya se ha explotado). */
+  'known-weak-entropy': 0.5,
 };
 
 export function attackEffort(cut: readonly AttackAtom[]): number {

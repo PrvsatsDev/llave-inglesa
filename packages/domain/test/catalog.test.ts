@@ -49,6 +49,9 @@ describe('versiones de firmware', () => {
     expect(parseFirmware('5.0.3-mk3')).toEqual([5, 0, 3]);
     expect(parseFirmware('v9.26.5')).toEqual([9, 26, 5]);
     expect(parseFirmware('desconocido')).toBeNull();
+    expect(parseFirmware('5')).toBeNull();
+    expect(parseFirmware('5.6')).toBeNull();
+    expect(parseFirmware('5.')).toBeNull();
   });
 
   it('compara con ceros implícitos', () => {
@@ -86,7 +89,10 @@ describe('advisoriesFor', () => {
     expect(reasons('coldcard-q', '5.5.2')).toEqual(['unrecognized-firmware']); // versión de Mk4 en una Q
     expect(reasons('coldcard-q', '5.6.0')).toEqual(['unrecognized-firmware']);
     expect(reasons('coldcard-mk4', '1.5.0Q')).toEqual(['unrecognized-firmware']);
-    expect(reasons('coldcard-mk4', 'beta')).toEqual(['unknown-firmware']);
+    expect(reasons('coldcard-mk4', 'beta')).toEqual(['unrecognized-firmware']);
+    expect(reasons('coldcard-mk4', '5.6')).toEqual(['unrecognized-firmware']); // incompleta
+    expect(reasons('coldcard-mk4', '7')).toEqual(['unrecognized-firmware']);
+    expect(reasons('coldcard-mk4', '   ')).toEqual(['unknown-firmware']);
     expect(reasons('coldcard-q', '6.6.0QX')).toEqual([]);
   });
 

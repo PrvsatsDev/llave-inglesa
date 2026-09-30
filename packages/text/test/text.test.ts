@@ -48,16 +48,23 @@ describe('avisos del catálogo', () => {
     expect(t.detail).toContain('Ya se ha explotado');
     expect(t.detail).toContain('Sin saber la versión');
     expect(t.detail).toContain('1.5.0');
-    expect(t.mitigations).toBe('Mitiga: mezclar al menos 50 tiradas de dado o passphrase.');
+    expect(t.mitigations).toBe('Mitiga: mezclar al menos 128 bits de entropía propia (unas 50 tiradas de dado) o passphrase.');
   });
 
   it('versión de otro modelo', () => {
-    expect(advisoryText(advisoriesFor('coldcard-q', '5.5.2')[0]!).detail).toContain('no es de este modelo');
+    expect(advisoryText(advisoriesFor('coldcard-q', '5.5.2')[0]!).detail).toContain('No reconocemos esa versión');
   });
 
   it('sin arreglo por firmware', () => {
     const t = advisoryText(advisoriesFor('trezor-one', '1.12.1')[0]!);
     expect(t.detail).toContain('No se puede corregir por firmware.');
     expect(t.detail).not.toContain('Sin saber la versión');
+  });
+});
+
+describe('ataques de entropía: hipotético frente a conocido', () => {
+  it('distingue el fallo aún desconocido del publicado', () => {
+    expect(attackText({ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'SeedSigner' } }, index)).toBe('RNG con fallo aún desconocido: SeedSigner');
+    expect(attackText({ type: 'known-weak-entropy', advisory: 'coldcard-rng-2026' }, index)).toBe('Semilla adivinable por un fallo publicado: Coldcard 2026');
   });
 });

@@ -16,9 +16,11 @@ export interface Holdings {
   people: readonly Id[];
   /** Ubicaciones cuyo contenido tiene físicamente. */
   locations: readonly Id[];
-  /** Semillas obtenidas sin acceso físico (RNG comprometido). */
-  compromisedSeeds?: readonly { key: Id; origins: EntropyOrigin[] }[];
+  /** Semillas obtenidas sin acceso físico (RNG comprometido o fallo de entropía conocido). */
+  compromisedSeeds?: readonly CompromisedSeed[];
 }
+
+export type CompromisedSeed = { key: Id; origins: EntropyOrigin[] } | { key: Id; advisory: string };
 
 export interface Derivation {
   readonly facts: ReadonlyMap<FactId, DerivedFact>;
@@ -54,8 +56,10 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
   for (const person of holdings.people) {
     for (const s of knowledgeOf(world, person)) add(secret(s), { rule: 'memory', premises: [], via: { person } });
   }
-  for (const { key, origins } of holdings.compromisedSeeds ?? []) {
-    add(secret({ type: 'seed', key }), { rule: 'entropy-compromise', premises: [], via: { origins } });
+  for (const c of holdings.compromisedSeeds ?? []) {
+    const seed = secret({ type: 'seed', key: c.key });
+    if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
+    else add(seed, { rule: 'known-weak-entropy', premises: [], via: { advisory: c.advisory } });
   }
 
   const descriptorId = factId(secret({ type: 'descriptor' }));

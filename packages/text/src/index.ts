@@ -1,3 +1,4 @@
+import { ADVISORIES } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Policy, SecretRef } from '@llave-inglesa/domain';
 import type { AttackAtom, EntropyOrigin, Fact, Justification, LossEvent } from '@llave-inglesa/engine';
 
@@ -55,7 +56,8 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     }
     case 'coercion': return a.location ? `Llave inglesa a ${label(a.person)} en ${label(a.location)}` : `Llave inglesa a ${label(a.person)}`;
     case 'insider': return `Traición de ${label(a.person)}`;
-    case 'entropy-compromise': return `RNG comprometido: ${originText(a.origin)}`;
+    case 'entropy-compromise': return `RNG con fallo aún desconocido: ${originText(a.origin)}`;
+    case 'known-weak-entropy': return `Semilla adivinable por un fallo publicado: ${advisoryShortName(a.advisory)}`;
   }
 }
 
@@ -107,7 +109,8 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
   switch (j.rule) {
     case 'location-access': return `al alcance en ${name(v.location)}`;
     case 'memory': return `lo sabe ${name(v.person)}`;
-    case 'entropy-compromise': return `predecible: RNG de ${(v.origins ?? []).map(originText).join(' + ')}`;
+    case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;
+    case 'known-weak-entropy': return `adivinable por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
     case 'descriptor-xpubs': return 'incluida en el descriptor';
     case 'unlock-device': return '';
@@ -155,6 +158,14 @@ export const ADVISORY_TITLE: Record<string, string> = {
   'bitbox02-2026-08': 'BitBox02: explotable desde un ordenador con malware',
 };
 
+/** Nombre corto de un aviso: marca y año (p. ej. "Coldcard 2026"). */
+export function advisoryShortName(id: string): string {
+  const advisory = ADVISORIES.find((a) => a.id === id);
+  const title = ADVISORY_TITLE[id];
+  if (!advisory || !title) return id;
+  return `${title.split(':')[0]} ${advisory.disclosed.slice(0, 4)}`;
+}
+
 export const ADVISORY_KIND: Record<AdvisoryKind, string> = {
   'weak-entropy': 'La semilla generada con este firmware es predecible: actualizar no la arregla, hay que migrar a una semilla nueva.',
   'physical-extraction': 'Con el dispositivo en la mano se puede sacar la semilla aunque tenga PIN.',
@@ -164,7 +175,7 @@ export const ADVISORY_KIND: Record<AdvisoryKind, string> = {
 
 export function mitigationText(m: Mitigation): string {
   switch (m.type) {
-    case 'dice': return `mezclar al menos ${m.minRolls} tiradas de dado`;
+    case 'own-entropy': return `mezclar al menos ${m.minBits} bits de entropía propia (unas ${Math.ceil(m.minBits / Math.log2(6))} tiradas de dado)`;
     case 'passphrase': return 'passphrase';
     case 'qr-only': return 'usarlo solo por QR';
   }
@@ -178,7 +189,7 @@ export function advisoryText(match: AdvisoryMatch): { title: string; detail: str
     a.exploited ? 'Ya se ha explotado para robar fondos.' : null,
     fixed.length > 0 ? `Corregido en ${fixed.join(', ')}.` : 'No se puede corregir por firmware.',
     match.reason === 'unknown-firmware' ? 'Sin saber la versión de firmware, asumimos que está afectado.' : null,
-    match.reason === 'unrecognized-firmware' ? 'Esa versión de firmware no es de este modelo: revísala. Mientras, asumimos que está afectado.' : null,
+    match.reason === 'unrecognized-firmware' ? 'No reconocemos esa versión de firmware para este modelo: revisa que esté completa y sea la correcta. Mientras, asumimos que está afectado.' : null,
   ]
     .filter(Boolean)
     .join(' ');

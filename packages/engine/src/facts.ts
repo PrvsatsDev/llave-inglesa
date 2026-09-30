@@ -43,6 +43,8 @@ export type RuleId =
   | 'memory'
   /** Secreto obtenido sin acceso físico (p. ej. RNG comprometido). */
   | 'entropy-compromise'
+  /** Semilla adivinable por un fallo de entropía publicado. */
+  | 'known-weak-entropy'
   | 'read-artifact'
   | 'descriptor-xpubs'
   | 'unlock-device'
@@ -60,7 +62,7 @@ export interface Justification {
   rule: RuleId;
   /** Hechos de los que depende (siempre derivados antes: el grafo es acíclico). */
   premises: FactId[];
-  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[] };
+  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string };
 }
 
 export interface DerivedFact {
