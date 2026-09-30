@@ -7,6 +7,9 @@ import styles from './fields.module.css';
 
 type SourceKind = EntropySource['kind'];
 
+/** Proyecto de Estudio Bitcoin para generar la semilla a mano con una moneda. */
+const SEMILLA_MONEDA_URL = 'https://estudiobitcoin.com/semilla-moneda-crea-tu-semilla-a-mano/';
+
 const SOURCE_OPTIONS: readonly { value: SourceKind; label: string }[] = [
   { value: 'device-rng', label: 'RNG de dispositivo' },
   { value: 'software-rng', label: 'RNG de software' },
@@ -132,6 +135,15 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
           ))}
         </ul>
         <p className={styles.hint}>Si mezclas varias fuentes, basta con que una sea buena… salvo que el dispositivo que las mezcla esté comprometido.</p>
+        {sources.some((s) => s.kind === 'coin') && (
+          <p className={styles.hint}>
+            Hay varias formas de crear la semilla a mano con una moneda; una guía paso a paso es{' '}
+            <a className={styles.link} href={SEMILLA_MONEDA_URL} target="_blank" rel="noopener noreferrer">
+              semilla-moneda
+            </a>
+            , de Estudio Bitcoin.
+          </p>
+        )}
       </Section>
 
       <Section title="Generación">
