@@ -33,3 +33,7 @@ fixtures/         Esquemas de ejemplo, usados también como tests
 El motor no produce texto: devuelve estructuras (reglas, ids, átomos) y cada interfaz
 decide cómo contarlas. La política de gasto es un árbol tipo Miniscript desde el primer
 día, para poder añadir timelocks sin rehacer nada.
+
+## Licencia
+
+[MIT](LICENSE).
