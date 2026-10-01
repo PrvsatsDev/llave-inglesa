@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import { Canvas } from './components/Canvas.tsx';
 import { Dialogs } from './components/Dialogs.tsx';
 import { Header } from './components/Header.tsx';
@@ -8,6 +8,7 @@ import { useLiveAnalysis } from './store/analysis.ts';
 import { hasLocalDocument, openLocal, saveLocal } from './storage/actions.ts';
 import { useDialog } from './store/dialog.ts';
 import { hasUnsavedChanges, useDocument } from './store/document.ts';
+import { useLayout } from './store/layout.ts';
 import { useScenario } from './store/scenario.ts';
 import { useSelection } from './store/selection.ts';
 import styles from './App.module.css';
@@ -75,12 +76,18 @@ export function App() {
   useOpenSavedOnStart();
   useUnsavedGuard();
   useLiveAnalysis();
+  const width = useLayout((s) => s.width);
+  const collapsed = useLayout((s) => s.collapsed);
   return (
     <ReactFlowProvider>
-      <div className={styles.shell}>
+      {/* Plegada, el ancho lo pone la clase: el estilo en línea tendría prioridad sobre ella. */}
+      <div
+        className={`${styles.shell} ${collapsed ? styles.collapsed : ''}`}
+        style={collapsed ? undefined : ({ '--panel-width': `${width}px` } as CSSProperties)}
+      >
         <Header />
-        <Canvas />
         <Sidebar />
+        <Canvas />
       </div>
       <Dialogs />
     </ReactFlowProvider>

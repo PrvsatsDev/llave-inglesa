@@ -65,7 +65,7 @@ Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada p
 
 ## 6. Interfaz
 
-- **Web** (offline, sin red): mapa de ubicaciones, personas y objetos; panel derecho con resumen del esquema (política, keys, validación, formas más baratas de robar y de perderlo todo, bloqueos, probar un escenario; cada lista se despliega para ver **todas** las combinaciones, con su esfuerzo o cuántos sucesos a la vez, y cualquiera se simula en el mapa), inspector de cada elemento y simulación de escenarios sobre el mapa. Deshacer/rehacer, guardado cifrado en el navegador, exportación cifrada (`.llave`) o en claro (`.json`).
+- **Web** (offline, sin red): mapa de ubicaciones, personas y objetos; columna izquierda con las cuatro puntuaciones siempre a la vista (2×2; redimensionable entre 400 y 720 px arrastrando su borde o con las flechas, y plegable a una barra con solo los números; la preferencia se recuerda en este navegador) y, debajo, el resumen del esquema (política, keys, validación, formas más baratas de robar y de perderlo todo, bloqueos, probar un escenario; cada lista se despliega para ver **todas** las combinaciones, con su esfuerzo o cuántos sucesos a la vez, y cualquiera se simula en el mapa), inspector de cada elemento y simulación de escenarios sobre el mapa. Deshacer/rehacer, guardado cifrado en el navegador, exportación cifrada (`.llave`) o en claro (`.json`).
 - **CLI**: `npm run analyze -- fichero.json` imprime puntuaciones, vías más baratas con su porqué, pérdidas y bloqueos.
 - **Ejemplos** (`fixtures/`): todo en casa, distribuido 2 de 3, single-sig con passphrase.
 

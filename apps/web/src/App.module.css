@@ -2,20 +2,25 @@
   display: grid;
   grid-template-areas:
     'header header'
-    'canvas sidebar';
-  grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+    'panel canvas';
+  grid-template-columns: min(var(--panel-width), 45vw) minmax(0, 1fr);
   grid-template-rows: var(--header-height) minmax(0, 1fr);
   height: 100%;
 }
 
+.collapsed {
+  --panel-width: var(--panel-rail-width);
+}
+
 @media (max-width: 900px) {
-  .shell {
+  .shell,
+  .collapsed {
     grid-template-areas:
       'header'
-      'canvas'
-      'sidebar';
+      'panel'
+      'canvas';
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: var(--header-height) minmax(360px, 60vh) auto;
+    grid-template-rows: var(--header-height) auto minmax(360px, 60vh);
     height: auto;
     min-height: 100%;
   }

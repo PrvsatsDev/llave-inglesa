@@ -1,13 +1,16 @@
 import { addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel } from '@llave-inglesa/domain';
 import { AlertTriangle, BadgeCheck, CircleCheck, MapPin, Plus, UserPlus, XCircle } from 'lucide-react';
+import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { keyColor } from '../lib/key-colors.ts';
 import { issueText, provenanceText } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
+import { PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from '../store/layout.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
 import { useScenarioView } from '../store/scenario.ts';
 import { Findings } from './Findings.tsx';
 import { ScenarioPanel } from './ScenarioPanel.tsx';
+import { Scoreboard } from './Scoreboard.tsx';
 import { Button, Field, Section, Segmented, TextArea, TextInput } from './inspector/fields.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
 import { KeyChip } from './KeyChip.tsx';
@@ -19,19 +22,73 @@ function exists(model: CustodyModel, s: Selection | null): boolean {
   return lists[s.kind].some((e) => e.id === s.id);
 }
 
-/** Prioridad: ficha de lo seleccionado > simulación activa > resumen del esquema. */
+/**
+ * Columna izquierda: las puntuaciones arriba y, debajo, el contenido.
+ * Prioridad del contenido: ficha de lo seleccionado > simulación activa > resumen del esquema.
+ */
 export function Sidebar() {
   const model = useDocument((s) => s.model);
   const selected = useSelection((s) => s.selected);
   const view = useScenarioView();
+  const collapsed = useLayout((s) => s.collapsed);
   const mode = exists(model, selected) ? 'inspector' : view ? 'scenario' : 'summary';
   const labels = { inspector: 'Inspector', scenario: 'Simulación', summary: 'Resumen del esquema' };
   return (
-    <aside className={styles.sidebar} aria-label={labels[mode]}>
-      {mode === 'inspector' && <Inspector />}
-      {mode === 'scenario' && view && <ScenarioPanel model={model} view={view} />}
-      {mode === 'summary' && <Summary model={model} />}
+    <aside className={styles.sidebar} aria-label="Panel">
+      <Scoreboard />
+      {!collapsed && (
+        <>
+          <div className={styles.content} aria-label={labels[mode]}>
+            {mode === 'inspector' && <Inspector />}
+            {mode === 'scenario' && view && <ScenarioPanel model={model} view={view} />}
+            {mode === 'summary' && <Summary model={model} />}
+          </div>
+          <ResizeHandle />
+        </>
+      )}
     </aside>
+  );
+}
+
+/** Asa para cambiar el ancho de la columna: arrastrar, flechas del teclado o doble clic para el ancho por defecto. */
+function ResizeHandle() {
+  const width = useLayout((s) => s.width);
+  const setWidth = useLayout((s) => s.setWidth);
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const left = handle.parentElement!.getBoundingClientRect().left;
+    handle.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => setWidth(ev.clientX - left);
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', up);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+  };
+  const onKeyDown = (e: KeyboardEvent) => {
+    const step = e.shiftKey ? 64 : 16;
+    if (e.key === 'ArrowLeft') setWidth(width - step);
+    else if (e.key === 'ArrowRight') setWidth(width + step);
+    else return;
+    e.preventDefault();
+  };
+  return (
+    <div
+      className={styles.resize}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Ancho del panel"
+      aria-valuemin={PANEL_MIN}
+      aria-valuemax={PANEL_MAX}
+      aria-valuenow={width}
+      tabIndex={0}
+      title="Arrastra para cambiar el ancho (doble clic: ancho por defecto)"
+      onPointerDown={onPointerDown}
+      onDoubleClick={() => setWidth(PANEL_DEFAULT)}
+      onKeyDown={onKeyDown}
+    />
   );
 }
 

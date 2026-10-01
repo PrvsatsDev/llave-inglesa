@@ -1,8 +1,9 @@
 import type { Analysis } from '@llave-inglesa/engine';
-import { AlertTriangle, Loader2, ShieldAlert, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, ChevronsLeft, ChevronsRight, Loader2, ShieldAlert, ShieldCheck, type LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
+import { useLayout } from '../store/layout.ts';
 import styles from './Scoreboard.module.css';
 
 type Level = 'good' | 'warn' | 'bad';
@@ -17,6 +18,8 @@ function level(score: number): { level: Level; icon: LucideIcon; text: string } 
 interface Metric {
   id: 'security' | 'resilience' | 'usability' | 'inheritance';
   label: string;
+  /** Abreviatura para la barra plegada. */
+  short: string;
   score: number;
   detail: string;
 }
@@ -31,10 +34,10 @@ function metrics(a: Analysis): Metric[] {
       ? `ningún robo con ≤${sec.searchedUpTo} ataques`
       : `robo más barato: esfuerzo ${sec.minEffort.toLocaleString('es')}` + (sec.cheapRoutes > 1 ? ` · ${sec.cheapRoutes} vías` : '');
   return [
-    { id: 'security', label: 'Seguridad', score: sec.score, detail: secDetail },
+    { id: 'security', label: 'Seguridad', short: 'Seg', score: sec.score, detail: secDetail },
     {
       id: 'resilience',
-      label: 'Resiliencia',
+      label: 'Resiliencia', short: 'Res',
       score: a.resilience.score,
       detail:
         cut(a.resilience.minSize, a.resilience.searchedUpTo, 'pérdida') +
@@ -42,13 +45,13 @@ function metrics(a: Analysis): Metric[] {
     },
     {
       id: 'usability',
-      label: 'Usabilidad',
+      label: 'Usabilidad', short: 'Usa',
       score: a.usability.score,
       detail: a.usability.locations ? `firmar en ${plural(a.usability.locations.length, 'ubicación', 'ubicaciones')}` : 'no puede firmar de forma segura',
     },
     {
       id: 'inheritance',
-      label: 'Herencia',
+      label: 'Herencia', short: 'Her',
       score: inh.score,
       detail:
         inh.status === 'ok'
@@ -94,26 +97,64 @@ function Tile({ metric, previous, stale }: { metric: Metric; previous: number | 
   );
 }
 
-/** Marcador flotante con las cuatro puntuaciones, recalculadas en vivo. */
+/** Versión mínima de una tarjeta para la columna plegada: abreviatura, número e icono de estado. */
+function MiniTile({ metric, stale }: { metric: Metric; stale: boolean }) {
+  const { level: lvl, icon: Icon, text } = level(metric.score);
+  return (
+    <div className={`${styles.mini} ${styles[lvl]} ${stale ? styles.stale : ''}`} title={`${metric.label}: ${metric.score} de 100, ${text}`}>
+      <span className={styles.label}>{metric.short}</span>
+      <span className={styles.miniValue}>{metric.score}</span>
+      <Icon size={13} className={styles.miniIcon} aria-label={text} />
+    </div>
+  );
+}
+
+/** Las cuatro puntuaciones, recalculadas en vivo, en cabeza de la columna. */
 export function Scoreboard() {
   const { status, analysis, previous, ms } = useAnalysis();
+  const collapsed = useLayout((s) => s.collapsed);
+  const setCollapsed = useLayout((s) => s.setCollapsed);
+  const stale = status !== 'ready';
+
+  if (collapsed) {
+    return (
+      <section className={styles.rail} aria-label="Puntuaciones del esquema" aria-live="polite">
+        <button className={styles.foldButton} onClick={() => setCollapsed(false)} aria-label="Desplegar el panel" title="Desplegar el panel">
+          <ChevronsRight size={16} />
+        </button>
+        {analysis ? (
+          metrics(analysis).map((m) => <MiniTile key={m.id} metric={m} stale={stale} />)
+        ) : (
+          <Loader2 size={14} className={styles.spin} aria-label="Analizando" />
+        )}
+      </section>
+    );
+  }
+
+  const fold = (
+    <button className={styles.foldButton} onClick={() => setCollapsed(true)} aria-label="Plegar el panel" title="Plegar el panel para ver más mapa">
+      <ChevronsLeft size={16} />
+    </button>
+  );
 
   if (!analysis) {
     return (
-      <div className={styles.board} aria-live="polite">
-        <p className={styles.placeholder}>
-          {status === 'invalid' ? 'Corrige los errores del modelo para analizarlo' : (
-            <>
-              <Loader2 size={14} className={styles.spin} aria-hidden /> Analizando…
-            </>
-          )}
-        </p>
-      </div>
+      <section className={styles.board} aria-live="polite">
+        <div className={styles.footer}>
+          <p className={styles.placeholder}>
+            {status === 'invalid' ? 'Corrige los errores del modelo para analizarlo' : (
+              <>
+                <Loader2 size={14} className={styles.spin} aria-hidden /> Analizando…
+              </>
+            )}
+          </p>
+          {fold}
+        </div>
+      </section>
     );
   }
 
   const prev = previous ? Object.fromEntries(metrics(previous).map((m) => [m.id, m.score])) : null;
-  const stale = status !== 'ready';
 
   return (
     <section className={styles.board} aria-label="Puntuaciones del esquema" aria-live="polite">
@@ -122,16 +163,19 @@ export function Scoreboard() {
           <Tile key={m.id} metric={m} previous={prev?.[m.id] ?? null} stale={stale} />
         ))}
       </div>
-      <p className={styles.footer}>
-        {status === 'running' && (
-          <>
-            <Loader2 size={11} className={styles.spin} aria-hidden /> recalculando…
-          </>
-        )}
-        {status === 'invalid' && <span className={styles.invalid}>Modelo con errores: análisis pausado</span>}
-        {status === 'error' && <span className={styles.invalid}>El análisis ha fallado</span>}
-        {status === 'ready' && ms !== null && <>análisis exhaustivo en {ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms</>}
-      </p>
+      <div className={styles.footer}>
+        <p className={styles.footerText}>
+          {status === 'running' && (
+            <>
+              <Loader2 size={11} className={styles.spin} aria-hidden /> recalculando…
+            </>
+          )}
+          {status === 'invalid' && <span className={styles.invalid}>Modelo con errores: análisis pausado</span>}
+          {status === 'error' && <span className={styles.invalid}>El análisis ha fallado</span>}
+          {status === 'ready' && ms !== null && <>análisis exhaustivo en {ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms</>}
+        </p>
+        {fold}
+      </div>
     </section>
   );
 }

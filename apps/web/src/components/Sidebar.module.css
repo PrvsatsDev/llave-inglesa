@@ -1,11 +1,48 @@
 .sidebar {
-  grid-area: sidebar;
+  grid-area: panel;
+  position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+/* Solo el contenido se desplaza: las puntuaciones quedan siempre a la vista. */
+.content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 0;
   overflow-y: auto;
-  background: var(--bg);
-  border-left: 1px solid var(--border);
+}
+
+.resize {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  z-index: 10;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resize:hover,
+.resize:focus-visible {
+  outline: none;
+  background: linear-gradient(to right, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px);
+}
+
+@media (max-width: 900px) {
+  .resize {
+    display: none;
+  }
+
+  .content {
+    overflow-y: visible;
+  }
 }
 
 .hint {
