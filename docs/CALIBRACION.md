@@ -116,3 +116,9 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 ## Fricciones al montar los esquemas
 
 (Se rellena sobre la marcha.)
+
+- **R01**: la procedencia de K1 quedó como "RNG de Desconocido + 99 dados", sin el Trezor que la generó:
+  al crear la key y meterla en un dispositivo, la procedencia no se enlaza sola con él. (Aquí no cambia
+  nada porque los 99 dados la protegen.)
+- **R01**: los ids se quedan con el nombre por defecto (`nuevo-dispositivo`, `nueva-persona`) aunque luego
+  se renombre. No se ve en la interfaz, solo en el JSON exportado.
