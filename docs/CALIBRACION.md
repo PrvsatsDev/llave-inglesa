@@ -113,6 +113,11 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
 | R12 2 de 3 con una SeedSigner | aceptable | bueno | bueno | bueno |
 
+## Por dónde vamos
+
+Hecho: R01. Siguiente: **R02** (foto en la nube). Al terminar la galería: diagnóstico de todo junto,
+ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
+
 ## Revisado con el motor
 
 - **R01** (23 · 34 · 100 · 100): el usuario ve bien el 23: un papel a la vista en casa es muy mala
