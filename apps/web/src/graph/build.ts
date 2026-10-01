@@ -38,6 +38,9 @@ export type Tone = ScenarioView['tone'];
 export type LocationNodeData = {
   name: string;
   kind: Location['kind'];
+  protection?: Location['protection'];
+  /** Nombre de la ubicación que la contiene, si está dentro de otra. */
+  insideName?: string;
   items: ItemView[];
   keys: KeyTag[];
   state?: LocationState;
@@ -120,7 +123,8 @@ export function buildGraph(model: CustodyModel): Graph {
       ),
     );
     const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id) }));
-    return { id: l.id, data: { name: l.name, kind: l.kind, items, keys } };
+    const insideName = l.inside === undefined ? undefined : index.locations.get(l.inside)?.name;
+    return { id: l.id, data: { name: l.name, kind: l.kind, ...(l.protection && { protection: l.protection }), ...(insideName !== undefined && { insideName }), items, keys } };
   });
 
   const edges: AccessEdge[] = model.locations.flatMap((l) =>

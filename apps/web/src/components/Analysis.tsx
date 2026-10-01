@@ -1,6 +1,8 @@
 import { indexModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import {
   ATTACK_EFFORT,
+  BURGLARY_EFFORT,
+  COERCION_SURCHARGE,
   DURESS_SURCHARGE,
   PASSPHRASE_EFFORT,
   rarityScore,
@@ -160,7 +162,7 @@ function securityScore(a: EngineAnalysis) {
     score: sec.score,
     rows,
     how: [
-      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
+      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma la diferencia. La llave inglesa en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
       `Cuanto más esfuerzo exige el robo más barato, más puntuación: ${curve}.`,
       `Tener varias vías casi igual de baratas (hasta ${num(EXPOSURE.margin)} más de esfuerzo) resta ${EXPOSURE.penaltyPerExtraRoute} por cada vía extra, como mucho ${EXPOSURE.maxPenalty}.`,
     ],
@@ -188,7 +190,7 @@ function resilienceScore(a: EngineAnalysis) {
     score: res.score,
     rows,
     how: [
-      `Cada desgracia tiene una rareza: cuántos órdenes de magnitud tiene de improbable. Olvidar lo memorizado ${num(r.forget)} · perder o romper un objeto ${num(r['item-loss'])} (una placa o arandelas de acero, que solo se pueden extraviar, ${num(r['steel-loss'])}) · avería de un portátil o pérdida de una cuenta ${num(r.total.device)} · incendio, inundación o fallecimiento ${num(r.fire)} · incapacidad ${num(r.incapacity)} · pérdida del acceso a un sitio ${num(r.total.physical)}.`,
+      `Cada desgracia tiene una rareza: cuántos órdenes de magnitud tiene de improbable. Olvidar lo memorizado ${num(r.forget)} · perder o romper un objeto ${num(r['item-loss'])} (una placa o arandelas de acero, que solo se pueden extraviar, ${num(r['steel-loss'])}) · avería de un portátil o pérdida de una cuenta ${num(r.total.device)} · incendio, inundación o fallecimiento ${num(r.fire)} (incendio o inundación en una caja del banco ${num(r['vault-disaster'])}) · incapacidad ${num(r.incapacity)} · pérdida del acceso a un sitio ${num(r.total.physical)}.`,
       `Varias desgracias a la vez suman sus rarezas (como multiplicar probabilidades). Se buscan las combinaciones de hasta ${res.searchedUpTo} tras las que nadie podría recuperar los fondos nunca; cuanto más rara la más probable, más puntuación: ${[1, 2, 3, 4, 5, 6].map((x) => `${x}${x === 6 ? ' o más' : ''} → ${rarityScore(x)}`).join(' · ')}.`,
       'Las demás vías también cuentan: sus probabilidades se suman, y la puntuación sale de la rareza equivalente de todas juntas.',
       `Un bloqueo temporal (fondos inmovilizados mientras alguien está incapacitado) no pierde nada, pero resta: ${LOCKOUT_PENALTY.map((p) => `rareza menor que ${num(p.below)} −${p.points}`).join(' · ')}.`,

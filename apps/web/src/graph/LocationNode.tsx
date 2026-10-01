@@ -8,6 +8,7 @@ import {
   FileCode2,
   FileText,
   HardDrive,
+  Landmark,
   Laptop,
   Lock,
   LockKeyhole,
@@ -16,6 +17,7 @@ import {
   Package,
   RectangleHorizontal,
   ShieldCheck,
+  Vault,
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
@@ -96,9 +98,23 @@ function ItemRow({ item }: { item: ItemView }) {
 }
 
 export const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
+const PROTECTION_ICONS: Record<NonNullable<LocationNodeType['data']['protection']>, LucideIcon> = { 'home-safe': Vault, 'bank-box': Landmark };
+export const PROTECTION_TEXT = { 'home-safe': 'Caja fuerte', 'bank-box': 'Caja del banco' } as const;
+
+/** Icono de una ubicación: el de su protección o, si no tiene, el de su tipo. */
+export function locationIcon(data: Pick<LocationNodeType['data'], 'kind' | 'protection'>): LucideIcon {
+  return data.protection ? PROTECTION_ICONS[data.protection] : LOCATION_ICONS[data.kind];
+}
+
+/** "Caja fuerte · dentro de Casa", o null si no tiene protección ni está dentro de otra. */
+export function locationMeta(data: Pick<LocationNodeType['data'], 'protection' | 'insideName'>): string | null {
+  const parts = [data.protection && PROTECTION_TEXT[data.protection], data.insideName !== undefined && `dentro de ${data.insideName}`].filter(Boolean);
+  return parts.length ? parts.join(' · ') : null;
+}
 
 export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
-  const LocationIcon = LOCATION_ICONS[data.kind];
+  const LocationIcon = locationIcon(data);
+  const meta = locationMeta(data);
   const selected = useSelection((s) => isSelected(s.selected, 'location', id));
   return (
     <div
@@ -109,7 +125,10 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
     >
       <header className={styles.locationHeader}>
         <LocationIcon size={14} className={styles.locationPin} aria-hidden />
-        <span className={styles.locationName}>{data.name}</span>
+        <span className={styles.locationTitle}>
+          <span className={styles.locationName}>{data.name}</span>
+          {meta && <span className={styles.locationMeta}>{meta}</span>}
+        </span>
         {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">
           {data.keys.map((k) => (
