@@ -33,7 +33,7 @@
     { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },
     {
       "id": "banco",
-      "name": "Caja del banco",
+      "name": "Caja del banco", "protection": "bank-box",
       "access": [{ "person": "yo" }, { "person": "pareja", "when": { "type": "after-death", "person": "yo" } }]
     },
     { "id": "casa-hermano", "name": "Casa de mi hermano", "access": [{ "person": "yo" }, { "person": "hermano" }] }

@@ -1,4 +1,4 @@
-import { indexModel, parseModel, updateKey } from '@llave-inglesa/domain';
+import { indexModel, parseModel, setLocationProtection, updateKey } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { analyze, attackAtoms, atomEffort, createWorld, PASSPHRASE_EFFORT, simulateAttack, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
@@ -30,11 +30,15 @@ describe('fortaleza de la passphrase', () => {
     expect(d.facts.get('secret:passphrase:k1')?.justification).toMatchObject({ rule: 'passphrase-bruteforce', premises: ['secret:seed:k1'] });
   });
 
-  it('una passphrase débil abarata el robo; una aleatoria larga no', () => {
-    const weak = analyze(strength('weak')).security;
-    const random = analyze(strength('random')).security;
-    expect(weak.score).toBeLessThan(random.score);
-    expect(weak.cuts).toContainEqual([bank, { type: 'passphrase-bruteforce', key: 'k1', strength: 'weak' }]);
+  it('una passphrase débil abre una vía (banco + fuerza bruta); una aleatoria larga no', () => {
+    const route = [bank, { type: 'passphrase-bruteforce', key: 'k1', strength: 'weak' }];
+    expect(analyze(strength('weak')).security.cuts).toContainEqual(route);
+    expect(analyze(strength('random')).security.cuts.some((c) => c.some((a) => a.type === 'passphrase-bruteforce'))).toBe(false);
+  });
+
+  it('si el banco no estuviera protegido, esa vía sería tan barata como la llave inglesa y bajaría la nota', () => {
+    const open = (s: 'weak' | 'random') => setLocationProtection(strength(s), 'banco', undefined);
+    expect(analyze(open('weak')).security.score).toBeLessThan(analyze(open('random')).security.score);
   });
 
   it('sin passphrase no hay nada que adivinar (y la fortaleza queda latente)', () => {
