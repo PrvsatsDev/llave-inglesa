@@ -100,7 +100,7 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 
 | Esquema | Seguridad | Resiliencia | Usabilidad | Herencia |
 |---|---|---|---|---|
-| R01 Papel en el cajón | flojo | flojo | excelente | excelente |
+| R01 Papel en el cajón | muy mal / flojo | flojo | excelente | excelente |
 | R02 Foto en la nube | muy mal | flojo | excelente | muy mal |
 | R03 Acero en la caja fuerte | aceptable | aceptable | excelente | excelente |
 | R04 Acero + copia en el banco | aceptable | bueno | excelente | excelente |
@@ -113,6 +113,11 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
 | R12 2 de 3 con una SeedSigner | aceptable | bueno | bueno | bueno |
 
+## Revisado con el motor
+
+- **R01** (23 · 34 · 100 · 100): el usuario ve bien el 23: un papel a la vista en casa es muy mala
+  custodia. Pendiente para más adelante: la traición de Pareja pesa igual (1,5) que una intrusión.
+
 ## Fricciones al montar los esquemas
 
 (Se rellena sobre la marcha.)
@@ -122,3 +127,6 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
   nada porque los 99 dados la protegen.)
 - **R01**: los ids se quedan con el nombre por defecto (`nuevo-dispositivo`, `nueva-persona`) aunque luego
   se renombre. No se ve en la interfaz, solo en el JSON exportado.
+- **R01**: no es obvio dónde se crea un dispositivo o un backup: solo se puede desde la ficha de su
+  ubicación. Ideas: botones "+ Dispositivo" y "+ Backup" también en el Esquema (preguntando la
+  ubicación), o un "+" junto a cada ubicación del índice.
