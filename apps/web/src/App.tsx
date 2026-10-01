@@ -9,14 +9,13 @@ import { hasLocalDocument, openLocal, saveLocal } from './storage/actions.ts';
 import { useDialog } from './store/dialog.ts';
 import { hasUnsavedChanges, useDocument } from './store/document.ts';
 import { useLayout } from './store/layout.ts';
-import { useScenario } from './store/scenario.ts';
-import { useSelection } from './store/selection.ts';
+import { goBack } from './store/navigation.ts';
 import styles from './App.module.css';
 
 const isEditable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
-/** Atajos globales: deshacer/rehacer, guardar y Esc para cerrar el inspector o la simulación. */
+/** Atajos globales: deshacer/rehacer, guardar y Esc para volver. */
 function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -28,10 +27,8 @@ function useShortcuts() {
         return;
       }
       if (e.key === 'Escape') {
-        // Primero se cierra la ficha abierta; si no hay ninguna, se sale de la simulación.
-        const selection = useSelection.getState();
-        if (selection.selected) selection.select(null);
-        else useScenario.getState().set(null);
+        // Lo mismo que "volver": cierra la ficha, regresa a la lista o sale de la simulación.
+        goBack();
         return;
       }
       // Dentro de un campo de texto, Ctrl+Z es el deshacer nativo del campo.

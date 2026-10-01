@@ -104,7 +104,7 @@ export function ScenarioPanel({ model, view }: { model: CustodyModel; view: Scen
 
   return (
     <>
-      <PanelHeader icon={scenario.kind === 'attack' ? Skull : Flame} kind="Simulación" title={OUTCOME_TITLE[view.outcome]} onClose={() => setScenario(null)} />
+      <PanelHeader icon={scenario.kind === 'attack' ? Skull : Flame} kind="Simulación" title={OUTCOME_TITLE[view.outcome]} onClose={() => setScenario(null)} closeLabel="Salir de la simulación" />
 
       <Section title={scenario.kind === 'attack' ? 'Ataques combinados' : 'Desgracias combinadas'}>
         {scenario.kind === 'attack' ? (

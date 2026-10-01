@@ -21,7 +21,7 @@ function duressHint(catalog: CatalogModel | undefined): string {
 
 export function DeviceInspector({ model, device }: { model: CustodyModel; device: Device }) {
   const apply = useDocument((s) => s.apply);
-  const select = useSelection((s) => s.select);
+  const back = useSelection((s) => s.back);
   const id = device.id;
   const patch = (p: Partial<Device>, field?: string) => apply((m) => updateDevice(m, id, p), field && `device:${id}:${field}`);
 
@@ -48,7 +48,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
 
   return (
     <>
-      <PanelHeader icon={device.kind === 'stateful' ? Cpu : Camera} kind="Dispositivo" title={device.label} onClose={() => select(null)} />
+      <PanelHeader icon={device.kind === 'stateful' ? Cpu : Camera} kind="Dispositivo" title={device.label} />
 
       <Section>
         <Field label="Nombre">{(fid) => <TextInput id={fid} value={device.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
@@ -164,7 +164,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
         label="Eliminar dispositivo"
         onClick={() => {
           apply((m) => removeDevice(m, id));
-          select(null);
+          back();
         }}
       />
     </>

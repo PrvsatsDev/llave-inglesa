@@ -29,7 +29,8 @@ function parseCondition(v: string): Access['when'] {
 
 export function LocationInspector({ model, location }: { model: CustodyModel; location: Location }) {
   const apply = useDocument((s) => s.apply);
-  const select = useSelection((s) => s.select);
+  const back = useSelection((s) => s.back);
+  const open = useSelection((s) => s.open);
   const id = location.id;
   const setAccess = (access: Access[]) => apply((m) => updateLocation(m, id, { access }));
 
@@ -46,12 +47,12 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
       createdId = r.id;
       return r.model;
     });
-    select({ kind, id: createdId });
+    open({ kind, id: createdId });
   };
 
   return (
     <>
-      <PanelHeader icon={MapPin} kind="Ubicación" title={location.name} onClose={() => select(null)} />
+      <PanelHeader icon={MapPin} kind="Ubicación" title={location.name} />
 
       <Section>
         <Field label="Nombre">
@@ -112,7 +113,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         <ul className={styles.list}>
           {items.map((item) => (
             <li key={item.id}>
-              <button className={styles.rowButton} onClick={() => select({ kind: item.kind, id: item.id })}>
+              <button className={styles.rowButton} onClick={() => open({ kind: item.kind, id: item.id })}>
                 <item.icon size={14} aria-hidden />
                 {item.label}
               </button>
@@ -130,7 +131,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         label={items.length ? `Eliminar ubicación y sus ${items.length} objetos` : 'Eliminar ubicación'}
         onClick={() => {
           apply((m) => removeLocation(m, id));
-          select(null);
+          back();
         }}
         disabled={model.locations.length <= 1}
         reason="Tiene que haber al menos una ubicación."

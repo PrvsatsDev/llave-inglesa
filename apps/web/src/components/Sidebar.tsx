@@ -2,18 +2,21 @@ import { addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, t
 import { AlertTriangle, BadgeCheck, CircleCheck, MapPin, Plus, UserPlus, XCircle } from 'lucide-react';
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { keyColor } from '../lib/key-colors.ts';
-import { issueText, provenanceText } from '../lib/text.ts';
+import { issueText, plural, provenanceText } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
+import { useAnalysis } from '../store/analysis.ts';
 import { useDocument } from '../store/document.ts';
 import { PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from '../store/layout.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
+import { useNavigation, type Section as SectionId } from '../store/navigation.ts';
 import { useScenarioView } from '../store/scenario.ts';
-import { Findings } from './Findings.tsx';
+import { LossRoutes, TheftRoutes, TryScenario } from './Findings.tsx';
 import { ScenarioPanel } from './ScenarioPanel.tsx';
 import { Scoreboard } from './Scoreboard.tsx';
 import { Button, Field, Section, Segmented, TextArea, TextInput } from './inspector/fields.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
 import { KeyChip } from './KeyChip.tsx';
+import { Breadcrumbs, SectionTabs } from './Navigation.tsx';
 import styles from './Sidebar.module.css';
 
 function exists(model: CustodyModel, s: Selection | null): boolean {
@@ -23,30 +26,65 @@ function exists(model: CustodyModel, s: Selection | null): boolean {
 }
 
 /**
- * Columna izquierda: las puntuaciones arriba y, debajo, el contenido.
- * Prioridad del contenido: ficha de lo seleccionado > simulación activa > resumen del esquema.
+ * Columna izquierda: secciones, puntuaciones, migas de pan y el contenido.
+ * La ficha de un elemento se abre encima de la sección en la que se estaba, y "volver" regresa a ella.
  */
 export function Sidebar() {
   const model = useDocument((s) => s.model);
   const selected = useSelection((s) => s.selected);
-  const view = useScenarioView();
   const collapsed = useLayout((s) => s.collapsed);
-  const mode = exists(model, selected) ? 'inspector' : view ? 'scenario' : 'summary';
-  const labels = { inspector: 'Inspector', scenario: 'Simulación', summary: 'Resumen del esquema' };
+  const section = useNavigation((s) => s.section);
   return (
     <aside className={styles.sidebar} aria-label="Panel">
+      {!collapsed && <SectionTabs model={model} />}
       <Scoreboard />
       {!collapsed && (
         <>
-          <div className={styles.content} aria-label={labels[mode]}>
-            {mode === 'inspector' && <Inspector />}
-            {mode === 'scenario' && view && <ScenarioPanel model={model} view={view} />}
-            {mode === 'summary' && <Summary model={model} />}
+          <Breadcrumbs model={model} />
+          <div className={styles.content}>
+            {exists(model, selected) ? <Inspector /> : <SectionContent section={section} model={model} />}
           </div>
           <ResizeHandle />
         </>
       )}
     </aside>
+  );
+}
+
+function SectionContent({ section, model }: { section: SectionId; model: CustodyModel }) {
+  const view = useScenarioView();
+  const metric = useNavigation((s) => s.metric);
+  if (section === 'schema') return <Summary model={model} />;
+  if (section === 'simulate') return view ? <ScenarioPanel model={model} view={view} /> : <TryScenario model={model} />;
+  switch (metric) {
+    case 'security':
+      return <TheftRoutes model={model} />;
+    case 'resilience':
+      return <LossRoutes model={model} />;
+    case 'usability':
+    case 'inheritance':
+      return <MetricDetail metric={metric} />;
+  }
+}
+
+/** Provisional: la línea de detalle de la tarjeta, hasta que estas métricas tengan su propia lista. */
+function MetricDetail({ metric }: { metric: 'usability' | 'inheritance' }) {
+  const analysis = useAnalysis((s) => s.analysis);
+  if (!analysis) return null;
+  const text =
+    metric === 'usability'
+      ? analysis.usability.locations
+        ? `Para firmar hay que ir a ${plural(analysis.usability.locations.length, 'ubicación', 'ubicaciones')}.`
+        : 'No se puede firmar de forma segura.'
+      : analysis.inheritance.status === 'ok'
+        ? `Los herederos recuperan los fondos yendo a ${plural(analysis.inheritance.locations!.length, 'ubicación', 'ubicaciones')}.`
+        : analysis.inheritance.status === 'no-heirs'
+          ? 'No hay herederos en el esquema.'
+          : 'Los herederos no podrían recuperar los fondos.';
+  return (
+    <Section>
+      <p className={styles.provenance}>{text}</p>
+    </Section>
   );
 }
 
@@ -173,8 +211,6 @@ function Summary({ model }: { model: CustodyModel }) {
         </div>
         <p className={styles.hint}>Los dispositivos y backups se añaden desde cada ubicación. Pulsa cualquier elemento del mapa para editarlo.</p>
       </Section>
-
-      <Findings model={model} />
 
       <Section title="Validación">
         {issues.length === 0 ? (
