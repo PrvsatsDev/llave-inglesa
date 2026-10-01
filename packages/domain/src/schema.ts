@@ -74,6 +74,11 @@ export const KeySchema = z.object({
   fingerprint: z.string().regex(/^[0-9a-fA-F]{8}$/).optional(),
   /** La key requiere passphrase BIP39 además de la semilla. */
   passphrase: z.boolean().default(false),
+  /**
+   * Cómo es la passphrase, nunca cuál es. weak: palabra, nombre o fecha; phrase: varias palabras
+   * elegidas por uno; random: generada al azar y larga. Sin indicar se trata como débil (ante la duda, lo peor).
+   */
+  passphraseStrength: z.enum(['weak', 'phrase', 'random']).optional(),
   provenance: ProvenanceSchema.default({ sources: [{ kind: 'unknown' }], independentlyVerified: false }),
 });
 export type Key = z.infer<typeof KeySchema>;

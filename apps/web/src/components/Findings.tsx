@@ -1,5 +1,5 @@
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
-import { attackAtoms, createWorld, lossAtoms } from '@llave-inglesa/engine';
+import { attackAtoms, createWorld, lossAtoms, type LossEvent } from '@llave-inglesa/engine';
 import { ChevronDown, ChevronUp, Flame, Hourglass, Play, Skull } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { attackText, lossText } from '../lib/text.ts';
@@ -150,10 +150,15 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
   if (!analysis) return null;
   const index = indexModel(model);
   const { resilience } = analysis;
+  const rarity = new Map([
+    ...resilience.cuts.map((cut, i) => [cut, resilience.rarities[i]!] as const),
+    ...resilience.lockouts.map((cut, i) => [cut, resilience.lockoutRarities[i]!] as const),
+  ]);
+  const lossMeta = (cut: LossEvent[]) => `rareza ${rarity.get(cut)!.toLocaleString('es')} · ${atOnce(cut)}`;
 
   return (
     <>
-      <Section title="Formas más baratas de perderlo todo">
+      <Section title="Formas más probables de perderlo todo">
         <div className={styles.header}>
           <Flame size={14} aria-hidden />
           <span>Tras cualquiera de estas, nadie podría recuperar los fondos. Pulsa una para verla en el mapa.</span>
@@ -163,9 +168,9 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
             cuts={resilience.cheapest}
             all={resilience.cuts}
             text={(e) => lossText(e, index)}
-            meta={(cut) => atOnce(cut)}
+            meta={lossMeta}
             empty={`Ninguna combinación de hasta ${resilience.searchedUpTo} desgracias lo consigue.`}
-            restTitle="Hacen falta más desgracias a la vez"
+            restTitle="Menos probables"
             toScenario={(events) => ({ kind: 'loss', events })}
             from="resilience"
           />
@@ -180,12 +185,12 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
             <span>Los fondos quedarían inmovilizados mientras dure la incapacidad; se recuperan tras el fallecimiento.</span>
           </div>
           <CutList
-            cuts={resilience.lockouts.filter((c) => c.length === resilience.lockoutMinSize)}
+            cuts={resilience.lockouts.filter((_, i) => resilience.lockoutRarities[i] === resilience.lockoutMinRarity)}
             all={resilience.lockouts}
             text={(e) => lossText(e, index)}
-            meta={(cut) => atOnce(cut)}
+            meta={lossMeta}
             empty=""
-            restTitle="Hacen falta más sucesos a la vez"
+            restTitle="Menos probables"
             tone="warn"
             toScenario={(events) => ({ kind: 'loss', events })}
             from="resilience"

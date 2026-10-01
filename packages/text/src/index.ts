@@ -1,6 +1,6 @@
 import { ADVISORIES } from '@llave-inglesa/domain';
-import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Policy, SecretRef } from '@llave-inglesa/domain';
-import type { AttackAtom, EntropyOrigin, Fact, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
+import type { AttackAtom, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -45,6 +45,43 @@ export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen 
 
 const locationKind = (index: ModelIndex, id: string) => index.locations.get(id)?.kind ?? 'physical';
 
+export const ROLE_TEXT: Record<Person['role'], string> = {
+  owner: 'titular',
+  heir: 'heredero/a',
+  custodian: 'custodio/a',
+  other: 'otra persona',
+};
+
+/** "A", "A y B", "A, B y C". */
+export const listText = (items: readonly string[]) => (items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} y ${items.at(-1)}`);
+
+/**
+ * Quién recupera la herencia, distinguiendo herederos de quien les ayuda (custodios…).
+ * Sin las ubicaciones: quien lo usa añade "yendo a …".
+ */
+export function inheritanceText(inh: InheritanceReport, people: readonly Person[]): string {
+  const who = (ids: readonly string[]) =>
+    listText(ids.map((id) => {
+      const p = people.find((x) => x.id === id);
+      return p ? `${p.name} (${ROLE_TEXT[p.role]})` : id;
+    }));
+  const verb = (ids: readonly string[], one: string, many: string) => (ids.length === 1 ? one : many);
+  switch (inh.status) {
+    case 'no-heirs':
+      return 'Tras el fallecimiento de los titulares no queda nadie que pueda llegar a los fondos';
+    case 'unrecoverable':
+      return inh.heirs.length > 0
+        ? `${who(inh.heirs)} no ${verb(inh.heirs, 'consigue', 'consiguen')} recuperar los fondos`
+        : 'Nadie tiene papel de heredero, y quien queda no consigue recuperar los fondos';
+    case 'ok':
+      if (inh.heirs.length === 0) return `Nadie tiene papel de heredero, pero ${who(inh.helpers)} ${verb(inh.helpers, 'puede', 'pueden')} recuperar los fondos`;
+      return (
+        `${who(inh.heirs)} ${verb(inh.heirs, 'recupera', 'recuperan')} los fondos` +
+        (inh.helpers.length > 0 ? ` con la ayuda de ${who(inh.helpers)}` : '')
+      );
+  }
+}
+
 /** Nombre corto de cada tipo de ataque (p. ej. para explicar su esfuerzo). */
 export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   burglary: 'robo sin nadie presente',
@@ -53,7 +90,10 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'entropy-compromise': 'RNG con fallo desconocido',
   'known-weak-entropy': 'fallo de entropía publicado',
   'malicious-firmware': 'firmware malicioso',
+  'passphrase-bruteforce': 'fuerza bruta a la passphrase',
 };
+
+export const PASSPHRASE_STRENGTH_TEXT = { weak: 'débil', phrase: 'frase', random: 'aleatoria larga' } as const;
 
 /** El mismo átomo se cuenta distinto según la ubicación: no se "entra" en una nube. */
 export function attackText(a: AttackAtom, index: ModelIndex): string {
@@ -69,6 +109,7 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     case 'entropy-compromise': return `RNG con fallo aún desconocido: ${originText(a.origin)}`;
     case 'known-weak-entropy': return `Semilla adivinable por un fallo publicado: ${advisoryShortName(a.advisory)}`;
     case 'malicious-firmware': return `Firmware malicioso: ${a.vendor}`;
+    case 'passphrase-bruteforce': return `Fuerza bruta a la passphrase de ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
 }
 
@@ -77,7 +118,9 @@ export function lossText(e: LossEvent, index: ModelIndex): string {
   switch (e.type) {
     case 'destroy-location': {
       const kind = locationKind(index, e.location);
-      const what = kind === 'cloud' ? 'Pérdida de la cuenta' : kind === 'device' ? 'Avería o robo de' : 'Destrucción de';
+      if (e.disaster === 'fire') return `Incendio en ${label(e.location)}`;
+      if (e.disaster === 'flood') return `Inundación en ${label(e.location)}`;
+      const what = kind === 'cloud' ? 'Pérdida de la cuenta' : kind === 'device' ? 'Avería de' : 'Pérdida del acceso a';
       return `${what} ${label(e.location)}`;
     }
     case 'item-loss': return `Pérdida de ${label(e.item)}`;
@@ -123,6 +166,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;
     case 'known-weak-entropy': return `adivinable por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
     case 'malicious-firmware': return `filtrada en las firmas por un firmware malicioso de ${v.vendor}`;
+    case 'passphrase-bruteforce': return `adivinada por fuerza bruta a partir de la semilla (passphrase ${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']})`;
     case 'physical-extraction': return `extraída del hardware de ${name(v.device)} pese al PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
     case 'descriptor-xpubs': return 'incluida en el descriptor';
@@ -148,6 +192,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'key-repeated-in-policy': 'Una key aparece dos veces en la política',
   'key-not-in-policy': 'Hay una key que no participa en la política',
   'no-owner': 'Falta una persona con rol de titular',
+  'passphrase-strength-unset': 'Hay una passphrase sin fortaleza indicada: se trata como débil',
 };
 
 export function issueText(issue: Issue, label: Label): string {

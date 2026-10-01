@@ -20,6 +20,8 @@ export interface Holdings {
   compromisedSeeds?: readonly CompromisedSeed[];
   /** PINs que una persona coaccionada no revela de verdad (da el de coacción). */
   withheldPins?: readonly { person: Id; device: Id }[];
+  /** Passphrases que el atacante intenta adivinar por fuerza bruta (necesita la semilla). */
+  guessedPassphrases?: readonly { key: Id; strength: 'weak' | 'phrase' }[];
 }
 
 export type CompromisedSeed =
@@ -86,6 +88,13 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
 
   do {
     changed = false;
+
+    // Fuerza bruta: con la semilla en la mano se prueban passphrases hasta dar con la que tiene fondos.
+    for (const g of holdings.guessedPassphrases ?? []) {
+      const seedId = factId(secret({ type: 'seed', key: g.key }));
+      if (!facts.has(seedId)) continue;
+      add(secret({ type: 'passphrase', key: g.key }), { rule: 'passphrase-bruteforce', premises: [seedId], via: { strength: g.strength } });
+    }
 
     for (const a of model.artifacts) {
       const itemId = factId({ kind: 'item', item: a.id });

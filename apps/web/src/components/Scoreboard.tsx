@@ -28,8 +28,6 @@ interface Metric {
 }
 
 function metrics(a: Analysis): Metric[] {
-  const cut = (n: number | null, upTo: number, what: string) =>
-    n === null ? `ninguna combinación de ≤${upTo} lo consigue` : n === 0 ? 'ya ocurre ahora mismo' : `${what} con ${plural(n, 'suceso', 'sucesos a la vez')}`;
   const inh = a.inheritance;
   const sec = a.security;
   const secDetail =
@@ -42,9 +40,12 @@ function metrics(a: Analysis): Metric[] {
       id: 'resilience',
       label: METRIC_LABEL.resilience, short: 'Res',
       score: a.resilience.score,
-      detail:
-        cut(a.resilience.minSize, a.resilience.searchedUpTo, 'pérdida') +
-        (a.resilience.lockoutMinSize ? ` · bloqueo temporal con ${plural(a.resilience.lockoutMinSize, 'suceso', 'sucesos')}` : ''),
+      detail: !a.resilience.recoverableNow
+        ? 'ya ahora no se puede recuperar'
+        : (a.resilience.minRarity === null
+            ? `ninguna pérdida con ≤${a.resilience.searchedUpTo} desgracias`
+            : `pérdida más probable: rareza ${a.resilience.minRarity.toLocaleString('es')}`) +
+          (a.resilience.lockoutMinRarity !== null ? ` · bloqueo temporal: rareza ${a.resilience.lockoutMinRarity.toLocaleString('es')}` : ''),
     },
     {
       id: 'usability',

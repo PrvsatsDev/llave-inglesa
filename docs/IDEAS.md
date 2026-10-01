@@ -35,6 +35,10 @@ pensarse antes de implementarla.
 - **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras.
 - **Resiliencia ponderada**: hoy todas las desgracias pesan igual (un incendio
   cuenta lo mismo que olvidar una contraseña).
+- **Profundidad de la seguridad** (para la calibración): hoy la puntuación solo mira el
+  robo más barato y las vías casi igual de baratas, así que endurecer una vía secundaria
+  (p. ej. pasar una passphrase de "frase" a "aleatoria larga" cuando lo más barato es la
+  llave inglesa) no mueve el número. Valorar que cuente también el siguiente escalón.
 - **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol,
   preparado para nodos `after`/`older`.
 

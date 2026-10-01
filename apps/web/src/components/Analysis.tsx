@@ -1,12 +1,14 @@
 import { indexModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import {
   ATTACK_EFFORT,
-  cutScore,
   DURESS_SURCHARGE,
+  PASSPHRASE_EFFORT,
+  rarityScore,
   explain,
   EXPOSURE,
   inheritanceScore,
-  lockoutPenalty,
+  LOCKOUT_PENALTY,
+  LOSS_RARITY,
   ownerDeaths,
   resilienceBreakdown,
   securityBreakdown,
@@ -18,7 +20,7 @@ import {
 } from '@llave-inglesa/engine';
 import { ChevronRight, Flame, Loader2, MapPin } from 'lucide-react';
 import { useMemo } from 'react';
-import { ATTACK_KIND_TEXT, plural } from '../lib/text.ts';
+import { ATTACK_KIND_TEXT, inheritanceText, plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
@@ -30,6 +32,7 @@ import tree from './ScenarioPanel.module.css';
 import styles from './Analysis.module.css';
 
 const num = (n: number) => n.toLocaleString('es');
+const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Una línea del desglose: de dónde sale la base y qué se le resta. */
 interface Row {
@@ -157,7 +160,7 @@ function securityScore(a: EngineAnalysis) {
     score: sec.score,
     rows,
     how: [
-      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
+      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
       `Cuanto más esfuerzo exige el robo más barato, más puntuación: ${curve}.`,
       `Tener varias vías casi igual de baratas (hasta ${num(EXPOSURE.margin)} más de esfuerzo) resta ${EXPOSURE.penaltyPerExtraRoute} por cada vía extra, como mucho ${EXPOSURE.maxPenalty}.`,
     ],
@@ -169,19 +172,26 @@ function resilienceScore(a: EngineAnalysis) {
   if (!res.recoverableNow) {
     return { score: res.score, rows: [{ label: 'Ahora mismo nadie puede recuperar los fondos', points: 0 }], how: [] as string[] };
   }
-  const b = resilienceBreakdown(res.minSize, res.lockoutMinSize);
+  const b = resilienceBreakdown(res.minRarity, res.combinedRarity, res.lockoutMinRarity);
+  const label = (reason: string, points: number): Row =>
+    reason === 'other-routes'
+      ? { label: `${plural(res.cuts.length - 1, 'vía más', 'vías más')}: todas juntas equivalen a rareza ${num(round1(res.combinedRarity!))}`, points: -points }
+      : { label: `Bloqueo temporal más probable: rareza ${num(res.lockoutMinRarity!)}`, points: -points };
   const rows: Row[] = [
-    res.minSize === null
+    res.minRarity === null
       ? { label: `Ninguna combinación de hasta ${res.searchedUpTo} desgracias lo pierde todo`, points: b.base }
-      : { label: `Se pierde todo con ${plural(res.minSize, 'desgracia', 'desgracias a la vez')}`, points: b.base },
-    ...b.penalties.map((p) => ({ label: `Bloqueo temporal con ${plural(res.lockoutMinSize!, 'suceso', 'sucesos a la vez')}`, points: -p.points })),
+      : { label: `Pérdida más probable: rareza ${num(res.minRarity)}`, points: b.base },
+    ...b.penalties.map((p) => label(p.reason, p.points)),
   ];
+  const r = LOSS_RARITY;
   return {
     score: res.score,
     rows,
     how: [
-      `Se buscan las combinaciones de hasta ${res.searchedUpTo} desgracias (incendio, pérdida, fallecimiento, olvido…) tras las que nadie podría recuperar los fondos nunca. Cuantas más tienen que ocurrir a la vez, más puntuación: ${[1, 2, 3].map((n) => `${plural(n, 'desgracia', 'desgracias')} → ${cutScore(n)}`).join(' · ')} · ninguna → ${cutScore(null)}.`,
-      `Un bloqueo temporal (fondos inmovilizados mientras alguien está incapacitado) no pierde nada, pero resta: con 1 suceso −${lockoutPenalty(1)}, con 2 a la vez −${lockoutPenalty(2)}.`,
+      `Cada desgracia tiene una rareza: cuántos órdenes de magnitud tiene de improbable. Olvidar lo memorizado ${num(r.forget)} · perder o romper un objeto ${num(r['item-loss'])} (una placa o arandelas de acero, que solo se pueden extraviar, ${num(r['steel-loss'])}) · avería de un portátil o pérdida de una cuenta ${num(r.total.device)} · incendio, inundación o fallecimiento ${num(r.fire)} · incapacidad ${num(r.incapacity)} · pérdida del acceso a un sitio ${num(r.total.physical)}.`,
+      `Varias desgracias a la vez suman sus rarezas (como multiplicar probabilidades). Se buscan las combinaciones de hasta ${res.searchedUpTo} tras las que nadie podría recuperar los fondos nunca; cuanto más rara la más probable, más puntuación: ${[1, 2, 3, 4, 5, 6].map((x) => `${x}${x === 6 ? ' o más' : ''} → ${rarityScore(x)}`).join(' · ')}.`,
+      'Las demás vías también cuentan: sus probabilidades se suman, y la puntuación sale de la rareza equivalente de todas juntas.',
+      `Un bloqueo temporal (fondos inmovilizados mientras alguien está incapacitado) no pierde nada, pero resta: ${LOCKOUT_PENALTY.map((p) => `rareza menor que ${num(p.below)} −${p.points}`).join(' · ')}.`,
     ],
   };
 }
@@ -202,7 +212,7 @@ function inheritanceScoreRows(a: EngineAnalysis) {
   const inh = a.inheritance;
   const label =
     inh.status === 'ok'
-      ? `Los herederos recuperan yendo a ${plural(inh.locations!.length, 'ubicación', 'ubicaciones')}`
+      ? `${inh.heirs.length > 0 ? 'Los herederos recuperan' : 'Se recupera'} yendo a ${plural(inh.locations!.length, 'ubicación', 'ubicaciones')}`
       : inh.status === 'no-heirs'
         ? 'No hay herederos'
         : 'Los herederos no pueden recuperar los fondos';
@@ -276,8 +286,11 @@ function Usability({ model, analysis }: { model: CustodyModel; analysis: EngineA
 function Inheritance({ model, analysis }: { model: CustodyModel; analysis: EngineAnalysis }) {
   const inh = analysis.inheritance;
   const simulate = useNavigation((s) => s.simulate);
-  const derivation = useMemo(() => simulateInheritance(model, inh.locations ?? undefined), [model, inh.locations]);
-  const name = (id: Id) => model.people.find((p) => p.id === id)?.name || 'Sin nombre';
+  const people = useMemo(() => [...inh.heirs, ...inh.helpers], [inh.heirs, inh.helpers]);
+  const derivation = useMemo(
+    () => simulateInheritance(model, inh.locations ?? undefined, inh.status === 'ok' ? people : undefined),
+    [model, inh.locations, inh.status, people],
+  );
 
   if (inh.status === 'no-heirs') {
     return (
@@ -293,8 +306,8 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
     <>
       <Section title="Herederos">
         <p className={styles.muted}>
-          Tras el fallecimiento de los titulares, <strong>{inh.heirs.map(name).join(', ')}</strong>{' '}
-          {inh.status === 'ok' ? 'recuperan los fondos yendo a:' : 'no consiguen recuperar los fondos.'}
+          Tras el fallecimiento de los titulares, {inheritanceText(inh, model.people)}
+          {inh.status === 'ok' ? ', yendo a:' : '.'}
         </p>
         {inh.locations && <Places model={model} ids={inh.locations} />}
         <Button icon={Flame} onClick={() => simulate({ kind: 'loss', events: ownerDeaths(model) }, 'inheritance')}>
@@ -302,7 +315,7 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
         </Button>
       </Section>
       <Section title="Por qué">
-        <Why model={model} derivation={derivation} who="Los herederos" />
+        <Why model={model} derivation={derivation} who={inh.status === 'ok' ? 'Los herederos' : 'Con todo lo que tienen a su alcance, quienes quedan'} />
       </Section>
     </>
   );

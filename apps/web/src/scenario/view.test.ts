@@ -66,7 +66,7 @@ describe('scenarioView: desgracias', () => {
   });
 
   it('incendio en casa: recuperable, con lo de casa destruido', () => {
-    const v = scenarioView(casa, { kind: 'loss', events: [{ type: 'destroy-location', location: 'casa' }] })!;
+    const v = scenarioView(casa, { kind: 'loss', events: [{ type: 'destroy-location', location: 'casa', disaster: 'total' }] })!;
     expect(v.outcome).toBe('recoverable');
     expect(v.tone).toBe('recovery');
     expect(v.locations.get('casa')).toBe('destroyed');
@@ -77,7 +77,7 @@ describe('scenarioView: desgracias', () => {
   it('dos incendios: pérdida permanente', () => {
     const v = scenarioView(casa, {
       kind: 'loss',
-      events: [{ type: 'destroy-location', location: 'casa' }, { type: 'destroy-location', location: 'banco' }],
+      events: [{ type: 'destroy-location', location: 'casa', disaster: 'total' }, { type: 'destroy-location', location: 'banco', disaster: 'total' }],
     })!;
     expect(v.outcome).toBe('lost');
   });
@@ -122,5 +122,16 @@ describe('scenarioView: PIN de coacción y dispositivos comprometidos', () => {
     const graph = applyScenario(buildGraph(casa), view);
     const item = graph.nodes.flatMap((n) => (n.type === 'location' ? (n as LocationNode).data.items : [])).find((i) => i.id === 'ccq');
     expect(item?.compromise).toBe('firmware');
+  });
+});
+
+describe('scenarioView: incendio', () => {
+  it('la ubicación lleva su desastre; el acero resiste y lo demás se destruye', () => {
+    const v = scenarioView(casa, { kind: 'loss', events: [{ type: 'destroy-location', location: 'casa', disaster: 'fire' }] })!;
+    expect(v.outcome).toBe('recoverable');
+    expect(v.disasters).toEqual(new Map([['casa', 'fire']]));
+    expect(v.survived).toEqual(new Set(['metal-k2']));
+    expect(v.items.get('ccq')).toBe('destroyed');
+    expect(v.items.get('metal-k2')).not.toBe('destroyed');
   });
 });

@@ -1,6 +1,6 @@
 import { ADVISORIES, advisoriesFor, indexModel, parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { ADVISORY_TITLE, advisoryText, attackText, lossText, secretText } from '../src/index.ts';
+import { ADVISORY_TITLE, advisoryText, attackText, inheritanceText, lossText, secretText } from '../src/index.ts';
 
 const result = parseModel({
   format: 'llave-inglesa',
@@ -27,9 +27,11 @@ describe('textos según el tipo de ubicación', () => {
   });
 
   it('pérdidas', () => {
-    expect(lossText({ type: 'destroy-location', location: 'casa' }, index)).toBe('Destrucción de Casa');
-    expect(lossText({ type: 'destroy-location', location: 'portatil' }, index)).toBe('Avería o robo de Portátil');
-    expect(lossText({ type: 'destroy-location', location: 'nube' }, index)).toBe('Pérdida de la cuenta iCloud');
+    expect(lossText({ type: 'destroy-location', location: 'casa', disaster: 'fire' }, index)).toBe('Incendio en Casa');
+    expect(lossText({ type: 'destroy-location', location: 'casa', disaster: 'flood' }, index)).toBe('Inundación en Casa');
+    expect(lossText({ type: 'destroy-location', location: 'casa', disaster: 'total' }, index)).toBe('Pérdida del acceso a Casa');
+    expect(lossText({ type: 'destroy-location', location: 'portatil', disaster: 'total' }, index)).toBe('Avería de Portátil');
+    expect(lossText({ type: 'destroy-location', location: 'nube', disaster: 'total' }, index)).toBe('Pérdida de la cuenta iCloud');
   });
 
   it('contraseñas', () => {
@@ -66,5 +68,27 @@ describe('ataques de entropía: hipotético frente a conocido', () => {
   it('distingue el fallo aún desconocido del publicado', () => {
     expect(attackText({ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'SeedSigner' } }, index)).toBe('RNG con fallo aún desconocido: SeedSigner');
     expect(attackText({ type: 'known-weak-entropy', advisory: 'coldcard-rng-2026' }, index)).toBe('Semilla adivinable por un fallo publicado: Coldcard 2026');
+  });
+});
+
+describe('texto de la herencia', () => {
+  const people = [
+    { id: 'pareja', name: 'Pareja', role: 'heir' as const, knows: [] },
+    { id: 'hijo', name: 'Hijo', role: 'heir' as const, knows: [] },
+    { id: 'hermano', name: 'Hermano', role: 'custodian' as const, knows: [] },
+  ];
+  const ok = { score: 90, status: 'ok' as const, heirs: ['pareja'], helpers: [], locations: ['casa'] };
+
+  it('nombra a los herederos con su papel y, solo si hace falta, a quien les ayuda', () => {
+    expect(inheritanceText(ok, people)).toBe('Pareja (heredero/a) recupera los fondos');
+    expect(inheritanceText({ ...ok, heirs: ['pareja', 'hijo'], helpers: ['hermano'] }, people)).toBe(
+      'Pareja (heredero/a) y Hijo (heredero/a) recuperan los fondos con la ayuda de Hermano (custodio/a)',
+    );
+  });
+
+  it('sin herederos, lo dice aunque un custodio pueda recuperar', () => {
+    expect(inheritanceText({ ...ok, heirs: [], helpers: ['hermano'] }, people)).toBe(
+      'Nadie tiene papel de heredero, pero Hermano (custodio/a) puede recuperar los fondos',
+    );
   });
 });

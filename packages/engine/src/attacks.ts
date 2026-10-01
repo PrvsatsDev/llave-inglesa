@@ -1,4 +1,4 @@
-import { advisoriesFor, catalogModelByName, type Device, type Id } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, type Device, type Id, type Key } from '@llave-inglesa/domain';
 import type { CompromisedSeed, Holdings } from './derive.ts';
 import { entropyOrigins, keyCompromise, originKey, weakEntropyKeys, type EntropyOrigin } from './entropy.ts';
 import { firmwareDevices, firmwareExposure } from './firmware.ts';
@@ -24,7 +24,19 @@ export type AttackAtom =
   /** Fallo de entropía publicado (p. ej. Coldcard 2026): las semillas afectadas se pueden adivinar. */
   | { type: 'known-weak-entropy'; advisory: string }
   /** Firmware malicioso de un fabricante: filtra en las firmas las semillas que pasan por sus dispositivos. */
-  | { type: 'malicious-firmware'; vendor: string };
+  | { type: 'malicious-firmware'; vendor: string }
+  /** Adivinar por fuerza bruta una passphrase no aleatoria; solo sirve teniendo ya la semilla. */
+  | { type: 'passphrase-bruteforce'; key: Id; strength: PassphraseGuess };
+
+/** Fortaleza de una passphrase que se puede adivinar (las aleatorias largas no). */
+export type PassphraseGuess = 'weak' | 'phrase';
+
+/** Fortaleza efectiva: sin indicar cuenta como débil. Null si no se puede adivinar. */
+export function guessablePassphrase(key: Key): PassphraseGuess | null {
+  if (!key.passphrase) return null;
+  const strength = key.passphraseStrength ?? 'weak';
+  return strength === 'random' ? null : strength;
+}
 
 export function attackAtoms(world: World): AttackAtom[] {
   const { model } = world;
@@ -40,6 +52,10 @@ export function attackAtoms(world: World): AttackAtom[] {
   for (const origin of entropyOrigins(model)) atoms.push({ type: 'entropy-compromise', origin });
   for (const advisory of weakEntropyKeys(model).keys()) atoms.push({ type: 'known-weak-entropy', advisory });
   for (const { vendor } of firmwareExposure(model).values()) atoms.push({ type: 'malicious-firmware', vendor });
+  for (const key of model.keys) {
+    const strength = guessablePassphrase(key);
+    if (strength) atoms.push({ type: 'passphrase-bruteforce', key: key.id, strength });
+  }
   return atoms;
 }
 
@@ -60,6 +76,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   const origins = new Set<string>();
   const advisories = new Set<string>();
   const firmware = new Set<string>();
+  const bruteforce: { key: Id; strength: PassphraseGuess }[] = [];
   for (const a of atoms) {
     switch (a.type) {
       case 'burglary':
@@ -82,6 +99,9 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'malicious-firmware':
         firmware.add(a.vendor.trim().toLowerCase());
         break;
+      case 'passphrase-bruteforce':
+        bruteforce.push({ key: a.key, strength: a.strength });
+        break;
     }
   }
   const compromisedSeeds: CompromisedSeed[] = world.model.keys.flatMap((key) => {
@@ -103,7 +123,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       if (advisory) item.value.holds.forEach((key) => compromisedSeeds.push({ key, advisory, device: item.value.id }));
     }
   }
-  return { people: [...people], locations: [...locations], compromisedSeeds };
+  return { people: [...people], locations: [...locations], compromisedSeeds, guessedPassphrases: bruteforce };
 }
 
 /** Cómo cae un dispositivo en un ataque: firmware malicioso del fabricante o extracción física de la semilla. */

@@ -1,11 +1,11 @@
 import type { Id } from '@llave-inglesa/domain';
 import type { Holdings } from './derive.ts';
-import { accessibleLocations, canAct, type LossEvent, type World } from './world.ts';
+import { accessibleLocations, canAct, DISASTERS, type LossEvent, type World } from './world.ts';
 
 /** Eventos de pérdida candidatos para el análisis de resiliencia. */
 export function lossAtoms(world: World): LossEvent[] {
   const { model } = world;
-  const atoms: LossEvent[] = model.locations.map((l) => ({ type: 'destroy-location', location: l.id }));
+  const atoms: LossEvent[] = model.locations.flatMap((l) => DISASTERS[l.kind].map((disaster): LossEvent => ({ type: 'destroy-location', location: l.id, disaster })));
   for (const p of model.people) {
     if (p.role === 'other') continue;
     atoms.push({ type: 'death', person: p.id }, { type: 'incapacity', person: p.id });

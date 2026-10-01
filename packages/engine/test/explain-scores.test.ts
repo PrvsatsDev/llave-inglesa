@@ -19,7 +19,7 @@ describe.each(FIXTURES)('el porqué de las puntuaciones (%s)', (name) => {
   it('el desglose de seguridad y resiliencia suma la puntuación mostrada', () => {
     const sec = securityBreakdown(a.security.minEffort, a.security.cheapRoutes);
     expect(sec.score).toBe(a.security.score);
-    const res = resilienceBreakdown(a.resilience.minSize, a.resilience.lockoutMinSize);
+    const res = resilienceBreakdown(a.resilience.minRarity, a.resilience.combinedRarity, a.resilience.lockoutMinRarity);
     if (a.resilience.recoverableNow) expect(res.score).toBe(a.resilience.score);
     for (const b of [sec, res]) expect(b.score).toBeLessThanOrEqual(b.base);
   });

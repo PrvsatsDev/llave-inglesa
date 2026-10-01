@@ -15,6 +15,7 @@ import {
   Network,
   Package,
   RectangleHorizontal,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
@@ -34,6 +35,9 @@ export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
   other: Package,
   descriptor: FileCode2,
 };
+
+/** Etiqueta del desastre simulado en la ubicación ('total' según el tipo de ubicación). */
+const DISASTER_TAG = { fire: 'Incendio', flood: 'Inundación', physical: 'Sin acceso', device: 'Averiado', cloud: 'Cuenta perdida' } as const;
 
 /** Cómo cae el dispositivo en el ataque simulado (texto además del color). */
 const COMPROMISE = { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' } as const;
@@ -62,6 +66,11 @@ function ItemRow({ item }: { item: ItemView }) {
           {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label="con PIN" />}
           {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label="cifrado" />}
         </span>
+        {item.survived && (
+          <span className={styles.survivedTag}>
+            <ShieldCheck size={11} aria-hidden /> Resiste
+          </span>
+        )}
         {item.compromise && (
           <span className={styles.compromiseTag}>
             <Bug size={11} aria-hidden /> {COMPROMISE[item.compromise]}
@@ -101,7 +110,7 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
       <header className={styles.locationHeader}>
         <LocationIcon size={14} className={styles.locationPin} aria-hidden />
         <span className={styles.locationName}>{data.name}</span>
-        {data.state === 'destroyed' && <span className={styles.stateTag}>Destruida</span>}
+        {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">
           {data.keys.map((k) => (
             <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`}>
