@@ -30,20 +30,21 @@ async function main(argv: string[]): Promise<number> {
 function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
   const out: string[] = [];
   const section = (title: string) => out.push('', bold(title));
-  const bySize = <T>(cuts: T[][], size: number | null) => cuts.filter((c) => c.length === size);
+  const num = (n: number) => n.toLocaleString('es');
   const label = (id: string) => model.locations.find((l) => l.id === id)?.name ?? id;
 
   out.push(bold(`🔧 ${model.name}`) + dim(`  — política ${fmt.policy()}`));
   if (model.description) out.push(dim(model.description));
 
   section('Puntuación');
-  const sizeText = (n: number | null, upTo: number) => (n === null ? `ninguna combinación de ≤${upTo}` : `${n} a la vez`);
   const sec = a.security;
   const secText = sec.minEffort === null
     ? `ningún robo con ≤${sec.searchedUpTo} ataques`
     : `robo con esfuerzo ${sec.minEffort}` + (sec.cheapRoutes > 1 ? ` · ${sec.cheapRoutes} vías igual de baratas` : '');
   out.push(`  Seguridad    ${scoreBar(sec.score)}  ${dim(secText)}`);
-  out.push(`  Resiliencia  ${scoreBar(a.resilience.score)}  ${dim('pérdida con ' + sizeText(a.resilience.minSize, a.resilience.searchedUpTo))}`);
+  const res = a.resilience;
+  const resText = res.minRarity === null ? `ninguna pérdida con ≤${res.searchedUpTo} desgracias` : `pérdida más probable: rareza ${num(res.minRarity)}`;
+  out.push(`  Resiliencia  ${scoreBar(res.score)}  ${dim(resText)}`);
   out.push(`  Usabilidad   ${scoreBar(a.usability.score)}  ${dim(a.usability.locations ? `firmar visitando ${a.usability.locations.length} ubicación(es)` : 'el titular no puede firmar de forma segura')}`);
   const inh = a.inheritance;
   const inhText = inh.status === 'ok' ? `herederos recuperan visitando ${inh.locations!.length} ubicación(es)` : inh.status === 'no-heirs' ? 'no hay herederos definidos' : 'los herederos NO pueden recuperar los fondos';
@@ -61,14 +62,14 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
     if (node) out.push(...fmt.tree(node, '    '));
   }
 
-  section('🔥 Formas más baratas de perder los fondos');
-  const losses = bySize(a.resilience.cuts, a.resilience.minSize);
+  section('🔥 Formas más probables de perder los fondos');
+  const losses = res.cheapest;
   if (!a.resilience.recoverableNow) out.push(red('  ¡Ya ahora mismo nadie puede recuperar los fondos!'));
   else if (losses.length === 0) out.push(green(`  Ninguna combinación de hasta ${a.resilience.searchedUpTo} pérdidas deja los fondos inaccesibles.`));
-  losses.forEach((cut) => out.push(red('  • ' + cut.map((x) => fmt.loss(x)).join('  +  '))));
-  if (a.resilience.cuts.length > losses.length) out.push(dim(`  (+${a.resilience.cuts.length - losses.length} combinaciones mínimas más grandes)`));
+  losses.forEach((cut) => out.push(red('  • ' + cut.map((x) => fmt.loss(x)).join('  +  ')) + dim(`  (rareza ${num(res.minRarity!)})`)));
+  if (res.cuts.length > losses.length) out.push(dim(`  (+${res.cuts.length - losses.length} combinaciones mínimas menos probables)`));
 
-  const lockouts = bySize(a.resilience.lockouts, a.resilience.lockoutMinSize);
+  const lockouts = res.lockouts.filter((_, i) => res.lockoutRarities[i] === res.lockoutMinRarity);
   if (lockouts.length > 0) {
     section('⏳ Bloqueos temporales (se resuelven tras el fallecimiento)');
     lockouts.forEach((cut) => out.push(yellow('  • ' + cut.map((x) => fmt.loss(x)).join('  +  '))));

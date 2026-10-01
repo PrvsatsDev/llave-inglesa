@@ -1,4 +1,6 @@
+import type { ModelIndex } from '@llave-inglesa/domain';
 import type { AttackAtom } from './attacks.ts';
+import type { LossEvent } from './world.ts';
 
 /**
  * Puntuaciones 0–100. Deliberadamente simples y explicables: cada una sale
@@ -82,7 +84,7 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'lockout'; points: number }[];
+  penalties: { reason: 'exposure' | 'other-routes' | 'lockout'; points: number }[];
   score: number;
 }
 
@@ -102,26 +104,97 @@ export function securityScore(minEffort: number | null, cheapRoutes: number): nu
   return securityBreakdown(minEffort, cheapRoutes).score;
 }
 
-/** Resiliencia: cuántas desgracias hacen falta para perderlo todo, menos lo fácil que sea un bloqueo temporal. */
-export function resilienceBreakdown(minSize: number | null, lockoutMinSize: number | null): ScoreBreakdown {
-  const base = cutScore(minSize);
-  const penalty = lockoutPenalty(lockoutMinSize);
-  return { base, penalties: penalty > 0 ? [{ reason: 'lockout', points: penalty }] : [], score: Math.max(0, base - penalty) };
+/**
+ * Rareza de cada desgracia: órdenes de magnitud de improbabilidad (≈ −log10 de su probabilidad).
+ * Sumar rarezas equivale a multiplicar probabilidades: dos sucesos de rareza 1 a la vez son tan
+ * raros como uno de rareza 2. Más alta = menos probable.
+ */
+export const LOSS_RARITY = {
+  /** Olvidar lo memorizado (PIN, passphrase…): de lo más frecuente. */
+  forget: 1,
+  /** Perder, romper o tirar un objeto concreto (papel, digital, dispositivo…). */
+  'item-loss': 1,
+  /** Perder una placa o unas arandelas de acero: no se rompen ni se queman, pero se pueden extraviar. */
+  'steel-loss': 1.5,
+  fire: 2,
+  flood: 2,
+  death: 2,
+  incapacity: 2.5,
+  /** Pérdida total de una ubicación, según su tipo. */
+  total: {
+    /** Pérdida del acceso a un sitio físico (cierra la caja, mudanza…): muy rara. */
+    physical: 3,
+    /** Avería de un portátil o disco: más frecuente que un incendio. */
+    device: 1.5,
+    /** Pérdida de una cuenta en la nube: más frecuente que un incendio. */
+    cloud: 1.5,
+  },
+} as const;
+
+export function lossRarity(e: LossEvent, index: ModelIndex): number {
+  switch (e.type) {
+    case 'destroy-location':
+      return e.disaster === 'total' ? LOSS_RARITY.total[index.locations.get(e.location)?.kind ?? 'physical'] : LOSS_RARITY[e.disaster];
+    case 'item-loss': {
+      const medium = index.artifacts.get(e.item)?.medium;
+      return medium === 'metal' || medium === 'washers' ? LOSS_RARITY['steel-loss'] : LOSS_RARITY['item-loss'];
+    }
+    default:
+      return LOSS_RARITY[e.type];
+  }
 }
 
-/** Resiliencia: cuántas desgracias tienen que ocurrir a la vez. */
-export function cutScore(minSize: number | null): number {
-  if (minSize === null) return 100; // ningún corte dentro del límite buscado
-  return [0, 25, 60, 85][minSize] ?? 100;
+/** Rareza de una combinación de desgracias a la vez: la suma. */
+export const cutRarity = (cut: readonly LossEvent[], index: ModelIndex) => cut.reduce((sum, e) => sum + lossRarity(e, index), 0);
+
+/**
+ * Rareza equivalente de varias vías de pérdida: sus probabilidades se suman.
+ * Tres vías de rareza 2 equivalen a una de rareza 2 − log10(3) ≈ 1,5.
+ */
+export function combinedRarity(rarities: readonly number[]): number | null {
+  if (rarities.length === 0) return null;
+  return -Math.log10(rarities.reduce((sum, r) => sum + 10 ** -r, 0));
+}
+
+/** Curva rareza → puntuación base (interpolación lineal). */
+const RARITY_CURVE: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [1, 25],
+  [2, 50],
+  [3, 70],
+  [4, 85],
+  [5, 95],
+  [6, 100],
+];
+
+export const rarityScore = (rarity: number | null) => (rarity === null ? 100 : Math.round(interpolate(RARITY_CURVE, Math.max(0, rarity))));
+
+/**
+ * Resiliencia: lo improbable que es la pérdida más probable, menos lo que suman las demás vías
+ * y lo fácil que sea un bloqueo temporal.
+ */
+export function resilienceBreakdown(minRarity: number | null, combined: number | null, lockoutMinRarity: number | null): ScoreBreakdown {
+  const base = rarityScore(minRarity);
+  const others = base - rarityScore(combined);
+  const lockout = lockoutPenalty(lockoutMinRarity);
+  const penalties: ScoreBreakdown['penalties'] = [];
+  if (others > 0) penalties.push({ reason: 'other-routes', points: others });
+  if (lockout > 0) penalties.push({ reason: 'lockout', points: lockout });
+  return { base, penalties, score: Math.max(0, base - others - lockout) };
 }
 
 /**
  * Un bloqueo temporal no pierde los fondos, pero puede inmovilizarlos durante años
- * (p. ej. un ictus). Resta algo a la resiliencia según lo fácil que sea que ocurra.
+ * (p. ej. un ictus). Resta según lo probable que sea el bloqueo más probable.
  */
-export function lockoutPenalty(minSize: number | null): number {
-  if (minSize === null) return 0;
-  return [0, 10, 5][minSize] ?? 0;
+export const LOCKOUT_PENALTY: readonly { below: number; points: number }[] = [
+  { below: 3, points: 10 },
+  { below: 5, points: 5 },
+];
+
+export function lockoutPenalty(minRarity: number | null): number {
+  if (minRarity === null) return 0;
+  return LOCKOUT_PENALTY.find((p) => minRarity < p.below)?.points ?? 0;
 }
 
 /** Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura. */

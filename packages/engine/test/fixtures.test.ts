@@ -40,7 +40,7 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
   it('la incapacidad del titular bloquea los fondos, pero no los pierde: se recuperan al fallecer', () => {
     expect(a.resilience.cuts).not.toContainEqual([{ type: 'incapacity', person: 'yo' }]);
     expect(a.resilience.lockouts).toContainEqual([{ type: 'incapacity', person: 'yo' }]);
-    expect(a.resilience.lockoutMinSize).toBe(1);
+    expect(a.resilience.lockoutMinRarity).toBe(2.5); // una incapacidad sola
   });
 
   it('con acceso al banco "si queda incapacitado o fallece", ya no hay bloqueo', () => {
@@ -104,7 +104,7 @@ describe('distribuido 2 de 3', () => {
 
   it('la incapacidad del titular no pierde los fondos (pareja + hermano)', () => {
     expect(a.resilience.cuts).not.toContainEqual([{ type: 'incapacity', person: 'yo' }]);
-    expect(a.resilience.minSize).toBe(2);
+    expect(a.resilience.cuts.every((c) => c.length >= 2)).toBe(true);
   });
 });
 

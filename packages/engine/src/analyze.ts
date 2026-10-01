@@ -3,7 +3,7 @@ import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './atta
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
-import { attackEffort, cutScore, EXPOSURE, inheritanceScore, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
+import { attackEffort, combinedRarity, cutRarity, EXPOSURE, inheritanceScore, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
 import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
 
 export interface AnalyzeOptions {
@@ -33,14 +33,27 @@ export interface SecurityReport extends CutReport<AttackAtom> {
   beatsDuress: boolean[];
 }
 
-export interface ResilienceReport extends CutReport<LossEvent> {
+export interface ResilienceReport {
+  score: number;
   recoverableNow: boolean;
+  searchedUpTo: number;
+  /** Combinaciones mínimas que lo pierden todo para siempre, de la más probable a la menos. */
+  cuts: LossEvent[][];
+  /** Rareza de cada combinación de `cuts` (mismo orden). */
+  rarities: number[];
+  /** Rareza de la pérdida más probable, o null si no hay ninguna hasta `searchedUpTo`. */
+  minRarity: number | null;
+  /** Rareza equivalente de todas las vías juntas (sus probabilidades se suman). */
+  combinedRarity: number | null;
+  /** Las pérdidas más probables (las de rareza mínima). */
+  cheapest: LossEvent[][];
   /**
    * Bloqueos temporales: combinaciones que impiden mover los fondos mientras
-   * alguien está incapacitado, pero que se resuelven cuando fallece.
+   * alguien está incapacitado, pero que se resuelven cuando fallece. Del más probable al menos.
    */
   lockouts: LossEvent[][];
-  lockoutMinSize: number | null;
+  lockoutRarities: number[];
+  lockoutMinRarity: number | null;
 }
 
 export interface InheritanceReport {
@@ -149,11 +162,6 @@ export function minimalLocationSet(
   return null;
 }
 
-function cutReport<A>(cuts: A[][], searchedUpTo: number): CutReport<A> {
-  const minSize = cuts[0]?.length ?? null;
-  return { score: cutScore(minSize), minSize, searchedUpTo, cuts, cheapest: cuts.filter((c) => c.length === minSize) };
-}
-
 /** ¿Este robo solo funciona si el coaccionado da el PIN real de un dispositivo con PIN de coacción? */
 function needsDuressPin(world: World, cut: readonly AttackAtom[]): boolean {
   return duressObstacles(world, cut).length > 0;
@@ -217,18 +225,31 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
   let resilience: ResilienceReport;
   if (recoverableNow) {
     const atoms = lossAtoms(intact);
-    const losses = cutReport(minimalCuts(atoms, lostForever, maxCutSize), maxCutSize);
-    const lockouts = minimalCuts(atoms, blockedNow, maxCutSize).filter((cut) => !lostForever(cut));
-    const lockoutMinSize = lockouts[0]?.length ?? null;
+    const byRarity = (cuts: LossEvent[][]) =>
+      cuts.map((cut) => ({ cut, rarity: cutRarity(cut, intact.index) })).sort((a, b) => a.rarity - b.rarity || a.cut.length - b.cut.length);
+    const losses = byRarity(minimalCuts(atoms, lostForever, maxCutSize));
+    const lockouts = byRarity(minimalCuts(atoms, blockedNow, maxCutSize).filter((cut) => !lostForever(cut)));
+    const minRarity = losses[0]?.rarity ?? null;
+    const combined = combinedRarity(losses.map((l) => l.rarity));
+    const lockoutMinRarity = lockouts[0]?.rarity ?? null;
     resilience = {
-      ...losses,
-      score: resilienceBreakdown(losses.minSize, lockoutMinSize).score,
+      score: resilienceBreakdown(minRarity, combined, lockoutMinRarity).score,
       recoverableNow,
-      lockouts,
-      lockoutMinSize,
+      searchedUpTo: maxCutSize,
+      cuts: losses.map((l) => l.cut),
+      rarities: losses.map((l) => l.rarity),
+      minRarity,
+      combinedRarity: combined,
+      cheapest: losses.filter((l) => l.rarity === minRarity).map((l) => l.cut),
+      lockouts: lockouts.map((l) => l.cut),
+      lockoutRarities: lockouts.map((l) => l.rarity),
+      lockoutMinRarity,
     };
   } else {
-    resilience = { score: 0, minSize: 0, searchedUpTo: 0, cuts: [[]], cheapest: [[]], recoverableNow, lockouts: [], lockoutMinSize: null };
+    resilience = {
+      score: 0, recoverableNow, searchedUpTo: 0, cuts: [[]], rarities: [0], minRarity: 0, combinedRarity: 0, cheapest: [[]],
+      lockouts: [], lockoutRarities: [], lockoutMinRarity: null,
+    };
   }
 
   const owners = activeOwners(intact);
