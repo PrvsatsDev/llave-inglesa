@@ -1,14 +1,12 @@
 import type { CustodyModel } from '@llave-inglesa/domain';
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
-import { plural } from '../lib/text.ts';
-import { useAnalysis } from '../store/analysis.ts';
 import { useDocument } from '../store/document.ts';
 import { PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from '../store/layout.ts';
 import { useNavigation, type Section as SectionId } from '../store/navigation.ts';
 import { useScenarioView } from '../store/scenario.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
-import { LossRoutes, TheftRoutes, TryScenario } from './Findings.tsx';
-import { Section } from './inspector/fields.tsx';
+import { MetricAnalysis } from './Analysis.tsx';
+import { TryScenario } from './Findings.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
 import { Breadcrumbs, SectionTabs } from './Navigation.tsx';
 import { ScenarioPanel } from './ScenarioPanel.tsx';
@@ -53,36 +51,7 @@ function SectionContent({ section, model }: { section: SectionId; model: Custody
   const metric = useNavigation((s) => s.metric);
   if (section === 'schema') return <Schema model={model} />;
   if (section === 'simulate') return view ? <ScenarioPanel model={model} view={view} /> : <TryScenario model={model} />;
-  switch (metric) {
-    case 'security':
-      return <TheftRoutes model={model} />;
-    case 'resilience':
-      return <LossRoutes model={model} />;
-    case 'usability':
-    case 'inheritance':
-      return <MetricDetail metric={metric} />;
-  }
-}
-
-/** Provisional: la línea de detalle de la tarjeta, hasta que estas métricas tengan su propia lista. */
-function MetricDetail({ metric }: { metric: 'usability' | 'inheritance' }) {
-  const analysis = useAnalysis((s) => s.analysis);
-  if (!analysis) return null;
-  const text =
-    metric === 'usability'
-      ? analysis.usability.locations
-        ? `Para firmar hay que ir a ${plural(analysis.usability.locations.length, 'ubicación', 'ubicaciones')}.`
-        : 'No se puede firmar de forma segura.'
-      : analysis.inheritance.status === 'ok'
-        ? `Los herederos recuperan los fondos yendo a ${plural(analysis.inheritance.locations!.length, 'ubicación', 'ubicaciones')}.`
-        : analysis.inheritance.status === 'no-heirs'
-          ? 'No hay herederos en el esquema.'
-          : 'Los herederos no podrían recuperar los fondos.';
-  return (
-    <Section>
-      <p className={styles.text}>{text}</p>
-    </Section>
-  );
+  return <MetricAnalysis model={model} metric={metric} />;
 }
 
 /** Asa para cambiar el ancho de la columna: arrastrar, flechas del teclado o doble clic para el ancho por defecto. */

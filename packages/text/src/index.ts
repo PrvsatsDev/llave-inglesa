@@ -45,6 +45,16 @@ export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen 
 
 const locationKind = (index: ModelIndex, id: string) => index.locations.get(id)?.kind ?? 'physical';
 
+/** Nombre corto de cada tipo de ataque (p. ej. para explicar su esfuerzo). */
+export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
+  burglary: 'robo sin nadie presente',
+  insider: 'traición',
+  coercion: 'llave inglesa',
+  'entropy-compromise': 'RNG con fallo desconocido',
+  'known-weak-entropy': 'fallo de entropía publicado',
+  'malicious-firmware': 'firmware malicioso',
+};
+
 /** El mismo átomo se cuenta distinto según la ubicación: no se "entra" en una nube. */
 export function attackText(a: AttackAtom, index: ModelIndex): string {
   const label = index.label;

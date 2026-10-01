@@ -44,9 +44,3 @@
     overflow-y: visible;
   }
 }
-
-.text {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-}

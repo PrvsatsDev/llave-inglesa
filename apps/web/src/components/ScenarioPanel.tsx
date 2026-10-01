@@ -16,7 +16,7 @@ const OUTCOME_TITLE = {
   lost: 'Pérdida permanente',
 } as const;
 
-function Tree({ node, index, model }: { node: ExplanationNode; index: ModelIndex; model: CustodyModel }) {
+export function Tree({ node, index, model }: { node: ExplanationNode; index: ModelIndex; model: CustodyModel }) {
   const reason = ruleText(node.justification, index, model.policy);
   return (
     <li className={styles.node}>

@@ -65,11 +65,34 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
   return last[1];
 }
 
+/** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
+export interface ScoreBreakdown {
+  base: number;
+  penalties: { reason: 'exposure' | 'lockout'; points: number }[];
+  score: number;
+}
+
 /** Seguridad: esfuerzo del robo más barato, menos la exposición por vías alternativas. */
-export function securityScore(minEffort: number | null, cheapRoutes: number): number {
-  if (minEffort === null) return 100; // ningún robo dentro del límite buscado
+export function securityBreakdown(minEffort: number | null, cheapRoutes: number): ScoreBreakdown {
+  if (minEffort === null) return { base: 100, penalties: [], score: 100 }; // ningún robo dentro del límite buscado
+  const base = Math.round(interpolate(EFFORT_CURVE, minEffort));
   const penalty = Math.min(EXPOSURE.maxPenalty, EXPOSURE.penaltyPerExtraRoute * Math.max(0, cheapRoutes - 1));
-  return Math.max(minEffort > 0 ? 5 : 0, Math.round(interpolate(EFFORT_CURVE, minEffort) - penalty));
+  return {
+    base,
+    penalties: penalty > 0 ? [{ reason: 'exposure', points: penalty }] : [],
+    score: Math.max(minEffort > 0 ? 5 : 0, base - penalty),
+  };
+}
+
+export function securityScore(minEffort: number | null, cheapRoutes: number): number {
+  return securityBreakdown(minEffort, cheapRoutes).score;
+}
+
+/** Resiliencia: cuántas desgracias hacen falta para perderlo todo, menos lo fácil que sea un bloqueo temporal. */
+export function resilienceBreakdown(minSize: number | null, lockoutMinSize: number | null): ScoreBreakdown {
+  const base = cutScore(minSize);
+  const penalty = lockoutPenalty(lockoutMinSize);
+  return { base, penalties: penalty > 0 ? [{ reason: 'lockout', points: penalty }] : [], score: Math.max(0, base - penalty) };
 }
 
 /** Resiliencia: cuántas desgracias tienen que ocurrir a la vez. */

@@ -12,7 +12,7 @@ import styles from './Scoreboard.module.css';
 type Level = 'good' | 'warn' | 'bad';
 
 /** Umbrales de estado. Siempre con icono + texto, nunca solo color. */
-function level(score: number): { level: Level; icon: LucideIcon; text: string } {
+export function level(score: number): { level: Level; icon: LucideIcon; text: string } {
   if (score >= 75) return { level: 'good', icon: ShieldCheck, text: 'Bien' };
   if (score >= 50) return { level: 'warn', icon: AlertTriangle, text: 'Mejorable' };
   return { level: 'bad', icon: ShieldAlert, text: 'Débil' };
