@@ -1,7 +1,7 @@
 import { advisoriesFor, catalogModelByName, type Device, type Id } from '@llave-inglesa/domain';
 import type { CompromisedSeed, Holdings } from './derive.ts';
 import { entropyOrigins, keyCompromise, originKey, weakEntropyKeys, type EntropyOrigin } from './entropy.ts';
-import { firmwareExposure } from './firmware.ts';
+import { firmwareDevices, firmwareExposure } from './firmware.ts';
 import { accessibleLocations, itemsAvailableAt, type World } from './world.ts';
 
 /** Aviso de extracción física que afecta al dispositivo (con su firmware actual), o null. */
@@ -104,4 +104,19 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
     }
   }
   return { people: [...people], locations: [...locations], compromisedSeeds };
+}
+
+/** Cómo cae un dispositivo en un ataque: firmware malicioso del fabricante o extracción física de la semilla. */
+export type DeviceCompromise = 'firmware' | 'extraction';
+
+/** Dispositivos que el ataque compromete directamente (para señalarlos en el mapa). */
+export function compromisedDevices(world: World, atoms: readonly AttackAtom[]): Map<Id, DeviceCompromise> {
+  const found = new Map<Id, DeviceCompromise>();
+  for (const a of atoms) {
+    if (a.type === 'malicious-firmware') firmwareDevices(world.model, a.vendor).forEach((d) => found.set(d, 'firmware'));
+  }
+  for (const seed of attackHoldings(world, atoms).compromisedSeeds ?? []) {
+    if ('device' in seed && seed.device) found.set(seed.device, 'extraction');
+  }
+  return found;
 }

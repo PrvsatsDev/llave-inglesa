@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Scenario } from '../scenario/view.ts';
-import { goBack, useNavigation } from './navigation.ts';
+import { goBack, routePosition, useNavigation } from './navigation.ts';
 import { useScenario } from './scenario.ts';
 import { useSelection } from './selection.ts';
 
@@ -12,7 +12,7 @@ const k1 = { kind: 'key', id: 'k1' } as const;
 beforeEach(() => {
   useSelection.getState().select(null);
   useScenario.getState().set(null);
-  useNavigation.setState({ section: 'schema', metric: 'security', simulatedFrom: null });
+  useNavigation.setState({ section: 'schema', metric: 'security', simulatedFrom: null, routes: [] });
 });
 
 describe('migas de pan de las fichas', () => {
@@ -79,5 +79,28 @@ describe('secciones y volver', () => {
     expect(goBack()).toBe(true);
     expect(useNavigation.getState().section).toBe('simulate');
     expect(useScenario.getState().active).toBeNull();
+  });
+});
+
+describe('recorrer las vías con ‹ ›', () => {
+  const other: Scenario = { kind: 'attack', atoms: [{ type: 'burglary', location: 'casa' }] };
+
+  it('la simulación recuerda la lista de la que salió y su posición', () => {
+    useNavigation.getState().simulate(other, 'security', [theft, other]);
+    expect(routePosition(useNavigation.getState().routes, useScenario.getState().active)).toBe(1);
+  });
+
+  it('si se modifica el escenario, ya no es ninguna vía de la lista', () => {
+    useNavigation.getState().simulate(theft, 'security', [theft, other]);
+    useScenario.getState().set({ kind: 'attack', atoms: [...(theft as Extract<Scenario, { kind: 'attack' }>).atoms, { type: 'burglary', location: 'banco' }] });
+    expect(routePosition(useNavigation.getState().routes, useScenario.getState().active)).toBe(-1);
+  });
+
+  it('sin métrica de origen no hay lista, y volver o cambiar de sección la olvida', () => {
+    useNavigation.getState().simulate(theft, undefined, [theft, other]);
+    expect(useNavigation.getState().routes).toEqual([]);
+    useNavigation.getState().simulate(theft, 'security', [theft, other]);
+    goBack();
+    expect(useNavigation.getState().routes).toEqual([]);
   });
 });

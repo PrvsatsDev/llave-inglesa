@@ -28,15 +28,7 @@ pensarse antes de implementarla.
 
 ## Interfaz y documentación (2026-09-30)
 
-- **Repaso de UX del panel derecho.** Cuesta encontrar lo que se busca: resumen,
-  inspector y simulación comparten panel y hay muchas secciones. Revisarlo entero
-  cuando la fase 2 esté cerrada.
 - **Guía de uso** que lo explique todo, partiendo de [CAPACIDADES.md](CAPACIDADES.md).
-- **Explicar el PIN de coacción en la simulación.** Al simular una vía que "vence un
-  PIN de coacción", el panel dice "robado" sin explicar que el atacante tuvo que
-  sortear ese PIN (y que por eso la vía cuesta más).
-- **Resaltar en el mapa los dispositivos comprometidos** en una simulación de firmware
-  malicioso o de extracción física (hoy estos ataques no iluminan nada).
 
 ## Simplificaciones conscientes del motor (para iterar)
 

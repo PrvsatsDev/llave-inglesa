@@ -75,3 +75,40 @@
 .note strong {
   color: var(--text);
 }
+
+.noteDanger {
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  color: var(--text);
+}
+
+.noteDanger svg {
+  color: var(--danger);
+}
+
+.effort {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.effort td {
+  padding: 4px 0;
+  color: var(--text-muted);
+  vertical-align: top;
+}
+
+.effort tfoot td {
+  border-top: 1px solid var(--border-strong);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.points {
+  width: 4em;
+  padding-left: var(--space-3) !important;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text) !important;
+  white-space: nowrap;
+}

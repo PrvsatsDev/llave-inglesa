@@ -196,3 +196,32 @@
   font-size: var(--text-xs);
   line-height: 1.5;
 }
+
+.stepper {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.step:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

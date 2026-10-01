@@ -117,9 +117,21 @@ function cutReport<A>(cuts: A[][], searchedUpTo: number): CutReport<A> {
 
 /** ¿Este robo solo funciona si el coaccionado da el PIN real de un dispositivo con PIN de coacción? */
 function needsDuressPin(world: World, cut: readonly AttackAtom[]): boolean {
-  if (!cut.some((a) => a.type === 'coercion')) return false;
-  if (!world.model.devices.some((d) => d.pinProtected && d.duressPin)) return false;
-  return !derive(world, withDuress(world, cut, attackHoldings(world, cut)), 'any').canSpend;
+  return duressObstacles(world, cut).length > 0;
+}
+
+/**
+ * PINs de coacción que el atacante tiene que vencer para que el robo funcione: el coaccionado
+ * sabe el PIN de ese dispositivo y podría dar el de coacción. Vacío si el robo no depende de ello.
+ */
+export function duressObstacles(world: World, cut: readonly AttackAtom[]): { person: Id; device: Id }[] {
+  if (!cut.some((a) => a.type === 'coercion')) return [];
+  if (!world.model.devices.some((d) => d.pinProtected && d.duressPin)) return [];
+  const holdings = withDuress(world, cut, attackHoldings(world, cut));
+  if (derive(world, holdings, 'any').canSpend) return [];
+  const knowsPin = (person: Id, device: Id) =>
+    world.model.people.some((p) => p.id === person && p.knows.some((s) => s.type === 'pin' && s.device === device));
+  return (holdings.withheldPins ?? []).filter((w) => knowsPin(w.person, w.device));
 }
 
 function securityReport(world: World, found: AttackAtom[][], searchedUpTo: number): SecurityReport {

@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
+  Bug,
   Camera,
   Circle,
   Cloud,
@@ -34,6 +35,9 @@ export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
   descriptor: FileCode2,
 };
 
+/** Cómo cae el dispositivo en el ataque simulado (texto además del color). */
+const COMPROMISE = { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' } as const;
+
 function ItemRow({ item }: { item: ItemView }) {
   const Icon = ITEM_ICONS[item.icon];
   const isDevice = item.icon === 'stateful' || item.icon === 'stateless';
@@ -42,6 +46,7 @@ function ItemRow({ item }: { item: ItemView }) {
   return (
     <li
       data-state={item.state}
+      data-compromised={item.compromise}
       className={`${styles.item} ${selected ? styles.itemSelected : ''}`}
       onClick={(e) => {
         e.stopPropagation();
@@ -57,6 +62,11 @@ function ItemRow({ item }: { item: ItemView }) {
           {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label="con PIN" />}
           {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label="cifrado" />}
         </span>
+        {item.compromise && (
+          <span className={styles.compromiseTag}>
+            <Bug size={11} aria-hidden /> {COMPROMISE[item.compromise]}
+          </span>
+        )}
         <span className={styles.itemSubtitle}>
           {item.subtitle}
           {item.registeredWallet && (

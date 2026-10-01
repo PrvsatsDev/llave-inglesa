@@ -1,9 +1,9 @@
 import type { CustodyModel, Issue } from '@llave-inglesa/domain';
-import { AlertTriangle, ArrowLeft, ChevronRight, ChevronsLeft, FlaskConical, Gauge, LayoutList, XCircle, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeft, FlaskConical, Gauge, LayoutList, XCircle, type LucideIcon } from 'lucide-react';
 import { entityName, KIND_LABEL, METRIC_INTRO, METRIC_LABEL, SECTION_INTRO, SECTION_LABEL } from '../lib/sections.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useLayout } from '../store/layout.ts';
-import { goBack, useNavigation, type Section } from '../store/navigation.ts';
+import { goBack, routePosition, useNavigation, type Section } from '../store/navigation.ts';
 import { useScenario } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
 import styles from './Navigation.module.css';
@@ -77,7 +77,8 @@ interface Crumb {
 
 /** Dónde estoy: migas de pan con "volver" y, en la raíz de cada sección, qué hay en ella. */
 export function Breadcrumbs({ model }: { model: CustodyModel }) {
-  const { section, metric, simulatedFrom } = useNavigation();
+  const { section, metric, simulatedFrom, routes, simulate } = useNavigation();
+  const active = useScenario((s) => s.active);
   const trail = useSelection((s) => s.trail);
   const select = useSelection((s) => s.select);
   const backTo = useSelection((s) => s.backTo);
@@ -85,11 +86,17 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
   // Las fichas que ya no existen (eliminadas) desaparecen de las migas.
   const fichas = trail.map((s, i) => ({ s, i, name: entityName(model, s) })).filter((f) => f.name !== null);
 
+  // Recorrer con ‹ › la lista de vías de la que salió la simulación.
+  const position = routePosition(routes, active);
+  const routeLabel = position >= 0 ? `Vía ${position + 1} de ${routes.length}` : routes.length > 0 ? 'Vía modificada' : 'Simulación';
+  const stepper = section === 'simulate' && simulatedFrom && position >= 0 && routes.length > 1 && fichas.length === 0;
+  const goRoute = (i: number) => simulate(routes[i]!, simulatedFrom!, routes);
+
   const base: Crumb[] =
     section === 'analysis'
       ? [{ label: SECTION_LABEL.analysis }, { label: METRIC_LABEL[metric] }]
       : section === 'simulate' && simulatedFrom
-        ? [{ label: METRIC_LABEL[simulatedFrom], onClick: goBack }, { label: 'Simulación' }]
+        ? [{ label: METRIC_LABEL[simulatedFrom], onClick: goBack }, { label: routeLabel }]
         : [{ label: SECTION_LABEL[section] }];
   if (fichas.length > 0) base.at(-1)!.onClick = () => select(null);
   const crumbs: Crumb[] = [
@@ -126,6 +133,22 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
             </li>
           ))}
         </ol>
+        {stepper && (
+          <span className={styles.stepper}>
+            <button className={styles.step} onClick={() => goRoute(position - 1)} disabled={position === 0} aria-label="Vía anterior" title="Vía anterior">
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              className={styles.step}
+              onClick={() => goRoute(position + 1)}
+              disabled={position === routes.length - 1}
+              aria-label="Vía siguiente"
+              title="Vía siguiente"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </span>
+        )}
       </div>
       {intro && <p className={styles.intro}>{intro}</p>}
     </div>

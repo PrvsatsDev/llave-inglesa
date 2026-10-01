@@ -1,6 +1,6 @@
 import { indexModel, type CustodyModel, type ModelIndex } from '@llave-inglesa/domain';
-import { attackAtoms, createWorld, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
-import { Eye, EyeOff, Flame, Skull, X } from 'lucide-react';
+import { ATTACK_EFFORT, attackAtoms, attackEffort, createWorld, DURESS_SURCHARGE, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
+import { Bug, Eye, EyeOff, Flame, ShieldQuestion, Skull, X } from 'lucide-react';
 import { attackText, factText, lossText, ruleText } from '../lib/text.ts';
 import type { ScenarioView } from '../scenario/view.ts';
 import { useScenario } from '../store/scenario.ts';
@@ -59,6 +59,70 @@ function Steps<A>({ steps, all, text, onChange }: { steps: A[]; all: A[]; text(a
         />
       )}
     </>
+  );
+}
+
+const num = (n: number) => n.toLocaleString('es');
+
+/**
+ * Lo que le cuesta al atacante: el esfuerzo de cada ataque, el recargo por vencer un PIN de
+ * coacción (explicado) y los dispositivos que caen por firmware malicioso o extracción física.
+ */
+function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioView; index: ModelIndex }) {
+  if (view.scenario.kind !== 'attack') return null;
+  const atoms = view.scenario.atoms;
+  const duress = view.duress;
+  const name = (id: string) => index.label(id);
+  const people = [...new Set(duress.map((d) => d.person))].map(name).join(' y ');
+  const devices = [...new Set(duress.map((d) => d.device))].map(name).join(' y ');
+  return (
+    <Section title="Esfuerzo del atacante">
+      <table className={styles.effort}>
+        <tbody>
+          {atoms.map((a, i) => (
+            <tr key={i}>
+              <td>{attackText(a, index)}</td>
+              <td className={styles.points}>{num(ATTACK_EFFORT[a.type])}</td>
+            </tr>
+          ))}
+          {duress.length > 0 && (
+            <tr>
+              <td>Vencer el PIN de coacción de {devices}</td>
+              <td className={styles.points}>+{num(DURESS_SURCHARGE)}</td>
+            </tr>
+          )}
+        </tbody>
+        {(atoms.length > 1 || duress.length > 0) && (
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td className={styles.points}>{num(attackEffort(atoms, duress.length > 0))}</td>
+            </tr>
+          </tfoot>
+        )}
+      </table>
+      {duress.length > 0 && (
+        <p className={styles.note}>
+          <ShieldQuestion size={14} aria-hidden />
+          <span>
+            {people} {duress.length > 1 ? 'tienen' : 'tiene'} un <strong>PIN de coacción</strong> en {devices}: bajo amenaza puede dar ese en lugar
+            del real, y el dispositivo abre una cartera señuelo. El robo solo sale si el atacante sabe que existe y le obliga a dar el
+            bueno; por eso cuesta {num(DURESS_SURCHARGE)} más. Lo encarece, pero no lo impide.
+          </span>
+        </p>
+      )}
+      {[...view.compromised].map(([device, how]) => (
+        <p key={device} className={`${styles.note} ${styles.noteDanger}`}>
+          <Bug size={14} aria-hidden />
+          <span>
+            <strong>{name(device)}</strong>{' '}
+            {how === 'firmware'
+              ? `queda comprometido: un firmware malicioso de ${model.devices.find((d) => d.id === device)?.vendor ?? 'su fabricante'} filtra en las firmas las semillas que pasan por él. Solo lo evita el anti-exfil.`
+              : 'queda comprometido: con el dispositivo en la mano, un fallo publicado permite extraer su semilla aunque tenga PIN. Solo la protege una passphrase.'}
+          </span>
+        </p>
+      ))}
+    </Section>
   );
 }
 
@@ -123,6 +187,8 @@ export function ScenarioPanel({ model, view }: { model: CustodyModel; view: Scen
           />
         )}
       </Section>
+
+      <Effort model={model} view={view} index={index} />
 
       {scenario.kind === 'attack' && <Privacy model={model} view={view} index={index} />}
 

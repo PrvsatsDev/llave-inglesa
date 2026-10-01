@@ -50,7 +50,7 @@ function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', 
               {i === firstRest && <p className={styles.restTitle}>{restTitle}</p>}
               <button
                 className={`${styles.cut} ${styles[tone]} ${on ? styles.active : ''}`}
-                onClick={() => simulate(scenario, from)}
+                onClick={() => simulate(scenario, from, all.map(toScenario))}
                 aria-current={on || undefined}
                 title="Simular en el mapa"
               >

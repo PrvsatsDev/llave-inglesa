@@ -1,4 +1,5 @@
 import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyModel, type Device, type Id, type Location, type Person, type SecretRef } from '@llave-inglesa/domain';
+import type { DeviceCompromise } from '@llave-inglesa/engine';
 import type { Edge, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
@@ -25,6 +26,8 @@ export type ItemView = {
   encrypted: boolean;
   /** Estado bajo el escenario activo (ausente si no hay escenario). */
   state?: ItemState;
+  /** Si el ataque simulado compromete el dispositivo, cómo. */
+  compromise?: DeviceCompromise;
 };
 
 export type KeyTag = { id: Id; label: string; color: string };
@@ -150,7 +153,7 @@ export function applyScenario(graph: Graph, view: ScenarioView | null): Graph {
   const { tone } = view;
   const nodes = graph.nodes.map((n): GraphNode => {
     if (n.type === 'location') {
-      const items = n.data.items.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim' }));
+      const items = n.data.items.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim', compromise: view.compromised.get(i.id) }));
       return { ...n, data: { ...n.data, items, state: view.locations.get(n.id) ?? 'dim', tone } };
     }
     return { ...n, data: { ...n.data, state: view.people.get(n.id) ?? 'dim', tone } };
