@@ -1,0 +1,20 @@
+import { describe, expect, it } from 'vitest';
+import { clampWidth, PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from './layout.ts';
+
+describe('disposición de la columna', () => {
+  it('el ancho nunca sale de sus límites', () => {
+    expect(clampWidth(0)).toBe(PANEL_MIN);
+    expect(clampWidth(10_000)).toBe(PANEL_MAX);
+    expect(clampWidth(500.4)).toBe(500);
+  });
+
+  it('sin almacenamiento arranca desplegada y con el ancho por defecto', () => {
+    expect(useLayout.getState().width).toBe(PANEL_DEFAULT);
+    expect(useLayout.getState().collapsed).toBe(false);
+  });
+
+  it('cambiar el ancho lo limita, aunque no se pueda guardar', () => {
+    useLayout.getState().setWidth(50);
+    expect(useLayout.getState().width).toBe(PANEL_MIN);
+  });
+});

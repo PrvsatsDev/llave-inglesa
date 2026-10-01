@@ -1,0 +1,142 @@
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.muted strong {
+  color: var(--text);
+}
+
+.score {
+  --status: var(--text-muted);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.good {
+  --status: var(--safe);
+}
+
+.warn {
+  --status: var(--warn);
+}
+
+.bad {
+  --status: var(--danger);
+}
+
+.value {
+  font-size: 36px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.status svg {
+  color: var(--status);
+}
+
+.breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.breakdown td {
+  padding: 4px 0;
+  color: var(--text-muted);
+  vertical-align: top;
+}
+
+.breakdown tfoot td {
+  border-top: 1px solid var(--border-strong);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.points {
+  width: 4em;
+  padding-left: var(--space-3) !important;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text) !important;
+  white-space: nowrap;
+}
+
+.how summary {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.how p {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+
+.places {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 32px 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.place:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.place svg:first-child {
+  color: var(--text-muted);
+}
+
+.chevron {
+  position: absolute;
+  right: 10px;
+  color: var(--text-faint);
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

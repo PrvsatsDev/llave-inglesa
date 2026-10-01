@@ -46,3 +46,11 @@ export function firmwareExposure(model: CustodyModel): Map<string, { vendor: str
   }
   return found;
 }
+
+/** Dispositivos por los que un firmware malicioso de `vendor` filtraría alguna semilla. */
+export function firmwareDevices(model: CustodyModel, vendor: string): Id[] {
+  const allSeeds = seedKeys(model);
+  return model.devices
+    .filter((d) => vendorKey(d.vendor) === vendorKey(vendor) && !hasAntiExfil(d) && keysUsedOn(d, allSeeds).length > 0)
+    .map((d) => d.id);
+}

@@ -69,7 +69,8 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
 
 export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; keyEntity: Key }) {
   const apply = useDocument((s) => s.apply);
-  const select = useSelection((s) => s.select);
+  const back = useSelection((s) => s.back);
+  const open = useSelection((s) => s.open);
   const id = key.id;
   const patch = (p: Partial<Key>, field?: string) => apply((m) => updateKey(m, id, p), field && `key:${id}:${field}`);
   const setProvenance = (p: Partial<Provenance>, field?: string) => patch({ provenance: { ...key.provenance, ...p } }, field && `provenance:${field}`);
@@ -87,7 +88,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
 
   return (
     <>
-      <PanelHeader icon={KeyRound} kind="Key" title={key.label} onClose={() => select(null)} />
+      <PanelHeader icon={KeyRound} kind="Key" title={key.label} />
 
       <Section>
         <div className={styles.twoCols}>
@@ -106,7 +107,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
         <ul className={styles.list}>
           {places.map((p, i) => (
             <li key={i}>
-              <button className={styles.rowButton} onClick={() => select({ kind: 'location', id: p.location })}>
+              <button className={styles.rowButton} onClick={() => open({ kind: 'location', id: p.location })}>
                 <MapPin size={14} aria-hidden />
                 {p.item}
                 <span className={`${styles.rowMeta} ${styles.hint}`}>
@@ -207,7 +208,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
         label="Eliminar key"
         onClick={() => {
           apply((m) => removeKey(m, id));
-          select(null);
+          back();
         }}
         disabled={model.keys.length <= 1}
         reason="Tiene que haber al menos una key."

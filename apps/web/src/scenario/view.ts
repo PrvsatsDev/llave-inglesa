@@ -2,14 +2,17 @@ import { indexModel, parseModel, type CustodyModel, type Id } from '@llave-ingle
 import {
   accessibleLocations,
   attackHoldings,
+  compromisedDevices,
   createWorld,
   derive,
+  duressObstacles,
   eventually,
   explain,
   factId,
   legitHoldings,
   type AttackAtom,
   type Derivation,
+  type DeviceCompromise,
   type ExplanationNode,
   type FactId,
   type LossEvent,
@@ -52,6 +55,10 @@ export interface ScenarioView {
    * saldo e historial (watch-only), aunque no pueda gastar. Hecho del que lo obtiene, si aplica.
    */
   exposure: { exposed: boolean; via: FactId | null };
+  /** Dispositivos que el ataque compromete directamente (firmware malicioso, extracción física). */
+  compromised: ReadonlyMap<Id, DeviceCompromise>;
+  /** PINs de coacción que el atacante tiene que vencer para que el robo funcione. */
+  duress: readonly { person: Id; device: Id }[];
 }
 
 export const accessEdgeId = (person: Id, location: Id) => `access:${person}:${location}`;
@@ -134,6 +141,8 @@ function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'at
     people,
     edges,
     exposure: balanceExposure(model, derivation),
+    compromised: compromisedDevices(world, scenario.atoms),
+    duress: derivation.canSpend ? duressObstacles(world, scenario.atoms) : [],
   };
 }
 
@@ -180,5 +189,7 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
     people,
     edges,
     exposure: { exposed: false, via: null },
+    compromised: new Map(),
+    duress: [],
   };
 }

@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
+import { parseModel, updateDevice, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { applyScenario, buildGraph, type LocationNode } from '../graph/build.ts';
-import { scenarioView } from './view.ts';
+import { scenarioView, type Scenario } from './view.ts';
 
 function fixture(name: string): CustodyModel {
   const r = parseModel(JSON.parse(readFileSync(new URL(`../../../../fixtures/${name}.json`, import.meta.url), 'utf8')));
@@ -104,5 +104,23 @@ describe('applyScenario', () => {
   it('sin escenario, el grafo queda intacto', () => {
     const g = buildGraph(casa);
     expect(applyScenario(g, null)).toBe(g);
+  });
+});
+
+describe('scenarioView: PIN de coacción y dispositivos comprometidos', () => {
+  const wrench: Scenario = { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] };
+
+  it('la llave inglesa con PIN de coacción en la Coldcard Q tiene que vencerlo', () => {
+    expect(scenarioView(casa, wrench)!.duress).toEqual([]);
+    const duress = updateDevice(casa, 'ccq', { duressPin: true });
+    expect(scenarioView(duress, wrench)!.duress).toEqual([{ person: 'yo', device: 'ccq' }]);
+  });
+
+  it('el firmware malicioso señala en el mapa el dispositivo comprometido', () => {
+    const view = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'malicious-firmware', vendor: 'Coinkite' }] })!;
+    expect(view.compromised).toEqual(new Map([['ccq', 'firmware']]));
+    const graph = applyScenario(buildGraph(casa), view);
+    const item = graph.nodes.flatMap((n) => (n.type === 'location' ? (n as LocationNode).data.items : [])).find((i) => i.id === 'ccq');
+    expect(item?.compromise).toBe('firmware');
   });
 });

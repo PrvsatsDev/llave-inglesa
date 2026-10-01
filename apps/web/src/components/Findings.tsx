@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { attackText, lossText } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
 import { useAnalysis } from '../store/analysis.ts';
+import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { sameScenario, useScenario } from '../store/scenario.ts';
 import { Field, Section, Select } from './inspector/fields.tsx';
 import styles from './Findings.module.css';
@@ -17,7 +18,7 @@ const atOnce = (cut: readonly unknown[]) => (cut.length === 1 ? '1 suceso' : `${
  * Combinaciones: primero las que marcan la puntuación (`cuts`, como mucho MAX_SHOWN) y,
  * al desplegar, todas las de `all` en su orden, con `restTitle` antes de las demás.
  */
-function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', toScenario }: {
+function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', toScenario, from }: {
   cuts: A[][];
   all: A[][];
   text(a: A): string;
@@ -26,9 +27,11 @@ function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', 
   restTitle: string;
   tone?: 'danger' | 'warn';
   toScenario(cut: A[]): Scenario;
+  /** Métrica a la que vuelve "volver" desde la simulación. */
+  from: MetricId;
 }) {
   const active = useScenario((s) => s.active);
-  const setScenario = useScenario((s) => s.set);
+  const simulate = useNavigation((s) => s.simulate);
   const [expanded, setExpanded] = useState(false);
   if (cuts.length === 0) return <p className={styles.empty}>{empty}</p>;
   const main = new Set(cuts);
@@ -47,8 +50,8 @@ function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', 
               {i === firstRest && <p className={styles.restTitle}>{restTitle}</p>}
               <button
                 className={`${styles.cut} ${styles[tone]} ${on ? styles.active : ''}`}
-                onClick={() => setScenario(on ? null : scenario)}
-                aria-pressed={on}
+                onClick={() => simulate(scenario, from, all.map(toScenario))}
+                aria-current={on || undefined}
                 title="Simular en el mapa"
               >
                 {cut.map((atom, j) => (
@@ -75,21 +78,21 @@ function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', 
 }
 
 /** Lanza cualquier ataque o desgracia individual (luego se pueden combinar en el panel). */
-function TryScenario({ model }: { model: CustodyModel }) {
-  const setScenario = useScenario((s) => s.set);
+export function TryScenario({ model }: { model: CustodyModel }) {
+  const simulate = useNavigation((s) => s.simulate);
   const index = indexModel(model);
   const world = createWorld(model);
   const attacks = attackAtoms(world);
   const losses = lossAtoms(world);
   return (
-    <Section title="Probar un escenario">
+    <Section title="Empezar con un suceso">
       <Field label="Un ataque">
         {(id) => (
           <Select
             id={id}
             value=""
             options={[{ value: '', label: 'Elige un ataque…' }, ...attacks.map((a, i) => ({ value: String(i), label: attackText(a, index) }))]}
-            onChange={(v) => v !== '' && setScenario({ kind: 'attack', atoms: [attacks[Number(v)]!] })}
+            onChange={(v) => v !== '' && simulate({ kind: 'attack', atoms: [attacks[Number(v)]!] })}
           />
         )}
       </Field>
@@ -99,7 +102,7 @@ function TryScenario({ model }: { model: CustodyModel }) {
             id={id}
             value=""
             options={[{ value: '', label: 'Elige una desgracia…' }, ...losses.map((e, i) => ({ value: String(i), label: lossText(e, index) }))]}
-            onChange={(v) => v !== '' && setScenario({ kind: 'loss', events: [losses[Number(v)]!] })}
+            onChange={(v) => v !== '' && simulate({ kind: 'loss', events: [losses[Number(v)]!] })}
           />
         )}
       </Field>
@@ -107,12 +110,12 @@ function TryScenario({ model }: { model: CustodyModel }) {
   );
 }
 
-/** Los puntos débiles que ha encontrado el análisis. Cada uno se puede simular en el mapa. */
-export function Findings({ model }: { model: CustodyModel }) {
+/** Formas más baratas de robar. Cada una se puede simular en el mapa. */
+export function TheftRoutes({ model }: { model: CustodyModel }) {
   const analysis = useAnalysis((s) => s.analysis);
   if (!analysis) return null;
   const index = indexModel(model);
-  const { security, resilience } = analysis;
+  const { security } = analysis;
   // Las vías "casi igual de baratas" también cuentan para la puntuación: se muestran todas.
   const cheapThefts = security.minEffort === null ? [] : security.cuts.slice(0, security.cheapRoutes);
   const route = new Map(security.cuts.map((cut, i) => [cut, { effort: security.efforts[i]!, duress: security.beatsDuress[i]! }]));
@@ -122,26 +125,38 @@ export function Findings({ model }: { model: CustodyModel }) {
   };
 
   return (
+    <Section title="Formas más baratas de robar">
+      <div className={styles.header}>
+        <Skull size={14} aria-hidden />
+        <span>Cualquiera de estas combinaciones basta para gastar tus fondos. Pulsa una para verla en el mapa.</span>
+      </div>
+      <CutList
+        cuts={cheapThefts}
+        all={security.cuts}
+        text={(a) => attackText(a, index)}
+        meta={theftMeta}
+        empty={`Ninguna combinación de hasta ${security.searchedUpTo} ataques lo consigue.`}
+        restTitle="Más costosas"
+        toScenario={(atoms) => ({ kind: 'attack', atoms })}
+        from="security"
+      />
+    </Section>
+  );
+}
+
+/** Formas más baratas de perderlo todo y bloqueos temporales. */
+export function LossRoutes({ model }: { model: CustodyModel }) {
+  const analysis = useAnalysis((s) => s.analysis);
+  if (!analysis) return null;
+  const index = indexModel(model);
+  const { resilience } = analysis;
+
+  return (
     <>
-      <Section title="Formas más baratas de robar">
-        <div className={styles.header}>
-          <Skull size={14} aria-hidden />
-          <span>Cualquiera de estas combinaciones basta para gastar tus fondos. Pulsa una para verla en el mapa.</span>
-        </div>
-        <CutList
-          cuts={cheapThefts}
-          all={security.cuts}
-          text={(a) => attackText(a, index)}
-          meta={theftMeta}
-          empty={`Ninguna combinación de hasta ${security.searchedUpTo} ataques lo consigue.`}
-          restTitle="Más costosas"
-          toScenario={(atoms) => ({ kind: 'attack', atoms })}
-        />
-      </Section>
       <Section title="Formas más baratas de perderlo todo">
         <div className={styles.header}>
           <Flame size={14} aria-hidden />
-          <span>Tras cualquiera de estas, nadie podría recuperar los fondos</span>
+          <span>Tras cualquiera de estas, nadie podría recuperar los fondos. Pulsa una para verla en el mapa.</span>
         </div>
         {resilience.recoverableNow ? (
           <CutList
@@ -152,6 +167,7 @@ export function Findings({ model }: { model: CustodyModel }) {
             empty={`Ninguna combinación de hasta ${resilience.searchedUpTo} desgracias lo consigue.`}
             restTitle="Hacen falta más desgracias a la vez"
             toScenario={(events) => ({ kind: 'loss', events })}
+            from="resilience"
           />
         ) : (
           <p className={styles.critical}>Ya ahora mismo nadie puede recuperar los fondos.</p>
@@ -172,10 +188,10 @@ export function Findings({ model }: { model: CustodyModel }) {
             restTitle="Hacen falta más sucesos a la vez"
             tone="warn"
             toScenario={(events) => ({ kind: 'loss', events })}
+            from="resilience"
           />
         </Section>
       )}
-      <TryScenario model={model} />
     </>
   );
 }

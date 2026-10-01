@@ -15,14 +15,15 @@ const ROLE_OPTIONS = [
 
 export function PersonInspector({ model, person }: { model: CustodyModel; person: Person }) {
   const apply = useDocument((s) => s.apply);
-  const select = useSelection((s) => s.select);
+  const back = useSelection((s) => s.back);
+  const open = useSelection((s) => s.open);
   const id = person.id;
   const isLastOwner = person.role === 'owner' && model.people.filter((p) => p.role === 'owner').length === 1;
   const access = model.locations.flatMap((l) => l.access.filter((a) => a.person === id).map((a) => ({ location: l, when: a.when })));
 
   return (
     <>
-      <PanelHeader icon={User} kind="Persona" title={person.name} onClose={() => select(null)} />
+      <PanelHeader icon={User} kind="Persona" title={person.name} />
 
       <Section>
         <Field label="Nombre">
@@ -54,7 +55,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
         <ul className={styles.list}>
           {access.map(({ location, when }) => (
             <li key={location.id}>
-              <button className={styles.rowButton} onClick={() => select({ kind: 'location', id: location.id })}>
+              <button className={styles.rowButton} onClick={() => open({ kind: 'location', id: location.id })}>
                 <MapPin size={14} aria-hidden />
                 {location.name}
                 <span className={`${styles.rowMeta} ${styles.hint}`}>
@@ -72,7 +73,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
         label="Eliminar persona"
         onClick={() => {
           apply((m) => removePerson(m, id));
-          select(null);
+          back();
         }}
         disabled={isLastOwner}
         reason="Tiene que haber al menos un titular."

@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import { Canvas } from './components/Canvas.tsx';
 import { Dialogs } from './components/Dialogs.tsx';
 import { Header } from './components/Header.tsx';
@@ -8,14 +8,14 @@ import { useLiveAnalysis } from './store/analysis.ts';
 import { hasLocalDocument, openLocal, saveLocal } from './storage/actions.ts';
 import { useDialog } from './store/dialog.ts';
 import { hasUnsavedChanges, useDocument } from './store/document.ts';
-import { useScenario } from './store/scenario.ts';
-import { useSelection } from './store/selection.ts';
+import { useLayout } from './store/layout.ts';
+import { goBack } from './store/navigation.ts';
 import styles from './App.module.css';
 
 const isEditable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
-/** Atajos globales: deshacer/rehacer, guardar y Esc para cerrar el inspector o la simulación. */
+/** Atajos globales: deshacer/rehacer, guardar y Esc para volver. */
 function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -27,10 +27,8 @@ function useShortcuts() {
         return;
       }
       if (e.key === 'Escape') {
-        // Primero se cierra la ficha abierta; si no hay ninguna, se sale de la simulación.
-        const selection = useSelection.getState();
-        if (selection.selected) selection.select(null);
-        else useScenario.getState().set(null);
+        // Lo mismo que "volver": cierra la ficha, regresa a la lista o sale de la simulación.
+        goBack();
         return;
       }
       // Dentro de un campo de texto, Ctrl+Z es el deshacer nativo del campo.
@@ -75,12 +73,18 @@ export function App() {
   useOpenSavedOnStart();
   useUnsavedGuard();
   useLiveAnalysis();
+  const width = useLayout((s) => s.width);
+  const collapsed = useLayout((s) => s.collapsed);
   return (
     <ReactFlowProvider>
-      <div className={styles.shell}>
+      {/* Plegada, el ancho lo pone la clase: el estilo en línea tendría prioridad sobre ella. */}
+      <div
+        className={`${styles.shell} ${collapsed ? styles.collapsed : ''}`}
+        style={collapsed ? undefined : ({ '--panel-width': `${width}px` } as CSSProperties)}
+      >
         <Header />
-        <Canvas />
         <Sidebar />
+        <Canvas />
       </div>
       <Dialogs />
     </ReactFlowProvider>

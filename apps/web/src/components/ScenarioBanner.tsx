@@ -1,6 +1,6 @@
 import { indexModel } from '@llave-inglesa/domain';
-import { CircleCheck, Eye, Hourglass, Skull, X, XCircle, type LucideIcon } from 'lucide-react';
-import { attackText, lossText } from '../lib/text.ts';
+import { Bug, CircleCheck, Eye, Hourglass, ShieldQuestion, Skull, X, XCircle, type LucideIcon } from 'lucide-react';
+import { attackText, lossText, plural } from '../lib/text.ts';
 import type { Outcome } from '../scenario/view.ts';
 import { useDocument } from '../store/document.ts';
 import { useScenario, useScenarioView } from '../store/scenario.ts';
@@ -32,6 +32,16 @@ export function ScenarioBanner() {
         <span className={styles.kicker}>{view.scenario.kind === 'attack' ? 'Simulando ataque' : 'Simulando desgracia'}</span>
         <span className={styles.steps}>{steps.join(' + ')}</span>
         <span className={styles.outcome}>{text}</span>
+        {view.duress.length > 0 && (
+          <span className={styles.privacy}>
+            <ShieldQuestion size={12} aria-hidden /> Venciendo un PIN de coacción
+          </span>
+        )}
+        {view.compromised.size > 0 && (
+          <span className={styles.privacy}>
+            <Bug size={12} aria-hidden /> {plural(view.compromised.size, 'dispositivo comprometido', 'dispositivos comprometidos')}
+          </span>
+        )}
         {view.exposure.exposed && (
           <span className={styles.privacy}>
             <Eye size={12} aria-hidden /> {view.outcome === 'stolen' ? 'Y además' : 'Pero'} ve tu saldo y tu historial

@@ -16,7 +16,7 @@ const MEDIUM_OPTIONS = [
 
 export function ArtifactInspector({ model, artifact }: { model: CustodyModel; artifact: Artifact }) {
   const apply = useDocument((s) => s.apply);
-  const select = useSelection((s) => s.select);
+  const back = useSelection((s) => s.back);
   const id = artifact.id;
   const patch = (p: Partial<Artifact>, field?: string) => apply((m) => updateArtifact(m, id, p), field && `artifact:${id}:${field}`);
   const options = secretOptions(model);
@@ -25,7 +25,7 @@ export function ArtifactInspector({ model, artifact }: { model: CustodyModel; ar
 
   return (
     <>
-      <PanelHeader icon={RectangleHorizontal} kind="Backup" title={artifact.label} onClose={() => select(null)} />
+      <PanelHeader icon={RectangleHorizontal} kind="Backup" title={artifact.label} />
 
       <Section>
         <Field label="Nombre">{(fid) => <TextInput id={fid} value={artifact.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
@@ -65,7 +65,7 @@ export function ArtifactInspector({ model, artifact }: { model: CustodyModel; ar
         label="Eliminar backup"
         onClick={() => {
           apply((m) => removeArtifact(m, id));
-          select(null);
+          back();
         }}
       />
     </>

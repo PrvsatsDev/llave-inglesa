@@ -6,7 +6,14 @@ import { SecretBadge } from '../../graph/SecretBadge.tsx';
 import { sameSecret } from '../../lib/secrets.ts';
 import styles from './fields.module.css';
 
-export function PanelHeader({ icon: Icon, kind, title, onClose }: { icon: LucideIcon; kind: string; title: string; onClose(): void }) {
+export function PanelHeader({ icon: Icon, kind, title, onClose, closeLabel }: {
+  icon: LucideIcon;
+  kind: string;
+  title: string;
+  /** Sin él no hay botón de cerrar: se sale con "volver" en las migas de pan. */
+  onClose?(): void;
+  closeLabel?: string;
+}) {
   return (
     <header className={styles.panelHeader}>
       <span className={styles.panelIcon} aria-hidden>
@@ -16,9 +23,11 @@ export function PanelHeader({ icon: Icon, kind, title, onClose }: { icon: Lucide
         <span className={styles.kicker}>{kind}</span>
         <span className={styles.panelTitle}>{title || 'Sin nombre'}</span>
       </span>
-      <button className={styles.iconButton} onClick={onClose} aria-label="Cerrar inspector" title="Cerrar (Esc)">
-        <X size={16} />
-      </button>
+      {onClose && (
+        <button className={styles.iconButton} onClick={onClose} aria-label={closeLabel} title={closeLabel}>
+          <X size={16} />
+        </button>
+      )}
     </header>
   );
 }

@@ -3,7 +3,7 @@ import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './atta
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
-import { attackEffort, cutScore, EXPOSURE, inheritanceScore, lockoutPenalty, securityScore, usabilityScore } from './score.ts';
+import { attackEffort, cutScore, EXPOSURE, inheritanceScore, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
 import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
 
 export interface AnalyzeOptions {
@@ -66,6 +66,34 @@ export function simulateLosses(model: CustodyModel, events: readonly LossEvent[]
   return derive(world, legitHoldings(world), 'any');
 }
 
+const activeOwners = (world: World) => world.model.people.filter((p) => p.role === 'owner' && canAct(world, p.id)).map((p) => p.id);
+
+/** El fallecimiento de todos los titulares: el suceso del que parte la herencia. */
+export function ownerDeaths(model: CustodyModel): LossEvent[] {
+  return model.people.filter((p) => p.role === 'owner').map((p) => ({ type: 'death', person: p.id }));
+}
+
+/**
+ * Cómo firman los titulares, de forma segura, yendo solo a `locations` (sin ubicaciones: a todas
+ * las que pueden entrar). Con las de `analyze().usability.locations`, `canSpend` es cierto.
+ */
+export function simulateSigning(model: CustodyModel, locations?: readonly Id[]): Derivation {
+  const world = createWorld(model);
+  const owners = activeOwners(world);
+  const reachable = locations ?? [...new Set(owners.flatMap((p) => accessibleLocations(world, p)))];
+  return derive(world, { people: owners, locations: reachable }, 'secure');
+}
+
+/**
+ * Qué consiguen los herederos tras fallecer los titulares yendo solo a `locations`
+ * (sin ubicaciones: a todas las que pueden llegar). Explica la puntuación de herencia.
+ */
+export function simulateInheritance(model: CustodyModel, locations?: readonly Id[]): Derivation {
+  const world = createWorld(model, ownerDeaths(model));
+  const heirs = legitHoldings(world);
+  return derive(world, { people: heirs.people, locations: locations ?? heirs.locations }, 'any');
+}
+
 /** Conjunto mínimo de ubicaciones con el que `people` puede gastar, o null si no hay. */
 export function minimalLocationSet(
   world: World,
@@ -89,9 +117,21 @@ function cutReport<A>(cuts: A[][], searchedUpTo: number): CutReport<A> {
 
 /** ¿Este robo solo funciona si el coaccionado da el PIN real de un dispositivo con PIN de coacción? */
 function needsDuressPin(world: World, cut: readonly AttackAtom[]): boolean {
-  if (!cut.some((a) => a.type === 'coercion')) return false;
-  if (!world.model.devices.some((d) => d.pinProtected && d.duressPin)) return false;
-  return !derive(world, withDuress(world, cut, attackHoldings(world, cut)), 'any').canSpend;
+  return duressObstacles(world, cut).length > 0;
+}
+
+/**
+ * PINs de coacción que el atacante tiene que vencer para que el robo funcione: el coaccionado
+ * sabe el PIN de ese dispositivo y podría dar el de coacción. Vacío si el robo no depende de ello.
+ */
+export function duressObstacles(world: World, cut: readonly AttackAtom[]): { person: Id; device: Id }[] {
+  if (!cut.some((a) => a.type === 'coercion')) return [];
+  if (!world.model.devices.some((d) => d.pinProtected && d.duressPin)) return [];
+  const holdings = withDuress(world, cut, attackHoldings(world, cut));
+  if (derive(world, holdings, 'any').canSpend) return [];
+  const knowsPin = (person: Id, device: Id) =>
+    world.model.people.some((p) => p.id === person && p.knows.some((s) => s.type === 'pin' && s.device === device));
+  return (holdings.withheldPins ?? []).filter((w) => knowsPin(w.person, w.device));
 }
 
 function securityReport(world: World, found: AttackAtom[][], searchedUpTo: number): SecurityReport {
@@ -143,7 +183,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     const lockoutMinSize = lockouts[0]?.length ?? null;
     resilience = {
       ...losses,
-      score: Math.max(0, losses.score - lockoutPenalty(lockoutMinSize)),
+      score: resilienceBreakdown(losses.minSize, lockoutMinSize).score,
       recoverableNow,
       lockouts,
       lockoutMinSize,
@@ -152,15 +192,11 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     resilience = { score: 0, minSize: 0, searchedUpTo: 0, cuts: [[]], cheapest: [[]], recoverableNow, lockouts: [], lockoutMinSize: null };
   }
 
-  const owners = model.people.filter((p) => p.role === 'owner' && canAct(intact, p.id)).map((p) => p.id);
+  const owners = activeOwners(intact);
   const ownerLocations = [...new Set(owners.flatMap((p) => accessibleLocations(intact, p)))];
   const usableWith = minimalLocationSet(intact, owners, ownerLocations, 'secure');
 
-  const afterDeath = createWorld(
-    model,
-    model.people.filter((p) => p.role === 'owner').map((p) => ({ type: 'death', person: p.id })),
-    intact.index,
-  );
+  const afterDeath = createWorld(model, ownerDeaths(model), intact.index);
   const heirs = legitHoldings(afterDeath);
   const heirLocations = heirs.people.length > 0 ? minimalLocationSet(afterDeath, heirs.people, heirs.locations, 'any') : null;
 

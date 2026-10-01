@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
+  Bug,
   Camera,
   Circle,
   Cloud,
@@ -23,7 +24,7 @@ import { LOCATION_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
 import styles from './nodes.module.css';
 
-const ICONS: Record<ItemIcon, LucideIcon> = {
+export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
   stateful: Cpu,
   stateless: Camera,
   paper: FileText,
@@ -34,14 +35,18 @@ const ICONS: Record<ItemIcon, LucideIcon> = {
   descriptor: FileCode2,
 };
 
+/** Cómo cae el dispositivo en el ataque simulado (texto además del color). */
+const COMPROMISE = { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' } as const;
+
 function ItemRow({ item }: { item: ItemView }) {
-  const Icon = ICONS[item.icon];
+  const Icon = ITEM_ICONS[item.icon];
   const isDevice = item.icon === 'stateful' || item.icon === 'stateless';
   const selected = useSelection((s) => isSelected(s.selected, item.kind, item.id));
   const select = useSelection((s) => s.select);
   return (
     <li
       data-state={item.state}
+      data-compromised={item.compromise}
       className={`${styles.item} ${selected ? styles.itemSelected : ''}`}
       onClick={(e) => {
         e.stopPropagation();
@@ -57,6 +62,11 @@ function ItemRow({ item }: { item: ItemView }) {
           {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label="con PIN" />}
           {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label="cifrado" />}
         </span>
+        {item.compromise && (
+          <span className={styles.compromiseTag}>
+            <Bug size={11} aria-hidden /> {COMPROMISE[item.compromise]}
+          </span>
+        )}
         <span className={styles.itemSubtitle}>
           {item.subtitle}
           {item.registeredWallet && (
@@ -76,7 +86,7 @@ function ItemRow({ item }: { item: ItemView }) {
   );
 }
 
-const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
+export const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
 
 export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
   const LocationIcon = LOCATION_ICONS[data.kind];

@@ -6,7 +6,7 @@ import { PERSON_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
 import styles from './nodes.module.css';
 
-const ROLE = {
+export const ROLE = {
   owner: 'Titular',
   heir: 'Heredero/a',
   custodian: 'Custodio/a',

@@ -342,6 +342,31 @@
   border-color: var(--tone);
 }
 
+.item[data-compromised] {
+  opacity: 1;
+  box-shadow: inset 0 0 0 1px var(--danger);
+  outline: 1px dashed var(--danger);
+  outline-offset: 2px;
+}
+
+.item[data-compromised] .itemIcon {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.compromiseTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
 .item[data-state='destroyed'] {
   opacity: 0.4;
   filter: grayscale(1);
