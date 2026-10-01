@@ -1,6 +1,6 @@
 import { updateDevice } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { analyze, ATTACK_EFFORT, DURESS_SURCHARGE, type AttackAtom } from '../src/index.ts';
+import { analyze, ATTACK_EFFORT, atomEffort, DURESS_SURCHARGE, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
 
 const casa = loadFixture('todo-en-casa'); // la llave inglesa en casa es la vía más barata (esfuerzo 2)
@@ -40,7 +40,7 @@ describe('PIN de coacción', () => {
   it('no afecta a robos sin coacción (quien traiciona da el PIN bueno)', () => {
     const s = analyze(duress).security;
     s.cuts.forEach((cut, i) => {
-      if (cut.every((a) => a.type !== 'coercion')) expect(s.efforts[i]).toBe(cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0));
+      if (cut.every((a) => a.type !== 'coercion')) expect(s.efforts[i]).toBe(cut.reduce((sum, a) => sum + atomEffort(a), 0));
     });
   });
 });

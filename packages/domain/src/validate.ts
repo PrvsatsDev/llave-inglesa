@@ -10,7 +10,8 @@ export type IssueCode =
   | 'threshold-out-of-range'
   | 'key-repeated-in-policy'
   | 'key-not-in-policy'
-  | 'no-owner';
+  | 'no-owner'
+  | 'passphrase-strength-unset';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -104,6 +105,10 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   walk(model.policy, ['policy']);
   model.keys.forEach((k, i) => {
     if (!used.includes(k.id)) report('warning', 'key-not-in-policy', ['keys', i], k.id);
+  });
+
+  model.keys.forEach((k, i) => {
+    if (k.passphrase && !k.passphraseStrength) report('warning', 'passphrase-strength-unset', ['keys', i, 'passphraseStrength'], k.id);
   });
 
   model.devices.forEach((d, i) => {

@@ -88,10 +88,16 @@ function balanceExposure(model: CustodyModel, d: Derivation): ScenarioView['expo
 }
 
 function referencesExist(model: CustodyModel, s: Scenario): boolean {
-  const ids = new Set([...model.locations, ...model.people, ...model.devices, ...model.artifacts].map((e) => e.id));
+  const ids = new Set([...model.locations, ...model.people, ...model.devices, ...model.artifacts, ...model.keys].map((e) => e.id));
   const refs =
     s.kind === 'attack'
-      ? s.atoms.flatMap((a) => (a.type === 'burglary' ? [a.location] : a.type === 'coercion' ? [a.person, ...(a.location ? [a.location] : [])] : a.type === 'insider' ? [a.person] : []))
+      ? s.atoms.flatMap((a) =>
+          a.type === 'burglary' ? [a.location]
+          : a.type === 'coercion' ? [a.person, ...(a.location ? [a.location] : [])]
+          : a.type === 'insider' ? [a.person]
+          : a.type === 'passphrase-bruteforce' ? [a.key]
+          : [],
+        )
       : s.events.map((e) => (e.type === 'destroy-location' ? e.location : e.type === 'item-loss' ? e.item : e.person));
   return refs.every((id) => ids.has(id));
 }

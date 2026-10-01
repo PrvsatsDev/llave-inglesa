@@ -49,6 +49,8 @@ export type RuleId =
   | 'physical-extraction'
   /** Semilla filtrada en las firmas por un firmware malicioso. */
   | 'malicious-firmware'
+  /** Passphrase adivinada por fuerza bruta a partir de la semilla. */
+  | 'passphrase-bruteforce'
   | 'read-artifact'
   | 'descriptor-xpubs'
   | 'unlock-device'
@@ -66,7 +68,7 @@ export interface Justification {
   rule: RuleId;
   /** Hechos de los que depende (siempre derivados antes: el grafo es acíclico). */
   premises: FactId[];
-  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string };
+  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string; strength?: 'weak' | 'phrase' };
 }
 
 export interface DerivedFact {

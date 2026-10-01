@@ -439,3 +439,18 @@
 .advisoryText {
   margin: 2px 0;
 }
+
+/* Aviso en una ficha: además del color, el texto dice qué falta. */
+.warningHint {
+  margin: 0;
+  color: var(--warn);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.fieldTitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}

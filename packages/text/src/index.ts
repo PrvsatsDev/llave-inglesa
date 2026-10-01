@@ -90,7 +90,10 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'entropy-compromise': 'RNG con fallo desconocido',
   'known-weak-entropy': 'fallo de entropía publicado',
   'malicious-firmware': 'firmware malicioso',
+  'passphrase-bruteforce': 'fuerza bruta a la passphrase',
 };
+
+export const PASSPHRASE_STRENGTH_TEXT = { weak: 'débil', phrase: 'frase', random: 'aleatoria larga' } as const;
 
 /** El mismo átomo se cuenta distinto según la ubicación: no se "entra" en una nube. */
 export function attackText(a: AttackAtom, index: ModelIndex): string {
@@ -106,6 +109,7 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     case 'entropy-compromise': return `RNG con fallo aún desconocido: ${originText(a.origin)}`;
     case 'known-weak-entropy': return `Semilla adivinable por un fallo publicado: ${advisoryShortName(a.advisory)}`;
     case 'malicious-firmware': return `Firmware malicioso: ${a.vendor}`;
+    case 'passphrase-bruteforce': return `Fuerza bruta a la passphrase de ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
 }
 
@@ -160,6 +164,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;
     case 'known-weak-entropy': return `adivinable por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
     case 'malicious-firmware': return `filtrada en las firmas por un firmware malicioso de ${v.vendor}`;
+    case 'passphrase-bruteforce': return `adivinada por fuerza bruta a partir de la semilla (passphrase ${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']})`;
     case 'physical-extraction': return `extraída del hardware de ${name(v.device)} pese al PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
     case 'descriptor-xpubs': return 'incluida en el descriptor';
@@ -185,6 +190,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'key-repeated-in-policy': 'Una key aparece dos veces en la política',
   'key-not-in-policy': 'Hay una key que no participa en la política',
   'no-owner': 'Falta una persona con rol de titular',
+  'passphrase-strength-unset': 'Hay una passphrase sin fortaleza indicada: se trata como débil',
 };
 
 export function issueText(issue: Issue, label: Label): string {

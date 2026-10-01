@@ -6,7 +6,7 @@ import { ITEM_ICONS, LOCATION_ICONS } from '../graph/LocationNode.tsx';
 import { ROLE } from '../graph/PersonNode.tsx';
 import { SecretBadge } from '../graph/SecretBadge.tsx';
 import { keyColor } from '../lib/key-colors.ts';
-import { issueText, plural, provenanceText } from '../lib/text.ts';
+import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, provenanceText } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
@@ -59,7 +59,7 @@ export function Schema({ model }: { model: CustodyModel }) {
               <button className={styles.row} onClick={() => select({ kind: 'key', id: k.id })}>
                 <span className={styles.rowMain}>
                   <KeyChip label={k.label} color={keyColor(model, k.id)} />
-                  {k.passphrase && <span className={styles.badge}>+ passphrase</span>}
+                  {k.passphrase && <span className={styles.badge}>+ passphrase {k.passphraseStrength ? PASSPHRASE_STRENGTH_TEXT[k.passphraseStrength] : 'sin indicar'}</span>}
                   {k.provenance.independentlyVerified && (
                     <span className={`${styles.badge} ${styles.verified}`} title="Derivación verificada con una herramienta independiente">
                       <BadgeCheck size={12} aria-hidden /> verificada

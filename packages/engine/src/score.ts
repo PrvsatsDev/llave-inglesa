@@ -10,7 +10,7 @@ import type { AttackAtom } from './attacks.ts';
  * Esfuerzo y riesgo que supone cada tipo de ataque para el atacante.
  * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
  */
-export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
+export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce'>, number>> = {
   /** Entrar sin nadie presente: sigiloso, sin confrontación. */
   burglary: 1.5,
   /** Alguien de confianza: ya tiene acceso y conocimiento. */
@@ -26,13 +26,27 @@ export const ATTACK_EFFORT: Readonly<Record<AttackAtom['type'], number>> = {
 };
 
 /**
+ * Fuerza bruta a una passphrase, teniendo ya la semilla. Una débil (palabra, fecha) cae casi gratis;
+ * una frase elegida por uno exige mucho cómputo y algo de suerte. Una aleatoria larga no se intenta.
+ */
+export const PASSPHRASE_EFFORT: Readonly<Record<'weak' | 'phrase', number>> = {
+  weak: 0.5,
+  phrase: 3,
+};
+
+/** Esfuerzo de un ataque concreto. */
+export function atomEffort(a: AttackAtom): number {
+  return a.type === 'passphrase-bruteforce' ? PASSPHRASE_EFFORT[a.strength] : ATTACK_EFFORT[a.type];
+}
+
+/**
  * Recargo cuando el robo exige vencer un PIN de coacción (el coaccionado puede dar el falso).
  * No lo anula: un atacante informado puede saber que existe.
  */
 export const DURESS_SURCHARGE = 1;
 
 export function attackEffort(cut: readonly AttackAtom[], beatsDuress = false): number {
-  return cut.reduce((sum, a) => sum + ATTACK_EFFORT[a.type], 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
+  return cut.reduce((sum, a) => sum + atomEffort(a), 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
 }
 
 /** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */

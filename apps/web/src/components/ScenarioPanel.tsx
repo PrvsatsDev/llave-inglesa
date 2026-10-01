@@ -1,5 +1,5 @@
 import { indexModel, type CustodyModel, type ModelIndex } from '@llave-inglesa/domain';
-import { ATTACK_EFFORT, attackAtoms, attackEffort, createWorld, DURESS_SURCHARGE, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
+import { atomEffort, attackAtoms, attackEffort, createWorld, DURESS_SURCHARGE, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
 import { Bug, Eye, EyeOff, Flame, ShieldQuestion, Skull, X } from 'lucide-react';
 import { attackText, factText, lossText, ruleText } from '../lib/text.ts';
 import type { ScenarioView } from '../scenario/view.ts';
@@ -82,7 +82,7 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
           {atoms.map((a, i) => (
             <tr key={i}>
               <td>{attackText(a, index)}</td>
-              <td className={styles.points}>{num(ATTACK_EFFORT[a.type])}</td>
+              <td className={styles.points}>{num(atomEffort(a))}</td>
             </tr>
           ))}
           {duress.length > 0 && (

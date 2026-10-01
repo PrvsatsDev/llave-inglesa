@@ -3,6 +3,7 @@ import {
   ATTACK_EFFORT,
   cutScore,
   DURESS_SURCHARGE,
+  PASSPHRASE_EFFORT,
   explain,
   EXPOSURE,
   inheritanceScore,
@@ -157,7 +158,7 @@ function securityScore(a: EngineAnalysis) {
     score: sec.score,
     rows,
     how: [
-      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
+      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
       `Cuanto más esfuerzo exige el robo más barato, más puntuación: ${curve}.`,
       `Tener varias vías casi igual de baratas (hasta ${num(EXPOSURE.margin)} más de esfuerzo) resta ${EXPOSURE.penaltyPerExtraRoute} por cada vía extra, como mucho ${EXPOSURE.maxPenalty}.`,
     ],

@@ -1,8 +1,8 @@
 import { activeHolds, advisoriesFor, catalogModelByName, indexModel, removeKey, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
-import { KeyRound, MapPin, Plus, X } from 'lucide-react';
+import { AlertTriangle, KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
-import { Button, DeleteButton, Field, PanelHeader, Section, Select, Switch, TextInput } from './fields.tsx';
+import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
 import { AdvisoryList, HardwareModelSelect } from './Hardware.tsx';
 import styles from './fields.module.css';
 
@@ -67,6 +67,20 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
   );
 }
 
+/** Solo cómo es, nunca cuál es. */
+const STRENGTH_OPTIONS = [
+  { value: 'weak', label: 'Débil' },
+  { value: 'phrase', label: 'Frase' },
+  { value: 'random', label: 'Aleatoria larga' },
+] as const;
+
+const STRENGTH_HINT = {
+  unset: 'Sin indicar: se trata como débil. Elige cómo es para que el análisis sea realista.',
+  weak: 'Una palabra, un nombre o una fecha. Con la semilla en la mano, se adivina casi gratis.',
+  phrase: 'Varias palabras elegidas por ti. Con la semilla, adivinarla exige mucho cómputo y algo de suerte.',
+  random: 'Generada al azar y larga (p. ej. 6 o más palabras con dados). No se puede adivinar.',
+} as const;
+
 export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; keyEntity: Key }) {
   const apply = useDocument((s) => s.apply);
   const back = useSelection((s) => s.back);
@@ -100,6 +114,20 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
           </Field>
         </div>
         <Switch checked={key.passphrase} onChange={(passphrase) => patch({ passphrase })} label="Requiere passphrase" hint="Sin la passphrase, la semilla sola no sirve." />
+        {key.passphrase && (
+          <>
+            <p className={styles.fieldTitle}>Cómo es la passphrase</p>
+            <Segmented
+              label="Cómo es la passphrase"
+              value={key.passphraseStrength ?? 'unset'}
+              options={STRENGTH_OPTIONS}
+              onChange={(v) => v !== 'unset' && patch({ passphraseStrength: v })}
+            />
+            <p className={key.passphraseStrength ? styles.hint : styles.warningHint}>
+              {!key.passphraseStrength && <AlertTriangle size={12} aria-hidden />} {STRENGTH_HINT[key.passphraseStrength ?? 'unset']}
+            </p>
+          </>
+        )}
       </Section>
 
       <Section title="Dónde está">
