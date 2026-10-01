@@ -149,6 +149,16 @@ export const LocationSchema = z.object({
    * cloud: cuenta en la nube (hackeo remoto / pérdida de la cuenta).
    */
   kind: z.enum(['physical', 'device', 'cloud']).default('physical'),
+  /**
+   * Solo ubicaciones físicas. home-safe: caja fuerte doméstica; bank-box: caja de seguridad
+   * de un banco. Sin indicar: ninguna (casa, oficina…).
+   */
+  protection: z.enum(['home-safe', 'bank-box']).optional(),
+  /**
+   * Ubicación física que la contiene (p. ej. la caja fuerte dentro de Casa): hay que entrar
+   * primero en ella y sus desastres la alcanzan. Un solo nivel.
+   */
+  inside: IdSchema.optional(),
   access: z
     .array(z.object({ person: IdSchema, when: AccessConditionSchema.default({ type: 'always' }) }))
     .default([]),

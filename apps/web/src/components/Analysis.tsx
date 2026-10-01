@@ -197,7 +197,7 @@ function resilienceScore(a: EngineAnalysis) {
 }
 
 function usabilityScoreRows(a: EngineAnalysis) {
-  const n = a.usability.locations?.length ?? null;
+  const n = a.usability.visits;
   return {
     score: a.usability.score,
     rows: [{ label: n === null ? 'Los titulares no pueden firmar de forma segura' : `Firmar exige ir a ${plural(n, 'ubicación', 'ubicaciones')}`, points: a.usability.score }],
@@ -212,7 +212,7 @@ function inheritanceScoreRows(a: EngineAnalysis) {
   const inh = a.inheritance;
   const label =
     inh.status === 'ok'
-      ? `${inh.heirs.length > 0 ? 'Los herederos recuperan' : 'Se recupera'} yendo a ${plural(inh.locations!.length, 'ubicación', 'ubicaciones')}`
+      ? `${inh.heirs.length > 0 ? 'Los herederos recuperan' : 'Se recupera'} yendo a ${plural(inh.visits!, 'ubicación', 'ubicaciones')}`
       : inh.status === 'no-heirs'
         ? 'No hay herederos'
         : 'Los herederos no pueden recuperar los fondos';

@@ -14,7 +14,7 @@ export type SigningMode = 'any' | 'secure';
 export interface Holdings {
   /** Personas cuya memoria aporta secretos. */
   people: readonly Id[];
-  /** Ubicaciones cuyo contenido tiene físicamente. */
+  /** Ubicaciones cuyo contenido tiene físicamente (una que está dentro de otra exige tener ambas). */
   locations: readonly Id[];
   /** Semillas obtenidas sin acceso físico (RNG comprometido o fallo de entropía conocido). */
   compromisedSeeds?: readonly CompromisedSeed[];
@@ -57,7 +57,11 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
     changed = true;
   };
 
-  for (const location of holdings.locations) {
+  // Lo que está dentro de otra ubicación solo se alcanza teniendo también la que la contiene.
+  const reached = new Set(holdings.locations);
+  for (const location of reached) {
+    const parent = index.locations.get(location)?.inside;
+    if (parent !== undefined && !reached.has(parent)) continue;
     for (const item of itemsAvailableAt(world, location)) {
       add({ kind: 'item', item: item.value.id }, { rule: 'location-access', premises: [], via: { location } });
     }

@@ -35,6 +35,9 @@ const modelArb: fc.Arbitrary<CustodyModel> = fc
       access: fc.array(fc.record({ person, loc, afterDeath: fc.boolean() }), { maxLength: 6 }),
       nPeople: fc.constant(nPeople),
       nLocs: fc.constant(nLocs),
+      // Protección de cada ubicación y si la segunda está dentro de la primera.
+      protections: fc.array(fc.constantFrom(undefined, 'home-safe' as const, 'bank-box' as const), { minLength: nLocs, maxLength: nLocs }),
+      nested: fc.boolean(),
     });
   })
   .map((r): CustodyModel => {
@@ -72,6 +75,8 @@ const modelArb: fc.Arbitrary<CustodyModel> = fc
       locations: Array.from({ length: r.nLocs }, (_, i) => ({
         id: `l${i}`,
         name: `L${i}`,
+        ...(r.protections[i] && { protection: r.protections[i] }),
+        ...(r.nested && i === 1 && { inside: 'l0' }),
         access: r.access
           .filter((a) => a.loc === `l${i}`)
           .map((a) => ({ person: a.person, when: a.afterDeath ? { type: 'after-death' as const, person: 'p0' } : { type: 'always' as const } })),

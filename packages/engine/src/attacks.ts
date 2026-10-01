@@ -13,7 +13,7 @@ export function extractionAdvisory(device: Device): string | null {
 
 /** Acción atómica de un adversario. Un ataque real es una combinación de átomos. */
 export type AttackAtom =
-  /** Entrar en una ubicación sin nadie presente. */
+  /** Entrar en una ubicación sin nadie presente (en una que está dentro de otra, además de entrar en esa). */
   | { type: 'burglary'; location: Id }
   /** Llave inglesa: obligar a una persona a revelar lo que sabe y abrir una ubicación. */
   | { type: 'coercion'; person: Id; location: Id | null }
@@ -82,10 +82,14 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'burglary':
         locations.add(a.location);
         break;
-      case 'coercion':
+      case 'coercion': {
         people.add(a.person);
+        // Obligado a abrir la caja fuerte, también abre la casa en la que está.
+        const parent = a.location ? world.index.locations.get(a.location)?.inside : undefined;
         if (a.location) locations.add(a.location);
+        if (parent) locations.add(parent);
         break;
+      }
       case 'insider':
         people.add(a.person);
         accessibleLocations(world, a.person).forEach((l) => locations.add(l));

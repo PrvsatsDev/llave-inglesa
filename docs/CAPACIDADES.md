@@ -15,7 +15,7 @@ Nunca material secreto real: solo qué existe, dónde está y quién sabe qué.
 | **Dispositivo** | Modelo (del catálogo o escrito a mano), **firmware instalado**, stateful/stateless, keys que guarda, **keys que se firman con él** (stateless o semilla externa; "sin indicar" = cualquiera en un stateless), PIN, **PIN de coacción configurado** (si el modelo lo admite), si firma con semillas externas, si tiene el multisig registrado, ubicación. |
 | **Backup** | Soporte (papel, metal, arandelas, digital, otro), contenido (semilla, passphrase, xpub, PIN, descriptor, contraseña) y secretos que lo bloquean (p. ej. cifrado con contraseña). |
 | **Persona** | Rol (titular, heredero, custodio, otro) y qué sabe de memoria. |
-| **Ubicación** | Tipo (física, dispositivo como un portátil, nube) y quién puede entrar y **cuándo**: siempre, tras el fallecimiento de alguien, o si alguien queda incapacitado o fallece (poder notarial). |
+| **Ubicación** | Tipo (física, dispositivo como un portátil, nube) y quién puede entrar y **cuándo**: siempre, tras el fallecimiento de alguien, o si alguien queda incapacitado o fallece (poder notarial). Las físicas tienen **protección** (ninguna, **caja fuerte** doméstica o **caja del banco**) y pueden estar **dentro de otra** física (p. ej. la caja fuerte dentro de Casa; un solo nivel): para entrar en ella hay que poder entrar también en la que la contiene. |
 
 La validación avisa de referencias rotas y de incoherencias (p. ej. un stateful que no guarda nada, una key fuera de la política).
 
@@ -32,9 +32,9 @@ Un robo es una **combinación** de ataques; se buscan todas las combinaciones m�
 
 | Ataque | Esfuerzo | Qué consigue |
 |---|---|---|
-| Intrusión (o hackeo / robo o malware, según el tipo de ubicación) | 1,5 | Todo lo que hay en la ubicación. |
+| Intrusión (o hackeo / robo o malware, según el tipo de ubicación) | 1,5 · caja fuerte 2,5 · caja del banco 3,5 | Todo lo que hay en la ubicación. En una que está **dentro de otra** hay que entrar también en esa, y solo suma la diferencia (casa 1,5 + caja fuerte 1 = 2,5). |
 | Traición | 1,5 | Lo que sabe una persona de confianza (no titular) y los sitios a los que entra. |
-| Llave inglesa | 2 | Lo que sabe la persona coaccionada y, si se hace allí, la ubicación. |
+| Llave inglesa | 2 · en una caja del banco 3 | Lo que sabe la persona coaccionada y, si se hace allí, la ubicación (obligada a abrir la caja fuerte, también la casa en la que está). En la caja del banco hay que llevarla en horario, identificarse y pasar cámaras: +1. |
 | RNG con fallo aún desconocido (por fabricante o de origen desconocido) | 3 | Semillas generadas con ese RNG, salvo que otra fuente buena o una verificación independiente las proteja. |
 | Firmware malicioso (por fabricante) | 3 | Semillas que pasan por sus dispositivos (guardadas o cargadas), filtradas en las firmas. **Anti-exfil lo mitiga.** |
 | Semilla adivinable por un fallo publicado (por aviso) | 0,5 | Todas las semillas generadas con firmware afectado, a la vez. **128 bits de entropía propia lo mitigan.** |
@@ -55,10 +55,11 @@ Desastres por ubicación, pérdida de un objeto, fallecimiento, incapacidad y ol
 | Ubicación | Desastres |
 |---|---|
 | Física (casa, banco) | **Incendio**, **inundación**, **pérdida del acceso** (se pierde todo) |
+| Física dentro de otra (caja fuerte de casa) | **Pérdida del acceso**; el incendio y la inundación le llegan de la que la contiene, y perder esa es perder también esta |
 | Dispositivo (portátil, disco) | **Avería** (se pierde todo) |
 | Nube | **Pérdida de la cuenta** (se pierde todo) |
 
-Un incendio o una inundación destruyen todo lo que hay en la ubicación **salvo los backups de metal o arandelas** (se asume acero). El papel, lo digital, "otro" y todos los dispositivos se pierden. En la simulación, la ubicación lleva la etiqueta del desastre y lo que resiste, "Resiste".
+Un incendio o una inundación destruyen todo lo que hay en la ubicación (y en lo que está dentro de ella) **salvo los backups de metal o arandelas** (se asume acero). El papel, lo digital, "otro" y todos los dispositivos se pierden. En la simulación, la ubicación lleva la etiqueta del desastre y lo que resiste, "Resiste".
 
 - La **incapacidad** es un **bloqueo temporal** (se resuelve al fallecer: heredan), no una pérdida; resta algo de resiliencia.
 - Los accesos "tras el fallecimiento" o "si queda incapacitado o fallece" se activan con esos sucesos.
@@ -66,9 +67,9 @@ Un incendio o una inundación destruyen todo lo que hay en la ubicación **salvo
 ## 5. Puntuaciones (0–100, parámetros en `packages/engine/src/score.ts`)
 
 - **Seguridad**: esfuerzo del robo más barato, menos una penalización si hay varias vías igual de baratas.
-- **Resiliencia**: lo improbable que es perderlo todo. Cada desgracia tiene una **rareza** (órdenes de magnitud de improbabilidad): olvidar 1 · perder un objeto 1 (acero 1,5) · avería de portátil o pérdida de cuenta 1,5 · incendio, inundación, fallecimiento 2 · incapacidad 2,5 · pérdida del acceso a un sitio 3. Varias a la vez suman su rareza. La base sale de la pérdida más probable; las demás vías restan (sus probabilidades se suman: rareza equivalente de todas juntas), y el bloqueo temporal más probable resta 10 si su rareza es menor que 3, 5 si es menor que 5.
-- **Usabilidad**: cuántas ubicaciones hay que visitar para firmar de forma segura (con dispositivos de firma).
-- **Herencia**: si los herederos pueden recuperar los fondos tras el fallecimiento de los titulares, y cuántas ubicaciones les cuesta.
+- **Resiliencia**: lo improbable que es perderlo todo. Cada desgracia tiene una **rareza** (órdenes de magnitud de improbabilidad): olvidar 1 · perder un objeto 1 (acero 1,5) · avería de portátil o pérdida de cuenta 1,5 · incendio, inundación, fallecimiento 2 (incendio o inundación en una caja del banco, 3: la cámara acorazada los resiste mucho mejor) · incapacidad 2,5 · pérdida del acceso a un sitio 3. Varias a la vez suman su rareza. La base sale de la pérdida más probable; las demás vías restan (sus probabilidades se suman: rareza equivalente de todas juntas), y el bloqueo temporal más probable resta 10 si su rareza es menor que 3, 5 si es menor que 5.
+- **Usabilidad**: cuántas ubicaciones hay que visitar para firmar de forma segura (con dispositivos de firma). Una ubicación y lo que tiene dentro (casa y su caja fuerte) son una sola visita.
+- **Herencia**: si los herederos pueden recuperar los fondos tras el fallecimiento de los titulares, y cuántas ubicaciones les cuesta (contadas como visitas, igual que en usabilidad).
 
 Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada paso. Las puntuaciones de seguridad y resiliencia se pueden **desglosar** en base y descuentos, y la usabilidad y la herencia se explican con la firma de los titulares (o de los herederos, tras el fallecimiento de los titulares) yendo solo a las ubicaciones mínimas.
 
@@ -90,5 +91,6 @@ Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada p
 - El air-gap no cuenta como mitigación (no frena la filtración en las firmas).
 - El catálogo no se actualiza solo; una versión completa y posterior a la corregida se da por buena aunque no exista.
 - Las rarezas son estimaciones de orden de magnitud, iguales para todos (no dependen de la edad, la zona o el tipo de vivienda), y las desgracias se tratan como independientes. Se buscan combinaciones de hasta 3 a la vez.
-- El metal se asume acero: una placa de aluminio o de latón no resistiría un incendio. Un papel en una bolsa estanca o una caja ignífuga tampoco se distinguen.
+- El metal se asume acero: una placa de aluminio o de latón no resistiría un incendio. Un papel en una bolsa estanca o una caja fuerte ignífuga tampoco se distinguen.
+- La protección son tres niveles fijos (ninguna, caja fuerte, caja del banco): no distingue la calidad de la caja fuerte ni si está anclada, ni alarmas o vigilancia en casa. Las ubicaciones solo se anidan un nivel.
 - Sin timelocks todavía; la política ya es un árbol preparado para ellos.

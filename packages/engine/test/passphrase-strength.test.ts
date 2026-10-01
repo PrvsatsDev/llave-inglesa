@@ -1,4 +1,4 @@
-import { parseModel, updateKey } from '@llave-inglesa/domain';
+import { indexModel, parseModel, updateKey } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { analyze, attackAtoms, atomEffort, createWorld, PASSPHRASE_EFFORT, simulateAttack, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
@@ -13,7 +13,7 @@ describe('fortaleza de la passphrase', () => {
   it('una aleatoria larga no se intenta adivinar; débil y frase sí, con su esfuerzo', () => {
     expect(bruteforce(strength('random'))).toEqual([]);
     expect(bruteforce(strength('weak'))).toEqual([{ type: 'passphrase-bruteforce', key: 'k1', strength: 'weak' }]);
-    expect(atomEffort(bruteforce(strength('phrase'))[0]!)).toBe(PASSPHRASE_EFFORT.phrase);
+    expect(atomEffort(bruteforce(strength('phrase'))[0]!, indexModel(strength('phrase')))).toBe(PASSPHRASE_EFFORT.phrase);
   });
 
   it('sin indicar se trata como débil, con un aviso', () => {

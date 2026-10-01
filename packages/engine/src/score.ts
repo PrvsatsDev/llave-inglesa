@@ -1,4 +1,4 @@
-import type { ModelIndex } from '@llave-inglesa/domain';
+import type { Id, Location, ModelIndex } from '@llave-inglesa/domain';
 import type { AttackAtom } from './attacks.ts';
 import type { LossEvent } from './world.ts';
 
@@ -13,7 +13,7 @@ import type { LossEvent } from './world.ts';
  * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
  */
 export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce'>, number>> = {
-  /** Entrar sin nadie presente: sigiloso, sin confrontación. */
+  /** Entrar sin nadie presente: sigiloso, sin confrontación. En sitios protegidos, ver BURGLARY_EFFORT. */
   burglary: 1.5,
   /** Alguien de confianza: ya tiene acceso y conocimiento. */
   insider: 1.5,
@@ -36,9 +36,52 @@ export const PASSPHRASE_EFFORT: Readonly<Record<'weak' | 'phrase', number>> = {
   phrase: 3,
 };
 
-/** Esfuerzo de un ataque concreto. */
-export function atomEffort(a: AttackAtom): number {
-  return a.type === 'passphrase-bruteforce' ? PASSPHRASE_EFFORT[a.strength] : ATTACK_EFFORT[a.type];
+/** Protección de una ubicación física; sin indicar, ninguna. */
+type Protection = NonNullable<Location['protection']> | 'none';
+
+/**
+ * Esfuerzo de una intrusión hasta llegar al contenido, según la protección. Si la ubicación está
+ * dentro de otra, el robo exige entrar en ambas y esta solo suma la diferencia: la caja fuerte de
+ * casa cuesta 1.5 (casa) + 1 (abrirla) = 2.5.
+ */
+export const BURGLARY_EFFORT: Readonly<Record<Protection, number>> = {
+  none: ATTACK_EFFORT.burglary,
+  /** Caja fuerte doméstica: hay que localizarla y forzarla o llevársela. */
+  'home-safe': 2.5,
+  /** Caja de seguridad de un banco: cámara acorazada, alarmas, vigilancia. */
+  'bank-box': 3.5,
+};
+
+/**
+ * Recargo de la llave inglesa según lo que hay que obligar a abrir. Una caja fuerte de casa se abre
+ * allí mismo; para la del banco hay que llevar a la víctima en horario, identificarse y pasar cámaras.
+ */
+export const COERCION_SURCHARGE: Readonly<Record<Protection, number>> = {
+  none: 0,
+  'home-safe': 0,
+  'bank-box': 1,
+};
+
+const protectionOf = (index: ModelIndex, location: Id | null): Protection =>
+  (location !== null && index.locations.get(location)?.protection) || 'none';
+
+/** Esfuerzo de un ataque concreto (la ubicación decide el de intrusiones y coacciones). */
+export function atomEffort(a: AttackAtom, index: ModelIndex): number {
+  switch (a.type) {
+    case 'passphrase-bruteforce':
+      return PASSPHRASE_EFFORT[a.strength];
+    case 'burglary': {
+      const location = index.locations.get(a.location);
+      // Dispositivos y nube no tienen protección: su intrusión es el robo o el hackeo.
+      if (location?.kind !== 'physical') return ATTACK_EFFORT.burglary;
+      const own = BURGLARY_EFFORT[protectionOf(index, a.location)];
+      return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT[protectionOf(index, location.inside)]);
+    }
+    case 'coercion':
+      return ATTACK_EFFORT.coercion + COERCION_SURCHARGE[protectionOf(index, a.location)];
+    default:
+      return ATTACK_EFFORT[a.type];
+  }
 }
 
 /**
@@ -47,8 +90,8 @@ export function atomEffort(a: AttackAtom): number {
  */
 export const DURESS_SURCHARGE = 1;
 
-export function attackEffort(cut: readonly AttackAtom[], beatsDuress = false): number {
-  return cut.reduce((sum, a) => sum + atomEffort(a), 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
+export function attackEffort(cut: readonly AttackAtom[], index: ModelIndex, beatsDuress = false): number {
+  return cut.reduce((sum, a) => sum + atomEffort(a, index), 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
 }
 
 /** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */
@@ -118,6 +161,8 @@ export const LOSS_RARITY = {
   'steel-loss': 1.5,
   fire: 2,
   flood: 2,
+  /** Incendio o inundación en la caja de un banco: la cámara acorazada los resiste mucho mejor que una casa. */
+  'vault-disaster': 3,
   death: 2,
   incapacity: 2.5,
   /** Pérdida total de una ubicación, según su tipo. */
@@ -134,7 +179,11 @@ export const LOSS_RARITY = {
 export function lossRarity(e: LossEvent, index: ModelIndex): number {
   switch (e.type) {
     case 'destroy-location':
-      return e.disaster === 'total' ? LOSS_RARITY.total[index.locations.get(e.location)?.kind ?? 'physical'] : LOSS_RARITY[e.disaster];
+    {
+      const location = index.locations.get(e.location);
+      if (e.disaster === 'total') return LOSS_RARITY.total[location?.kind ?? 'physical'];
+      return location?.protection === 'bank-box' ? LOSS_RARITY['vault-disaster'] : LOSS_RARITY[e.disaster];
+    }
     case 'item-loss': {
       const medium = index.artifacts.get(e.item)?.medium;
       return medium === 'metal' || medium === 'washers' ? LOSS_RARITY['steel-loss'] : LOSS_RARITY['item-loss'];
