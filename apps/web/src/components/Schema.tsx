@@ -2,7 +2,7 @@ import { addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, t
 import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Crown, MapPin, Plus, User, UserPlus, XCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
-import { ITEM_ICONS, LOCATION_ICONS } from '../graph/LocationNode.tsx';
+import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.tsx';
 import { ROLE } from '../graph/PersonNode.tsx';
 import { SecretBadge } from '../graph/SecretBadge.tsx';
 import { keyColor } from '../lib/key-colors.ts';
@@ -129,7 +129,8 @@ function Places({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
     <Section title={`Ubicaciones (${locations.length})`} action={<Button icon={MapPin} onClick={onAdd}>Ubicación</Button>}>
       <ul className={styles.list}>
         {locations.map(({ id, data }) => {
-          const Icon = LOCATION_ICONS[data.kind];
+          const Icon = locationIcon(data);
+          const meta = locationMeta(data);
           return (
             <li key={id} className={styles.place}>
               <button className={styles.row} onClick={() => select({ kind: 'location', id })}>
@@ -142,7 +143,7 @@ function Places({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
                     ))}
                   </span>
                 </span>
-                {data.items.length === 0 && <span className={styles.rowSub}>Vacía</span>}
+                {(meta || data.items.length === 0) && <span className={styles.rowSub}>{[meta, data.items.length === 0 && 'Vacía'].filter(Boolean).join(' · ')}</span>}
                 <ChevronRight size={14} className={styles.chevron} aria-hidden />
               </button>
               {data.items.length > 0 && (

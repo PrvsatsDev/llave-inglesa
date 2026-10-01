@@ -66,6 +66,8 @@ export interface InheritanceReport {
   helpers: Id[];
   /** Ubicaciones mínimas a las que hay que ir, o null si no se recupera. */
   locations: Id[] | null;
+  /** Viajes: las ubicaciones sin contar las que están dentro de otra de la lista. */
+  visits: number | null;
 }
 
 export interface Analysis {
@@ -74,7 +76,7 @@ export interface Analysis {
   /** ¿Qué combinación de pérdidas deja los fondos inaccesibles para siempre? */
   resilience: ResilienceReport;
   /** ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? */
-  usability: { score: number; locations: Id[] | null };
+  usability: { score: number; locations: Id[] | null; visits: number | null };
   /** Tras el fallecimiento de los titulares, ¿pueden los herederos recuperar los fondos? */
   inheritance: InheritanceReport;
 }
@@ -143,19 +145,32 @@ function inheritanceReport(world: World): InheritanceReport {
   } else {
     helpers = [];
   }
-  return { score: inheritanceScore(locations?.length ?? null), status, heirs, helpers, locations };
+  const n = visits(world, locations);
+  return { score: inheritanceScore(n), status, heirs, helpers, locations, visits: n };
 }
 
-/** Conjunto mínimo de ubicaciones con el que `people` puede gastar, o null si no hay. */
+/** Viajes necesarios para ir a `locations`: la caja fuerte de casa se abre en la misma visita a casa. */
+export function visits(world: World, locations: readonly Id[] | null): number | null {
+  return locations && locations.filter((l) => world.index.locations.get(l)?.inside === undefined).length;
+}
+
+/**
+ * Conjunto mínimo de ubicaciones con el que `people` puede gastar, o null si no hay. Minimiza las
+ * visitas: cada una es una ubicación junto con las que tiene dentro.
+ */
 export function minimalLocationSet(
   world: World,
   people: readonly Id[],
   candidates: readonly Id[],
   mode: SigningMode,
 ): Id[] | null {
-  for (let size = 0; size <= candidates.length; size++) {
-    for (const combo of combinations(candidates.length, size)) {
-      const locations = combo.map((i) => candidates[i]!);
+  // Se cuentan visitas: entrar en casa incluye abrir la caja fuerte que hay dentro.
+  const visits = candidates.filter((l) => world.index.locations.get(l)?.inside === undefined);
+  const within = (visit: Id) => [visit, ...candidates.filter((l) => world.index.locations.get(l)?.inside === visit)];
+  for (let size = 0; size <= visits.length; size++) {
+    for (const combo of combinations(visits.length, size)) {
+      const chosen = combo.map((i) => visits[i]!);
+      const locations = chosen.flatMap(within);
       if (derive(world, { people, locations }, mode).canSpend) return locations;
     }
   }
@@ -185,7 +200,7 @@ function securityReport(world: World, found: AttackAtom[][], searchedUpTo: numbe
   const cuts = found
     .map((cut) => {
       const beatsDuress = needsDuressPin(world, cut);
-      return { cut, beatsDuress, effort: attackEffort(cut, beatsDuress) };
+      return { cut, beatsDuress, effort: attackEffort(cut, world.index, beatsDuress) };
     })
     .sort((a, b) => a.effort - b.effort || a.cut.length - b.cut.length);
   const minEffort = cuts[0]?.effort ?? null;
@@ -255,13 +270,14 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
   const owners = activeOwners(intact);
   const ownerLocations = [...new Set(owners.flatMap((p) => accessibleLocations(intact, p)))];
   const usableWith = minimalLocationSet(intact, owners, ownerLocations, 'secure');
+  const usableVisits = visits(intact, usableWith);
 
   const inheritance = inheritanceReport(createWorld(model, ownerDeaths(model), intact.index));
 
   return {
     security,
     resilience,
-    usability: { score: usabilityScore(usableWith?.length ?? null), locations: usableWith },
+    usability: { score: usabilityScore(usableVisits), locations: usableWith, visits: usableVisits },
     inheritance,
   };
 }

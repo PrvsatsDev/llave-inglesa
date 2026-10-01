@@ -25,6 +25,14 @@ export const DISASTERS: Readonly<Record<Location['kind'], readonly Disaster[]>> 
 };
 
 /**
+ * Desastres de una ubicación concreta. Lo que está dentro de otra no tiene desastres propios: le llegan
+ * los de su contenedor, y una caja fuerte propia siempre se puede abrir (un cerrajero), así que no se pierde.
+ */
+export function disastersOf(location: Location): readonly Disaster[] {
+  return location.inside === undefined ? DISASTERS[location.kind] : [];
+}
+
+/**
  * Soportes que resisten cada desastre parcial. El metal se asume acero (placas, arandelas).
  * Los dispositivos (electrónica) no resisten ninguno. Ante la duda ("otro"), lo peor.
  */
@@ -69,9 +77,13 @@ export function createWorld(model: CustodyModel, events: readonly LossEvent[] = 
   return world;
 }
 
-/** Un incendio o una inundación destruyen lo que hay en la ubicación salvo los soportes que los resisten. */
-function ruin(world: { index: ModelIndex; lostItems: Set<Id> }, location: Id, disaster: Exclude<Disaster, 'total'>) {
-  for (const item of world.index.itemsAt(location)) {
+/**
+ * Un incendio o una inundación destruyen lo que hay en la ubicación, y en lo que está dentro de ella,
+ * salvo los soportes que los resisten.
+ */
+function ruin(world: { model: CustodyModel; index: ModelIndex; lostItems: Set<Id> }, location: Id, disaster: Exclude<Disaster, 'total'>) {
+  const reached = [location, ...world.model.locations.filter((l) => l.inside === location).map((l) => l.id)];
+  for (const item of reached.flatMap((l) => world.index.itemsAt(l))) {
     if (item.kind === 'artifact' && SURVIVES[disaster].includes(item.value.medium)) continue;
     world.lostItems.add(item.value.id);
   }
@@ -103,15 +115,23 @@ export function eventually(events: readonly LossEvent[]): LossEvent[] {
   return events.map((e) => (e.type === 'incapacity' ? { type: 'death', person: e.person } : e));
 }
 
+/** Perdida la ubicación, o la que la contiene. */
+export function isDestroyed(world: World, location: Id): boolean {
+  const parent = world.index.locations.get(location)?.inside;
+  return world.destroyed.has(location) || (parent !== undefined && world.destroyed.has(parent));
+}
+
+/** Ubicaciones en las que puede entrar. En una que está dentro de otra, hace falta poder entrar en ambas. */
 export function accessibleLocations(world: World, person: Id): Id[] {
   if (!canAct(world, person)) return [];
+  const enters = (l: Location | undefined) => !!l && l.access.some((a) => a.person === person && conditionHolds(world, a.when));
   return world.model.locations
-    .filter((l) => !world.destroyed.has(l.id))
-    .filter((l) => l.access.some((a) => a.person === person && conditionHolds(world, a.when)))
+    .filter((l) => !isDestroyed(world, l.id))
+    .filter((l) => enters(l) && (l.inside === undefined || enters(world.index.locations.get(l.inside))))
     .map((l) => l.id);
 }
 
 export function itemsAvailableAt(world: World, location: Id): readonly Item[] {
-  if (world.destroyed.has(location)) return [];
+  if (isDestroyed(world, location)) return [];
   return world.index.itemsAt(location).filter((i) => !world.lostItems.has(i.value.id));
 }

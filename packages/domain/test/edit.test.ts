@@ -17,6 +17,9 @@ import {
   removeDevice,
   removeKey,
   removeLocation,
+  setLocationInside,
+  setLocationProtection,
+  updateLocation,
   removePerson,
   setArtifactPassword,
   setThreshold,
@@ -144,6 +147,50 @@ describe('operaciones de edición', () => {
   });
 });
 
+describe('ubicaciones protegidas y anidadas', () => {
+  const safe = () => {
+    const created = addLocation(casa, 'Caja fuerte');
+    return { id: created.id, model: setLocationProtection(setLocationInside(created.model, created.id, 'casa'), created.id, 'home-safe') };
+  };
+
+  it('la caja fuerte queda dentro de casa, con su protección', () => {
+    const { id, model } = safe();
+    expect(model.locations.find((l) => l.id === id)).toMatchObject({ inside: 'casa', protection: 'home-safe' });
+    expect(errors(model)).toEqual([]);
+  });
+
+  it('un solo nivel, nunca dentro de sí misma ni de algo que no es físico', () => {
+    const { id, model } = safe();
+    expect(setLocationInside(model, 'banco', id)).toBe(model); // la caja fuerte ya está dentro de algo
+    expect(setLocationInside(model, 'casa', 'banco')).toBe(model); // casa ya contiene la caja fuerte
+    expect(setLocationInside(model, 'banco', 'banco')).toBe(model);
+    const cloud = addLocation(model, 'Nube', 'cloud');
+    expect(setLocationInside(cloud.model, 'banco', cloud.id)).toBe(cloud.model);
+  });
+
+  it('una ubicación no física no tiene protección', () => {
+    const cloud = addLocation(casa, 'Nube', 'cloud');
+    expect(setLocationProtection(cloud.model, cloud.id, 'bank-box').locations.find((l) => l.id === cloud.id)?.protection).toBeUndefined();
+  });
+
+  it('si deja de ser física, pierde la protección y lo que tenía dentro queda suelto', () => {
+    const { id, model } = safe();
+    const m = updateLocation(model, 'casa', { kind: 'device' });
+    expect(m.locations.find((l) => l.id === id)?.inside).toBeUndefined();
+    const own = updateLocation(model, id, { kind: 'cloud' });
+    expect(own.locations.find((l) => l.id === id)).not.toHaveProperty('protection');
+    expect(errors(m)).toEqual([]);
+    expect(errors(own)).toEqual([]);
+  });
+
+  it('eliminar el contenedor deja la caja fuerte por su cuenta, con su protección', () => {
+    const { id, model } = safe();
+    const m = removeLocation(model, 'casa');
+    expect(m.locations.find((l) => l.id === id)).toMatchObject({ protection: 'home-safe' });
+    expect(m.locations.find((l) => l.id === id)).not.toHaveProperty('inside');
+  });
+});
+
 /** Operación aleatoria sobre ids que existen en el modelo actual. */
 type Op = (m: CustodyModel, pick: (n: number) => number) => CustodyModel;
 const ops: Op[] = [
@@ -164,6 +211,9 @@ const ops: Op[] = [
   },
   (m, pick) => addArtifact(m, m.locations[pick(m.locations.length)]!.id).model,
   (m, pick) => (m.artifacts.length ? removeArtifact(m, m.artifacts[pick(m.artifacts.length)]!.id) : m),
+  (m, pick) => setLocationProtection(m, m.locations[pick(m.locations.length)]!.id, ([undefined, 'home-safe', 'bank-box'] as const)[pick(3)]),
+  (m, pick) => setLocationInside(m, m.locations[pick(m.locations.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
+  (m, pick) => updateLocation(m, m.locations[pick(m.locations.length)]!.id, { kind: (['physical', 'device', 'cloud'] as const)[pick(3)] }),
 ];
 
 describe('propiedad: editar nunca rompe el modelo', () => {

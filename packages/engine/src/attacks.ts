@@ -13,9 +13,9 @@ export function extractionAdvisory(device: Device): string | null {
 
 /** Acción atómica de un adversario. Un ataque real es una combinación de átomos. */
 export type AttackAtom =
-  /** Entrar en una ubicación sin nadie presente. */
+  /** Entrar en una ubicación sin nadie presente (en una que está dentro de otra, además de entrar en esa). */
   | { type: 'burglary'; location: Id }
-  /** Llave inglesa: obligar a una persona a revelar lo que sabe y abrir una ubicación. */
+  /** Llave inglesa: obligar a una persona a revelar lo que sabe y abrir una ubicación (y lo que tiene dentro). */
   | { type: 'coercion'; person: Id; location: Id | null }
   /** Alguien de confianza actúa por su cuenta con lo que sabe y los sitios a los que accede. */
   | { type: 'insider'; person: Id }
@@ -42,7 +42,8 @@ export function attackAtoms(world: World): AttackAtom[] {
   const { model } = world;
   const atoms: AttackAtom[] = model.locations.map((l) => ({ type: 'burglary', location: l.id }));
   for (const p of model.people) {
-    const locations = accessibleLocations(world, p.id);
+    // Lo que está dentro de otra ubicación se abre en la misma coacción que su contenedor.
+    const locations = accessibleLocations(world, p.id).filter((l) => world.index.locations.get(l)?.inside === undefined);
     if (locations.length === 0) atoms.push({ type: 'coercion', person: p.id, location: null });
     for (const location of locations) atoms.push({ type: 'coercion', person: p.id, location });
   }
@@ -82,10 +83,15 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'burglary':
         locations.add(a.location);
         break;
-      case 'coercion':
+      case 'coercion': {
         people.add(a.person);
-        if (a.location) locations.add(a.location);
+        if (!a.location) break;
+        // Obligado a abrir la casa, abre también lo que hay dentro y a lo que puede entrar (la caja fuerte).
+        const reachable = accessibleLocations(world, a.person);
+        locations.add(a.location);
+        world.model.locations.filter((l) => l.inside === a.location && reachable.includes(l.id)).forEach((l) => locations.add(l.id));
         break;
+      }
       case 'insider':
         people.add(a.person);
         accessibleLocations(world, a.person).forEach((l) => locations.add(l));

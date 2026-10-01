@@ -45,9 +45,9 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
   const res = a.resilience;
   const resText = res.minRarity === null ? `ninguna pérdida con ≤${res.searchedUpTo} desgracias` : `pérdida más probable: rareza ${num(res.minRarity)}`;
   out.push(`  Resiliencia  ${scoreBar(res.score)}  ${dim(resText)}`);
-  out.push(`  Usabilidad   ${scoreBar(a.usability.score)}  ${dim(a.usability.locations ? `firmar visitando ${a.usability.locations.length} ubicación(es)` : 'el titular no puede firmar de forma segura')}`);
+  out.push(`  Usabilidad   ${scoreBar(a.usability.score)}  ${dim(a.usability.locations ? `firmar visitando ${a.usability.visits} ubicación(es)` : 'el titular no puede firmar de forma segura')}`);
   const inh = a.inheritance;
-  const inhText = inh.status === 'ok' ? `herederos recuperan visitando ${inh.locations!.length} ubicación(es)` : inh.status === 'no-heirs' ? 'no hay herederos definidos' : 'los herederos NO pueden recuperar los fondos';
+  const inhText = inh.status === 'ok' ? `herederos recuperan visitando ${inh.visits} ubicación(es)` : inh.status === 'no-heirs' ? 'no hay herederos definidos' : 'los herederos NO pueden recuperar los fondos';
   out.push(`  Herencia     ${scoreBar(inh.score)}  ${dim(inhText)}`);
 
   section('🕵️  Formas más baratas de robar');

@@ -56,6 +56,8 @@ export function formatIssue(i: Issue): string {
     'key-not-in-policy': `key que no participa en la política${ref}`,
     'no-owner': 'no hay ninguna persona con rol de titular',
     'passphrase-strength-unset': `passphrase sin fortaleza indicada${ref} (se trata como débil)`,
+    'protection-not-physical': `protección en una ubicación que no es física${ref}`,
+    'invalid-nesting': `ubicación dentro de otra no válida${ref} (ambas físicas y un solo nivel)`,
   };
   const tag = i.severity === 'error' ? red('error') : yellow('aviso');
   return `${tag} ${dim(where)} ${text[i.code]}`;

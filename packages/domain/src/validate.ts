@@ -11,7 +11,9 @@ export type IssueCode =
   | 'key-repeated-in-policy'
   | 'key-not-in-policy'
   | 'no-owner'
-  | 'passphrase-strength-unset';
+  | 'passphrase-strength-unset'
+  | 'protection-not-physical'
+  | 'invalid-nesting';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -133,7 +135,28 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     }),
   );
 
+  const byId = new Map(model.locations.map((l) => [l.id, l]));
+  model.locations.forEach((l, i) => {
+    if (l.protection && l.kind !== 'physical') report('error', 'protection-not-physical', ['locations', i, 'protection'], l.id);
+    if (l.inside === undefined) return;
+    const parent = byId.get(l.inside);
+    if (!parent) return ref(locations, l.inside, ['locations', i, 'inside']);
+    if (!canNest(model, l.id, l.inside)) report('error', 'invalid-nesting', ['locations', i, 'inside'], l.id);
+  });
+
   if (!model.people.some((p) => p.role === 'owner')) report('error', 'no-owner', ['people']);
 
   return issues;
+}
+
+/**
+ * ¿Puede `child` ir dentro de `parent`? Ambas físicas, distintas, y un solo nivel:
+ * el contenedor no está dentro de otra y lo contenido no contiene a nadie.
+ */
+export function canNest(model: CustodyModel, child: Id, parent: Id): boolean {
+  const c = model.locations.find((l) => l.id === child);
+  const p = model.locations.find((l) => l.id === parent);
+  if (!c || !p || c.id === p.id) return false;
+  if (c.kind !== 'physical' || p.kind !== 'physical') return false;
+  return p.inside === undefined && !model.locations.some((l) => l.inside === child);
 }

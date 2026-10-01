@@ -51,7 +51,7 @@ function metrics(a: Analysis): Metric[] {
       id: 'usability',
       label: METRIC_LABEL.usability, short: 'Usa',
       score: a.usability.score,
-      detail: a.usability.locations ? `firmar en ${plural(a.usability.locations.length, 'ubicación', 'ubicaciones')}` : 'no puede firmar de forma segura',
+      detail: a.usability.locations ? `firmar en ${plural(a.usability.visits!, 'ubicación', 'ubicaciones')}` : 'no puede firmar de forma segura',
     },
     {
       id: 'inheritance',
@@ -59,7 +59,7 @@ function metrics(a: Analysis): Metric[] {
       score: inh.score,
       detail:
         inh.status === 'ok'
-          ? `herederos: ${plural(inh.locations!.length, 'ubicación', 'ubicaciones')}`
+          ? `herederos: ${plural(inh.visits!, 'ubicación', 'ubicaciones')}`
           : inh.status === 'no-heirs'
             ? 'no hay herederos'
             : 'los herederos no recuperan',

@@ -1,4 +1,5 @@
 import type { Artifact, CustodyModel, Device, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
+import { canNest } from './validate.ts';
 
 /**
  * Operaciones de edición: funciones puras `modelo → modelo` que mantienen la
@@ -135,11 +136,49 @@ export function addLocation(model: CustodyModel, name = 'Nueva ubicación', kind
   return { model: { ...model, locations: [...model.locations, location] }, id };
 }
 
-export function updateLocation(model: CustodyModel, id: Id, patch: Patch<Location>): CustodyModel {
-  return { ...model, locations: replace(model.locations, id, (l) => ({ ...l, ...patch })) };
+/** Edita nombre, tipo o accesos. Si deja de ser física, pierde su protección y se deshace el anidamiento. */
+export function updateLocation(model: CustodyModel, id: Id, patch: Patch<Omit<Location, 'protection' | 'inside'>>): CustodyModel {
+  const m = { ...model, locations: replace(model.locations, id, (l) => ({ ...l, ...patch })) };
+  if (!patch.kind || patch.kind === 'physical') return m;
+  return {
+    ...m,
+    locations: m.locations.map((l) => {
+      if (l.id === id) return withoutKeys(l, 'protection', 'inside');
+      return l.inside === id ? withoutKeys(l, 'inside') : l;
+    }),
+  };
 }
 
-/** Elimina la ubicación y todo lo que contiene. */
+/** Protección de una ubicación física (undefined = ninguna). En las demás no hace nada. */
+export function setLocationProtection(model: CustodyModel, id: Id, protection: Location['protection']): CustodyModel {
+  return {
+    ...model,
+    locations: model.locations.map((l) => {
+      if (l.id !== id || l.kind !== 'physical') return l;
+      return protection ? { ...l, protection } : withoutKeys(l, 'protection');
+    }),
+  };
+}
+
+/** Mete la ubicación dentro de otra (o la saca con undefined). Si no se puede anidar, no hace nada. */
+export function setLocationInside(model: CustodyModel, id: Id, parent: Id | undefined): CustodyModel {
+  if (parent !== undefined && !canNest(model, id, parent)) return model;
+  return {
+    ...model,
+    locations: model.locations.map((l) => {
+      if (l.id !== id) return l;
+      return parent ? { ...l, inside: parent } : withoutKeys(l, 'inside');
+    }),
+  };
+}
+
+function withoutKeys<T extends object, K extends keyof T>(value: T, ...keys: K[]): Omit<T, K> {
+  const copy = { ...value };
+  for (const k of keys) delete copy[k];
+  return copy;
+}
+
+/** Elimina la ubicación y los objetos que contiene; las ubicaciones de dentro quedan sueltas. */
 export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
   if (model.locations.length <= 1) return model;
   const goneDevices = new Set(model.devices.filter((d) => d.location === id).map((d) => d.id));
@@ -147,7 +186,8 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
   return stripSecrets(
     {
       ...model,
-      locations: model.locations.filter((l) => l.id !== id),
+      // Lo que estaba dentro sigue existiendo, ahora por su cuenta.
+      locations: model.locations.filter((l) => l.id !== id).map((l) => (l.inside === id ? withoutKeys(l, 'inside') : l)),
       devices: model.devices.filter((d) => d.location !== id),
       artifacts: model.artifacts.filter((a) => a.location !== id),
     },

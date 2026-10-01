@@ -82,7 +82,7 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
           {atoms.map((a, i) => (
             <tr key={i}>
               <td>{attackText(a, index)}</td>
-              <td className={styles.points}>{num(atomEffort(a))}</td>
+              <td className={styles.points}>{num(atomEffort(a, index))}</td>
             </tr>
           ))}
           {duress.length > 0 && (
@@ -96,7 +96,7 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
           <tfoot>
             <tr>
               <td>Total</td>
-              <td className={styles.points}>{num(attackEffort(atoms, duress.length > 0))}</td>
+              <td className={styles.points}>{num(attackEffort(atoms, index, duress.length > 0))}</td>
             </tr>
           </tfoot>
         )}
