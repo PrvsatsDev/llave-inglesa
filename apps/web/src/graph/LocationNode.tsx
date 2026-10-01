@@ -23,7 +23,7 @@ import { LOCATION_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
 import styles from './nodes.module.css';
 
-const ICONS: Record<ItemIcon, LucideIcon> = {
+export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
   stateful: Cpu,
   stateless: Camera,
   paper: FileText,
@@ -35,7 +35,7 @@ const ICONS: Record<ItemIcon, LucideIcon> = {
 };
 
 function ItemRow({ item }: { item: ItemView }) {
-  const Icon = ICONS[item.icon];
+  const Icon = ITEM_ICONS[item.icon];
   const isDevice = item.icon === 'stateful' || item.icon === 'stateless';
   const selected = useSelection((s) => isSelected(s.selected, item.kind, item.id));
   const select = useSelection((s) => s.select);
@@ -76,7 +76,7 @@ function ItemRow({ item }: { item: ItemView }) {
   );
 }
 
-const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
+export const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
 
 export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
   const LocationIcon = LOCATION_ICONS[data.kind];

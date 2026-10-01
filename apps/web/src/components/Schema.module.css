@@ -1,0 +1,193 @@
+.hint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Fila del índice: pulsarla abre la ficha. */
+.row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 32px 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+
+.row:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.row:hover .chevron {
+  color: var(--text);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rowSub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.role {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.secrets {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--text-faint);
+}
+
+/* Objetos de una ubicación: colgando de ella, con una guía a la izquierda. */
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 6px 16px;
+  padding: 0 0 0 8px;
+  list-style: none;
+  border-left: 1px solid var(--border-strong);
+}
+
+.row.item {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-color: transparent;
+  background: none;
+}
+
+.row.item:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.row.item .secrets {
+  margin-left: auto;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.verified {
+  background: var(--safe-soft);
+  color: var(--safe);
+}
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.issues li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.issues svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.error {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.warning {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.meta {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.meta summary {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.metaBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
