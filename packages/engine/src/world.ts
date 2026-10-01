@@ -1,14 +1,37 @@
-import { indexModel, type AccessCondition, type CustodyModel, type Id, type Item, type ModelIndex, type SecretRef } from '@llave-inglesa/domain';
+import { indexModel, type AccessCondition, type Artifact, type CustodyModel, type Id, type Item, type Location, type ModelIndex, type SecretRef } from '@llave-inglesa/domain';
 
 /** Algo que se pierde o deja de funcionar. Nunca aumenta lo que alguien puede hacer (salvo accesos tras fallecimiento). */
 export type LossEvent =
-  | { type: 'destroy-location'; location: Id }
+  /** Desastre en una ubicación: incendio o inundación destruyen lo que no los resiste; 'total', todo. */
+  | { type: 'destroy-location'; location: Id; disaster: Disaster }
   | { type: 'item-loss'; item: Id }
   | { type: 'death'; person: Id }
   /** Vive, pero no puede actuar (y sus herederos aún no heredan). */
   | { type: 'incapacity'; person: Id }
   /** Puede actuar, pero olvida lo que tenía memorizado. */
   | { type: 'forget'; person: Id };
+
+/**
+ * Tipos de desastre. Ubicación física: incendio, inundación o 'total' (pérdida del acceso: cierra
+ * la caja, mudanza…). Dispositivo (portátil, disco) y nube solo tienen 'total' (avería, pérdida de la cuenta).
+ */
+export type Disaster = 'fire' | 'flood' | 'total';
+
+/** Desastres posibles en cada tipo de ubicación. */
+export const DISASTERS: Readonly<Record<Location['kind'], readonly Disaster[]>> = {
+  physical: ['fire', 'flood', 'total'],
+  device: ['total'],
+  cloud: ['total'],
+};
+
+/**
+ * Soportes que resisten cada desastre parcial. El metal se asume acero (placas, arandelas).
+ * Los dispositivos (electrónica) no resisten ninguno. Ante la duda ("otro"), lo peor.
+ */
+export const SURVIVES: Readonly<Record<Exclude<Disaster, 'total'>, readonly Artifact['medium'][]>> = {
+  fire: ['metal', 'washers'],
+  flood: ['metal', 'washers'],
+};
 
 /** Un modelo más el estado tras aplicar eventos de pérdida. Inmutable. */
 export interface World {
@@ -33,7 +56,10 @@ export function createWorld(model: CustodyModel, events: readonly LossEvent[] = 
   };
   for (const e of events) {
     switch (e.type) {
-      case 'destroy-location': world.destroyed.add(e.location); break;
+      case 'destroy-location':
+        if (e.disaster === 'total') world.destroyed.add(e.location);
+        else ruin(world, e.location, e.disaster);
+        break;
       case 'item-loss': world.lostItems.add(e.item); break;
       case 'death': world.dead.add(e.person); break;
       case 'incapacity': world.incapacitated.add(e.person); break;
@@ -41,6 +67,14 @@ export function createWorld(model: CustodyModel, events: readonly LossEvent[] = 
     }
   }
   return world;
+}
+
+/** Un incendio o una inundación destruyen lo que hay en la ubicación salvo los soportes que los resisten. */
+function ruin(world: { index: ModelIndex; lostItems: Set<Id> }, location: Id, disaster: Exclude<Disaster, 'total'>) {
+  for (const item of world.index.itemsAt(location)) {
+    if (item.kind === 'artifact' && SURVIVES[disaster].includes(item.value.medium)) continue;
+    world.lostItems.add(item.value.id);
+  }
 }
 
 export function canAct(world: World, person: Id): boolean {

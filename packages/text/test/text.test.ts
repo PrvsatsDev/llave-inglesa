@@ -27,9 +27,11 @@ describe('textos según el tipo de ubicación', () => {
   });
 
   it('pérdidas', () => {
-    expect(lossText({ type: 'destroy-location', location: 'casa' }, index)).toBe('Destrucción de Casa');
-    expect(lossText({ type: 'destroy-location', location: 'portatil' }, index)).toBe('Avería o robo de Portátil');
-    expect(lossText({ type: 'destroy-location', location: 'nube' }, index)).toBe('Pérdida de la cuenta iCloud');
+    expect(lossText({ type: 'destroy-location', location: 'casa', disaster: 'fire' }, index)).toBe('Incendio en Casa');
+    expect(lossText({ type: 'destroy-location', location: 'casa', disaster: 'flood' }, index)).toBe('Inundación en Casa');
+    expect(lossText({ type: 'destroy-location', location: 'casa', disaster: 'total' }, index)).toBe('Pérdida del acceso a Casa');
+    expect(lossText({ type: 'destroy-location', location: 'portatil', disaster: 'total' }, index)).toBe('Avería de Portátil');
+    expect(lossText({ type: 'destroy-location', location: 'nube', disaster: 'total' }, index)).toBe('Pérdida de la cuenta iCloud');
   });
 
   it('contraseñas', () => {

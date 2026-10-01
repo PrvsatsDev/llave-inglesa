@@ -13,6 +13,7 @@ import {
   type AttackAtom,
   type Derivation,
   type DeviceCompromise,
+  type Disaster,
   type ExplanationNode,
   type FactId,
   type LossEvent,
@@ -59,6 +60,10 @@ export interface ScenarioView {
   compromised: ReadonlyMap<Id, DeviceCompromise>;
   /** PINs de coacción que el atacante tiene que vencer para que el robo funcione. */
   duress: readonly { person: Id; device: Id }[];
+  /** Desastre simulado en cada ubicación afectada. */
+  disasters: ReadonlyMap<Id, Disaster>;
+  /** Objetos que estaban en una ubicación con incendio o inundación y lo han resistido. */
+  survived: ReadonlySet<Id>;
 }
 
 export const accessEdgeId = (person: Id, location: Id) => `access:${person}:${location}`;
@@ -149,6 +154,8 @@ function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'at
     exposure: balanceExposure(model, derivation),
     compromised: compromisedDevices(world, scenario.atoms),
     duress: derivation.canSpend ? duressObstacles(world, scenario.atoms) : [],
+    disasters: new Map(),
+    survived: new Set(),
   };
 }
 
@@ -178,6 +185,9 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
     people.set(p.id, state);
   }
 
+  const disasters = new Map<Id, Disaster>();
+  for (const e of scenario.events) if (e.type === 'destroy-location') disasters.set(e.location, e.disaster);
+
   const edges = new Set<string>();
   for (const p of holdings.people) accessibleLocations(world, p).forEach((l) => edges.add(accessEdgeId(p, l)));
   const reachable = new Set(holdings.locations);
@@ -197,5 +207,11 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
     exposure: { exposed: false, via: null },
     compromised: new Map(),
     duress: [],
+    disasters,
+    survived: new Set(
+      [...model.devices, ...model.artifacts]
+        .filter((i) => disasters.has(i.location) && disasters.get(i.location) !== 'total' && !world.lostItems.has(i.id))
+        .map((i) => i.id),
+    ),
   };
 }

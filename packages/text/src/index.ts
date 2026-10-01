@@ -118,7 +118,9 @@ export function lossText(e: LossEvent, index: ModelIndex): string {
   switch (e.type) {
     case 'destroy-location': {
       const kind = locationKind(index, e.location);
-      const what = kind === 'cloud' ? 'Pérdida de la cuenta' : kind === 'device' ? 'Avería o robo de' : 'Destrucción de';
+      if (e.disaster === 'fire') return `Incendio en ${label(e.location)}`;
+      if (e.disaster === 'flood') return `Inundación en ${label(e.location)}`;
+      const what = kind === 'cloud' ? 'Pérdida de la cuenta' : kind === 'device' ? 'Avería de' : 'Pérdida del acceso a';
       return `${what} ${label(e.location)}`;
     }
     case 'item-loss': return `Pérdida de ${label(e.item)}`;

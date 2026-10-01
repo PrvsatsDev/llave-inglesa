@@ -50,7 +50,15 @@ Reglas que protegen: PIN del dispositivo, **passphrase** (sin ella la semilla so
 
 ## 4. Desgracias (resiliencia)
 
-Destrucción de una ubicación, pérdida de un objeto, fallecimiento, incapacidad y olvido. Se buscan las combinaciones mínimas que dejan los fondos inaccesibles para siempre.
+Desastres por ubicación, pérdida de un objeto, fallecimiento, incapacidad y olvido. Se buscan las combinaciones mínimas que dejan los fondos inaccesibles para siempre.
+
+| Ubicación | Desastres |
+|---|---|
+| Física (casa, banco) | **Incendio**, **inundación**, **pérdida del acceso** (se pierde todo) |
+| Dispositivo (portátil, disco) | **Avería** (se pierde todo) |
+| Nube | **Pérdida de la cuenta** (se pierde todo) |
+
+Un incendio o una inundación destruyen todo lo que hay en la ubicación **salvo los backups de metal o arandelas** (se asume acero). El papel, lo digital, "otro" y todos los dispositivos se pierden. En la simulación, la ubicación lleva la etiqueta del desastre y lo que resiste, "Resiste".
 
 - La **incapacidad** es un **bloqueo temporal** (se resuelve al fallecer: heredan), no una pérdida; resta algo de resiliencia.
 - Los accesos "tras el fallecimiento" o "si queda incapacitado o fallece" se activan con esos sucesos.
@@ -81,5 +89,6 @@ Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada p
 - No se modela el ordenador o móvil con el que se firma: los fallos explotables desde un ordenador con malware solo se avisan.
 - El air-gap no cuenta como mitigación (no frena la filtración en las firmas).
 - El catálogo no se actualiza solo; una versión completa y posterior a la corregida se da por buena aunque no exista.
-- Todas las desgracias pesan igual; el soporte del backup (papel/metal) aún no cambia su resistencia.
+- Todas las desgracias pesan igual.
+- El metal se asume acero: una placa de aluminio o de latón no resistiría un incendio. Un papel en una bolsa estanca o una caja ignífuga tampoco se distinguen.
 - Sin timelocks todavía; la política ya es un árbol preparado para ellos.

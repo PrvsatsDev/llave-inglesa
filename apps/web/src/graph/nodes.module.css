@@ -367,6 +367,19 @@
   font-weight: 700;
 }
 
+.survivedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--safe-soft);
+  color: var(--safe);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
 .item[data-state='destroyed'] {
   opacity: 0.4;
   filter: grayscale(1);
