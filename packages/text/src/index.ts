@@ -1,6 +1,6 @@
 import { ADVISORIES } from '@llave-inglesa/domain';
-import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Policy, SecretRef } from '@llave-inglesa/domain';
-import type { AttackAtom, EntropyOrigin, Fact, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
+import type { AttackAtom, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -44,6 +44,43 @@ export function provenanceText(key: Key): string {
 export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen desconocido' : o.vendor);
 
 const locationKind = (index: ModelIndex, id: string) => index.locations.get(id)?.kind ?? 'physical';
+
+export const ROLE_TEXT: Record<Person['role'], string> = {
+  owner: 'titular',
+  heir: 'heredero/a',
+  custodian: 'custodio/a',
+  other: 'otra persona',
+};
+
+/** "A", "A y B", "A, B y C". */
+export const listText = (items: readonly string[]) => (items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} y ${items.at(-1)}`);
+
+/**
+ * Quién recupera la herencia, distinguiendo herederos de quien les ayuda (custodios…).
+ * Sin las ubicaciones: quien lo usa añade "yendo a …".
+ */
+export function inheritanceText(inh: InheritanceReport, people: readonly Person[]): string {
+  const who = (ids: readonly string[]) =>
+    listText(ids.map((id) => {
+      const p = people.find((x) => x.id === id);
+      return p ? `${p.name} (${ROLE_TEXT[p.role]})` : id;
+    }));
+  const verb = (ids: readonly string[], one: string, many: string) => (ids.length === 1 ? one : many);
+  switch (inh.status) {
+    case 'no-heirs':
+      return 'Tras el fallecimiento de los titulares no queda nadie que pueda llegar a los fondos';
+    case 'unrecoverable':
+      return inh.heirs.length > 0
+        ? `${who(inh.heirs)} no ${verb(inh.heirs, 'consigue', 'consiguen')} recuperar los fondos`
+        : 'Nadie tiene papel de heredero, y quien queda no consigue recuperar los fondos';
+    case 'ok':
+      if (inh.heirs.length === 0) return `Nadie tiene papel de heredero, pero ${who(inh.helpers)} ${verb(inh.helpers, 'puede', 'pueden')} recuperar los fondos`;
+      return (
+        `${who(inh.heirs)} ${verb(inh.heirs, 'recupera', 'recuperan')} los fondos` +
+        (inh.helpers.length > 0 ? ` con la ayuda de ${who(inh.helpers)}` : '')
+      );
+  }
+}
 
 /** Nombre corto de cada tipo de ataque (p. ej. para explicar su esfuerzo). */
 export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {

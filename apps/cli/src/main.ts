@@ -1,7 +1,8 @@
 #!/usr/bin/env -S npx tsx
 import { readFile } from 'node:fs/promises';
 import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
-import { analyze, explain, simulateAttack, simulateLosses, type Analysis } from '@llave-inglesa/engine';
+import { analyze, explain, simulateAttack, simulateInheritance, type Analysis } from '@llave-inglesa/engine';
+import { inheritanceText } from '@llave-inglesa/text';
 import { bold, dim, formatIssue, Formatter, green, red, scoreBar, yellow } from './format.ts';
 
 const USAGE = 'Uso: llave-inglesa analyze <modelo.json>';
@@ -82,11 +83,11 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
 
   section('⚰️  Herencia');
   if (inh.status === 'ok') {
-    out.push(`  Tras el fallecimiento del titular, ${inh.heirs.map((h) => model.people.find((p) => p.id === h)?.name ?? h).join(', ')} recupera(n) desde: ${inh.locations!.map(label).join(' + ')}`);
-    const node = explain(simulateLosses(model, model.people.filter((p) => p.role === 'owner').map((p) => ({ type: 'death', person: p.id }))), 'spend');
+    out.push(`  Tras el fallecimiento del titular, ${inheritanceText(inh, model.people)}, yendo a: ${inh.locations!.map(label).join(' + ')}`);
+    const node = explain(simulateInheritance(model, inh.locations!, [...inh.heirs, ...inh.helpers]), 'spend');
     if (node) out.push(...fmt.tree(node, '    '));
   } else {
-    out.push(red(`  ${inhText}`));
+    out.push(red(`  ${inheritanceText(inh, model.people)}`));
   }
 
   console.log(out.join('\n'));

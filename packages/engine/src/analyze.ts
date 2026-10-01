@@ -43,6 +43,18 @@ export interface ResilienceReport extends CutReport<LossEvent> {
   lockoutMinSize: number | null;
 }
 
+export interface InheritanceReport {
+  score: number;
+  /** 'no-heirs': tras el fallecimiento no queda nadie (ni herederos ni custodios) que pueda actuar. */
+  status: 'ok' | 'no-heirs' | 'unrecoverable';
+  /** Personas con papel de heredero que pueden actuar. */
+  heirs: Id[];
+  /** Personas de otro papel (custodios…) sin las que no se recupera; vacío si los herederos se bastan. */
+  helpers: Id[];
+  /** Ubicaciones mínimas a las que hay que ir, o null si no se recupera. */
+  locations: Id[] | null;
+}
+
 export interface Analysis {
   /** ¿Qué combinación de ataques permite robar, y con qué esfuerzo? */
   security: SecurityReport;
@@ -51,7 +63,7 @@ export interface Analysis {
   /** ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? */
   usability: { score: number; locations: Id[] | null };
   /** Tras el fallecimiento de los titulares, ¿pueden los herederos recuperar los fondos? */
-  inheritance: { score: number; status: 'ok' | 'no-heirs' | 'unrecoverable'; heirs: Id[]; locations: Id[] | null };
+  inheritance: InheritanceReport;
 }
 
 /** ¿Qué consigue un adversario con esta combinación de ataques? */
@@ -85,13 +97,40 @@ export function simulateSigning(model: CustodyModel, locations?: readonly Id[]):
 }
 
 /**
- * Qué consiguen los herederos tras fallecer los titulares yendo solo a `locations`
- * (sin ubicaciones: a todas las que pueden llegar). Explica la puntuación de herencia.
+ * Qué consiguen los herederos tras fallecer los titulares yendo solo a `locations` (sin ubicaciones:
+ * a todas las que pueden llegar), con `people` (sin indicar: todos los que pueden actuar).
+ * Con los herederos y ayudantes del análisis, explica la puntuación de herencia.
  */
-export function simulateInheritance(model: CustodyModel, locations?: readonly Id[]): Derivation {
+export function simulateInheritance(model: CustodyModel, locations?: readonly Id[], people?: readonly Id[]): Derivation {
   const world = createWorld(model, ownerDeaths(model));
-  const heirs = legitHoldings(world);
-  return derive(world, { people: heirs.people, locations: locations ?? heirs.locations }, 'any');
+  const legit = legitHoldings(world);
+  const who = people ?? legit.people;
+  const reachable = new Set(who.flatMap((p) => accessibleLocations(world, p)));
+  return derive(world, { people: who, locations: (locations ?? legit.locations).filter((l) => reachable.has(l)) }, 'any');
+}
+
+/**
+ * Herencia: las ubicaciones mínimas con las que la coalición legítima recupera los fondos tras el
+ * fallecimiento de los titulares, y qué personas de otro papel hacen falta de verdad (se quita
+ * cada una y se comprueba si los demás se bastan con las ubicaciones a las que aún llegan).
+ */
+function inheritanceReport(world: World): InheritanceReport {
+  const legit = legitHoldings(world);
+  const role = (id: Id) => world.model.people.find((p) => p.id === id)?.role;
+  const heirs = legit.people.filter((p) => role(p) === 'heir');
+  const locations = legit.people.length > 0 ? minimalLocationSet(world, legit.people, legit.locations, 'any') : null;
+  const status = legit.people.length === 0 ? 'no-heirs' : locations ? 'ok' : 'unrecoverable';
+  let helpers = legit.people.filter((p) => role(p) !== 'heir');
+  if (locations) {
+    for (const p of [...helpers]) {
+      const people = [...heirs, ...helpers.filter((h) => h !== p)];
+      const reachable = new Set(people.flatMap((q) => accessibleLocations(world, q)));
+      if (derive(world, { people, locations: locations.filter((l) => reachable.has(l)) }, 'any').canSpend) helpers = helpers.filter((h) => h !== p);
+    }
+  } else {
+    helpers = [];
+  }
+  return { score: inheritanceScore(locations?.length ?? null), status, heirs, helpers, locations };
 }
 
 /** Conjunto mínimo de ubicaciones con el que `people` puede gastar, o null si no hay. */
@@ -196,19 +235,12 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
   const ownerLocations = [...new Set(owners.flatMap((p) => accessibleLocations(intact, p)))];
   const usableWith = minimalLocationSet(intact, owners, ownerLocations, 'secure');
 
-  const afterDeath = createWorld(model, ownerDeaths(model), intact.index);
-  const heirs = legitHoldings(afterDeath);
-  const heirLocations = heirs.people.length > 0 ? minimalLocationSet(afterDeath, heirs.people, heirs.locations, 'any') : null;
+  const inheritance = inheritanceReport(createWorld(model, ownerDeaths(model), intact.index));
 
   return {
     security,
     resilience,
     usability: { score: usabilityScore(usableWith?.length ?? null), locations: usableWith },
-    inheritance: {
-      score: inheritanceScore(heirLocations?.length ?? null),
-      status: heirs.people.length === 0 ? 'no-heirs' : heirLocations ? 'ok' : 'unrecoverable',
-      heirs: [...heirs.people],
-      locations: heirLocations,
-    },
+    inheritance,
   };
 }

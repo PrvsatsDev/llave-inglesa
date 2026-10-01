@@ -18,7 +18,7 @@ import {
 } from '@llave-inglesa/engine';
 import { ChevronRight, Flame, Loader2, MapPin } from 'lucide-react';
 import { useMemo } from 'react';
-import { ATTACK_KIND_TEXT, plural } from '../lib/text.ts';
+import { ATTACK_KIND_TEXT, inheritanceText, plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
@@ -202,7 +202,7 @@ function inheritanceScoreRows(a: EngineAnalysis) {
   const inh = a.inheritance;
   const label =
     inh.status === 'ok'
-      ? `Los herederos recuperan yendo a ${plural(inh.locations!.length, 'ubicación', 'ubicaciones')}`
+      ? `${inh.heirs.length > 0 ? 'Los herederos recuperan' : 'Se recupera'} yendo a ${plural(inh.locations!.length, 'ubicación', 'ubicaciones')}`
       : inh.status === 'no-heirs'
         ? 'No hay herederos'
         : 'Los herederos no pueden recuperar los fondos';
@@ -276,8 +276,11 @@ function Usability({ model, analysis }: { model: CustodyModel; analysis: EngineA
 function Inheritance({ model, analysis }: { model: CustodyModel; analysis: EngineAnalysis }) {
   const inh = analysis.inheritance;
   const simulate = useNavigation((s) => s.simulate);
-  const derivation = useMemo(() => simulateInheritance(model, inh.locations ?? undefined), [model, inh.locations]);
-  const name = (id: Id) => model.people.find((p) => p.id === id)?.name || 'Sin nombre';
+  const people = useMemo(() => [...inh.heirs, ...inh.helpers], [inh.heirs, inh.helpers]);
+  const derivation = useMemo(
+    () => simulateInheritance(model, inh.locations ?? undefined, inh.status === 'ok' ? people : undefined),
+    [model, inh.locations, inh.status, people],
+  );
 
   if (inh.status === 'no-heirs') {
     return (
@@ -293,8 +296,8 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
     <>
       <Section title="Herederos">
         <p className={styles.muted}>
-          Tras el fallecimiento de los titulares, <strong>{inh.heirs.map(name).join(', ')}</strong>{' '}
-          {inh.status === 'ok' ? 'recuperan los fondos yendo a:' : 'no consiguen recuperar los fondos.'}
+          Tras el fallecimiento de los titulares, {inheritanceText(inh, model.people)}
+          {inh.status === 'ok' ? ', yendo a:' : '.'}
         </p>
         {inh.locations && <Places model={model} ids={inh.locations} />}
         <Button icon={Flame} onClick={() => simulate({ kind: 'loss', events: ownerDeaths(model) }, 'inheritance')}>
@@ -302,7 +305,7 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
         </Button>
       </Section>
       <Section title="Por qué">
-        <Why model={model} derivation={derivation} who="Los herederos" />
+        <Why model={model} derivation={derivation} who={inh.status === 'ok' ? 'Los herederos' : 'Con todo lo que tienen a su alcance, quienes quedan'} />
       </Section>
     </>
   );
