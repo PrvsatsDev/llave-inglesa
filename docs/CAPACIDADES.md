@@ -55,7 +55,7 @@ Desastres por ubicación, pérdida de un objeto, fallecimiento, incapacidad y ol
 | Ubicación | Desastres |
 |---|---|
 | Física (casa, banco) | **Incendio**, **inundación**, **pérdida del acceso** (se pierde todo) |
-| Física dentro de otra (caja fuerte de casa) | **Pérdida del acceso**; el incendio y la inundación le llegan de la que la contiene, y perder esa es perder también esta |
+| Física dentro de otra (caja fuerte de casa) | Ninguno propio: le llegan los de la que la contiene (perder esa es perder también esta). Una caja fuerte propia siempre se puede abrir, así que no se pierde el acceso |
 | Dispositivo (portátil, disco) | **Avería** (se pierde todo) |
 | Nube | **Pérdida de la cuenta** (se pierde todo) |
 

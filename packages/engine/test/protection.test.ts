@@ -4,6 +4,7 @@ import {
   accessibleLocations,
   analyze,
   atomEffort,
+  attackAtoms,
   ATTACK_EFFORT,
   BURGLARY_EFFORT,
   COERCION_SURCHARGE,
@@ -62,10 +63,17 @@ describe('ubicaciones protegidas', () => {
   });
 
   it('con la llave inglesa, la caja fuerte se abre en casa sin recargo; la del banco, con recargo', () => {
-    const atCaja: AttackAtom = { type: 'coercion', person: 'yo', location: 'caja' };
-    expect(simulateAttack(model, [atCaja]).canSpend).toBe(true);
-    expect(atomEffort(atCaja, index)).toBe(ATTACK_EFFORT.coercion);
+    const atHome: AttackAtom = { type: 'coercion', person: 'yo', location: 'casa' };
+    expect(simulateAttack(model, [atHome]).canSpend).toBe(true);
+    expect(atomEffort(atHome, index)).toBe(ATTACK_EFFORT.coercion);
+    // Pareja entra en casa pero no en la caja fuerte: coaccionarla no la abre.
+    expect(simulateAttack(model, [{ type: 'coercion', person: 'pareja', location: 'casa' }]).canSpend).toBe(false);
     expect(atomEffort({ type: 'coercion', person: 'yo', location: 'banco' }, index)).toBe(ATTACK_EFFORT.coercion + COERCION_SURCHARGE['bank-box']);
+  });
+
+  it('una caja fuerte no crea una vía de llave inglesa aparte de la de casa', () => {
+    const coercions = attackAtoms(createWorld(model)).filter((a) => a.type === 'coercion' && a.person === 'yo');
+    expect(coercions.map((a) => (a.type === 'coercion' ? a.location : null)).sort()).toEqual(['banco', 'casa']);
   });
 
   it('el robo más barato es la llave inglesa en casa; entrar a la fuerza cuesta 2.5', () => {
@@ -101,9 +109,15 @@ describe('desastres en ubicaciones protegidas', () => {
     expect(itemsAvailableAt(world, 'caja')).toEqual([]);
   });
 
-  it('la caja fuerte no tiene incendio ni inundación propios, solo la pérdida del acceso', () => {
+  it('la caja fuerte no tiene desastres propios: le llegan los de casa', () => {
     const disasters = lossAtoms(createWorld(model)).flatMap((e) => (e.type === 'destroy-location' && e.location === 'caja' ? [e.disaster] : []));
-    expect(disasters).toEqual(['total']);
+    expect(disasters).toEqual([]);
+  });
+
+  it('guardar algo en la caja fuerte de casa (con los mismos accesos) no empeora la resiliencia', () => {
+    const shared = input({ locations: input().locations!.map((l) => (l.id === 'caja' ? { ...l, access: [{ person: 'yo' }, { person: 'pareja' }] } : l)) });
+    const outside = parse({ ...shared, artifacts: shared.artifacts!.map((a) => (a.id === 'papel' ? { ...a, location: 'casa' } : a)) });
+    expect(analyze(parse(shared)).resilience.score).toBe(analyze(outside).resilience.score);
   });
 
   it('un incendio o una inundación en la caja del banco son más raros que en casa', () => {

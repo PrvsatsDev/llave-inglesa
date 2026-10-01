@@ -25,11 +25,11 @@ export const DISASTERS: Readonly<Record<Location['kind'], readonly Disaster[]>> 
 };
 
 /**
- * Desastres de una ubicación concreta. Lo que está dentro de otra no tiene incendio ni inundación
- * propios (le llegan los de su contenedor), pero sí puede perderse el acceso (se estropea la cerradura…).
+ * Desastres de una ubicación concreta. Lo que está dentro de otra no tiene desastres propios: le llegan
+ * los de su contenedor, y una caja fuerte propia siempre se puede abrir (un cerrajero), así que no se pierde.
  */
 export function disastersOf(location: Location): readonly Disaster[] {
-  return location.inside === undefined ? DISASTERS[location.kind] : ['total'];
+  return location.inside === undefined ? DISASTERS[location.kind] : [];
 }
 
 /**
