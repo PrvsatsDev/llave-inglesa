@@ -277,3 +277,10 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   RNG del dispositivo: verificar demuestra que la semilla sale de esa entropía, no que la entropía sea
   buena. La interfaz no lo explica y es fácil creer lo contrario. Idea: explicarlo junto a la casilla, y
   avisar si una key solo tiene el RNG del dispositivo como fuente.
+- **Esquema de prueba (fallo del motor, no de interfaz)**: al firmar con una semilla cargada, `derive.ts`
+  usa el primer dispositivo que admite semillas (sin estado, o con "acepta semilla externa") y no mira
+  qué keys carga. Con un dispositivo que solo carga K2 y otro que carga K1, el "por qué" dice que
+  K1 se firma con el primero. Aquí no cambia la nota (están en el mismo sitio), pero si estuvieran en
+  ubicaciones distintas la usabilidad saldría mal, y si ningún dispositivo cargara esa key se daría por
+  posible una firma que no lo es. La parte de firmware malicioso (`firmware.ts`) sí respeta `loads`.
+  Arreglar en el paso 2 del diagnóstico, con test.
