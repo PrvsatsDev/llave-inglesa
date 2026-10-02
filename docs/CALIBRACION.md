@@ -113,6 +113,17 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
 | R12 2 de 3 con una SeedSigner | aceptable | bueno | bueno | bueno |
 
+## Resultados
+
+Notas actuales del motor (Seguridad · Resiliencia · Usabilidad · Herencia). ✓ = dentro de la banda
+esperada, ✗ = fuera. Se recalculan todas cada vez que cambia `score.ts`; la última columna dice qué
+ajuste las movió.
+
+| Esquema | Seg | Res | Usa | Her | Último cambio |
+|---|---|---|---|---|---|
+| R01 Papel en el cajón | 23 ✓ | 34 ✓ | 100 ✓ | 100 ✓ | — |
+| R02 Foto en la nube | 23 ✓ | 34 ✓ | 100 ✓ | 0 ✓ | hackeo de una nube 1,5 → 1 (Seg 27 → 23) |
+
 ## Por dónde vamos
 
 Hecho: R01, R02. Siguiente: **R03** (acero en la caja fuerte). Al terminar la galería: diagnóstico de todo junto,
