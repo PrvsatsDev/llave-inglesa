@@ -76,7 +76,7 @@ Dentro de cada métrica, `A < B` significa "A debe puntuar menos que B" y `A ≈
 (±5)".
 
 **Seguridad**
-- R07 < R02 < R01 < R03 ≈ R04 < R05 < R06
+- R07 < R02 ≈ R01 < R03 ≈ R04 < R05 < R06
 - R08 < R09; R12 < R09; R10 ≈ R09 ≈ R11
 - R03 < R09: un multisig bien distribuido es más seguro que el mejor single-sig sin passphrase.
 
@@ -115,7 +115,7 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 
 ## Por dónde vamos
 
-Hecho: R01. Siguiente: **R02** (foto en la nube). Al terminar la galería: diagnóstico de todo junto,
+Hecho: R01, R02. Siguiente: **R03** (acero en la caja fuerte). Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor

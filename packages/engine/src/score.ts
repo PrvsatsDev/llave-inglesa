@@ -62,6 +62,13 @@ export const COERCION_SURCHARGE: Readonly<Record<Protection, number>> = {
   'bank-box': 1,
 };
 
+/**
+ * Hackeo de una cuenta en la nube: en remoto, sin riesgo físico y contra millones de cuentas a la
+ * vez (phishing, contraseñas reutilizadas, filtraciones, malware que busca semillas en las fotos).
+ * Más barato que entrar en una casa.
+ */
+export const CLOUD_BREACH_EFFORT = 1;
+
 const protectionOf = (index: ModelIndex, location: Id | null): Protection =>
   (location !== null && index.locations.get(location)?.protection) || 'none';
 
@@ -72,7 +79,8 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
       return PASSPHRASE_EFFORT[a.strength];
     case 'burglary': {
       const location = index.locations.get(a.location);
-      // Dispositivos y nube no tienen protección: su intrusión es el robo o el hackeo.
+      if (location?.kind === 'cloud') return CLOUD_BREACH_EFFORT;
+      // Un dispositivo no tiene protección: su intrusión es robarlo o meterle malware.
       if (location?.kind !== 'physical') return ATTACK_EFFORT.burglary;
       const own = BURGLARY_EFFORT[protectionOf(index, a.location)];
       return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT[protectionOf(index, location.inside)]);

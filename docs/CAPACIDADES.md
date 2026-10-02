@@ -32,7 +32,7 @@ Un robo es una **combinación** de ataques; se buscan todas las combinaciones m�
 
 | Ataque | Esfuerzo | Qué consigue |
 |---|---|---|
-| Intrusión (o hackeo / robo o malware, según el tipo de ubicación) | 1,5 · caja fuerte 2,5 · caja del banco 3,5 | Todo lo que hay en la ubicación. En una que está **dentro de otra** hay que entrar también en esa, y solo suma la diferencia (casa 1,5 + caja fuerte 1 = 2,5). |
+| Intrusión (o hackeo / robo o malware, según el tipo de ubicación) | 1,5 · caja fuerte 2,5 · caja del banco 3,5 · hackeo de una nube 1 | Todo lo que hay en la ubicación. El hackeo de una nube es más barato: en remoto, sin riesgo y a escala (phishing, filtraciones, malware que busca semillas en las fotos). En una que está **dentro de otra** hay que entrar también en esa, y solo suma la diferencia (casa 1,5 + caja fuerte 1 = 2,5). |
 | Traición | 1,5 | Lo que sabe una persona de confianza (no titular) y los sitios a los que entra. |
 | Llave inglesa | 2 · en una caja del banco 3 | Lo que sabe la persona coaccionada y, si se hace allí, la ubicación (obligada a abrir la caja fuerte, también la casa en la que está). En la caja del banco hay que llevarla en horario, identificarse y pasar cámaras: +1. |
 | RNG con fallo aún desconocido (por fabricante o de origen desconocido) | 3 | Semillas generadas con ese RNG, salvo que otra fuente buena o una verificación independiente las proteja. |
