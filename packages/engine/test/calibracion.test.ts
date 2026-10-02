@@ -91,4 +91,46 @@ describe('calibración: esquemas de referencia', () => {
     expect(r12.resilience.score).toBeLessThan(r09.resilience.score);
     expect(r12.usability.score).toBeLessThan(r09.usability.score);
   });
+
+  describe('bandas esperadas (docs/CALIBRACION.md)', () => {
+    type Band = 'muy mal' | 'flojo' | 'aceptable' | 'bueno' | 'excelente';
+    const RANGE: Record<Band, [number, number]> = {
+      'muy mal': [0, 25],
+      flojo: [25, 50],
+      aceptable: [50, 70],
+      bueno: [70, 85],
+      excelente: [85, 101],
+    };
+    // Seguridad · Resiliencia · Usabilidad · Herencia; una lista admite varias bandas.
+    const BANDS: Record<string, [Band | Band[], Band, Band, Band]> = {
+      'r01-papel-en-casa': [['muy mal', 'flojo'], 'flojo', 'excelente', 'bueno'],
+      'r02-foto-en-la-nube': ['muy mal', 'flojo', 'excelente', 'muy mal'],
+      'r03-acero-en-caja-fuerte': ['aceptable', 'aceptable', 'excelente', 'bueno'],
+      'r04-acero-y-banco': ['aceptable', 'bueno', 'excelente', 'bueno'],
+      'r05-passphrase-copia-aparte': ['bueno', 'flojo', 'excelente', 'aceptable'],
+      'r06-passphrase-solo-memoria': ['bueno', 'flojo', 'excelente', 'muy mal'],
+      'r07-coldcard-afectada': ['muy mal', 'aceptable', 'excelente', 'bueno'],
+      'r08-2de3-todo-en-casa': ['aceptable', 'aceptable', 'excelente', 'bueno'],
+      'r09-2de3-distribuido': ['bueno', 'bueno', 'excelente', 'bueno'],
+      'r10-2de3-custodio': ['bueno', 'bueno', 'excelente', 'bueno'],
+      'r11-2de3-sin-herencia': ['bueno', 'aceptable', 'excelente', 'muy mal'],
+      'r12-2de3-seedsigner': ['aceptable', 'aceptable', 'bueno', 'bueno'],
+    };
+    const inBand = (value: number, band: Band | Band[]) => [band].flat().some((b) => value >= RANGE[b][0] && value < RANGE[b][1]);
+
+    for (const [name, [sec, res, usa, inh]] of Object.entries(BANDS)) {
+      it(name, () => {
+        const a = score(name);
+        const actual = { seguridad: a.security.score, resiliencia: a.resilience.score, usabilidad: a.usability.score, herencia: a.inheritance.score };
+        const expected = { seguridad: sec, resiliencia: res, usabilidad: usa, herencia: inh };
+        for (const metric of Object.keys(actual) as (keyof typeof actual)[]) {
+          expect(inBand(actual[metric], expected[metric]), `${metric}: ${actual[metric]} fuera de ${[expected[metric]].flat().join(' / ')}`).toBe(true);
+        }
+      });
+    }
+  });
+
+  it('con un solo heredero, la herencia no pasa de ~84: su fallecimiento siempre cuenta', () => {
+    for (const r of [r04, r08, r09, r10]) expect(r.inheritance.score).toBeLessThan(85);
+  });
 });

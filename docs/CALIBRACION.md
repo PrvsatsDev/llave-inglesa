@@ -101,18 +101,27 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 
 | Esquema | Seguridad | Resiliencia | Usabilidad | Herencia |
 |---|---|---|---|---|
-| R01 Papel en el cajón | muy mal / flojo | flojo | excelente | excelente |
+| R01 Papel en el cajón | muy mal / flojo | flojo | excelente | bueno ¹ |
 | R02 Foto en la nube | muy mal | flojo | excelente | muy mal |
-| R03 Acero en la caja fuerte | aceptable | aceptable | excelente | excelente |
-| R04 Acero + copia en el banco | aceptable | bueno | excelente | excelente |
-| R05 Passphrase con copia aparte | bueno | aceptable | excelente | bueno |
-| R06 Passphrase solo en la memoria | bueno | muy mal | excelente | muy mal |
-| R07 Coldcard afectada | muy mal | aceptable | excelente | excelente |
-| R08 2 de 3 todo en casa | aceptable | aceptable | excelente | excelente |
+| R03 Acero en la caja fuerte | aceptable | aceptable | excelente | bueno ¹ |
+| R04 Acero + copia en el banco | aceptable | bueno | excelente | bueno ¹ |
+| R05 Passphrase con copia aparte | bueno | flojo ¹ | excelente | aceptable ¹ |
+| R06 Passphrase solo en la memoria | bueno | flojo ¹ | excelente | muy mal |
+| R07 Coldcard afectada | muy mal | aceptable | excelente | bueno ¹ |
+| R08 2 de 3 todo en casa | aceptable | aceptable | excelente | bueno ¹ |
 | R09 2 de 3 distribuido | bueno | bueno | excelente | bueno |
 | R10 2 de 3 con custodio | bueno | bueno | excelente | bueno |
 | R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
-| R12 2 de 3 con una SeedSigner | aceptable | bueno | bueno | bueno |
+| R12 2 de 3 con una SeedSigner | aceptable | aceptable ¹ | bueno | bueno |
+
+¹ Revisadas en el diagnóstico conjunto, tras ver los resultados: en todas, el motor acierta y la banda
+era optimista. Herencia: desde el ajuste 2 descuenta la fragilidad del camino de los herederos, y con
+**un solo heredero no pasa de ~84** (su fallecimiento, rareza 2, siempre resta al menos 16): *excelente*
+exige dos herederos o más. Resiliencia: en R05 la passphrase es un segundo secreto que se puede perder;
+en R06 basta con olvidarla (en el borde de muy mal); en R12 las placas son la única copia.
+
+Las bandas son un test (`packages/engine/test/calibracion.test.ts`): cada esquema de la galería debe
+caer en la suya en las cuatro métricas.
 
 ## Resultados
 
@@ -122,18 +131,18 @@ ajuste las movió.
 
 | Esquema | Seg | Res | Usa | Her | Último cambio |
 |---|---|---|---|---|---|
-| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✗ | ajuste 2 (Her 100 → 70) |
+| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✓ | ajuste 2 (Her 100 → 70) |
 | R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
-| R03 Acero en la caja fuerte | 51 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | ajuste 3 (Seg 49 → 51) |
-| R04 Acero + copia en el banco | 51 ✓ | 77 ✓ | 100 ✓ | 82 ✗ | ajuste 3 (Seg 49 → 51) |
-| R05 Passphrase con copia aparte | 71 ✓ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 3 (Seg 65 → 71) |
-| R06 Passphrase solo en la memoria | 73 ✓ | 28 ✗ | 100 ✓ | 0 ✓ | ajuste 3 (Seg 65 → 73) |
-| R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
-| R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✗ | ajuste 3 (Seg 49 → 53) |
+| R03 Acero en la caja fuerte | 51 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | ajuste 3 (Seg 49 → 51) |
+| R04 Acero + copia en el banco | 51 ✓ | 77 ✓ | 100 ✓ | 82 ✓ | ajuste 3 (Seg 49 → 51) |
+| R05 Passphrase con copia aparte | 71 ✓ | 45 ✓ | 100 ✓ | 59 ✓ | ajuste 3 (Seg 65 → 71) |
+| R06 Passphrase solo en la memoria | 73 ✓ | 28 ✓ | 100 ✓ | 0 ✓ | ajuste 3 (Seg 65 → 73) |
+| R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | — |
+| R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✓ | ajuste 3 (Seg 49 → 53) |
 | R09 2 de 3 distribuido | 71 ✓ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
 | R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 72 ✓ | — |
 | R11 2 de 3 sin plan de herencia | 71 ✓ | 56 ✓ | 100 ✓ | 0 ✓ | — |
-| R12 2 de 3 con una SeedSigner | 65 ✓ | 62 ✗ | 75 ✓ | 72 ✓ | — |
+| R12 2 de 3 con una SeedSigner | 65 ✓ | 62 ✓ | 75 ✓ | 72 ✓ | — |
 
 ### Ajustes de `score.ts`
 
@@ -161,7 +170,8 @@ ajuste las movió.
 
 ## Por dónde vamos
 
-Hecho: la galería completa (R01–R12) y los ajustes 1, 2 y 3. Siguiente: **diagnóstico conjunto**.
+Hecho: la galería completa (R01–R12), los ajustes 1, 2 y 3 y las bandas revisadas (paso 1 del
+diagnóstico). Siguiente: **paso 2**, pendientes del motor; después, **paso 3**, las fricciones.
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (con el ajuste 3, R06 da 73). Al terminar la galería: diagnóstico de todo junto,
