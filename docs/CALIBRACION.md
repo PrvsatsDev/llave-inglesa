@@ -110,6 +110,7 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
 | R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✗ | ajuste 3 (Seg 49 → 53) |
 | R09 2 de 3 distribuido | 71 ✗ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
+| R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 72 ✓ | — |
 
 ## Resultados
 
@@ -154,7 +155,7 @@ ajuste las movió.
 
 ## Por dónde vamos
 
-Hecho: R01–R09 y los ajustes 1, 2 y 3. Siguiente: **R10** (2 de 3 con custodio).
+Hecho: R01–R10 y los ajustes 1, 2 y 3. Siguiente: **R11** (2 de 3 sin plan de herencia).
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (con el ajuste 3, R06 da 73). Al terminar la galería: diagnóstico de todo junto,
@@ -211,6 +212,12 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   y cada sitio da una key): 13 vías frente a 42, y a esfuerzo 4,5, una frente a tres. La tercera key
   sirve para no perder los fondos, no para que cueste más robarlos, y ahí R09 gana con claridad
   (resiliencia 72 frente a 45, herencia 72 frente a 59). Aceptado R05 ≈ R09 en seguridad.
+- **R10** (71 · 75 · 100 · 72): el primero con las cuatro notas en su banda, y ≈ R09. El Abogado
+  solo tiene K3: no abre vías baratas (su traición con la de Pareja cuesta 5). La resiliencia mejora un
+  poco (72 → 75): como el Abogado entra siempre, con Yo incapacitado Pareja y él reúnen K1 (caja fuerte)
+  y K3 (despacho), y la incapacidad ya no bloquea por sí sola. Para el diagnóstico: el despacho se modeló
+  sin protección (intrusión 1,5, como una casa); si el abogado guarda la placa en su caja fuerte,
+  debería ponerse *caja fuerte*.
 
 ## Fricciones al montar los esquemas
 

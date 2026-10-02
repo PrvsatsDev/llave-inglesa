@@ -16,6 +16,7 @@ describe('calibración: esquemas de referencia', () => {
   const r07 = score('r07-coldcard-afectada');
   const r08 = score('r08-2de3-todo-en-casa');
   const r09 = score('r09-2de3-distribuido');
+  const r10 = score('r10-2de3-custodio');
 
   it('hackear una nube es más barato que entrar en una casa', () => {
     expect(CLOUD_BREACH_EFFORT).toBeLessThan(BURGLARY_EFFORT.none);
@@ -66,5 +67,12 @@ describe('calibración: esquemas de referencia', () => {
     expect(r03.inheritance.losses[0]).toEqual([{ type: 'item-loss', item: 'nuevo-backup' }]);
     expect(r04.inheritance.losses).toContainEqual([{ type: 'item-loss', item: 'nuevo-backup' }, { type: 'item-loss', item: 'nuevo-backup-2' }]);
     expect(r04.inheritance.losses.some((c) => c.length === 1 && c[0]!.type === 'item-loss')).toBe(false);
+  });
+
+  it('R10 ≈ R09: el custodio solo tiene una key y no abre vías baratas', () => {
+    near(r10.security.score, r09.security.score);
+    near(r10.resilience.score, r09.resilience.score);
+    near(r10.inheritance.score, r09.inheritance.score);
+    expect(r10.security.cheapest).toEqual(r09.security.cheapest);
   });
 });
