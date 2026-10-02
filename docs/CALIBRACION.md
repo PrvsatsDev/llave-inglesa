@@ -127,6 +127,7 @@ ajuste las movió.
 | R03 Acero en la caja fuerte | 49 ✗ | 61 ✓ | 100 ✓ | 76 ✗ | ajuste 2 (Her 100 → 76) |
 | R04 Acero + copia en el banco | 49 ✗ | 77 ✓ | 100 ✓ | 82 ✗ | ajuste 2 (Her 100 → 82) |
 | R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 2 (Her 90 → 59) |
+| R06 Passphrase solo en la memoria | 65 ✗ | 28 ✗ | 100 ✓ | 0 ✓ | — |
 
 ### Ajustes de `score.ts`
 
@@ -149,7 +150,10 @@ ajuste las movió.
 
 ## Por dónde vamos
 
-Hecho: R01–R05 y los ajustes 1 y 2 (el 2, pendiente de revisar en la web). Siguiente: **R06** (passphrase solo en la memoria). Al terminar la galería: diagnóstico de todo junto,
+Hecho: R01–R06 y los ajustes 1 y 2. Siguiente: **R07** (Coldcard afectada).
+
+**Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
+(hoy, esfuerzo 3 → 65). Se decidirá con R08–R12: llave inglesa a 3,5 o retocar la curva. Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor
@@ -180,6 +184,13 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
 - **Multisig del fixture `distribuido-2de3`** (fuera de la galería): con la llave inglesa a 3 empataba
   con `todo-en-casa` (65), porque una única SeedSigner firma las tres keys y su firmware malicioso (3)
   lo roba todo. Si la SeedSigner solo carga la key de su misma ubicación, sube a 74.
+- **R06** (65 · 28 · 100 · 0): seguridad igual que R05, no por encima: en los dos la única vía barata
+  es la llave inglesa a Yo (3), y la seguridad ignora las vías secundarias (en R05, la copia de la
+  passphrase). El usuario cree que "solo llave inglesa" debería rondar 75 o más (ver *Referencia fija*).
+  Resiliencia 28: basta con olvidar la passphrase (rareza 1); justo por encima de "muy mal", aceptado.
+  Probado con una Coldcard con PIN de coacción: sigue en 65, y es correcto: con la llave inglesa en
+  casa también se abre la caja fuerte, y placa + passphrase bastan sin tocar el dispositivo. Sin la
+  placa en casa, el PIN de coacción sí cuenta (3 + 1 → 80).
 
 ## Fricciones al montar los esquemas
 
@@ -201,3 +212,6 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   Pareja (también Casa, donde solo hay un Trezor que no puede desbloquear), no solo las que necesita.
   Lo que se usa sí se distingue (resaltado) de lo que solo está al alcance, pero en las ubicaciones
   no. Idea: distinguir también las ubicaciones necesarias de las solo alcanzables.
+- **R06**: con un PIN de coacción, la seguridad no cambia si hay otro camino que no pasa por el
+  dispositivo (la placa en la misma casa), pero la interfaz no explica por qué. Idea: avisar "el PIN de
+  coacción no ayuda: con la llave inglesa también se llevan la placa de la caja fuerte".
