@@ -64,7 +64,7 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
 
   it('la llave inglesa es la vía más barata: robar sin confrontación exige asaltar dos sitios', () => {
     expect(a.security.minEffort).toBe(ATTACK_EFFORT.coercion);
-    expect(a.security.cheapRoutes).toBe(1);
+    expect(a.security.cheapest).toEqual([[{ type: 'coercion', person: 'yo', location: 'casa' }]]);
     const i = a.security.cuts.findIndex((c) => c.length === 2 && c.every((x) => x.type === 'burglary'));
     expect(a.security.efforts[i]).toBe(2 * ATTACK_EFFORT.burglary + EXTRA_SITE_SURCHARGE);
   });

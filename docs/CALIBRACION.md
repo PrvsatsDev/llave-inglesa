@@ -77,7 +77,7 @@ Dentro de cada métrica, `A < B` significa "A debe puntuar menos que B" y `A ≈
 
 **Seguridad**
 - R07 < R02 < R01 < R03 ≈ R04 < R05 < R06
-- R08 < R09; R12 < R09; R10 ≈ R09 ≈ R11
+- R08 < R09; R12 < R09; R10 ≈ R09 ≈ R11; R05 ≈ R09 (ver R09 en *Revisado*)
 - R03 < R09: un multisig bien distribuido es más seguro que el mejor single-sig sin passphrase.
 
 **Resiliencia**
@@ -101,18 +101,15 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 
 | Esquema | Seguridad | Resiliencia | Usabilidad | Herencia |
 |---|---|---|---|---|
-| R01 Papel en el cajón | muy mal / flojo | flojo | excelente | excelente |
-| R02 Foto en la nube | muy mal | flojo | excelente | muy mal |
-| R03 Acero en la caja fuerte | aceptable | aceptable | excelente | excelente |
-| R04 Acero + copia en el banco | aceptable | bueno | excelente | excelente |
-| R05 Passphrase con copia aparte | bueno | aceptable | excelente | bueno |
-| R06 Passphrase solo en la memoria | bueno | muy mal | excelente | muy mal |
-| R07 Coldcard afectada | muy mal | aceptable | excelente | excelente |
-| R08 2 de 3 todo en casa | aceptable | aceptable | excelente | excelente |
-| R09 2 de 3 distribuido | bueno | bueno | excelente | bueno |
-| R10 2 de 3 con custodio | bueno | bueno | excelente | bueno |
-| R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
-| R12 2 de 3 con una SeedSigner | aceptable | bueno | bueno | bueno |
+| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✗ | ajuste 2 (Her 100 → 70) |
+| R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
+| R03 Acero en la caja fuerte | 51 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | ajuste 3 (Seg 49 → 51) |
+| R04 Acero + copia en el banco | 51 ✓ | 77 ✓ | 100 ✓ | 82 ✗ | ajuste 3 (Seg 49 → 51) |
+| R05 Passphrase con copia aparte | 71 ✓ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 3 (Seg 65 → 71) |
+| R06 Passphrase solo en la memoria | 73 ✓ | 28 ✗ | 100 ✓ | 0 ✓ | ajuste 3 (Seg 65 → 73) |
+| R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
+| R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✗ | ajuste 3 (Seg 49 → 53) |
+| R09 2 de 3 distribuido | 71 ✗ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
 
 ## Resultados
 
@@ -149,13 +146,18 @@ ajuste las movió.
   dejan a los herederos sin los fondos; su robustez se puntúa como la resiliencia y se resta
   **0,4 × lo que le falta para 100** (como mucho −40). Se descartó restar la resiliencia del titular:
   sus desgracias no son las de los herederos (p. ej., copias a las que solo llega el titular).
+- **Ajuste 3** (tras R09): llave inglesa 3 → **3,5** (en la caja del banco, 4,5). En R09 la única vía
+  barata era la llave inglesa y daba 65, lejos de la *Referencia fija* (≈ 75). Con 3,5 todas las
+  seguridades entran en su banda salvo R09 (71, justo por debajo de bueno) y aparece R05 < R06. Se
+  descartó subir además la curva (esfuerzo 3 → 75): daría 75 a cualquier ataque sofisticado de
+  esfuerzo 3, como el firmware de una SeedSigner que firma todas las keys.
 
 ## Por dónde vamos
 
-Hecho: R01–R08 y los ajustes 1 y 2. Siguiente: **R09** (2 de 3 distribuido).
+Hecho: R01–R09 y los ajustes 1, 2 y 3. Siguiente: **R10** (2 de 3 con custodio).
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
-(hoy, esfuerzo 3 → 65). Se decidirá con R08–R12: llave inglesa a 3,5 o retocar la curva. Al terminar la galería: diagnóstico de todo junto,
+(con el ajuste 3, R06 da 73). Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor
@@ -201,6 +203,14 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   inglesas (3) entran como vías casi igual de baratas (−6). Los ataques a fabricantes empiezan en 7,5:
   ahí sí ayudan tres fabricantes distintos. Resiliencia algo mejor que R03 (lo más probable, perder el
   acceso a Casa, rareza 3). Aquí la llave inglesa no es lo más barato: no informa sobre su peso.
+- **R09** (65 → 71 · 72 · 100 · 72): la única vía barata es la llave inglesa en casa (dispositivos y
+  PIN firman con dos keys); motivó el ajuste 3. Queda igual que R05 en seguridad, y el usuario se
+  preguntó si un multisig distribuido no debería estar algo por encima. Mirando todas las vías, no:
+  R05 es en la práctica un "2 de 2" contra el robo (semilla en la caja fuerte y passphrase en casa de
+  los padres: una sola pareja que conseguir), y R09 un 2 de 3 (tres parejas posibles; cada fabricante
+  y cada sitio da una key): 13 vías frente a 42, y a esfuerzo 4,5, una frente a tres. La tercera key
+  sirve para no perder los fondos, no para que cueste más robarlos, y ahí R09 gana con claridad
+  (resiliencia 72 frente a 45, herencia 72 frente a 59). Aceptado R05 ≈ R09 en seguridad.
 
 ## Fricciones al montar los esquemas
 

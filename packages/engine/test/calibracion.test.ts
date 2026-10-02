@@ -12,6 +12,10 @@ describe('calibración: esquemas de referencia', () => {
   const r03 = score('r03-acero-en-caja-fuerte');
   const r04 = score('r04-acero-y-banco');
   const r05 = score('r05-passphrase-copia-aparte');
+  const r06 = score('r06-passphrase-solo-memoria');
+  const r07 = score('r07-coldcard-afectada');
+  const r08 = score('r08-2de3-todo-en-casa');
+  const r09 = score('r09-2de3-distribuido');
 
   it('hackear una nube es más barato que entrar en una casa', () => {
     expect(CLOUD_BREACH_EFFORT).toBeLessThan(BURGLARY_EFFORT.none);
@@ -23,17 +27,33 @@ describe('calibración: esquemas de referencia', () => {
     expect(r02.inheritance.score).toBe(0);
   });
 
-  it('seguridad: R02 < R01 < R03 ≈ R04 < R05', () => {
+  it('seguridad: R07 < R02 < R01 < R03 ≈ R04 < R05 < R06; R08 < R09; R03 < R09', () => {
+    expect(r07.security.score).toBeLessThan(r02.security.score);
     expect(r02.security.score).toBeLessThan(r01.security.score);
     expect(r01.security.score).toBeLessThan(r03.security.score);
     near(r03.security.score, r04.security.score);
     expect(r04.security.score).toBeLessThan(r05.security.score);
+    expect(r05.security.score).toBeLessThan(r06.security.score);
+    expect(r08.security.score).toBeLessThan(r09.security.score);
+    expect(r03.security.score).toBeLessThan(r09.security.score);
   });
 
-  it('resiliencia: R01 < R03 < R04, y R05 < R03', () => {
+  it('solo la llave inglesa en casa: alrededor de 75', () => {
+    expect(r06.security.cuts).toEqual([[{ type: 'coercion', person: 'yo', location: 'casa' }]]);
+    expect(r06.security.score).toBeGreaterThanOrEqual(70);
+  });
+
+  it('resiliencia: R06 < R03 < R04; R01 < R03; R05 < R03; R08 < R09', () => {
+    expect(r06.resilience.score).toBeLessThan(r03.resilience.score);
+    expect(r08.resilience.score).toBeLessThan(r09.resilience.score);
     expect(r01.resilience.score).toBeLessThan(r03.resilience.score);
     expect(r03.resilience.score).toBeLessThan(r04.resilience.score);
     expect(r05.resilience.score).toBeLessThan(r03.resilience.score);
+  });
+
+  it('herencia: R02 y R06 no se pueden heredar', () => {
+    expect(r02.inheritance.score).toBe(0);
+    expect(r06.inheritance.score).toBe(0);
   });
 
   it('herencia: R05 < R01 < R03 < R04 (papel < acero < dos placas; la passphrase es otro punto único)', () => {

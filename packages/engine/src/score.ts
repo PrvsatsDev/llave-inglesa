@@ -18,7 +18,7 @@ export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphr
   /** Alguien de confianza: ya tiene acceso y conocimiento, pero traicionar a la pareja es mucho más raro que un robo. */
   insider: 2.5,
   /** Llave inglesa: saber que tienes bitcoin, ir a por ti, violencia y años de cárcel. Raro, como los ataques sofisticados. */
-  coercion: 3,
+  coercion: 3.5,
   /** Cadena de suministro / RNG con puerta trasera: sofisticado. */
   'entropy-compromise': 3,
   /** Fallo de entropía publicado: se adivina en remoto, sin tocar nada (ya se ha explotado). */
