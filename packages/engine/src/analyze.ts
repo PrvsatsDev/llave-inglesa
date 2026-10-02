@@ -3,7 +3,7 @@ import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './atta
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
-import { attackEffort, combinedRarity, cutRarity, EXPOSURE, inheritanceScore, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
+import { attackEffort, combinedRarity, cutRarity, EXPOSURE, inheritanceBreakdown, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
 import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
 
 export interface AnalyzeOptions {
@@ -68,6 +68,15 @@ export interface InheritanceReport {
   locations: Id[] | null;
   /** Viajes: las ubicaciones sin contar las que están dentro de otra de la lista. */
   visits: number | null;
+  /**
+   * Desgracias que, además del fallecimiento de los titulares, dejarían a los herederos sin los fondos,
+   * de la más probable a la menos (vacío si no se recupera ni sin ellas).
+   */
+  losses: LossEvent[][];
+  /** Rareza de cada combinación de `losses` (mismo orden). */
+  lossRarities: number[];
+  /** Rareza equivalente de todas juntas, o null si no hay ninguna hasta el límite buscado. */
+  lossCombinedRarity: number | null;
 }
 
 export interface Analysis {
@@ -129,7 +138,7 @@ export function simulateInheritance(model: CustodyModel, locations?: readonly Id
  * fallecimiento de los titulares, y qué personas de otro papel hacen falta de verdad (se quita
  * cada una y se comprueba si los demás se bastan con las ubicaciones a las que aún llegan).
  */
-function inheritanceReport(world: World): InheritanceReport {
+function inheritanceReport(world: World, maxCutSize: number): InheritanceReport {
   const legit = legitHoldings(world);
   const role = (id: Id) => world.model.people.find((p) => p.id === id)?.role;
   const heirs = legit.people.filter((p) => role(p) === 'heir');
@@ -146,7 +155,28 @@ function inheritanceReport(world: World): InheritanceReport {
     helpers = [];
   }
   const n = visits(world, locations);
-  return { score: inheritanceScore(n), status, heirs, helpers, locations, visits: n };
+
+  // Fragilidad: qué más tendría que pasar, ya fallecidos los titulares, para que no lo recuperen.
+  let losses: { cut: LossEvent[]; rarity: number }[] = [];
+  if (locations) {
+    const owners = new Set(world.model.people.filter((p) => p.role === 'owner').map((p) => p.id));
+    const atoms = lossAtoms(world).filter((e) => !('person' in e && owners.has(e.person)));
+    const blocked = (events: LossEvent[]) => {
+      const after = createWorld(world.model, [...ownerDeaths(world.model), ...events], world.index);
+      return !derive(after, legitHoldings(after), 'any').canSpend;
+    };
+    losses = minimalCuts(atoms, blocked, maxCutSize)
+      .map((cut) => ({ cut, rarity: cutRarity(cut, world.index) }))
+      .sort((a, b) => a.rarity - b.rarity || a.cut.length - b.cut.length);
+  }
+  const lossCombinedRarity = combinedRarity(losses.map((l) => l.rarity));
+  return {
+    score: inheritanceBreakdown(n, lossCombinedRarity).score,
+    status, heirs, helpers, locations, visits: n,
+    losses: losses.map((l) => l.cut),
+    lossRarities: losses.map((l) => l.rarity),
+    lossCombinedRarity,
+  };
 }
 
 /** Viajes necesarios para ir a `locations`: la caja fuerte de casa se abre en la misma visita a casa. */
@@ -272,7 +302,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
   const usableWith = minimalLocationSet(intact, owners, ownerLocations, 'secure');
   const usableVisits = visits(intact, usableWith);
 
-  const inheritance = inheritanceReport(createWorld(model, ownerDeaths(model), intact.index));
+  const inheritance = inheritanceReport(createWorld(model, ownerDeaths(model), intact.index), maxCutSize);
 
   return {
     security,

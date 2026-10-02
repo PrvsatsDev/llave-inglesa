@@ -10,6 +10,8 @@ import {
   rarityScore,
   explain,
   EXPOSURE,
+  inheritanceBreakdown,
+  HEIR_FRAGILITY_WEIGHT,
   inheritanceScore,
   LOCKOUT_PENALTY,
   LOSS_RARITY,
@@ -28,7 +30,7 @@ import { ATTACK_KIND_TEXT, inheritanceText, plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
-import { LossRoutes, TheftRoutes } from './Findings.tsx';
+import { HeirLossRoutes, LossRoutes, TheftRoutes } from './Findings.tsx';
 import { Button, Section } from './inspector/fields.tsx';
 import { Tree } from './ScenarioPanel.tsx';
 import { level } from './Scoreboard.tsx';
@@ -220,12 +222,18 @@ function inheritanceScoreRows(a: EngineAnalysis) {
       : inh.status === 'no-heirs'
         ? 'No hay herederos'
         : 'Los herederos no pueden recuperar los fondos';
+  const b = inheritanceBreakdown(inh.visits, inh.lossCombinedRarity);
+  const fragility = (points: number): Row => ({
+    label: `Fragilidad: ${plural(inh.losses.length, 'forma', 'formas')} de quedarse sin los fondos; la más probable, rareza ${num(inh.lossRarities[0]!)}${inh.losses.length > 1 ? `, todas juntas ${num(round1(inh.lossCombinedRarity!))}` : ''}`,
+    points: -points,
+  });
   return {
     score: inh.score,
-    rows: [{ label, points: inh.score }],
+    rows: [{ label, points: b.base }, ...b.penalties.map((p) => fragility(p.points))],
     how: [
       'Tras el fallecimiento de todos los titulares, si los herederos pueden recuperar los fondos con lo que tienen a su alcance (incluidos los accesos "tras fallecer"), y cuántas ubicaciones les cuesta.',
       `${scale(inheritanceScore, ['ubicación', 'ubicaciones'], 1, 4)}.`,
+      `Después se resta la fragilidad de ese camino. El fallecimiento es seguro, así que se da por hecho y se buscan las desgracias que, además, dejarían a los herederos sin los fondos (perder la única copia, un incendio, que fallezca el heredero…). Su robustez se puntúa como la resiliencia, y se resta ${num(HEIR_FRAGILITY_WEIGHT)} × lo que le falta para 100: como mucho ${num(Math.round(HEIR_FRAGILITY_WEIGHT * 100))}.`,
     ],
   };
 }
@@ -321,6 +329,7 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
       <Section title="Por qué">
         <Why model={model} derivation={derivation} who={inh.status === 'ok' ? 'Los herederos' : 'Con todo lo que tienen a su alcance, quienes quedan'} />
       </Section>
+      {inh.status === 'ok' && <HeirLossRoutes model={model} />}
     </>
   );
 }

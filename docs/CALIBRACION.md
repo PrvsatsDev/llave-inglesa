@@ -92,7 +92,8 @@ Dentro de cada métrica, `A < B` significa "A debe puntuar menos que B" y `A ≈
 
 **Herencia**
 - R02, R06 y R11 no se pueden heredar (en R02, Pareja no entra en iCloud ni sabe el PIN).
-- R03 ≈ R04 > R05: a Pareja le basta con casa, salvo que también necesite la passphrase de casa de los padres.
+- R05 < R01 < R03 < R04 (tras el ajuste 2): papel < acero < dos placas; en R05 el papel de la
+  passphrase es otro punto único para Pareja.
 
 ### Bandas
 
@@ -121,11 +122,11 @@ ajuste las movió.
 
 | Esquema | Seg | Res | Usa | Her | Último cambio |
 |---|---|---|---|---|---|
-| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 100 ✓ | ajuste 1 (Seg 23 → 35, Res 34 → 41) |
+| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✗ | ajuste 2 (Her 100 → 70) |
 | R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
-| R03 Acero en la caja fuerte | 49 ✗ | 61 ✓ | 100 ✓ | 100 ✓ | ajuste 1 (Seg 27 → 49, Res 51 → 61) |
-| R04 Acero + copia en el banco | 49 ✗ | 77 ✓ | 100 ✓ | 100 ✓ | ajuste 1 (Seg 27 → 49, Res 70 → 77) |
-| R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 90 ✗ | ajuste 1 (Seg 45 → 65, Res 31 → 45) |
+| R03 Acero en la caja fuerte | 49 ✗ | 61 ✓ | 100 ✓ | 76 ✗ | ajuste 2 (Her 100 → 76) |
+| R04 Acero + copia en el banco | 49 ✗ | 77 ✓ | 100 ✓ | 82 ✗ | ajuste 2 (Her 100 → 82) |
+| R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 2 (Her 90 → 59) |
 
 ### Ajustes de `score.ts`
 
@@ -139,10 +140,16 @@ ajuste las movió.
   - Vías casi igual de baratas: −4 por vía (máx. −12) → **−2 (máx. −6)**.
   - Curva de resiliencia: rareza 1 → 30 · **2 → 60** · 3 → 75 · 4 → 85 (antes 25 · 50 · 70 · 85).
   - Bloqueo temporal: −10 / −5 → **−5 / −2**.
+- **Ajuste 2** (tras R05): herencia daba 100 a casi todo, aunque el camino de los herederos fuera
+  frágil (en R01, perder el papel basta). Ahora es la facilidad de siempre **menos la fragilidad** de
+  ese camino: se da por hecho el fallecimiento (es seguro) y se buscan las desgracias que, además,
+  dejan a los herederos sin los fondos; su robustez se puntúa como la resiliencia y se resta
+  **0,4 × lo que le falta para 100** (como mucho −40). Se descartó restar la resiliencia del titular:
+  sus desgracias no son las de los herederos (p. ej., copias a las que solo llega el titular).
 
 ## Por dónde vamos
 
-Hecho: R01–R05 y el ajuste 1, pendiente de que el usuario lo revise en la web. Siguiente: **R06** (passphrase solo en la memoria). Al terminar la galería: diagnóstico de todo junto,
+Hecho: R01–R05 y los ajustes 1 y 2 (el 2, pendiente de revisar en la web). Siguiente: **R06** (passphrase solo en la memoria). Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor
@@ -190,3 +197,7 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   se distinguen en las listas: "Pérdida de Backup K1 + Pérdida de Backup K1", o un bloqueo que nombra
   uno sin decir cuál. Ideas: avisar de etiquetas repetidas, o añadir la ubicación al nombre cuando
   dos coinciden.
+- **R05**: al simular el fallecimiento, el mapa pinta en verde todas las ubicaciones a las que entra
+  Pareja (también Casa, donde solo hay un Trezor que no puede desbloquear), no solo las que necesita.
+  Lo que se usa sí se distingue (resaltado) de lo que solo está al alcance, pero en las ubicaciones
+  no. Idea: distinguir también las ubicaciones necesarias de las solo alcanzables.

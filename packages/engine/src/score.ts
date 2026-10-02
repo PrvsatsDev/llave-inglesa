@@ -156,7 +156,7 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'other-routes' | 'lockout'; points: number }[];
+  penalties: { reason: 'exposure' | 'other-routes' | 'lockout' | 'heir-fragility'; points: number }[];
   score: number;
 }
 
@@ -281,8 +281,27 @@ export function usabilityScore(locations: number | null): number {
   return [100, 100, 75, 50][locations] ?? 30;
 }
 
-/** Herencia: si los herederos pueden recuperar los fondos, y cuánto les cuesta. */
+/** Herencia, facilidad: si los herederos pueden recuperar los fondos, y cuántas ubicaciones les cuesta. */
 export function inheritanceScore(locations: number | null): number {
   if (locations === null) return 0;
   return [100, 100, 90, 80][locations] ?? 65;
+}
+
+/**
+ * Cuánto pesa la fragilidad del camino de los herederos: se resta este factor por lo que le falta a
+ * su robustez (misma escala que la resiliencia) para llegar a 100. Con 0,4, un camino fácil pero que
+ * se pierde con cualquier cosa baja como mucho a 60.
+ */
+export const HEIR_FRAGILITY_WEIGHT = 0.4;
+
+/**
+ * Herencia: la facilidad, menos la fragilidad. Los herederos heredan lo que quede tras toda una vida:
+ * el fallecimiento es seguro, así que se da por hecho y se miden las desgracias que, además, les
+ * dejarían sin los fondos (`heirLossRarity`: rareza equivalente de todas ellas).
+ */
+export function inheritanceBreakdown(locations: number | null, heirLossRarity: number | null): ScoreBreakdown {
+  const base = inheritanceScore(locations);
+  if (locations === null) return { base, penalties: [], score: base };
+  const points = Math.round(HEIR_FRAGILITY_WEIGHT * (100 - rarityScore(heirLossRarity)));
+  return { base, penalties: points > 0 ? [{ reason: 'heir-fragility', points }] : [], score: Math.max(0, base - points) };
 }

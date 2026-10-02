@@ -36,8 +36,15 @@ describe('calibración: esquemas de referencia', () => {
     expect(r05.resilience.score).toBeLessThan(r03.resilience.score);
   });
 
-  it('herencia: R03 ≈ R04 > R05', () => {
-    near(r03.inheritance.score, r04.inheritance.score);
-    expect(r05.inheritance.score).toBeLessThan(r04.inheritance.score);
+  it('herencia: R05 < R01 < R03 < R04 (papel < acero < dos placas; la passphrase es otro punto único)', () => {
+    expect(r05.inheritance.score).toBeLessThan(r01.inheritance.score);
+    expect(r01.inheritance.score).toBeLessThan(r03.inheritance.score);
+    expect(r03.inheritance.score).toBeLessThan(r04.inheritance.score);
+  });
+
+  it('herencia: con una sola placa, perderla basta; con dos, hay que perder las dos', () => {
+    expect(r03.inheritance.losses[0]).toEqual([{ type: 'item-loss', item: 'nuevo-backup' }]);
+    expect(r04.inheritance.losses).toContainEqual([{ type: 'item-loss', item: 'nuevo-backup' }, { type: 'item-loss', item: 'nuevo-backup-2' }]);
+    expect(r04.inheritance.losses.some((c) => c.length === 1 && c[0]!.type === 'item-loss')).toBe(false);
   });
 });
