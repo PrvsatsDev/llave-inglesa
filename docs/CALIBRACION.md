@@ -76,7 +76,7 @@ Dentro de cada métrica, `A < B` significa "A debe puntuar menos que B" y `A ≈
 (±5)".
 
 **Seguridad**
-- R07 < R02 ≈ R01 < R03 ≈ R04 < R05 < R06
+- R07 < R02 < R01 < R03 ≈ R04 < R05 < R06
 - R08 < R09; R12 < R09; R10 ≈ R09 ≈ R11
 - R03 < R09: un multisig bien distribuido es más seguro que el mejor single-sig sin passphrase.
 
@@ -121,14 +121,28 @@ ajuste las movió.
 
 | Esquema | Seg | Res | Usa | Her | Último cambio |
 |---|---|---|---|---|---|
-| R01 Papel en el cajón | 23 ✓ | 34 ✓ | 100 ✓ | 100 ✓ | — |
-| R02 Foto en la nube | 23 ✓ | 34 ✓ | 100 ✓ | 0 ✓ | hackeo de una nube 1,5 → 1 (Seg 27 → 23) |
-| R03 Acero en la caja fuerte | 27 ✗ | 51 ✓ | 100 ✓ | 100 ✓ | — |
-| R04 Acero + copia en el banco | 27 ✗ | 70 ✓ | 100 ✓ | 100 ✓ | — |
+| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 100 ✓ | ajuste 1 (Seg 23 → 35, Res 34 → 41) |
+| R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
+| R03 Acero en la caja fuerte | 49 ✗ | 61 ✓ | 100 ✓ | 100 ✓ | ajuste 1 (Seg 27 → 49, Res 51 → 61) |
+| R04 Acero + copia en el banco | 49 ✗ | 77 ✓ | 100 ✓ | 100 ✓ | ajuste 1 (Seg 27 → 49, Res 70 → 77) |
+| R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 90 ✗ | ajuste 1 (Seg 45 → 65, Res 31 → 45) |
+
+### Ajustes de `score.ts`
+
+- **Ajuste 0** (tras R02): el hackeo de una nube cuesta 1 (antes, como una intrusión: 1,5).
+- **Ajuste 1** (tras R05): la llave inglesa a Yo en casa era lo más barato en casi todo, y la
+  resiliencia castigaba demasiado "dos descuidos a la vez".
+  - Llave inglesa 2 → **3** (en la caja del banco, 4). Puede que suba a 3,5: lo dirán R08–R12.
+  - Traición 1,5 → **2,5**.
+  - Cada **sitio físico más** que haya que asaltar en un mismo robo, **+1**. Sin esto, con la llave
+    inglesa cara, robar en dos casas (1,5 + 1,5) igualaba un multisig distribuido con tenerlo todo en casa.
+  - Vías casi igual de baratas: −4 por vía (máx. −12) → **−2 (máx. −6)**.
+  - Curva de resiliencia: rareza 1 → 30 · **2 → 60** · 3 → 75 · 4 → 85 (antes 25 · 50 · 70 · 85).
+  - Bloqueo temporal: −10 / −5 → **−5 / −2**.
 
 ## Por dónde vamos
 
-Hecho: R01–R04. Siguiente: **R05** (passphrase con copia aparte). Al terminar la galería: diagnóstico de todo junto,
+Hecho: R01–R05 y el ajuste 1, pendiente de que el usuario lo revise en la web. Siguiente: **R06** (passphrase solo en la memoria). Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor
@@ -150,6 +164,15 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   del banco no abre vías baratas: intrusión 3,5, llave inglesa allí 3). La segunda placa sube la
   resiliencia de 51 a 70: lo más probable ya es que fallezcan Yo y Pareja, o perder las dos placas y
   el Trezor o el PIN (rareza 4).
+- **R05** (45 · 31 · 100 · 90 → ajuste 1: 65 · 45 · 100 · 90): seguridad y resiliencia muy bajas. La
+  llave inglesa a Yo era lo único que quedaba tras la passphrase; y la resiliencia caía por "olvidar la
+  passphrase y perder el papel" (rareza 2 → 50) menos otras vías parecidas y el bloqueo por incapacidad
+  (Pareja no entra en casa de los padres hasta que fallece Yo). Con un poder notarial (acceso "si queda
+  incapacitado o fallece") el bloqueo desaparece. Motivó el ajuste 1. La herencia (90) supera la banda
+  esperada (bueno): dos sitios a visitar, −10; parece razonable.
+- **Multisig del fixture `distribuido-2de3`** (fuera de la galería): con la llave inglesa a 3 empataba
+  con `todo-en-casa` (65), porque una única SeedSigner firma las tres keys y su firmware malicioso (3)
+  lo roba todo. Si la SeedSigner solo carga la key de su misma ubicación, sube a 74.
 
 ## Fricciones al montar los esquemas
 

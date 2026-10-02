@@ -15,10 +15,10 @@ import type { LossEvent } from './world.ts';
 export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce'>, number>> = {
   /** Entrar sin nadie presente: sigiloso, sin confrontación. En sitios protegidos, ver BURGLARY_EFFORT. */
   burglary: 1.5,
-  /** Alguien de confianza: ya tiene acceso y conocimiento. */
-  insider: 1.5,
-  /** Llave inglesa: violento, arriesgado, exige presencia física. */
-  coercion: 2,
+  /** Alguien de confianza: ya tiene acceso y conocimiento, pero traicionar a la pareja es mucho más raro que un robo. */
+  insider: 2.5,
+  /** Llave inglesa: saber que tienes bitcoin, ir a por ti, violencia y años de cárcel. Raro, como los ataques sofisticados. */
+  coercion: 3,
   /** Cadena de suministro / RNG con puerta trasera: sofisticado. */
   'entropy-compromise': 3,
   /** Fallo de entropía publicado: se adivina en remoto, sin tocar nada (ya se ha explotado). */
@@ -98,8 +98,29 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
  */
 export const DURESS_SURCHARGE = 1;
 
+/**
+ * Recargo por cada sitio físico más que haya que asaltar (intrusión o llave inglesa): localizar y
+ * asaltar dos casas es mucho más que dos veces una. Una ubicación dentro de otra es el mismo sitio;
+ * la nube, la traición o el firmware no son sitios.
+ */
+export const EXTRA_SITE_SURCHARGE = 1;
+
+/** Sitios físicos distintos que exige un robo (las ubicaciones anidadas cuentan como su contenedor). */
+export function attackSites(cut: readonly AttackAtom[], index: ModelIndex): Id[] {
+  const sites = new Set<Id>();
+  for (const a of cut) {
+    if ((a.type !== 'burglary' && a.type !== 'coercion') || a.location === null) continue;
+    const location = index.locations.get(a.location);
+    if (location?.kind === 'physical') sites.add(location.inside ?? location.id);
+  }
+  return [...sites];
+}
+
+export const extraSitesSurcharge = (cut: readonly AttackAtom[], index: ModelIndex) =>
+  Math.max(0, attackSites(cut, index).length - 1) * EXTRA_SITE_SURCHARGE;
+
 export function attackEffort(cut: readonly AttackAtom[], index: ModelIndex, beatsDuress = false): number {
-  return cut.reduce((sum, a) => sum + atomEffort(a, index), 0) + (beatsDuress ? DURESS_SURCHARGE : 0);
+  return cut.reduce((sum, a) => sum + atomEffort(a, index), 0) + extraSitesSurcharge(cut, index) + (beatsDuress ? DURESS_SURCHARGE : 0);
 }
 
 /** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */
@@ -117,8 +138,8 @@ const EFFORT_CURVE: readonly (readonly [number, number])[] = [
 export const EXPOSURE = {
   /** Una vía cuenta como "igual de barata" si cuesta como mucho esto más que la más barata. */
   margin: 0.5,
-  penaltyPerExtraRoute: 4,
-  maxPenalty: 12,
+  penaltyPerExtraRoute: 2,
+  maxPenalty: 6,
 } as const;
 
 function interpolate(curve: readonly (readonly [number, number])[], x: number): number {
@@ -216,9 +237,9 @@ export function combinedRarity(rarities: readonly number[]): number | null {
 /** Curva rareza → puntuación base (interpolación lineal). */
 const RARITY_CURVE: readonly (readonly [number, number])[] = [
   [0, 0],
-  [1, 25],
-  [2, 50],
-  [3, 70],
+  [1, 30],
+  [2, 60],
+  [3, 75],
   [4, 85],
   [5, 95],
   [6, 100],
@@ -245,8 +266,8 @@ export function resilienceBreakdown(minRarity: number | null, combined: number |
  * (p. ej. un ictus). Resta según lo probable que sea el bloqueo más probable.
  */
 export const LOCKOUT_PENALTY: readonly { below: number; points: number }[] = [
-  { below: 3, points: 10 },
-  { below: 5, points: 5 },
+  { below: 3, points: 5 },
+  { below: 5, points: 2 },
 ];
 
 export function lockoutPenalty(minRarity: number | null): number {

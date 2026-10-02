@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { analyze, BURGLARY_EFFORT, CLOUD_BREACH_EFFORT } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
 
-/** Galería de esquemas de referencia (docs/CALIBRACION.md): lo ya acordado con el motor. */
+/** Galería de esquemas de referencia (docs/CALIBRACION.md): el orden ya acordado con el motor. */
 const score = (name: string) => analyze(loadFixture(`referencia/${name}`));
+const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThanOrEqual(5);
 
 describe('calibración: esquemas de referencia', () => {
   const r01 = score('r01-papel-en-casa');
   const r02 = score('r02-foto-en-la-nube');
+  const r03 = score('r03-acero-en-caja-fuerte');
+  const r04 = score('r04-acero-y-banco');
+  const r05 = score('r05-passphrase-copia-aparte');
 
   it('hackear una nube es más barato que entrar en una casa', () => {
     expect(CLOUD_BREACH_EFFORT).toBeLessThan(BURGLARY_EFFORT.none);
@@ -19,9 +23,21 @@ describe('calibración: esquemas de referencia', () => {
     expect(r02.inheritance.score).toBe(0);
   });
 
-  it('R01 ≈ R02 en seguridad: papel a la vista y foto en la nube, igual de malos', () => {
-    expect(r01.security.score).toBeLessThan(25);
-    expect(r02.security.score).toBeLessThan(25);
-    expect(Math.abs(r01.security.score - r02.security.score)).toBeLessThanOrEqual(5);
+  it('seguridad: R02 < R01 < R03 ≈ R04 < R05', () => {
+    expect(r02.security.score).toBeLessThan(r01.security.score);
+    expect(r01.security.score).toBeLessThan(r03.security.score);
+    near(r03.security.score, r04.security.score);
+    expect(r04.security.score).toBeLessThan(r05.security.score);
+  });
+
+  it('resiliencia: R01 < R03 < R04, y R05 < R03', () => {
+    expect(r01.resilience.score).toBeLessThan(r03.resilience.score);
+    expect(r03.resilience.score).toBeLessThan(r04.resilience.score);
+    expect(r05.resilience.score).toBeLessThan(r03.resilience.score);
+  });
+
+  it('herencia: R03 ≈ R04 > R05', () => {
+    near(r03.inheritance.score, r04.inheritance.score);
+    expect(r05.inheritance.score).toBeLessThan(r04.inheritance.score);
   });
 });

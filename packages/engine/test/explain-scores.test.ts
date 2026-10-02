@@ -42,8 +42,8 @@ describe.each(FIXTURES)('el porqué de las puntuaciones (%s)', (name) => {
 describe('desglose de seguridad', () => {
   it('varias vías casi igual de baratas restan, con tope', () => {
     expect(securityBreakdown(2, 1).penalties).toEqual([]);
-    expect(securityBreakdown(2, 3).penalties).toEqual([{ reason: 'exposure', points: 8 }]);
-    expect(securityBreakdown(2, 10).penalties[0]!.points).toBe(12);
+    expect(securityBreakdown(2, 3).penalties).toEqual([{ reason: 'exposure', points: 4 }]);
+    expect(securityBreakdown(2, 10).penalties[0]!.points).toBe(6);
   });
 
   it('sin ningún robo encontrado, 100 sin descuentos', () => {

@@ -1,0 +1,161 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "R05",
+  "description": "Passphrase con copia aparte",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": true,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Desconocido"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "independentlyVerified": false
+      },
+      "passphraseStrength": "phrase"
+    }
+  ],
+  "policy": {
+    "type": "key",
+    "key": "k1"
+  },
+  "devices": [
+    {
+      "id": "nuevo-dispositivo",
+      "label": "Trezor",
+      "vendor": "Trezor",
+      "model": "Trezor Safe 5",
+      "kind": "stateful",
+      "holds": [
+        "k1"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": false,
+      "location": "casa"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "nuevo-backup",
+      "label": "Backup K1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-2",
+      "label": "Backup Passphrase",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "passphrase",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    }
+  ],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": [
+        {
+          "type": "passphrase",
+          "key": "k1"
+        },
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo"
+        }
+      ]
+    },
+    {
+      "id": "nueva-persona",
+      "name": "Pareja",
+      "role": "heir",
+      "knows": []
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion",
+      "name": "Caja fuerte",
+      "kind": "physical",
+      "protection": "home-safe",
+      "inside": "casa",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion-2",
+      "name": "Casa padres",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    }
+  ]
+}
