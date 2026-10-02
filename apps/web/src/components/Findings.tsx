@@ -1,5 +1,5 @@
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
-import { attackAtoms, createWorld, lossAtoms, type LossEvent } from '@llave-inglesa/engine';
+import { attackAtoms, createWorld, lossAtoms, ownerDeaths, type LossEvent } from '@llave-inglesa/engine';
 import { ChevronDown, ChevronUp, Flame, Hourglass, Play, Skull } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { attackText, lossText } from '../lib/text.ts';
@@ -198,5 +198,34 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
         </Section>
       )}
     </>
+  );
+}
+
+/** Lo que, además del fallecimiento de los titulares, dejaría a los herederos sin los fondos. */
+export function HeirLossRoutes({ model }: { model: CustodyModel }) {
+  const analysis = useAnalysis((s) => s.analysis);
+  if (!analysis) return null;
+  const index = indexModel(model);
+  const { inheritance: inh } = analysis;
+  const rarity = new Map(inh.losses.map((cut, i) => [cut, inh.lossRarities[i]!] as const));
+  const deaths = ownerDeaths(model);
+  return (
+    <Section title="Formas más probables de quedarse sin herencia">
+      <div className={styles.header}>
+        <Flame size={14} aria-hidden />
+        <span>Si además del fallecimiento pasa cualquiera de estas, los herederos no podrían recuperar los fondos. Pulsa una para verla en el mapa.</span>
+      </div>
+      <CutList
+        cuts={inh.losses.filter((_, i) => inh.lossRarities[i] === inh.lossRarities[0])}
+        all={inh.losses}
+        text={(e) => lossText(e, index)}
+        meta={(cut) => `rareza ${rarity.get(cut)!.toLocaleString('es')} · ${atOnce(cut)}`}
+        empty={`Ninguna combinación de hasta ${analysis.resilience.searchedUpTo} desgracias lo consigue.`}
+        restTitle="Menos probables"
+        tone="warn"
+        toScenario={(events) => ({ kind: 'loss', events: [...deaths, ...events] })}
+        from="inheritance"
+      />
+    </Section>
   );
 }

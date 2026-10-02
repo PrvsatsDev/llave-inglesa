@@ -1,6 +1,6 @@
 import { updateDevice, updateLocation } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { analyze, simulateAttack, type AttackAtom } from '../src/index.ts';
+import { analyze, ATTACK_EFFORT, EXTRA_SITE_SURCHARGE, simulateAttack, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
 
 describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () => {
@@ -12,12 +12,12 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
     expect(a.usability.score).toBe(100);
   });
 
-  it('una llave inglesa en casa basta para robar: baja seguridad', () => {
+  it('una llave inglesa en casa basta para robar: seguridad solo aceptable', () => {
     expect(a.security.minSize).toBe(1);
     expect(a.security.cuts.filter((c) => c.length === 1)).toEqual([
       [{ type: 'coercion', person: 'yo', location: 'casa' }],
     ]);
-    expect(a.security.score).toBeLessThan(50);
+    expect(a.security.score).toBeLessThan(70);
   });
 
   it('un ladrón en casa sin el PIN no puede robar', () => {
@@ -62,17 +62,18 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
     expect(simulateAttack(noPin, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(true);
   });
 
-  it('la llave inglesa como única vía es débil, pero no tanto como robar sin confrontación', () => {
-    expect(a.security.minEffort).toBe(2);
-    expect(a.security.cheapRoutes).toBe(1);
-    expect(a.security.score).toBeGreaterThan(25);
+  it('la llave inglesa es la vía más barata: robar sin confrontación exige asaltar dos sitios', () => {
+    expect(a.security.minEffort).toBe(ATTACK_EFFORT.coercion);
+    expect(a.security.cheapest).toEqual([[{ type: 'coercion', person: 'yo', location: 'casa' }]]);
+    const i = a.security.cuts.findIndex((c) => c.length === 2 && c.every((x) => x.type === 'burglary'));
+    expect(a.security.efforts[i]).toBe(2 * ATTACK_EFFORT.burglary + EXTRA_SITE_SURCHARGE);
   });
 
-  it('sin PIN la seguridad cae por debajo de 25: vías más fáciles y más numerosas', () => {
+  it('sin PIN basta con entrar en casa: la seguridad cae a flojo', () => {
     const noPin = analyze(updateDevice(model, 'ccq', { pinProtected: false }));
-    expect(noPin.security.minEffort).toBe(1.5);
-    expect(noPin.security.cheapRoutes).toBeGreaterThan(1);
-    expect(noPin.security.score).toBeLessThan(25);
+    expect(noPin.security.minEffort).toBe(ATTACK_EFFORT.burglary);
+    expect(noPin.security.score).toBeLessThan(50);
+    expect(noPin.security.score).toBeLessThan(a.security.score);
     expect(noPin.security.cheapest).toContainEqual([{ type: 'burglary', location: 'casa' }]);
   });
 
@@ -94,8 +95,10 @@ describe('distribuido 2 de 3', () => {
     expect(a.security.cuts).toContainEqual([{ type: 'malicious-firmware', vendor: 'SeedSigner' }]);
   });
 
-  it('es más seguro que tenerlo todo en casa', () => {
-    expect(a.security.score).toBeGreaterThan(analyze(loadFixture('todo-en-casa')).security.score);
+  it('el firmware de la SeedSigner es lo más barato: robar en dos casas cuesta más que la suma', () => {
+    expect(a.security.cheapest).toEqual([[{ type: 'malicious-firmware', vendor: 'SeedSigner' }]]);
+    const i = a.security.cuts.findIndex((c) => c.length === 2 && c.every((x) => x.type === 'burglary'));
+    expect(a.security.efforts[i]).toBe(2 * ATTACK_EFFORT.burglary + EXTRA_SITE_SURCHARGE);
   });
 
   it('firmar exige visitar dos ubicaciones', () => {

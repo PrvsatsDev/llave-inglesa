@@ -1,0 +1,336 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "R11",
+  "description": "2 de 3 sin plan de herencia",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Coinkite"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Coinkite",
+          "model": "Coldcard Q",
+          "firmware": "1.5.0"
+        },
+        "independentlyVerified": false
+      }
+    },
+    {
+      "id": "k2",
+      "label": "K2",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "BitBox"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "BitBox",
+          "model": "BitBox02",
+          "firmware": "9.26.5"
+        },
+        "independentlyVerified": false
+      }
+    },
+    {
+      "id": "k3",
+      "label": "K3",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Blockstream"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Blockstream",
+          "model": "Jade",
+          "firmware": "1.0.37"
+        },
+        "independentlyVerified": false
+      }
+    }
+  ],
+  "policy": {
+    "type": "thresh",
+    "k": 2,
+    "of": [
+      {
+        "type": "key",
+        "key": "k1"
+      },
+      {
+        "type": "key",
+        "key": "k2"
+      },
+      {
+        "type": "key",
+        "key": "k3"
+      }
+    ]
+  },
+  "devices": [
+    {
+      "id": "nuevo-dispositivo",
+      "label": "Coldcard Q",
+      "vendor": "Coinkite",
+      "model": "Coldcard Q",
+      "firmware": "1.5.0",
+      "kind": "stateful",
+      "holds": [
+        "k1"
+      ],
+      "loads": [
+        "k1"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": true,
+      "registeredWallet": true,
+      "location": "casa"
+    },
+    {
+      "id": "nuevo-dispositivo-2",
+      "label": "BitBox02",
+      "vendor": "BitBox",
+      "model": "BitBox02",
+      "firmware": "9.26.5",
+      "kind": "stateful",
+      "holds": [
+        "k2"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": true,
+      "location": "casa"
+    },
+    {
+      "id": "nuevo-dispositivo-3",
+      "label": "Jade",
+      "vendor": "Blockstream",
+      "model": "Jade",
+      "firmware": "1.0.37",
+      "kind": "stateful",
+      "holds": [
+        "k3"
+      ],
+      "loads": [
+        "k3"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": true,
+      "registeredWallet": true,
+      "location": "casa"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "nuevo-backup",
+      "label": "Descriptor",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "casa"
+    },
+    {
+      "id": "nuevo-backup-2",
+      "label": "Backup K1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-3",
+      "label": "Backup K2",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k2"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    },
+    {
+      "id": "nuevo-backup-4",
+      "label": "Backup K3",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k3"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-3"
+    },
+    {
+      "id": "nuevo-backup-5",
+      "label": "Descriptor cf",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-6",
+      "label": "Descriptor cb",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    },
+    {
+      "id": "nuevo-backup-7",
+      "label": "Descriptor",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-3"
+    }
+  ],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": [
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo"
+        },
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo-2"
+        },
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo-3"
+        }
+      ]
+    },
+    {
+      "id": "nueva-persona",
+      "name": "Pareja",
+      "role": "heir",
+      "knows": []
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion",
+      "name": "Caja fuerte",
+      "kind": "physical",
+      "protection": "home-safe",
+      "inside": "casa",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion-2",
+      "name": "Caja en banco",
+      "kind": "physical",
+      "protection": "bank-box",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion-3",
+      "name": "Casa padres",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    }
+  ]
+}

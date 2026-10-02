@@ -1,9 +1,9 @@
 import { indexModel, updateDevice } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { analyze, ATTACK_EFFORT, atomEffort, DURESS_SURCHARGE, type AttackAtom } from '../src/index.ts';
+import { analyze, ATTACK_EFFORT, attackEffort, DURESS_SURCHARGE, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
 
-const casa = loadFixture('todo-en-casa'); // la llave inglesa en casa es la vía más barata (esfuerzo 2)
+const casa = loadFixture('todo-en-casa'); // la llave inglesa en casa es la vía más barata (esfuerzo 3)
 const duress = updateDevice(casa, 'ccq', { duressPin: true });
 const index = indexModel(duress);
 const wrench: AttackAtom[] = [{ type: 'coercion', person: 'yo', location: 'casa' }];
@@ -41,7 +41,7 @@ describe('PIN de coacción', () => {
   it('no afecta a robos sin coacción (quien traiciona da el PIN bueno)', () => {
     const s = analyze(duress).security;
     s.cuts.forEach((cut, i) => {
-      if (cut.every((a) => a.type !== 'coercion')) expect(s.efforts[i]).toBe(cut.reduce((sum, a) => sum + atomEffort(a, index), 0));
+      if (cut.every((a) => a.type !== 'coercion')) expect(s.efforts[i]).toBe(attackEffort(cut, index));
     });
   });
 });

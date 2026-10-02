@@ -1,0 +1,157 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "R04",
+  "description": "Acero en casa y copia en el banco",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Desconocido"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "independentlyVerified": false
+      }
+    }
+  ],
+  "policy": {
+    "type": "key",
+    "key": "k1"
+  },
+  "devices": [
+    {
+      "id": "nuevo-dispositivo",
+      "label": "Trezor",
+      "vendor": "Trezor",
+      "model": "Trezor Safe 5",
+      "kind": "stateful",
+      "holds": [
+        "k1"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": false,
+      "location": "casa"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "nuevo-backup",
+      "label": "Backup K1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-2",
+      "label": "Backup K1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    }
+  ],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": [
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo"
+        }
+      ]
+    },
+    {
+      "id": "nueva-persona",
+      "name": "Pareja",
+      "role": "heir",
+      "knows": []
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion",
+      "name": "Caja fuerte",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ],
+      "protection": "home-safe",
+      "inside": "casa"
+    },
+    {
+      "id": "nueva-ubicacion-2",
+      "name": "Caja en banco",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ],
+      "protection": "bank-box"
+    }
+  ]
+}

@@ -76,9 +76,10 @@ describe('ubicaciones protegidas', () => {
     expect(coercions.map((a) => (a.type === 'coercion' ? a.location : null)).sort()).toEqual(['banco', 'casa']);
   });
 
-  it('el robo más barato es la llave inglesa en casa; entrar a la fuerza cuesta 2.5', () => {
+  it('forzar la caja fuerte (2.5) es más barato que la llave inglesa en casa', () => {
     const s = analyze(model).security;
-    expect(s.minEffort).toBe(ATTACK_EFFORT.coercion);
+    expect(s.minEffort).toBe(BURGLARY_EFFORT['home-safe']);
+    expect(BURGLARY_EFFORT['home-safe']).toBeLessThan(ATTACK_EFFORT.coercion);
     const i = s.cuts.findIndex((c) => c.length === 2 && c.every((a) => a.type === 'burglary'));
     expect(s.efforts[i]).toBe(BURGLARY_EFFORT['home-safe']);
   });

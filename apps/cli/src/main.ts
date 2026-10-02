@@ -87,6 +87,12 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
     out.push(`  Tras el fallecimiento del titular, ${inheritanceText(inh, model.people)}, yendo a: ${inh.locations!.map(label).join(' + ')}`);
     const node = explain(simulateInheritance(model, inh.locations!, [...inh.heirs, ...inh.helpers]), 'spend');
     if (node) out.push(...fmt.tree(node, '    '));
+    const heirLosses = inh.losses.filter((_, i) => inh.lossRarities[i] === inh.lossRarities[0]);
+    if (heirLosses.length > 0) {
+      out.push('', dim('  Lo más probable que, además, les dejaría sin los fondos:'));
+      heirLosses.forEach((cut) => out.push(yellow('  • ' + cut.map((x) => fmt.loss(x)).join('  +  ')) + dim(`  (rareza ${num(inh.lossRarities[0]!)})`)));
+      if (inh.losses.length > heirLosses.length) out.push(dim(`  (+${inh.losses.length - heirLosses.length} combinaciones mínimas menos probables)`));
+    }
   } else {
     out.push(red(`  ${inheritanceText(inh, model.people)}`));
   }

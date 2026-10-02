@@ -2,12 +2,16 @@ import { indexModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import {
   ATTACK_EFFORT,
   BURGLARY_EFFORT,
+  CLOUD_BREACH_EFFORT,
+  EXTRA_SITE_SURCHARGE,
   COERCION_SURCHARGE,
   DURESS_SURCHARGE,
   PASSPHRASE_EFFORT,
   rarityScore,
   explain,
   EXPOSURE,
+  inheritanceBreakdown,
+  HEIR_FRAGILITY_WEIGHT,
   inheritanceScore,
   LOCKOUT_PENALTY,
   LOSS_RARITY,
@@ -26,7 +30,7 @@ import { ATTACK_KIND_TEXT, inheritanceText, plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
-import { LossRoutes, TheftRoutes } from './Findings.tsx';
+import { HeirLossRoutes, LossRoutes, TheftRoutes } from './Findings.tsx';
 import { Button, Section } from './inspector/fields.tsx';
 import { Tree } from './ScenarioPanel.tsx';
 import { level } from './Scoreboard.tsx';
@@ -157,12 +161,12 @@ function securityScore(a: EngineAnalysis) {
     .sort((x, y) => x[1] - y[1])
     .map(([type, e]) => `${ATTACK_KIND_TEXT[type]} ${num(e)}`)
     .join(' · ');
-  const curve = [1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' o más' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
+  const curve = [1, 1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' o más' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
   return {
     score: sec.score,
     rows,
     how: [
-      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma la diferencia. La llave inglesa en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
+      `Se buscan todas las combinaciones de hasta ${sec.searchedUpTo} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Hackear una cuenta en la nube cuesta ${num(CLOUD_BREACH_EFFORT)}. Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma la diferencia. Cada sitio físico distinto que haya que asaltar, después del primero, +${num(EXTRA_SITE_SURCHARGE)} (una ubicación dentro de otra es el mismo sitio). La llave inglesa en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
       `Cuanto más esfuerzo exige el robo más barato, más puntuación: ${curve}.`,
       `Tener varias vías casi igual de baratas (hasta ${num(EXPOSURE.margin)} más de esfuerzo) resta ${EXPOSURE.penaltyPerExtraRoute} por cada vía extra, como mucho ${EXPOSURE.maxPenalty}.`,
     ],
@@ -218,12 +222,18 @@ function inheritanceScoreRows(a: EngineAnalysis) {
       : inh.status === 'no-heirs'
         ? 'No hay herederos'
         : 'Los herederos no pueden recuperar los fondos';
+  const b = inheritanceBreakdown(inh.visits, inh.lossCombinedRarity);
+  const fragility = (points: number): Row => ({
+    label: `Fragilidad: ${plural(inh.losses.length, 'forma', 'formas')} de quedarse sin los fondos; la más probable, rareza ${num(inh.lossRarities[0]!)}${inh.losses.length > 1 ? `, todas juntas ${num(round1(inh.lossCombinedRarity!))}` : ''}`,
+    points: -points,
+  });
   return {
     score: inh.score,
-    rows: [{ label, points: inh.score }],
+    rows: [{ label, points: b.base }, ...b.penalties.map((p) => fragility(p.points))],
     how: [
       'Tras el fallecimiento de todos los titulares, si los herederos pueden recuperar los fondos con lo que tienen a su alcance (incluidos los accesos "tras fallecer"), y cuántas ubicaciones les cuesta.',
       `${scale(inheritanceScore, ['ubicación', 'ubicaciones'], 1, 4)}.`,
+      `Después se resta la fragilidad de ese camino. El fallecimiento es seguro, así que se da por hecho y se buscan las desgracias que, además, dejarían a los herederos sin los fondos (perder la única copia, un incendio, que fallezca el heredero…). Su robustez se puntúa como la resiliencia, y se resta ${num(HEIR_FRAGILITY_WEIGHT)} × lo que le falta para 100: como mucho ${num(Math.round(HEIR_FRAGILITY_WEIGHT * 100))}.`,
     ],
   };
 }
@@ -319,6 +329,7 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
       <Section title="Por qué">
         <Why model={model} derivation={derivation} who={inh.status === 'ok' ? 'Los herederos' : 'Con todo lo que tienen a su alcance, quienes quedan'} />
       </Section>
+      {inh.status === 'ok' && <HeirLossRoutes model={model} />}
     </>
   );
 }

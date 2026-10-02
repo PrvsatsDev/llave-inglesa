@@ -1,5 +1,5 @@
 import { indexModel, type CustodyModel, type ModelIndex } from '@llave-inglesa/domain';
-import { atomEffort, attackAtoms, attackEffort, createWorld, DURESS_SURCHARGE, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
+import { atomEffort, attackAtoms, attackEffort, attackSites, createWorld, DURESS_SURCHARGE, extraSitesSurcharge, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
 import { Bug, Eye, EyeOff, Flame, ShieldQuestion, Skull, X } from 'lucide-react';
 import { attackText, factText, lossText, ruleText } from '../lib/text.ts';
 import type { ScenarioView } from '../scenario/view.ts';
@@ -65,7 +65,7 @@ function Steps<A>({ steps, all, text, onChange }: { steps: A[]; all: A[]; text(a
 const num = (n: number) => n.toLocaleString('es');
 
 /**
- * Lo que le cuesta al atacante: el esfuerzo de cada ataque, el recargo por vencer un PIN de
+ * Lo que le cuesta al atacante: el esfuerzo de cada ataque, el recargo por asaltar varios sitios, el de vencer un PIN de
  * coacción (explicado) y los dispositivos que caen por firmware malicioso o extracción física.
  */
 function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioView; index: ModelIndex }) {
@@ -75,6 +75,8 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
   const name = (id: string) => index.label(id);
   const people = [...new Set(duress.map((d) => d.person))].map(name).join(' y ');
   const devices = [...new Set(duress.map((d) => d.device))].map(name).join(' y ');
+  const sites = attackSites(atoms, index);
+  const sitesSurcharge = extraSitesSurcharge(atoms, index);
   return (
     <Section title="Esfuerzo del atacante">
       <table className={styles.effort}>
@@ -85,6 +87,12 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
               <td className={styles.points}>{num(atomEffort(a, index))}</td>
             </tr>
           ))}
+          {sitesSurcharge > 0 && (
+            <tr>
+              <td>Asaltar {sites.length} sitios distintos ({sites.map(name).join(', ')})</td>
+              <td className={styles.points}>+{num(sitesSurcharge)}</td>
+            </tr>
+          )}
           {duress.length > 0 && (
             <tr>
               <td>Vencer el PIN de coacción de {devices}</td>
@@ -92,7 +100,7 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
             </tr>
           )}
         </tbody>
-        {(atoms.length > 1 || duress.length > 0) && (
+        {(atoms.length > 1 || sitesSurcharge > 0 || duress.length > 0) && (
           <tfoot>
             <tr>
               <td>Total</td>

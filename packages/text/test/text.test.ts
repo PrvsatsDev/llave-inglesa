@@ -77,7 +77,7 @@ describe('texto de la herencia', () => {
     { id: 'hijo', name: 'Hijo', role: 'heir' as const, knows: [] },
     { id: 'hermano', name: 'Hermano', role: 'custodian' as const, knows: [] },
   ];
-  const ok = { score: 90, status: 'ok' as const, heirs: ['pareja'], helpers: [], locations: ['casa'], visits: 1 };
+  const ok = { score: 90, status: 'ok' as const, heirs: ['pareja'], helpers: [], locations: ['casa'], visits: 1, losses: [], lossRarities: [], lossCombinedRarity: null };
 
   it('nombra a los herederos con su papel y, solo si hace falta, a quien les ayuda', () => {
     expect(inheritanceText(ok, people)).toBe('Pareja (heredero/a) recupera los fondos');

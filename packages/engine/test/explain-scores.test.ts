@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   analyze,
   explain,
+  HEIR_FRAGILITY_WEIGHT,
+  inheritanceBreakdown,
+  rarityScore,
   ownerDeaths,
   resilienceBreakdown,
   securityBreakdown,
   simulateInheritance,
   simulateSigning,
 } from '../src/index.ts';
-import { loadFixture } from './helpers.ts';
+import { base, loadFixture, parse } from './helpers.ts';
 
 const FIXTURES = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
 
@@ -42,11 +45,47 @@ describe.each(FIXTURES)('el porqué de las puntuaciones (%s)', (name) => {
 describe('desglose de seguridad', () => {
   it('varias vías casi igual de baratas restan, con tope', () => {
     expect(securityBreakdown(2, 1).penalties).toEqual([]);
-    expect(securityBreakdown(2, 3).penalties).toEqual([{ reason: 'exposure', points: 8 }]);
-    expect(securityBreakdown(2, 10).penalties[0]!.points).toBe(12);
+    expect(securityBreakdown(2, 3).penalties).toEqual([{ reason: 'exposure', points: 4 }]);
+    expect(securityBreakdown(2, 10).penalties[0]!.points).toBe(6);
   });
 
   it('sin ningún robo encontrado, 100 sin descuentos', () => {
     expect(securityBreakdown(null, 0)).toEqual({ base: 100, penalties: [], score: 100 });
+  });
+});
+
+describe('desglose de herencia', () => {
+  it('sin fragilidad, la facilidad tal cual', () => {
+    expect(inheritanceBreakdown(1, null)).toEqual({ base: 100, penalties: [], score: 100 });
+  });
+
+  it('la fragilidad resta, como mucho 40', () => {
+    expect(inheritanceBreakdown(1, 1.5).penalties).toEqual([{ reason: 'heir-fragility', points: Math.round(HEIR_FRAGILITY_WEIGHT * (100 - rarityScore(1.5))) }]);
+    expect(inheritanceBreakdown(1, 0).score).toBe(60);
+    expect(inheritanceBreakdown(2, 0).score).toBe(55);
+  });
+
+  it('si no se puede heredar, 0 sin más', () => {
+    expect(inheritanceBreakdown(null, null)).toEqual({ base: 0, penalties: [], score: 0 });
+  });
+});
+
+describe('vías casi igual de baratas', () => {
+  it('la llave inglesa a la misma persona en dos sitios cuenta como una sola vía', () => {
+    // Single-sig con passphrase aleatoria que solo sabe Yo, y la semilla en dos sitios: hay que coaccionarle.
+    const plate = (id: string, location: string) => ({ id, label: id, medium: 'metal' as const, contents: [{ type: 'seed' as const, key: 'k1' }], location });
+    const a = analyze(parse(base({
+      keys: [{ id: 'k1', label: 'K1', passphrase: true, passphraseStrength: 'random' }],
+      policy: { type: 'key', key: 'k1' },
+      people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'passphrase', key: 'k1' }] }],
+      locations: [
+        { id: 'casa', name: 'Casa', access: [{ person: 'yo' }] },
+        { id: 'padres', name: 'Padres', access: [{ person: 'yo' }] },
+      ],
+      artifacts: [plate('a', 'casa'), plate('b', 'padres')],
+    })));
+    expect(a.security.cheapest).toHaveLength(2);
+    expect(a.security.cheapest.flat().every((x) => x.type === 'coercion' && x.person === 'yo')).toBe(true);
+    expect(a.security.cheapRoutes).toBe(1);
   });
 });

@@ -1,4 +1,4 @@
-import type { Id, SecretRef } from '@llave-inglesa/domain';
+import type { Device, Id, SecretRef } from '@llave-inglesa/domain';
 import type { EntropyOrigin } from './entropy.ts';
 import { factId, type DerivedFact, type Fact, type FactId, type Justification } from './facts.ts';
 import { satisfy } from './policy.ts';
@@ -9,6 +9,13 @@ import { itemsAvailableAt, knowledgeOf, type World } from './world.ts';
  * - `secure`: solo firma en dispositivos de firma (uso legítimo del día a día).
  */
 export type SigningMode = 'any' | 'secure';
+
+/**
+ * ¿Se puede firmar `key` cargando su semilla en `device`? Hace falta que admita semillas (sin estado, o
+ * con semilla externa) y, si se indica qué keys carga, que esté entre ellas; sin indicar, cualquiera.
+ */
+export const canLoadSeed = (device: Device, key: Id) =>
+  (device.kind === 'stateless' || device.acceptsExternalSeed) && (device.loads === undefined || device.loads.includes(key));
 
 /** Lo que tiene a su alcance un actor (o coalición de actores). */
 export interface Holdings {
@@ -135,9 +142,7 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       }
     }
 
-    const seedSigners = model.devices.filter(
-      (d) => (d.kind === 'stateless' || d.acceptsExternalSeed) && has({ kind: 'unlocked', device: d.id }),
-    );
+    const seedSigners = model.devices.filter((d) => has({ kind: 'unlocked', device: d.id }));
     for (const key of index.keys.keys()) {
       const seedId = factId(secret({ type: 'seed', key }));
       if (!facts.has(seedId)) continue;
@@ -147,8 +152,10 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       add(xpub(key), { rule: 'seed-xpub', premises });
       if (mode === 'any') {
         add({ kind: 'sign', key }, { rule: 'seed-sign', premises });
-      } else if (seedSigners[0]) {
-        const device = seedSigners[0].id;
+      } else {
+        const signer = seedSigners.find((d) => canLoadSeed(d, key));
+        if (!signer) continue;
+        const device = signer.id;
         add({ kind: 'sign', key }, {
           rule: 'seed-sign-on-device',
           premises: [...premises, factId({ kind: 'unlocked', device })],
