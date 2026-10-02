@@ -124,10 +124,11 @@ ajuste las movió.
 | R01 Papel en el cajón | 23 ✓ | 34 ✓ | 100 ✓ | 100 ✓ | — |
 | R02 Foto en la nube | 23 ✓ | 34 ✓ | 100 ✓ | 0 ✓ | hackeo de una nube 1,5 → 1 (Seg 27 → 23) |
 | R03 Acero en la caja fuerte | 27 ✗ | 51 ✓ | 100 ✓ | 100 ✓ | — |
+| R04 Acero + copia en el banco | 27 ✗ | 70 ✓ | 100 ✓ | 100 ✓ | — |
 
 ## Por dónde vamos
 
-Hecho: R01–R03. Siguiente: **R04** (acero en casa y copia en el banco). Al terminar la galería: diagnóstico de todo junto,
+Hecho: R01–R04. Siguiente: **R05** (passphrase con copia aparte). Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor
@@ -145,6 +146,10 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   techo, y la penalización por vías casi igual de baratas resta 12 (hasta el firmware malicioso, 3,
   entra en el margen). Se deja para el diagnóstico conjunto: los pesos de traición, llave inglesa y
   la penalización por varias vías mueven todos los esquemas.
+- **R04** (27 · 70 · 100 · 100): todo como se esperaba salvo la seguridad, que es la de R03 (la caja
+  del banco no abre vías baratas: intrusión 3,5, llave inglesa allí 3). La segunda placa sube la
+  resiliencia de 51 a 70: lo más probable ya es que fallezcan Yo y Pareja, o perder las dos placas y
+  el Trezor o el PIN (rareza 4).
 
 ## Fricciones al montar los esquemas
 
@@ -158,3 +163,7 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
 - **R01**: no es obvio dónde se crea un dispositivo o un backup: solo se puede desde la ficha de su
   ubicación. Ideas: botones "+ Dispositivo" y "+ Backup" también en el Esquema (preguntando la
   ubicación), o un "+" junto a cada ubicación del índice.
+- **R04**: dos backups con la misma etiqueta ("Backup K1", uno en la caja fuerte y otro en el banco) no
+  se distinguen en las listas: "Pérdida de Backup K1 + Pérdida de Backup K1", o un bloqueo que nombra
+  uno sin decir cuál. Ideas: avisar de etiquetas repetidas, o añadir la ubicación al nombre cuando
+  dos coinciden.
