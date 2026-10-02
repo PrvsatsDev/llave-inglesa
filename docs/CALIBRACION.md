@@ -128,6 +128,7 @@ ajuste las movió.
 | R04 Acero + copia en el banco | 49 ✗ | 77 ✓ | 100 ✓ | 82 ✗ | ajuste 2 (Her 100 → 82) |
 | R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 2 (Her 90 → 59) |
 | R06 Passphrase solo en la memoria | 65 ✗ | 28 ✗ | 100 ✓ | 0 ✓ | — |
+| R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
 
 ### Ajustes de `score.ts`
 
@@ -150,7 +151,7 @@ ajuste las movió.
 
 ## Por dónde vamos
 
-Hecho: R01–R06 y los ajustes 1 y 2. Siguiente: **R07** (Coldcard afectada).
+Hecho: R01–R07 y los ajustes 1 y 2. Siguiente: **R08** (2 de 3 todo en casa).
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (hoy, esfuerzo 3 → 65). Se decidirá con R08–R12: llave inglesa a 3,5 o retocar la curva. Al terminar la galería: diagnóstico de todo junto,
@@ -191,6 +192,9 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   Probado con una Coldcard con PIN de coacción: sigue en 65, y es correcto: con la llave inglesa en
   casa también se abre la caja fuerte, y placa + passphrase bastan sin tocar el dispositivo. Sin la
   placa en casa, el PIN de coacción sí cuenta (3 + 1 → 80).
+- **R07** (12 · 61 · 100 · 76): como se esperaba. La semilla se adivina en remoto por el fallo de
+  Coldcard 2026 (esfuerzo 0,5): la peor seguridad de la galería. El resto, idéntico a R03. La herencia
+  (76) queda bajo la banda antigua (excelente), pensada antes del ajuste 2.
 
 ## Fricciones al montar los esquemas
 
@@ -215,3 +219,8 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
 - **R06**: con un PIN de coacción, la seguridad no cambia si hay otro camino que no pasa por el
   dispositivo (la placa en la misma casa), pero la interfaz no explica por qué. Idea: avisar "el PIN de
   coacción no ayuda: con la llave inglesa también se llevan la placa de la caja fuerte".
+- **R07**: el fabricante del RNG en la procedencia es texto libre y quedó "Coldcard Q", no "Coinkite"
+  como en el catálogo. El fallo publicado se detecta igual (va por el firmware con que se generó), pero
+  el ataque "RNG con fallo aún desconocido" agrupa por fabricante: dos keys con "Coldcard Q" y
+  "Coinkite" no se verían comprometidas a la vez. Misma familia que la primera fricción de R01. Idea:
+  elegir el fabricante del catálogo, o rellenarlo desde el dispositivo que generó la key.
