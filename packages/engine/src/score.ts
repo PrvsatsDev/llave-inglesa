@@ -281,10 +281,13 @@ export function usabilityScore(locations: number | null): number {
   return [100, 100, 75, 50][locations] ?? 30;
 }
 
-/** Herencia, facilidad: si los herederos pueden recuperar los fondos, y cuántas ubicaciones les cuesta. */
+/**
+ * Herencia, facilidad: si los herederos pueden recuperar los fondos, y cuántas ubicaciones les cuesta.
+ * Más suave que la usabilidad: firmar es recurrente, heredar ocurre una sola vez.
+ */
 export function inheritanceScore(locations: number | null): number {
   if (locations === null) return 0;
-  return [100, 100, 90, 80][locations] ?? 65;
+  return [100, 100, 95, 90][locations] ?? 80;
 }
 
 /**

@@ -135,14 +135,14 @@ ajuste las movió.
 | R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
 | R03 Acero en la caja fuerte | 51 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | ajuste 3 (Seg 49 → 51) |
 | R04 Acero + copia en el banco | 51 ✓ | 77 ✓ | 100 ✓ | 82 ✓ | ajuste 3 (Seg 49 → 51) |
-| R05 Passphrase con copia aparte | 71 ✓ | 45 ✓ | 100 ✓ | 59 ✓ | ajuste 3 (Seg 65 → 71) |
+| R05 Passphrase con copia aparte | 71 ✓ | 45 ✓ | 100 ✓ | 64 ✓ | ajuste 4 (Her 59 → 64) |
 | R06 Passphrase solo en la memoria | 73 ✓ | 28 ✓ | 100 ✓ | 0 ✓ | ajuste 3 (Seg 65 → 73) |
 | R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | — |
 | R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✓ | ajuste 3 (Seg 49 → 53) |
-| R09 2 de 3 distribuido | 71 ✓ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
-| R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 72 ✓ | — |
+| R09 2 de 3 distribuido | 71 ✓ | 72 ✓ | 100 ✓ | 77 ✓ | ajuste 4 (Her 72 → 77) |
+| R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 77 ✓ | ajuste 4 (Her 72 → 77) |
 | R11 2 de 3 sin plan de herencia | 71 ✓ | 56 ✓ | 100 ✓ | 0 ✓ | — |
-| R12 2 de 3 con una SeedSigner | 65 ✓ | 62 ✓ | 75 ✓ | 72 ✓ | — |
+| R12 2 de 3 con una SeedSigner | 65 ✓ | 62 ✓ | 75 ✓ | 77 ✓ | ajuste 4 (Her 72 → 77) |
 
 ### Ajustes de `score.ts`
 
@@ -167,11 +167,34 @@ ajuste las movió.
   seguridades entran en su banda y aparece R05 < R06. Se
   descartó subir además la curva (esfuerzo 3 → 75): daría 75 a cualquier ataque sofisticado de
   esfuerzo 3, como el firmware de una SeedSigner que firma todas las keys.
+- **Ajuste 4** (tras buscar un 2 de 3 "perfecto", ver *Conclusión*): la facilidad de la herencia es más
+  suave que la usabilidad, porque heredar ocurre una sola vez: 1 sitio → 100 · 2 → **95** · 3 → **90** ·
+  4 o más → **80** (antes 100 · 90 · 80 · 65, como la usabilidad).
 
 ## Por dónde vamos
 
-Hecho: la galería completa (R01–R12), los ajustes 1, 2 y 3 y las bandas revisadas (paso 1 del
+Hecho: la galería completa (R01–R12), los ajustes 1 a 4 y las bandas revisadas (paso 1 del
 diagnóstico) y los pendientes del motor (paso 2). Siguiente: **paso 3**, las fricciones (rama aparte).
+
+## Conclusión
+
+Para comprobar la calibración se buscó un 2 de 3 que rozara el 100 en todo (diseños de prueba, no
+fixtures): keys con 99 dados y verificadas, dispositivos con anti-exfil, cada placa en un sitio distinto
+con su descriptor, PINs apuntados en la caja del banco, dos herederos y un abogado custodio.
+
+| Variante | Seg | Res | Usa | Her | Qué lo limita |
+|---|---|---|---|---|---|
+| A: se firma en casa (dos dispositivos, uno con PIN de coacción) | 83 | 87 | 100 | 86 | llave inglesa en casa (3,5 + 1) |
+| B: el segundo dispositivo en casa de un familiar | 90 | 89 | 75 | 86 | firmar exige dos visitas |
+| C: dos titulares, cada uno sabe un PIN | 90 | 87 | 100 | 77 | queda un solo heredero |
+
+Herencia con el ajuste 4 (antes, 81 · 81 · 72).
+
+**100 en todo no existe, ni en el motor ni en la custodia real.** Hay tres conflictos de fondo:
+firmar solo en un sitio frente a la llave inglesa; herederos que recuperan fácil frente a quien se
+haga pasar por ellos o robe allí; y cada copia de más (resiliencia) es otra puerta para robar. Lo
+razonable es pedir *excelente* (~85 o más) en todo salvo en lo que uno elige sacrificar, y eso se
+consigue. La herramienta no da la perfección: muestra qué se cambia por qué.
 
 Paso 2, decidido: se arreglan la firma con semilla cargada (respeta qué keys carga cada dispositivo) y
 la llave inglesa a una misma persona en varios sitios (una sola vía al contar las casi igual de

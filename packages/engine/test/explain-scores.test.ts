@@ -62,7 +62,7 @@ describe('desglose de herencia', () => {
   it('la fragilidad resta, como mucho 40', () => {
     expect(inheritanceBreakdown(1, 1.5).penalties).toEqual([{ reason: 'heir-fragility', points: Math.round(HEIR_FRAGILITY_WEIGHT * (100 - rarityScore(1.5))) }]);
     expect(inheritanceBreakdown(1, 0).score).toBe(60);
-    expect(inheritanceBreakdown(2, 0).score).toBe(50);
+    expect(inheritanceBreakdown(2, 0).score).toBe(55);
   });
 
   it('si no se puede heredar, 0 sin más', () => {
