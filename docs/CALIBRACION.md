@@ -233,6 +233,11 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   Resiliencia por debajo de lo esperado (bueno): sin dispositivos que guarden las keys, las placas son la
   única copia y perder dos lo pierde todo (rareza 3); en R09 los dispositivos hacían de segunda copia.
   Parece correcto: la banda esperada era optimista.
+- **Esquema de prueba "2 de 3 combinado"** (de prueba, no es fixture): sirvió para encontrar las
+  fricciones marcadas como *esquema de prueba* (abajo) y una idea para el diagnóstico: el motor no distingue
+  dónde vive la víctima de dónde solo tiene acceso. La llave inglesa en casa de un familiar exige llevarla
+  allí (o retener a quien vive allí y hacerla venir); en la caja del banco eso ya cuesta +1. ¿Un recargo
+  menor (+0,5) en ubicaciones donde la víctima no vive? Haría falta saber quién vive dónde.
 
 ## Fricciones al montar los esquemas
 
@@ -265,3 +270,10 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   En R08 el usuario lo confirma: en la key hay que escribir el fabricante a mano en *Entropía* y luego
   volver a elegir el dispositivo en *Generada en*. Bastaría con elegir *Generada en* y que el RNG se
   rellenara desde ahí.
+- **Esquema de prueba**: si nadie sabe el PIN de un dispositivo, el motor lo trata como inaccesible y la
+  seguridad sube sin que el usuario se dé cuenta (en el esquema de prueba, 73 → 83).
+  Idea: avisar "nadie sabe el PIN de X: no sirve para firmar" (aviso de validación).
+- **Esquema de prueba**: "verificada de forma independiente" no protege una key cuya única fuente es el
+  RNG del dispositivo: verificar demuestra que la semilla sale de esa entropía, no que la entropía sea
+  buena. La interfaz no lo explica y es fácil creer lo contrario. Idea: explicarlo junto a la casilla, y
+  avisar si una key solo tiene el RNG del dispositivo como fuente.
