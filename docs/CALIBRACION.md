@@ -129,6 +129,7 @@ ajuste las movió.
 | R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 2 (Her 90 → 59) |
 | R06 Passphrase solo en la memoria | 65 ✗ | 28 ✗ | 100 ✓ | 0 ✓ | — |
 | R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
+| R08 2 de 3 todo en casa | 49 ✗ | 65 ✓ | 100 ✓ | 78 ✗ | — |
 
 ### Ajustes de `score.ts`
 
@@ -151,7 +152,7 @@ ajuste las movió.
 
 ## Por dónde vamos
 
-Hecho: R01–R07 y los ajustes 1 y 2. Siguiente: **R08** (2 de 3 todo en casa).
+Hecho: R01–R08 y los ajustes 1 y 2. Siguiente: **R09** (2 de 3 distribuido).
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (hoy, esfuerzo 3 → 65). Se decidirá con R08–R12: llave inglesa a 3,5 o retocar la curva. Al terminar la galería: diagnóstico de todo junto,
@@ -195,6 +196,11 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
 - **R07** (12 · 61 · 100 · 76): como se esperaba. La semilla se adivina en remoto por el fallo de
   Coldcard 2026 (esfuerzo 0,5): la peor seguridad de la galería. El resto, idéntico a R03. La herencia
   (76) queda bajo la banda antigua (excelente), pensada antes del ajuste 2.
+- **R08** (49 · 65 · 100 · 78): seguridad igual que R03, y es lo esperable: con las tres placas en la
+  caja fuerte, forzarla (2,5) da dos semillas, y Pareja también puede robar sola (2,5); las llaves
+  inglesas (3) entran como vías casi igual de baratas (−6). Los ataques a fabricantes empiezan en 7,5:
+  ahí sí ayudan tres fabricantes distintos. Resiliencia algo mejor que R03 (lo más probable, perder el
+  acceso a Casa, rareza 3). Aquí la llave inglesa no es lo más barato: no informa sobre su peso.
 
 ## Fricciones al montar los esquemas
 
@@ -224,3 +230,6 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   el ataque "RNG con fallo aún desconocido" agrupa por fabricante: dos keys con "Coldcard Q" y
   "Coinkite" no se verían comprometidas a la vez. Misma familia que la primera fricción de R01. Idea:
   elegir el fabricante del catálogo, o rellenarlo desde el dispositivo que generó la key.
+  En R08 el usuario lo confirma: en la key hay que escribir el fabricante a mano en *Entropía* y luego
+  volver a elegir el dispositivo en *Generada en*. Bastaría con elegir *Generada en* y que el RNG se
+  rellenara desde ahí.
