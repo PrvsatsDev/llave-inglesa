@@ -111,6 +111,7 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✗ | ajuste 3 (Seg 49 → 53) |
 | R09 2 de 3 distribuido | 71 ✗ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
 | R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 72 ✓ | — |
+| R11 2 de 3 sin plan de herencia | 71 ✓ | 56 ✓ | 100 ✓ | 0 ✓ | — |
 
 ## Resultados
 
@@ -155,7 +156,7 @@ ajuste las movió.
 
 ## Por dónde vamos
 
-Hecho: R01–R10 y los ajustes 1, 2 y 3. Siguiente: **R11** (2 de 3 sin plan de herencia).
+Hecho: R01–R11 y los ajustes 1, 2 y 3. Siguiente: **R12** (2 de 3 con una SeedSigner).
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (con el ajuste 3, R06 da 73). Al terminar la galería: diagnóstico de todo junto,
@@ -218,6 +219,10 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   y K3 (despacho), y la incapacidad ya no bloquea por sí sola. Para el diagnóstico: el despacho se modeló
   sin protección (intrusión 1,5, como una casa); si el abogado guarda la placa en su caja fuerte,
   debería ponerse *caja fuerte*.
+- **R11** (71 · 56 · 100 · 0): como se esperaba. Seguridad idéntica a R09 (quitar a Pareja el acceso
+  tras fallecer no encarece ningún robo); lo más probable que lo pierde todo es que fallezca Yo
+  (rareza 2): Pareja solo llega a la placa K1. Para el titular en vida, tan bueno como R09; para los
+  herederos, inútil.
 
 ## Fricciones al montar los esquemas
 

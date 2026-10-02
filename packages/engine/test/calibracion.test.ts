@@ -17,6 +17,7 @@ describe('calibración: esquemas de referencia', () => {
   const r08 = score('r08-2de3-todo-en-casa');
   const r09 = score('r09-2de3-distribuido');
   const r10 = score('r10-2de3-custodio');
+  const r11 = score('r11-2de3-sin-herencia');
 
   it('hackear una nube es más barato que entrar en una casa', () => {
     expect(CLOUD_BREACH_EFFORT).toBeLessThan(BURGLARY_EFFORT.none);
@@ -74,5 +75,12 @@ describe('calibración: esquemas de referencia', () => {
     near(r10.resilience.score, r09.resilience.score);
     near(r10.inheritance.score, r09.inheritance.score);
     expect(r10.security.cheapest).toEqual(r09.security.cheapest);
+  });
+
+  it('R11: tan seguro como R09, pero sin herencia y menos resiliente', () => {
+    expect(r11.security.score).toBe(r09.security.score);
+    expect(r11.resilience.score).toBeLessThan(r09.resilience.score);
+    expect(r11.resilience.cheapest).toEqual([[{ type: 'death', person: 'yo' }]]);
+    expect(r11.inheritance.score).toBe(0);
   });
 });
