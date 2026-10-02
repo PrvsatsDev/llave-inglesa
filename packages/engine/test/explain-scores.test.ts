@@ -11,7 +11,7 @@ import {
   simulateInheritance,
   simulateSigning,
 } from '../src/index.ts';
-import { loadFixture } from './helpers.ts';
+import { base, loadFixture, parse } from './helpers.ts';
 
 const FIXTURES = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
 
@@ -67,5 +67,25 @@ describe('desglose de herencia', () => {
 
   it('si no se puede heredar, 0 sin más', () => {
     expect(inheritanceBreakdown(null, null)).toEqual({ base: 0, penalties: [], score: 0 });
+  });
+});
+
+describe('vías casi igual de baratas', () => {
+  it('la llave inglesa a la misma persona en dos sitios cuenta como una sola vía', () => {
+    // Single-sig con passphrase aleatoria que solo sabe Yo, y la semilla en dos sitios: hay que coaccionarle.
+    const plate = (id: string, location: string) => ({ id, label: id, medium: 'metal' as const, contents: [{ type: 'seed' as const, key: 'k1' }], location });
+    const a = analyze(parse(base({
+      keys: [{ id: 'k1', label: 'K1', passphrase: true, passphraseStrength: 'random' }],
+      policy: { type: 'key', key: 'k1' },
+      people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'passphrase', key: 'k1' }] }],
+      locations: [
+        { id: 'casa', name: 'Casa', access: [{ person: 'yo' }] },
+        { id: 'padres', name: 'Padres', access: [{ person: 'yo' }] },
+      ],
+      artifacts: [plate('a', 'casa'), plate('b', 'padres')],
+    })));
+    expect(a.security.cheapest).toHaveLength(2);
+    expect(a.security.cheapest.flat().every((x) => x.type === 'coercion' && x.person === 'yo')).toBe(true);
+    expect(a.security.cheapRoutes).toBe(1);
   });
 });

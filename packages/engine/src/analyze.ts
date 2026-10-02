@@ -25,7 +25,7 @@ export interface CutReport<A> {
 export interface SecurityReport extends CutReport<AttackAtom> {
   /** Esfuerzo del robo más barato (suma de ATTACK_EFFORT), o null si no hay. */
   minEffort: number | null;
-  /** Vías de robo igual de baratas o casi (penalizan por exposición). */
+  /** Vías de robo igual de baratas o casi (penalizan por exposición); la llave inglesa a una misma persona en sitios distintos es una sola. */
   cheapRoutes: number;
   /** Esfuerzo de cada corte de `cuts` (mismo orden). */
   efforts: number[];
@@ -234,7 +234,9 @@ function securityReport(world: World, found: AttackAtom[][], searchedUpTo: numbe
     })
     .sort((a, b) => a.effort - b.effort || a.cut.length - b.cut.length);
   const minEffort = cuts[0]?.effort ?? null;
-  const cheapRoutes = minEffort === null ? 0 : cuts.filter((c) => c.effort <= minEffort + EXPOSURE.margin).length;
+  // La llave inglesa a una misma persona es un solo ataque: el atacante elige dónde hacerla.
+  const route = (cut: AttackAtom[]) => cut.map((a) => (a.type === 'coercion' ? `coercion:${a.person}` : JSON.stringify(a))).sort().join('|');
+  const cheapRoutes = minEffort === null ? 0 : new Set(cuts.filter((c) => c.effort <= minEffort + EXPOSURE.margin).map((c) => route(c.cut))).size;
   return {
     score: securityScore(minEffort, cheapRoutes),
     minSize: found.length ? Math.min(...found.map((c) => c.length)) : null,

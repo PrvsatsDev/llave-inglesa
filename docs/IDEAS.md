@@ -35,10 +35,12 @@ pensarse antes de implementarla.
 - **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras.
 - **Resiliencia ponderada**: hoy todas las desgracias pesan igual (un incendio
   cuenta lo mismo que olvidar una contraseña).
-- **Profundidad de la seguridad** (para la calibración): hoy la puntuación solo mira el
-  robo más barato y las vías casi igual de baratas, así que endurecer una vía secundaria
-  (p. ej. pasar una passphrase de "frase" a "aleatoria larga" cuando lo más barato es la
-  llave inglesa) no mueve el número. Valorar que cuente también el siguiente escalón.
+- **Profundidad de la seguridad**: decidido en la calibración (2026-10-02) dejarlo así y
+  documentarlo como límite: contar las vías secundarias penalizaría a un multisig 2 de 3
+  frente a semilla + passphrase separadas (ver R09 en docs/CALIBRACION.md).
+- **Dónde vive cada persona** (de la calibración): la llave inglesa en una ubicación donde la
+  víctima no vive exige llevarla allí o retener a quien vive allí; podría costar algo más
+  (+0,5), como ya pasa en la caja del banco (+1). Requiere modelar quién vive dónde.
 - **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol,
   preparado para nodos `after`/`older`.
 

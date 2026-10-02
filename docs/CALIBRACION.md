@@ -171,7 +171,13 @@ ajuste las movió.
 ## Por dónde vamos
 
 Hecho: la galería completa (R01–R12), los ajustes 1, 2 y 3 y las bandas revisadas (paso 1 del
-diagnóstico). Siguiente: **paso 2**, pendientes del motor; después, **paso 3**, las fricciones.
+diagnóstico) y los pendientes del motor (paso 2). Siguiente: **paso 3**, las fricciones (rama aparte).
+
+Paso 2, decidido: se arreglan la firma con semilla cargada (respeta qué keys carga cada dispositivo) y
+la llave inglesa a una misma persona en varios sitios (una sola vía al contar las casi igual de
+baratas); ninguna nota de la galería cambia. Las vías secundarias quedan como límite conocido
+(`CAPACIDADES.md`); "dónde vive cada persona" pasa a `IDEAS.md`; la protección del despacho es una
+decisión de modelado, no del motor.
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (con el ajuste 3, R06 da 73). Al terminar la galería: diagnóstico de todo junto,
@@ -293,4 +299,4 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   K1 se firma con el primero. Aquí no cambia la nota (están en el mismo sitio), pero si estuvieran en
   ubicaciones distintas la usabilidad saldría mal, y si ningún dispositivo cargara esa key se daría por
   posible una firma que no lo es. La parte de firmware malicioso (`firmware.ts`) sí respeta `loads`.
-  Arreglar en el paso 2 del diagnóstico, con test.
+  **Arreglado** en el paso 2 del diagnóstico, con test.

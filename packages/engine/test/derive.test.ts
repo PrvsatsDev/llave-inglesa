@@ -116,3 +116,33 @@ describe('cortes mínimos', () => {
     expect(cuts).toEqual([[3], [1, 2]]);
   });
 });
+
+describe('firmar cargando la semilla', () => {
+  // 2 de 2: un Coldcard con K2 que solo carga K2, y una SeedSigner que carga K1 en otro sitio.
+  const model = base({
+    locations: [
+      { id: 'casa', name: 'Casa', access: [{ person: 'yo' }] },
+      { id: 'otra', name: 'Otra', access: [{ person: 'yo' }] },
+    ],
+    devices: [
+      { id: 'cc', label: 'Coldcard', vendor: 'Coinkite', kind: 'stateful', holds: ['k2'], pinProtected: false, acceptsExternalSeed: true, loads: ['k2'], location: 'casa' },
+      { id: 'ss', label: 'SeedSigner', vendor: 'SeedSigner', kind: 'stateless', pinProtected: false, loads: ['k1'], location: 'otra' },
+    ],
+    artifacts: [seedPlate('k1')],
+  });
+
+  it('un dispositivo solo carga las keys que se le indican', () => {
+    expect(run(model, 'secure', { people: ['yo'], locations: ['casa'] }).canSpend).toBe(false);
+  });
+
+  it('K1 se firma en la SeedSigner, no en el Coldcard', () => {
+    const d = run(model, 'secure', { people: ['yo'], locations: ['casa', 'otra'] });
+    expect(d.canSpend).toBe(true);
+    expect(d.facts.get('sign:k1' as never)?.justification.via).toEqual({ device: 'ss' });
+  });
+
+  it('sin indicar qué carga, un dispositivo sin estado acepta cualquier semilla', () => {
+    const loose = { ...model, devices: model.devices!.map((d) => (d.id === 'ss' ? { ...d, loads: undefined, location: 'casa' } : d)) };
+    expect(run(loose, 'secure', { people: ['yo'], locations: ['casa'] }).canSpend).toBe(true);
+  });
+});
