@@ -123,16 +123,28 @@ ajuste las movió.
 |---|---|---|---|---|---|
 | R01 Papel en el cajón | 23 ✓ | 34 ✓ | 100 ✓ | 100 ✓ | — |
 | R02 Foto en la nube | 23 ✓ | 34 ✓ | 100 ✓ | 0 ✓ | hackeo de una nube 1,5 → 1 (Seg 27 → 23) |
+| R03 Acero en la caja fuerte | 27 ✗ | 51 ✓ | 100 ✓ | 100 ✓ | — |
 
 ## Por dónde vamos
 
-Hecho: R01, R02. Siguiente: **R03** (acero en la caja fuerte). Al terminar la galería: diagnóstico de todo junto,
+Hecho: R01–R03. Siguiente: **R04** (acero en casa y copia en el banco). Al terminar la galería: diagnóstico de todo junto,
 ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las fricciones.
 
 ## Revisado con el motor
 
 - **R01** (23 · 34 · 100 · 100): el usuario ve bien el 23: un papel a la vista en casa es muy mala
   custodia. Pendiente para más adelante: la traición de Pareja pesa igual (1,5) que una intrusión.
+- **R02** (27 → 23 · 34 · 100 · 0): salía más seguro que R01 porque el hackeo de iCloud costaba lo
+  mismo que una intrusión (1,5) y Pareja no puede traicionar. Ahora el hackeo de una nube cuesta **1**
+  (remoto, sin riesgo, a escala). R02 ≈ R01 en vez de R02 < R01: papel a la vista y foto en la nube,
+  igual de malos por motivos distintos. Pendiente: la llave inglesa a la misma persona cuenta como una
+  vía por cada ubicación (en R02, dos), lo que infla la penalización por varias vías baratas.
+- **R03** (27 · 51 · 100 · 100): seguridad muy por debajo de lo esperado (aceptable). El robo más
+  barato es la traición de Pareja (1,5, porque entra en la caja fuerte), seguido de la llave inglesa a
+  Yo o a Pareja (2). Ni subiendo traición y llave inglesa a 3 pasa de 43: la caja fuerte (2,5) es el
+  techo, y la penalización por vías casi igual de baratas resta 12 (hasta el firmware malicioso, 3,
+  entra en el margen). Se deja para el diagnóstico conjunto: los pesos de traición, llave inglesa y
+  la penalización por varias vías mueven todos los esquemas.
 
 ## Fricciones al montar los esquemas
 
