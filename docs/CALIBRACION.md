@@ -101,6 +101,27 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 
 | Esquema | Seguridad | Resiliencia | Usabilidad | Herencia |
 |---|---|---|---|---|
+| R01 Papel en el cajón | muy mal / flojo | flojo | excelente | excelente |
+| R02 Foto en la nube | muy mal | flojo | excelente | muy mal |
+| R03 Acero en la caja fuerte | aceptable | aceptable | excelente | excelente |
+| R04 Acero + copia en el banco | aceptable | bueno | excelente | excelente |
+| R05 Passphrase con copia aparte | bueno | aceptable | excelente | bueno |
+| R06 Passphrase solo en la memoria | bueno | muy mal | excelente | muy mal |
+| R07 Coldcard afectada | muy mal | aceptable | excelente | excelente |
+| R08 2 de 3 todo en casa | aceptable | aceptable | excelente | excelente |
+| R09 2 de 3 distribuido | bueno | bueno | excelente | bueno |
+| R10 2 de 3 con custodio | bueno | bueno | excelente | bueno |
+| R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
+| R12 2 de 3 con una SeedSigner | aceptable | bueno | bueno | bueno |
+
+## Resultados
+
+Notas actuales del motor (Seguridad · Resiliencia · Usabilidad · Herencia). ✓ = dentro de la banda
+esperada, ✗ = fuera. Se recalculan todas cada vez que cambia `score.ts`; la última columna dice qué
+ajuste las movió.
+
+| Esquema | Seg | Res | Usa | Her | Último cambio |
+|---|---|---|---|---|---|
 | R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✗ | ajuste 2 (Her 100 → 70) |
 | R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
 | R03 Acero en la caja fuerte | 51 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | ajuste 3 (Seg 49 → 51) |
@@ -113,23 +134,6 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 72 ✓ | — |
 | R11 2 de 3 sin plan de herencia | 71 ✓ | 56 ✓ | 100 ✓ | 0 ✓ | — |
 | R12 2 de 3 con una SeedSigner | 65 ✓ | 62 ✗ | 75 ✓ | 72 ✓ | — |
-
-## Resultados
-
-Notas actuales del motor (Seguridad · Resiliencia · Usabilidad · Herencia). ✓ = dentro de la banda
-esperada, ✗ = fuera. Se recalculan todas cada vez que cambia `score.ts`; la última columna dice qué
-ajuste las movió.
-
-| Esquema | Seg | Res | Usa | Her | Último cambio |
-|---|---|---|---|---|---|
-| R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✗ | ajuste 2 (Her 100 → 70) |
-| R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
-| R03 Acero en la caja fuerte | 49 ✗ | 61 ✓ | 100 ✓ | 76 ✗ | ajuste 2 (Her 100 → 76) |
-| R04 Acero + copia en el banco | 49 ✗ | 77 ✓ | 100 ✓ | 82 ✗ | ajuste 2 (Her 100 → 82) |
-| R05 Passphrase con copia aparte | 65 ✗ | 45 ✗ | 100 ✓ | 59 ✗ | ajuste 2 (Her 90 → 59) |
-| R06 Passphrase solo en la memoria | 65 ✗ | 28 ✗ | 100 ✓ | 0 ✓ | — |
-| R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
-| R08 2 de 3 todo en casa | 49 ✗ | 65 ✓ | 100 ✓ | 78 ✗ | — |
 
 ### Ajustes de `score.ts`
 
