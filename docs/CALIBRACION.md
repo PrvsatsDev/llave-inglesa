@@ -109,9 +109,10 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R06 Passphrase solo en la memoria | 73 ✓ | 28 ✗ | 100 ✓ | 0 ✓ | ajuste 3 (Seg 65 → 73) |
 | R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✗ | — |
 | R08 2 de 3 todo en casa | 53 ✓ | 65 ✓ | 100 ✓ | 78 ✗ | ajuste 3 (Seg 49 → 53) |
-| R09 2 de 3 distribuido | 71 ✗ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
+| R09 2 de 3 distribuido | 71 ✓ | 72 ✓ | 100 ✓ | 72 ✓ | ajuste 3 (Seg 65 → 71) |
 | R10 2 de 3 con custodio | 71 ✓ | 75 ✓ | 100 ✓ | 72 ✓ | — |
 | R11 2 de 3 sin plan de herencia | 71 ✓ | 56 ✓ | 100 ✓ | 0 ✓ | — |
+| R12 2 de 3 con una SeedSigner | 65 ✓ | 62 ✗ | 75 ✓ | 72 ✓ | — |
 
 ## Resultados
 
@@ -150,13 +151,13 @@ ajuste las movió.
   sus desgracias no son las de los herederos (p. ej., copias a las que solo llega el titular).
 - **Ajuste 3** (tras R09): llave inglesa 3 → **3,5** (en la caja del banco, 4,5). En R09 la única vía
   barata era la llave inglesa y daba 65, lejos de la *Referencia fija* (≈ 75). Con 3,5 todas las
-  seguridades entran en su banda salvo R09 (71, justo por debajo de bueno) y aparece R05 < R06. Se
+  seguridades entran en su banda y aparece R05 < R06. Se
   descartó subir además la curva (esfuerzo 3 → 75): daría 75 a cualquier ataque sofisticado de
   esfuerzo 3, como el firmware de una SeedSigner que firma todas las keys.
 
 ## Por dónde vamos
 
-Hecho: R01–R11 y los ajustes 1, 2 y 3. Siguiente: **R12** (2 de 3 con una SeedSigner).
+Hecho: la galería completa (R01–R12) y los ajustes 1, 2 y 3. Siguiente: **diagnóstico conjunto**.
 
 **Referencia fija**: un esquema cuya única vía de robo es la llave inglesa debería rondar **75 o más**
 (con el ajuste 3, R06 da 73). Al terminar la galería: diagnóstico de todo junto,
@@ -223,6 +224,11 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   tras fallecer no encarece ningún robo); lo más probable que lo pierde todo es que fallezca Yo
   (rareza 2): Pareja solo llega a la placa K1. Para el titular en vida, tan bueno como R09; para los
   herederos, inútil.
+- **R12** (65 · 62 · 75 · 72): lo más barato es el firmware malicioso de la SeedSigner (3): las tres
+  semillas pasan por ella. La llave inglesa en casa ya no basta (allí no hay dispositivos con keys).
+  Resiliencia por debajo de lo esperado (bueno): sin dispositivos que guarden las keys, las placas son la
+  única copia y perder dos lo pierde todo (rareza 3); en R09 los dispositivos hacían de segunda copia.
+  Parece correcto: la banda esperada era optimista.
 
 ## Fricciones al montar los esquemas
 

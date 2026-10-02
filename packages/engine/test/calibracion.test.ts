@@ -18,6 +18,7 @@ describe('calibración: esquemas de referencia', () => {
   const r09 = score('r09-2de3-distribuido');
   const r10 = score('r10-2de3-custodio');
   const r11 = score('r11-2de3-sin-herencia');
+  const r12 = score('r12-2de3-seedsigner');
 
   it('hackear una nube es más barato que entrar en una casa', () => {
     expect(CLOUD_BREACH_EFFORT).toBeLessThan(BURGLARY_EFFORT.none);
@@ -82,5 +83,12 @@ describe('calibración: esquemas de referencia', () => {
     expect(r11.resilience.score).toBeLessThan(r09.resilience.score);
     expect(r11.resilience.cheapest).toEqual([[{ type: 'death', person: 'yo' }]]);
     expect(r11.inheritance.score).toBe(0);
+  });
+
+  it('R12: todo pasa por una SeedSigner; menos seguro, resiliente y usable que R09', () => {
+    expect(r12.security.cheapest).toEqual([[{ type: 'malicious-firmware', vendor: 'SeedSigner' }]]);
+    expect(r12.security.score).toBeLessThan(r09.security.score);
+    expect(r12.resilience.score).toBeLessThan(r09.resilience.score);
+    expect(r12.usability.score).toBeLessThan(r09.usability.score);
   });
 });

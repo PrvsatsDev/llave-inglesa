@@ -1,0 +1,302 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "R12",
+  "description": "2 de 3 con una SeedSigner",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Coinkite"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Coinkite",
+          "model": "Coldcard Q",
+          "firmware": "1.5.0"
+        },
+        "independentlyVerified": false
+      }
+    },
+    {
+      "id": "k2",
+      "label": "K2",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "BitBox"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "BitBox",
+          "model": "BitBox02",
+          "firmware": "9.26.5"
+        },
+        "independentlyVerified": false
+      }
+    },
+    {
+      "id": "k3",
+      "label": "K3",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Blockstream"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Blockstream",
+          "model": "Jade",
+          "firmware": "1.0.37"
+        },
+        "independentlyVerified": false
+      }
+    }
+  ],
+  "policy": {
+    "type": "thresh",
+    "k": 2,
+    "of": [
+      {
+        "type": "key",
+        "key": "k1"
+      },
+      {
+        "type": "key",
+        "key": "k2"
+      },
+      {
+        "type": "key",
+        "key": "k3"
+      }
+    ]
+  },
+  "devices": [
+    {
+      "id": "nuevo-dispositivo",
+      "label": "SeedSigner",
+      "vendor": "SeedSigner",
+      "kind": "stateless",
+      "holds": [],
+      "pinProtected": false,
+      "duressPin": false,
+      "acceptsExternalSeed": true,
+      "registeredWallet": false,
+      "location": "casa",
+      "model": "SeedSigner",
+      "firmware": "5.6.0",
+      "loads": [
+        "k1",
+        "k2",
+        "k3"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "nuevo-backup",
+      "label": "Descriptor",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "casa"
+    },
+    {
+      "id": "nuevo-backup-2",
+      "label": "Backup K1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-3",
+      "label": "Backup K2",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k2"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    },
+    {
+      "id": "nuevo-backup-4",
+      "label": "Backup K3",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k3"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-3"
+    },
+    {
+      "id": "nuevo-backup-5",
+      "label": "Descriptor cf",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-6",
+      "label": "Descriptor cb",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    },
+    {
+      "id": "nuevo-backup-7",
+      "label": "Descriptor",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-3"
+    }
+  ],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": []
+    },
+    {
+      "id": "nueva-persona",
+      "name": "Pareja",
+      "role": "heir",
+      "knows": []
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion",
+      "name": "Caja fuerte",
+      "kind": "physical",
+      "protection": "home-safe",
+      "inside": "casa",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion-2",
+      "name": "Caja en banco",
+      "kind": "physical",
+      "protection": "bank-box",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion-3",
+      "name": "Casa padres",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    }
+  ]
+}
