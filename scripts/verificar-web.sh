@@ -5,10 +5,10 @@
 # Uso: sh scripts/verificar-web.sh [SHA256SUMS] [URL]
 set -eu
 SUMS="${1:-release/SHA256SUMS}"
-URL="${2:-https://llave-inglesa.netlify.app}"
+URL="${2:-https://llave-inglesa.vualt.net}"
 fallos=0
-# El zip, el LEEME (solo va en el zip) y _headers (Netlify lo usa como configuración, no lo sirve) no se comparan.
-grep -v -e '\.zip$' -e '/LEEME\.txt$' -e '/_headers$' "$SUMS" | while read -r esperado ruta; do
+# El zip y el LEEME (solo va en el zip) no se comparan.
+grep -v -e '\.zip$' -e '/LEEME\.txt$' "$SUMS" | while read -r esperado ruta; do
   fichero="${ruta#*/}"
   obtenido="$(curl -fsS "$URL/$fichero" | sha256sum | cut -d' ' -f1)"
   if [ "$obtenido" = "$esperado" ]; then echo "✓ $fichero"; else echo "✗ $fichero (publicado: $obtenido)"; echo x >> .verificar-fallos; fi

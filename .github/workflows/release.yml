@@ -40,7 +40,7 @@ jobs:
           {
             echo "## llave-inglesa ${GITHUB_REF_NAME}"
             echo
-            echo "En línea: https://llave-inglesa.netlify.app"
+            echo "En línea: https://llave-inglesa.vualt.net"
             echo
             echo "### Usarla sin conexión"
             echo

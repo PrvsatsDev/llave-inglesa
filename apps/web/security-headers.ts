@@ -1,7 +1,7 @@
 /**
  * Cabeceras de seguridad: una sola lista para todos los sitios donde se sirve la app.
  *   - <meta> del HTML (vite.config.ts): el CSP, que también protege el zip usado sin conexión.
- *   - `_headers` de Netlify y `vite preview` (las pruebas e2e las usan también).
+ *   - `vite preview`, para que las pruebas e2e las usen también.
  *   - El bloque de Caddy para un servidor propio (lo genera scripts/caddy.ts, ver deploy/README.md).
  */
 
@@ -35,15 +35,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
 /** Los ficheros de /assets/ llevan su hash en el nombre: nunca cambian. */
 export const ASSETS_CACHE = 'public, max-age=31536000, immutable';
 
-/** Fichero `_headers` de Netlify. */
-export function netlifyHeaders(): string {
-  const block = (headers: Record<string, string>) => Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`).join('\n');
-  return `/*\n${block(SECURITY_HEADERS)}\n\n/assets/*\n${block({ 'Cache-Control': ASSETS_CACHE })}\n`;
-}
-
 /**
  * Bloque de sitio para Caddy. Sirve la versión enlazada en `<root>/actual` tal cual (sin inyectar
- * nada: la web publicada es idéntica al build), con HTTPS automático y HSTS (Netlify ya lo pone).
+ * nada: la web publicada es idéntica al build), con HTTPS automático y HSTS.
  * Sin registro de visitas.
  */
 export function caddySite(domain: string, root: string): string {
@@ -61,9 +55,6 @@ ${lines.join('\n')}
 \t\t-Server
 \t}
 \theader /assets/* Cache-Control "${ASSETS_CACHE}"
-
-\t# Configuración de Netlify, no hace falta servirla.
-\trespond /_headers 404
 }
 `;
 }

@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
-import { CSP, netlifyHeaders, SECURITY_HEADERS } from './security-headers.ts';
+import { CSP, SECURITY_HEADERS } from './security-headers.ts';
 
 /** Versión publicada (la de package.json), visible en la app para compararla con la Release. */
 const VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
@@ -12,9 +12,6 @@ const contentSecurityPolicy = (): Plugin => ({
   transformIndexHtml: () => [
     { tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: CSP }, injectTo: 'head-prepend' },
   ],
-  generateBundle() {
-    this.emitFile({ type: 'asset', fileName: '_headers', source: netlifyHeaders() });
-  },
 });
 
 export default defineConfig({

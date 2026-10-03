@@ -5,7 +5,7 @@ publicado se puede comprobar contra el código.
 
 - El **build es reproducible**: el mismo código da exactamente los mismos ficheros.
 - Cada **Release** de GitHub trae el zip y un `SHA256SUMS` con el hash de cada fichero.
-- La **web publicada** (https://llave-inglesa.netlify.app) sirve esos mismos ficheros, sin nada inyectado.
+- La **web publicada** (https://llave-inglesa.vualt.net) sirve esos mismos ficheros, sin nada inyectado.
 
 ## 1. Comprobar un zip descargado
 
@@ -43,7 +43,7 @@ sistema, no en la aplicación.
 sh scripts/verificar-web.sh SHA256SUMS-de-la-release
 ```
 
-Descarga cada fichero de https://llave-inglesa.netlify.app y compara su hash. La web puede ir por delante
+Descarga cada fichero de https://llave-inglesa.vualt.net y compara su hash. La web puede ir por delante
 de la última Release si se ha publicado algo después; para comprobar el estado actual, recompila desde
 `main` y usa tu propio `release/SHA256SUMS`.
 
@@ -53,7 +53,7 @@ La política de seguridad del contenido (`connect-src 'none'`) impide cualquier 
 el HTML como en las cabeceras de la web:
 
 ```sh
-curl -sI https://llave-inglesa.netlify.app | grep -i content-security-policy
+curl -sI https://llave-inglesa.vualt.net | grep -i content-security-policy
 ```
 
 También puedes abrir las herramientas de desarrollador del navegador, pestaña *Red*, y ver que, tras

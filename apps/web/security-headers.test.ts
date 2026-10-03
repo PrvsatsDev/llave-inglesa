@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { caddySite, CSP, netlifyHeaders, SECURITY_HEADERS } from './security-headers.ts';
+import { caddySite, CSP, SECURITY_HEADERS } from './security-headers.ts';
 
 describe('cabeceras de seguridad', () => {
   it('el CSP prohíbe cualquier petición de red y los iframes ajenos', () => {
@@ -7,9 +7,8 @@ describe('cabeceras de seguridad', () => {
     expect(SECURITY_HEADERS['Content-Security-Policy']).toContain("frame-ancestors 'none'");
   });
 
-  it('Netlify y Caddy llevan las mismas cabeceras', () => {
+  it('el bloque de Caddy lleva todas las cabeceras', () => {
     for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
-      expect(netlifyHeaders()).toContain(`${name}: ${value}`);
       expect(caddySite('ejemplo.net', '/srv/x')).toContain(`${name} "${value}"`);
     }
   });

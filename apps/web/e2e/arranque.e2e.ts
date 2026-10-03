@@ -14,7 +14,7 @@ test('la app arranca sin errores y sin hacer peticiones de red', async ({ page, 
   expect(external).toEqual([]);
 });
 
-test('el servidor manda las cabeceras de seguridad (las mismas que _headers en Netlify)', async ({ request }) => {
+test('el servidor manda las cabeceras de seguridad (las mismas que el bloque de Caddy)', async ({ request }) => {
   const res = await request.get('/');
   const h = res.headers();
   expect(h['content-security-policy']).toContain("connect-src 'none'");

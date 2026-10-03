@@ -36,7 +36,7 @@ Cada resultado explica **por qué**, y cualquier combinación se puede **simular
 
 ## Cómo usarla
 
-- **En línea**: https://llave-inglesa.netlify.app
+- **En línea**: https://llave-inglesa.vualt.net
 - **Sin conexión**: descarga el zip de la última [Release](https://github.com/PrvsatsDev/llave-inglesa/releases),
   descomprímelo y sirve la carpeta en tu equipo (`python3 -m http.server 8000 --bind 127.0.0.1`); lo
   explica el `LEEME.txt` que va dentro.
