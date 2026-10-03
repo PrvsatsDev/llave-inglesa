@@ -35,7 +35,8 @@ export type Outcome =
   | 'lost';
 
 export type ItemState = 'used' | 'reached' | 'destroyed' | 'dim';
-export type LocationState = 'reached' | 'destroyed' | 'dim';
+/** used: contiene algo que se usa (o una ubicación anidada que lo contiene). reached: solo al alcance. */
+export type LocationState = 'used' | 'reached' | 'destroyed' | 'dim';
 export type PersonState = 'coerced' | 'attacker' | 'legit' | 'dead' | 'incapacitated' | 'forgot' | 'dim';
 
 export interface ScenarioView {
@@ -49,8 +50,10 @@ export interface ScenarioView {
   items: ReadonlyMap<Id, ItemState>;
   locations: ReadonlyMap<Id, LocationState>;
   people: ReadonlyMap<Id, PersonState>;
-  /** Aristas de acceso persona→ubicación que intervienen. */
+  /** Aristas de acceso persona→ubicación que intervienen: llevan a una ubicación que se usa. */
   edges: ReadonlySet<string>;
+  /** Aristas de acceso a ubicaciones solo al alcance (se entra, pero no hace falta). */
+  reachedEdges: ReadonlySet<string>;
   /**
    * El atacante conoce las xpubs de TODAS las keys: puede calcular tus direcciones y ver
    * saldo e historial (watch-only), aunque no pueda gastar. Hecho del que lo obtiene, si aplica.
@@ -122,6 +125,25 @@ function itemStates(model: CustodyModel, d: Derivation, used: Set<FactId>, destr
   return items;
 }
 
+/** Ubicaciones con algún objeto usado, más las que las contienen (hay que entrar para llegar). */
+function usedLocations(model: CustodyModel, items: ReadonlyMap<Id, ItemState>): Set<Id> {
+  const parent = new Map(model.locations.map((l) => [l.id, l.inside]));
+  const used = new Set<Id>();
+  for (const i of [...model.devices, ...model.artifacts]) {
+    if (items.get(i.id) !== 'used') continue;
+    for (let l: Id | undefined = i.location; l !== undefined && !used.has(l); l = parent.get(l)) used.add(l);
+  }
+  return used;
+}
+
+/** Separa las aristas de acceso según lleven a una ubicación usada o solo alcanzada. */
+function splitEdges(edges: Iterable<string>, used: ReadonlySet<Id>) {
+  const hot = new Set<string>();
+  const reached = new Set<string>();
+  for (const e of edges) (used.has(e.slice(e.lastIndexOf(':') + 1)) ? hot : reached).add(e);
+  return { edges: hot, reachedEdges: reached };
+}
+
 function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'attack' }>): ScenarioView {
   const world = createWorld(model);
   const holdings = attackHoldings(world, scenario.atoms);
@@ -140,6 +162,8 @@ function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'at
     }
   }
   const reached = new Set(holdings.locations);
+  const items = itemStates(model, derivation, used, () => false);
+  const usedHere = usedLocations(model, items);
 
   return {
     scenario,
@@ -147,10 +171,10 @@ function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'at
     outcome: derivation.canSpend ? 'stolen' : 'safe',
     derivation,
     explanation: explain(derivation, 'spend'),
-    items: itemStates(model, derivation, used, () => false),
-    locations: new Map(model.locations.map((l) => [l.id, reached.has(l.id) ? 'reached' : 'dim'])),
+    items,
+    locations: new Map(model.locations.map((l) => [l.id, usedHere.has(l.id) ? 'used' : reached.has(l.id) ? 'reached' : 'dim'])),
     people,
-    edges,
+    ...splitEdges(edges, usedHere),
     exposure: balanceExposure(model, derivation),
     compromised: compromisedDevices(world, scenario.atoms),
     duress: derivation.canSpend ? duressObstacles(world, scenario.atoms) : [],
@@ -191,6 +215,8 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
   const edges = new Set<string>();
   for (const p of holdings.people) accessibleLocations(world, p).forEach((l) => edges.add(accessEdgeId(p, l)));
   const reachable = new Set(holdings.locations);
+  const items = itemStates(model, derivation, used, (id, location) => world.lostItems.has(id) || world.destroyed.has(location));
+  const usedHere = usedLocations(model, items);
 
   return {
     scenario,
@@ -198,12 +224,15 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
     outcome,
     derivation,
     explanation: explain(derivation, 'spend'),
-    items: itemStates(model, derivation, used, (id, location) => world.lostItems.has(id) || world.destroyed.has(location)),
+    items,
     locations: new Map(
-      model.locations.map((l) => [l.id, world.destroyed.has(l.id) ? 'destroyed' : reachable.has(l.id) ? 'reached' : 'dim']),
+      model.locations.map((l) => [
+        l.id,
+        world.destroyed.has(l.id) ? 'destroyed' : usedHere.has(l.id) ? 'used' : reachable.has(l.id) ? 'reached' : 'dim',
+      ]),
     ),
     people,
-    edges,
+    ...splitEdges(edges, usedHere),
     exposure: { exposed: false, via: null },
     compromised: new Map(),
     duress: [],

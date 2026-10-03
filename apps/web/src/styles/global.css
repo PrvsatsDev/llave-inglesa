@@ -79,6 +79,20 @@ textarea {
   stroke-width: 2.5;
 }
 
+.react-flow__edge.edge-reached .react-flow__edge-path {
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.react-flow__edge.edge-reached-attack .react-flow__edge-path {
+  stroke: var(--danger);
+}
+
+.react-flow__edge.edge-reached-recovery .react-flow__edge-path {
+  stroke: var(--safe);
+}
+
 .react-flow__edge.edge-dim {
   opacity: 0.2;
 }

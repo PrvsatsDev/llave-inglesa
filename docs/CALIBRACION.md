@@ -299,6 +299,8 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   Pareja (también Casa, donde solo hay un Trezor que no puede desbloquear), no solo las que necesita.
   Lo que se usa sí se distingue (resaltado) de lo que solo está al alcance, pero en las ubicaciones
   no. Idea: distinguir también las ubicaciones necesarias de las solo alcanzables.
+  **Resuelto** en el paso 3: etiquetas "Necesaria" / "Al alcance" y accesos distintos. En R05 Casa sí sale
+  necesaria, porque la caja fuerte con la semilla está dentro de ella.
 - **R06**: con un PIN de coacción, la seguridad no cambia si hay otro camino que no pasa por el
   dispositivo (la placa en la misma casa), pero la interfaz no explica por qué. Idea: avisar "el PIN de
   coacción no ayuda: con la llave inglesa también se llevan la placa de la caja fuerte".
@@ -313,6 +315,12 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   **Resuelto** (con la de R01) en el paso 3: *Generada en* ofrece los dispositivos del esquema y rellena
   desde ellos la entropía; el fabricante del RNG se elige del catálogo; y una key con la procedencia sin
   rellenar propone rellenarla desde el dispositivo donde está.
+- **Paso 3 (revisión del paso de ubicaciones necesarias)**: al simular un incendio en casa, la placa de
+  acero de K2 "Resiste" y la primera vía de recuperación la usa. El usuario quiere comprobar qué pasaría
+  si tampoco resistiera: ¿hay otra vía o se pierde todo? Ya se puede, añadiendo "Pérdida de Placa K2" en
+  *Desgracias combinadas*, pero no se le ocurre a nadie desde el mapa. Idea: en la simulación de una
+  desgracia, un atajo junto a lo que se usa o resiste ("¿Y si se pierde?") que añada esa pérdida a la
+  combinación.
 - **Esquema de prueba**: si nadie sabe el PIN de un dispositivo, el motor lo trata como inaccesible y la
   seguridad sube sin que el usuario se dé cuenta (en el esquema de prueba, 73 → 83).
   Idea: avisar "nadie sabe el PIN de X: no sirve para firmar" (aviso de validación).

@@ -21,11 +21,12 @@ describe('scenarioView: ataques', () => {
     expect(wrench.items.get('ccq')).toBe('used');
     expect(wrench.items.get('metal-k2')).toBe('used');
     expect(wrench.items.get('metal-k1')).toBe('dim');
-    expect(wrench.locations.get('casa')).toBe('reached');
+    expect(wrench.locations.get('casa')).toBe('used');
     expect(wrench.locations.get('banco')).toBe('dim');
     expect(wrench.people.get('yo')).toBe('coerced');
     expect(wrench.people.get('pareja')).toBe('dim');
     expect(wrench.edges).toEqual(new Set(['access:yo:casa']));
+    expect(wrench.reachedEdges).toEqual(new Set());
     expect(wrench.explanation?.fact.kind).toBe('spend');
   });
 
@@ -74,6 +75,24 @@ describe('scenarioView: desgracias', () => {
     expect(v.items.get('metal-k1')).toBe('used');
   });
 
+  it('fallecimiento del titular: distingue las ubicaciones necesarias de las solo alcanzables', () => {
+    const v = scenarioView(casa, { kind: 'loss', events: [{ type: 'death', person: 'yo' }] })!;
+    expect(v.outcome).toBe('recoverable');
+    expect(v.locations.get('casa')).toBe('used');
+    expect(v.locations.get('banco')).toBe('used');
+    expect(v.locations.get('padres')).toBe('reached');
+    expect(v.edges).toEqual(new Set(['access:pareja:casa', 'access:pareja:banco']));
+    expect(v.reachedEdges).toEqual(new Set(['access:pareja:padres']));
+  });
+
+  it('una ubicación anidada que se usa hace necesaria la que la contiene', () => {
+    const m = fixture('referencia/r05-passphrase-copia-aparte');
+    const v = scenarioView(m, { kind: 'loss', events: [{ type: 'death', person: 'yo' }] })!;
+    expect(v.items.get('nuevo-dispositivo')).toBe('reached');
+    expect(v.locations.get('nueva-ubicacion')).toBe('used');
+    expect(v.locations.get('casa')).toBe('used');
+  });
+
   it('dos incendios: pérdida permanente', () => {
     const v = scenarioView(casa, {
       kind: 'loss',
@@ -94,11 +113,19 @@ describe('applyScenario', () => {
     const view = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] });
     const g = applyScenario(buildGraph(casa), view);
     const node = g.nodes.find((n): n is LocationNode => n.id === 'casa' && n.type === 'location')!;
-    expect(node.data.state).toBe('reached');
+    expect(node.data.state).toBe('used');
     expect(node.data.items.find((i) => i.id === 'ccq')?.state).toBe('used');
     const hot = g.edges.filter((e) => e.className?.includes('edge-attack')).map((e) => e.id);
     expect(hot).toEqual(['access:yo:casa']);
     expect(g.edges.find((e) => e.id === 'access:yo:casa')?.animated).toBe(true);
+  });
+
+  it('las aristas a ubicaciones solo alcanzables quedan en tono suave, sin animar', () => {
+    const view = scenarioView(casa, { kind: 'loss', events: [{ type: 'death', person: 'yo' }] });
+    const g = applyScenario(buildGraph(casa), view);
+    const edge = g.edges.find((e) => e.id === 'access:pareja:padres')!;
+    expect(edge.className).toContain('edge-reached-recovery');
+    expect(edge.animated).toBe(false);
   });
 
   it('sin escenario, el grafo queda intacto', () => {

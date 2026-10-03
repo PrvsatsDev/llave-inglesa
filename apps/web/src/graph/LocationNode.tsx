@@ -41,6 +41,9 @@ export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
 /** Etiqueta del desastre simulado en la ubicación ('total' según el tipo de ubicación). */
 const DISASTER_TAG = { fire: 'Incendio', flood: 'Inundación', physical: 'Sin acceso', device: 'Averiado', cloud: 'Cuenta perdida' } as const;
 
+/** Ubicación que hace falta en la simulación (texto además del color). */
+const USED_TAG = { attack: 'La usa el atacante', recovery: 'Necesaria' } as const;
+
 /** Cómo cae el dispositivo en el ataque simulado (texto además del color). */
 const COMPROMISE = { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' } as const;
 
@@ -128,8 +131,14 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
         <span className={styles.locationTitle}>
           <span className={styles.locationName}>{data.name}</span>
           {meta && <span className={styles.locationMeta}>{meta}</span>}
+          {(data.disaster || data.state === 'used' || data.state === 'reached') && (
+            <span className={styles.locationTags}>
+              {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
+              {data.state === 'used' && <span className={styles.stateTag}>{USED_TAG[data.tone ?? 'recovery']}</span>}
+              {data.state === 'reached' && <span className={`${styles.stateTag} ${styles.reachedTag}`}>Al alcance</span>}
+            </span>
+          )}
         </span>
-        {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">
           {data.keys.map((k) => (
             <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`}>

@@ -168,7 +168,8 @@ export function applyScenario(graph: Graph, view: ScenarioView | null): Graph {
   });
   const edges = graph.edges.map((e): AccessEdge => {
     const hot = view.edges.has(e.id);
-    return { ...e, animated: hot, className: `${e.className ?? ''} ${hot ? `edge-${tone}` : 'edge-dim'}` };
+    const state = hot ? `edge-${tone}` : view.reachedEdges.has(e.id) ? `edge-reached edge-reached-${tone}` : 'edge-dim';
+    return { ...e, animated: hot, className: `${e.className ?? ''} ${state}` };
   });
   return { nodes, edges };
 }
