@@ -13,6 +13,14 @@ function watchErrors(page: Page): string[] {
   return errors;
 }
 
+// Los recorridos empiezan con la bienvenida ya vista (solo si este navegador aún no tiene preferencias,
+// para no pisar lo que guarde la propia prueba antes de recargar). La bienvenida tiene sus pruebas en bienvenida.e2e.ts.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('llave-inglesa:panel')) localStorage.setItem('llave-inglesa:panel', JSON.stringify({ welcomeSeen: true }));
+  });
+});
+
 const scoreCard = (page: Page, metric: string) => page.getByRole('button', { name: new RegExp(`^${metric}`) }).first();
 
 test('cada ejemplo carga, se analiza y no tiene errores de modelo', async ({ page }) => {

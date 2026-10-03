@@ -12,6 +12,12 @@ describe('disposición de la columna', () => {
     expect(useLayout.getState().width).toBe(PANEL_DEFAULT);
     expect(useLayout.getState().collapsed).toBe(false);
     expect(useLayout.getState().mobileNoticeDismissed).toBe(false);
+    expect(useLayout.getState().welcomeSeen).toBe(false);
+  });
+
+  it('la bienvenida queda vista aunque no se pueda guardar', () => {
+    useLayout.getState().markWelcomeSeen();
+    expect(useLayout.getState().welcomeSeen).toBe(true);
   });
 
   it('el aviso de móvil se cierra aunque no se pueda guardar', () => {

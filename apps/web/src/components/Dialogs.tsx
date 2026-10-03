@@ -1,6 +1,7 @@
-import { AlertTriangle, KeyRound, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, Wrench } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
+import { examples } from '../lib/examples.ts';
 import styles from './Dialogs.module.css';
 
 const MIN_LENGTH = 10;
@@ -67,6 +68,58 @@ function PasswordForm({ req }: { req: Extract<DialogRequest, { kind: 'password' 
   );
 }
 
+/** Qué es la herramienta, la advertencia de no usar secretos reales y por dónde empezar. */
+function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className={styles.form}>
+      <header className={styles.header}>
+        <span className={styles.icon}>
+          <Wrench size={18} />
+        </span>
+        <h2 className={styles.title}>llave-inglesa</h2>
+      </header>
+      <p className={styles.lead}>Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.</p>
+      <ul className={styles.points}>
+        <li>Describe qué keys, dispositivos y backups tienes, dónde están y quién sabe qué.</li>
+        <li>
+          La herramienta calcula cómo podrían robarte, qué desgracias te dejarían sin fondos, lo cómodo que es firmar y si tus
+          herederos llegarían a ellos. Y siempre explica por qué.
+        </li>
+        <li>Todo ocurre en tu navegador: sin cuentas, sin red. Puedes guardar tu esquema cifrado.</li>
+      </ul>
+      <p className={styles.warning}>
+        <AlertTriangle size={14} aria-hidden /> Nunca escribas frases semilla, claves privadas ni passphrases reales: no hacen falta.
+      </p>
+      <footer className={styles.welcomeActions}>
+        <button className={styles.primary} onClick={() => req.resolve({ kind: 'example' })} autoFocus>
+          <MapIcon size={14} aria-hidden /> Ver un ejemplo
+        </button>
+        <button className={styles.secondary} onClick={() => req.resolve({ kind: 'new' })}>
+          <FilePlus2 size={14} aria-hidden /> Empezar de cero
+        </button>
+        <button className={styles.secondary} onClick={() => fileRef.current?.click()}>
+          <FolderOpen size={14} aria-hidden /> Abrir fichero
+        </button>
+      </footer>
+      <p className={styles.hint}>
+        Hay {examples.length} ejemplos en el selector de arriba. Puedes volver aquí pulsando el logo.
+      </p>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".llave,.json,application/json"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) req.resolve({ kind: 'open', file });
+        }}
+      />
+    </div>
+  );
+}
+
 /** Contenedor de todos los diálogos modales (uno a la vez, con <dialog> nativo). */
 export function Dialogs() {
   const current = useDialog((s) => s.current);
@@ -81,7 +134,7 @@ export function Dialogs() {
 
   const cancel = () => {
     if (!current) return;
-    if (current.kind === 'password') current.resolve(null);
+    if (current.kind === 'password' || current.kind === 'welcome') current.resolve(null);
     else if (current.kind === 'confirm') current.resolve(false);
     else current.resolve();
   };
@@ -89,7 +142,7 @@ export function Dialogs() {
   return (
     <dialog
       ref={ref}
-      className={styles.dialog}
+      className={`${styles.dialog} ${current?.kind === 'welcome' ? styles.wide : ''}`}
       onCancel={(e) => {
         e.preventDefault();
         cancel();
@@ -110,6 +163,7 @@ export function Dialogs() {
           </footer>
         </div>
       )}
+      {current?.kind === 'welcome' && <Welcome req={current} />}
       {current?.kind === 'alert' && (
         <div className={styles.form}>
           <h2 className={styles.title}>{current.title}</h2>

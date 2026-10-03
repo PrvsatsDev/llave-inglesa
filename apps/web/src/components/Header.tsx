@@ -2,7 +2,7 @@ import { ChevronDown, Redo2, Undo2, Wrench } from 'lucide-react';
 import { examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { policyText } from '../lib/text.ts';
-import { loadExample } from '../storage/actions.ts';
+import { loadExample, showWelcome } from '../storage/actions.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
 import { FileMenu } from './FileMenu.tsx';
 import { KeyChip } from './KeyChip.tsx';
@@ -45,12 +45,12 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <div className={styles.brand}>
+      <button className={styles.brand} onClick={() => void showWelcome()} title="Qué es llave-inglesa" aria-label="Qué es llave-inglesa">
         <span className={styles.logo} aria-hidden>
           <Wrench size={16} strokeWidth={2.5} />
         </span>
         <span className={styles.wordmark}>llave-inglesa</span>
-      </div>
+      </button>
 
       <div className={styles.divider} aria-hidden />
 

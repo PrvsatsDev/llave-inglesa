@@ -10,7 +10,8 @@ import {
   type Envelope,
   type VaultKey,
 } from '@llave-inglesa/vault';
-import { alertDialog, askPassword, confirmDialog } from '../store/dialog.ts';
+import { alertDialog, askPassword, confirmDialog, welcomeDialog } from '../store/dialog.ts';
+import { useLayout } from '../store/layout.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
 import { useScenario } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
@@ -238,4 +239,12 @@ export async function importFile(file: File) {
     return;
   }
   openDocument(result.model, { kind: 'file', name: file.name });
+}
+
+/** La bienvenida: qué es y por dónde empezar. Cerrarla o elegir "ver un ejemplo" deja el ejemplo abierto. */
+export async function showWelcome() {
+  const choice = await welcomeDialog();
+  useLayout.getState().markWelcomeSeen();
+  if (choice?.kind === 'new') await newDocument();
+  else if (choice?.kind === 'open') await importFile(choice.file);
 }

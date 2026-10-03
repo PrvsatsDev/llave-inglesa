@@ -8,6 +8,10 @@
   box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
 }
 
+.dialog.wide {
+  width: min(560px, calc(100vw - 32px));
+}
+
 .dialog::backdrop {
   background: rgb(5 6 10 / 0.7);
   backdrop-filter: blur(3px);
@@ -187,6 +191,45 @@
 .danger {
   background: var(--danger);
   color: var(--bg);
+}
+
+/* Bienvenida */
+
+.lead {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+.welcomeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.welcomeActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
 }
 
 @keyframes appear {

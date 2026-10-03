@@ -15,6 +15,16 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.brand:hover .logo {
+  box-shadow: 0 0 24px var(--accent);
 }
 
 .logo {
