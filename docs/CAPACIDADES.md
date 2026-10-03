@@ -66,6 +66,8 @@ Un incendio o una inundación destruyen todo lo que hay en la ubicación (y en l
 
 ## 5. Puntuaciones (0–100, parámetros en `packages/engine/src/score.ts`)
 
+Cada puntuación se lee en cinco **bandas**, las mismas de la calibración (`SCORE_BANDS`): **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **bueno** 70–85 · **excelente** ≥ 85. Las tarjetas y el análisis las muestran con su icono, su texto y su color.
+
 - **Seguridad**: esfuerzo del robo más barato, menos una penalización si hay varias vías casi igual de baratas (hasta 0,5 más): −2 por cada vía extra, como mucho −6. La llave inglesa a una misma persona en sitios distintos cuenta como una sola vía (el atacante elige dónde).
 - **Resiliencia**: lo improbable que es perderlo todo. Cada desgracia tiene una **rareza** (órdenes de magnitud de improbabilidad): olvidar 1 · perder un objeto 1 (acero 1,5) · avería de portátil o pérdida de cuenta 1,5 · incendio, inundación, fallecimiento 2 (incendio o inundación en una caja del banco, 3: la cámara acorazada los resiste mucho mejor) · incapacidad 2,5 · pérdida del acceso a un sitio 3. Varias a la vez suman su rareza. La base sale de la pérdida más probable; las demás vías restan (sus probabilidades se suman: rareza equivalente de todas juntas), y el bloqueo temporal más probable resta 5 si su rareza es menor que 3, 2 si es menor que 5. Escala: rareza 1 → 30 · 2 → 60 · 3 → 75 · 4 → 85 · 5 → 95 · 6 → 100.
 - **Usabilidad**: cuántas ubicaciones hay que visitar para firmar de forma segura (con dispositivos de firma). Una ubicación y lo que tiene dentro (casa y su caja fuerte) son una sola visita.

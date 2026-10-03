@@ -16,16 +16,25 @@
   gap: var(--space-3);
 }
 
+/* Bandas de puntuación (ver level() en Scoreboard.tsx). */
+.very-poor {
+  --status: var(--band-very-poor);
+}
+
+.weak {
+  --status: var(--band-weak);
+}
+
+.fair {
+  --status: var(--band-fair);
+}
+
 .good {
-  --status: var(--safe);
+  --status: var(--band-good);
 }
 
-.warn {
-  --status: var(--warn);
-}
-
-.bad {
-  --status: var(--danger);
+.excellent {
+  --status: var(--band-excellent);
 }
 
 .value {

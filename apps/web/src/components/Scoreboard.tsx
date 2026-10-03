@@ -1,21 +1,26 @@
-import type { Analysis } from '@llave-inglesa/engine';
-import { AlertTriangle, ChevronsRight, Loader2, ShieldAlert, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { scoreBand, type Analysis, type ScoreBand } from '@llave-inglesa/engine';
+import { AlertTriangle, BadgeCheck, ChevronsRight, Loader2, ShieldAlert, ShieldCheck, ShieldX, type LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { METRIC_LABEL } from '../lib/sections.ts';
-import { plural } from '../lib/text.ts';
+import { plural, SCORE_BAND_TEXT } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useLayout } from '../store/layout.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
 import styles from './Scoreboard.module.css';
 
-type Level = 'good' | 'warn' | 'bad';
+const BAND_ICON: Record<ScoreBand, LucideIcon> = {
+  'very-poor': ShieldX,
+  weak: ShieldAlert,
+  fair: AlertTriangle,
+  good: ShieldCheck,
+  excellent: BadgeCheck,
+};
 
-/** Umbrales de estado. Siempre con icono + texto, nunca solo color. */
-export function level(score: number): { level: Level; icon: LucideIcon; text: string } {
-  if (score >= 75) return { level: 'good', icon: ShieldCheck, text: 'Bien' };
-  if (score >= 50) return { level: 'warn', icon: AlertTriangle, text: 'Mejorable' };
-  return { level: 'bad', icon: ShieldAlert, text: 'Débil' };
+/** Banda de una puntuación (las de la calibración). Siempre con icono + texto, nunca solo color. */
+export function level(score: number): { level: ScoreBand; icon: LucideIcon; text: string } {
+  const band = scoreBand(score);
+  return { level: band, icon: BAND_ICON[band], text: SCORE_BAND_TEXT[band] };
 }
 
 interface Metric {

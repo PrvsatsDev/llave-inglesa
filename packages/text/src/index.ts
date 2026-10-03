@@ -1,6 +1,6 @@
 import { ADVISORIES } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
-import type { AttackAtom, DuressReport, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -129,6 +129,15 @@ export function lossText(e: LossEvent, index: ModelIndex): string {
     case 'forget': return `${label(e.person)} olvida lo memorizado`;
   }
 }
+
+/** Cómo se lee una puntuación (bandas de la calibración). */
+export const SCORE_BAND_TEXT: Record<ScoreBand, string> = {
+  'very-poor': 'Muy mal',
+  weak: 'Flojo',
+  fair: 'Aceptable',
+  good: 'Bueno',
+  excellent: 'Excelente',
+};
 
 const effortText = (e: number) => e.toLocaleString('es');
 

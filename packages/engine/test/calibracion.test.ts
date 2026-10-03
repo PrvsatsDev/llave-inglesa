@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { tidyIds } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { analyze, BURGLARY_EFFORT, CLOUD_BREACH_EFFORT } from '../src/index.ts';
+import { analyze, BURGLARY_EFFORT, CLOUD_BREACH_EFFORT, scoreBand, type ScoreBand } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
 
 /** Galería de esquemas de referencia (docs/CALIBRACION.md): el orden ya acordado con el motor. */
@@ -94,15 +94,16 @@ describe('calibración: esquemas de referencia', () => {
     expect(r12.usability.score).toBeLessThan(r09.usability.score);
   });
 
+  it('las bandas cortan donde dice docs/CALIBRACION.md', () => {
+    expect([0, 24, 25, 49, 50, 69, 70, 84, 85, 100].map(scoreBand)).toEqual([
+      'very-poor', 'very-poor', 'weak', 'weak', 'fair', 'fair', 'good', 'good', 'excellent', 'excellent',
+    ]);
+  });
+
   describe('bandas esperadas (docs/CALIBRACION.md)', () => {
+    // Las mismas bandas que muestra la interfaz (SCORE_BANDS en score.ts).
     type Band = 'muy mal' | 'flojo' | 'aceptable' | 'bueno' | 'excelente';
-    const RANGE: Record<Band, [number, number]> = {
-      'muy mal': [0, 25],
-      flojo: [25, 50],
-      aceptable: [50, 70],
-      bueno: [70, 85],
-      excelente: [85, 101],
-    };
+    const ID: Record<Band, ScoreBand> = { 'muy mal': 'very-poor', flojo: 'weak', aceptable: 'fair', bueno: 'good', excelente: 'excellent' };
     // Seguridad · Resiliencia · Usabilidad · Herencia; una lista admite varias bandas.
     const BANDS: Record<string, [Band | Band[], Band, Band, Band]> = {
       'r01-papel-en-casa': [['muy mal', 'flojo'], 'flojo', 'excelente', 'bueno'],
@@ -119,7 +120,7 @@ describe('calibración: esquemas de referencia', () => {
       'r11-2de3-sin-herencia': ['bueno', 'aceptable', 'excelente', 'muy mal'],
       'r12-2de3-seedsigner': ['aceptable', 'aceptable', 'bueno', 'bueno'],
     };
-    const inBand = (value: number, band: Band | Band[]) => [band].flat().some((b) => value >= RANGE[b][0] && value < RANGE[b][1]);
+    const inBand = (value: number, band: Band | Band[]) => [band].flat().some((b) => scoreBand(value) === ID[b]);
 
     for (const [name, [sec, res, usa, inh]] of Object.entries(BANDS)) {
       it(name, () => {
