@@ -34,8 +34,21 @@
 
 .locationTitle {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
+}
+
+/* Estado en la simulación, bajo el nombre: así nunca lo tapa ni compite con las keys. */
+.locationTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.locationTags .stateTag {
+  margin-left: 0;
 }
 
 .locationMeta {
@@ -57,6 +70,10 @@
 
 .keyTags {
   display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 55%;
   gap: 4px;
   margin-left: auto;
   padding-left: 8px;
@@ -322,9 +339,22 @@
   filter: saturate(0.4);
 }
 
-.location[data-state='reached'] {
+/* Necesaria: contiene algo que se usa. */
+.location[data-state='used'] {
   border-color: var(--tone);
   box-shadow: 0 0 0 1px var(--tone), 0 0 28px var(--tone-soft), var(--shadow);
+}
+
+.location[data-state='used'] .stateTag {
+  background: var(--tone-soft);
+  border-color: var(--tone);
+  color: var(--tone);
+}
+
+/* Solo al alcance: se entra, pero no hace falta. */
+.location[data-state='reached'] {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--tone) 60%, transparent);
 }
 
 .location[data-state='destroyed'] {
@@ -381,6 +411,35 @@
   font-weight: 700;
 }
 
+.itemTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Atajo de la simulación: probar qué pasaría si también se perdiera. */
+.whatIf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 0 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.whatIf:hover {
+  border-style: solid;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .survivedTag {
   display: inline-flex;
   align-items: center;
@@ -433,6 +492,13 @@
   white-space: nowrap;
 }
 
+.stateTag.reachedTag {
+  border-style: dashed;
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
 .person[data-state='coerced'] .stateTag,
 .person[data-state='attacker'] .stateTag {
   background: var(--danger-soft);
@@ -444,4 +510,8 @@
   50% {
     box-shadow: inset 0 0 0 1px var(--tone), 0 0 16px var(--tone-soft);
   }
+}
+
+.handle.sideHandle {
+  top: 28px;
 }

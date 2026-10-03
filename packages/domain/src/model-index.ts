@@ -37,6 +37,15 @@ export function policyKeys(policy: Policy): Id[] {
   return policy.type === 'key' ? [policy.key] : policy.of.flatMap(policyKeys);
 }
 
+export const normalizeLabel = (label: string) => label.trim().toLowerCase().replace(/\s+/g, ' ');
+
+/** Grupos de dos o más elementos con la misma clave. */
+export function repeated<T>(list: readonly T[], key: (e: T) => string): T[][] {
+  const groups = new Map<string, T[]>();
+  for (const e of list) groups.set(key(e), [...(groups.get(key(e)) ?? []), e]);
+  return [...groups.values()].filter((g) => g.length > 1);
+}
+
 const byId = <T extends { id: Id }>(list: readonly T[]) => new Map(list.map((e) => [e.id, e]));
 
 export function indexModel(model: CustodyModel): ModelIndex {
@@ -54,6 +63,15 @@ export function indexModel(model: CustodyModel): ModelIndex {
   const labels = new Map<Id, string>();
   for (const e of [...model.keys, ...model.devices, ...model.artifacts]) labels.set(e.id, e.label);
   for (const e of [...model.people, ...model.locations]) labels.set(e.id, e.name);
+  // Dos objetos con la misma etiqueta no se distinguirían en las listas: se añade su ubicación
+  // ("Backup K1 (Banco)") y, si también coincide, un número.
+  const locationName = (id: Id) => model.locations.find((l) => l.id === id)?.name ?? id;
+  for (const group of repeated([...model.devices, ...model.artifacts], (i) => normalizeLabel(i.label))) {
+    for (const same of repeated(group, (i) => i.location)) {
+      same.forEach((i, n) => labels.set(i.id, `${i.label} (${locationName(i.location)}, ${n + 1})`));
+    }
+    for (const i of group) if (labels.get(i.id) === i.label) labels.set(i.id, `${i.label} (${locationName(i.location)})`);
+  }
 
   return {
     keys: byId(model.keys),

@@ -1,3 +1,4 @@
+import { normalizeLabel, repeated } from './model-index.ts';
 import { CustodyModelSchema, type CustodyModel, type Id, type Policy, type SecretRef } from './schema.ts';
 
 export type Severity = 'error' | 'warning';
@@ -7,6 +8,8 @@ export type IssueCode =
   | 'duplicate-id'
   | 'unknown-reference'
   | 'stateful-holds-nothing'
+  | 'pin-unknown'
+  | 'duplicate-label'
   | 'threshold-out-of-range'
   | 'key-repeated-in-policy'
   | 'key-not-in-policy'
@@ -22,7 +25,7 @@ export interface Issue {
   path: (string | number)[];
   /** Id implicado, si aplica. */
   ref?: string;
-  /** Solo para `schema`: mensaje original del validador. */
+  /** `schema`: mensaje original del validador. `duplicate-label`: el nombre repetido. */
   detail?: string;
 }
 
@@ -118,6 +121,11 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     d.holds.forEach((k, j) => ref(keys, k, ['devices', i, 'holds', j]));
     d.loads?.forEach((k, j) => ref(keys, k, ['devices', i, 'loads', j]));
     if (d.kind === 'stateful' && d.holds.length === 0) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
+    // Con PIN que nadie sabe ni está apuntado, el dispositivo no sirve para firmar (y la seguridad sube sin avisar).
+    const isPin = (s: SecretRef) => s.type === 'pin' && s.device === d.id;
+    if (d.pinProtected && !model.people.some((p) => p.knows.some(isPin)) && !model.artifacts.some((a) => a.contents.some(isPin))) {
+      report('warning', 'pin-unknown', ['devices', i, 'pinProtected'], d.id);
+    }
   });
 
   model.artifacts.forEach((a, i) => {
@@ -145,6 +153,19 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   });
 
   if (!model.people.some((p) => p.role === 'owner')) report('error', 'no-owner', ['people']);
+
+  // Nombres repetidos que no se pueden distinguir (dos objetos iguales en sitios distintos sí: llevan su ubicación).
+  const sameName = (path: (first: Id) => string, groups: { id: Id }[][], names: Map<Id, string>) =>
+    groups.forEach((g) => issues.push({ severity: 'warning', code: 'duplicate-label', path: [path(g[0]!.id)], ref: g[0]!.id, detail: names.get(g[0]!.id)! }));
+  const names = new Map<Id, string>([
+    ...[...model.keys, ...model.devices, ...model.artifacts].map((e) => [e.id, e.label] as const),
+    ...[...model.people, ...model.locations].map((e) => [e.id, e.name] as const),
+  ]);
+  sameName(() => 'keys', repeated(model.keys, (k) => normalizeLabel(k.label)), names);
+  sameName(() => 'people', repeated(model.people, (p) => normalizeLabel(p.name)), names);
+  sameName(() => 'locations', repeated(model.locations, (l) => normalizeLabel(l.name)), names);
+  const items = [...model.devices, ...model.artifacts];
+  sameName((id) => (devices.has(id) ? 'devices' : 'artifacts'), repeated(items, (i) => `${i.location}\u0000${normalizeLabel(i.label)}`), names);
 
   return issues;
 }

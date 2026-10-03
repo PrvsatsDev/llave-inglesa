@@ -1,4 +1,4 @@
-import type { Artifact, CustodyModel, Device, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
+import type { Artifact, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 import { canNest } from './validate.ts';
 
 /**
@@ -22,6 +22,10 @@ const allIds = (m: CustodyModel) =>
 
 /** Id único y legible derivado de un nombre ("Casa de mis padres" → "casa-de-mis-padres"). */
 export function uniqueId(model: CustodyModel, name: string): Id {
+  return uniqueSlug(allIds(model), name);
+}
+
+function uniqueSlug(taken: ReadonlySet<Id>, name: string): Id {
   const slug =
     name
       .normalize('NFD')
@@ -29,10 +33,61 @@ export function uniqueId(model: CustodyModel, name: string): Id {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'item';
-  const taken = allIds(model);
   let id = slug;
   for (let n = 2; taken.has(id); n++) id = `${slug}-${n}`;
   return id;
+}
+
+// ---------- Ids ----------
+
+/** Ids que ponen las operaciones `add*` antes de que el usuario elija un nombre. */
+const DEFAULT_ID = /^(nueva-ubicacion|nueva-persona|nuevo-dispositivo|nuevo-firmante-stateless|nuevo-backup)(-\d+)?$/;
+
+/**
+ * Cambia los ids por defecto (`nuevo-dispositivo-2`…) por el de su nombre actual ("Trezor de casa"
+ * → `trezor-de-casa`), con todas sus referencias. Los ids puestos a mano y los de las keys no se tocan.
+ * Pensado para exportar: dentro del editor los ids no se ven y cambiarlos movería la selección.
+ */
+export function tidyIds(model: CustodyModel): CustodyModel {
+  const named = [
+    ...model.locations.map((e) => ({ id: e.id, name: e.name })),
+    ...model.people.map((e) => ({ id: e.id, name: e.name })),
+    ...model.devices.map((e) => ({ id: e.id, name: e.label })),
+    ...model.artifacts.map((e) => ({ id: e.id, name: e.label })),
+  ].filter((e) => DEFAULT_ID.test(e.id));
+  const taken = new Set([...allIds(model)].filter((id) => !named.some((e) => e.id === id)));
+  const renames = new Map<Id, Id>();
+  for (const e of named) {
+    const id = uniqueSlug(taken, e.name);
+    taken.add(id);
+    if (id !== e.id) renames.set(e.id, id);
+  }
+  return renames.size ? renameIds(model, renames) : model;
+}
+
+/** Cambia ids de ubicaciones, personas, dispositivos y backups en todas sus referencias. */
+export function renameIds(model: CustodyModel, renames: ReadonlyMap<Id, Id>): CustodyModel {
+  const to = (id: Id) => renames.get(id) ?? id;
+  const secret = (s: SecretRef): SecretRef =>
+    s.type === 'pin' ? { ...s, device: to(s.device) } : s.type === 'password' ? { ...s, artifact: to(s.artifact) } : s;
+  return {
+    ...model,
+    devices: model.devices.map((d) => ({ ...d, id: to(d.id), location: to(d.location) })),
+    artifacts: model.artifacts.map((a) => ({
+      ...a,
+      id: to(a.id),
+      location: to(a.location),
+      contents: a.contents.map(secret),
+      lockedBy: a.lockedBy.map(secret),
+    })),
+    people: model.people.map((p) => ({ ...p, id: to(p.id), knows: p.knows.map(secret) })),
+    locations: model.locations.map((l) => ({
+      ...l,
+      id: to(l.id),
+      ...(l.inside !== undefined && { inside: to(l.inside) }),
+      access: l.access.map((a) => ({ person: to(a.person), when: a.when.type === 'always' ? a.when : { ...a.when, person: to(a.when.person) } })),
+    })),
+  };
 }
 
 const replace = <T extends { id: Id }>(list: T[], id: Id, fn: (e: T) => T) => list.map((e) => (e.id === id ? fn(e) : e));
@@ -112,6 +167,39 @@ export function addKey(model: CustodyModel): Created {
 export function updateKey(model: CustodyModel, id: Id, patch: Patch<Key>): CustodyModel {
   return { ...model, keys: replace(model.keys, id, (k) => ({ ...k, ...patch })) };
 }
+
+/** Procedencia sin rellenar: tal como la deja `addKey`. */
+export function isBlankProvenance(key: Key): boolean {
+  const p = key.provenance;
+  return !p.generatedBy && !p.independentlyVerified && p.sources.every((s) => s.kind === 'unknown');
+}
+
+/**
+ * La semilla de `keyId` se generó en el dispositivo `deviceId`: copia su fabricante, modelo y
+ * firmware actual (se copian, no se enlazan: el firmware que cuenta es el de cuando se generó).
+ * Si la entropía estaba sin indicar, pasa a ser el RNG de ese dispositivo; un RNG de dispositivo
+ * con fabricante desconocido toma el suyo.
+ */
+export function setKeyGeneratedOn(model: CustodyModel, keyId: Id, deviceId: Id): CustodyModel {
+  const device = model.devices.find((d) => d.id === deviceId);
+  if (!device) return model;
+  const { vendor, model: name, firmware } = device;
+  const rng: EntropySource = { kind: 'device-rng', vendor, ...(name && { model: name }) };
+  return {
+    ...model,
+    keys: replace(model.keys, keyId, (k) => {
+      const sources = k.provenance.sources.every((s) => s.kind === 'unknown')
+        ? [rng]
+        : k.provenance.sources.map((s) => (s.kind === 'device-rng' && isUnknownVendor(s.vendor) ? rng : s));
+      return {
+        ...k,
+        provenance: { ...k.provenance, sources, generatedBy: { vendor, ...(name && { model: name }), ...(firmware && { firmware }) } },
+      };
+    }),
+  };
+}
+
+const isUnknownVendor = (vendor: string) => ['', 'desconocido'].includes(vendor.trim().toLowerCase());
 
 export function removeKey(model: CustodyModel, id: Id): CustodyModel {
   const policy = removeFromPolicy(model.policy, id);

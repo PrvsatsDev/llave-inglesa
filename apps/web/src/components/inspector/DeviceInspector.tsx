@@ -3,6 +3,7 @@ import { Camera, Cpu } from 'lucide-react';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, SecretToggles, Segmented, Select, Switch, TextInput } from './fields.tsx';
+import { DuressNotes } from '../Findings.tsx';
 import { AdvisoryList, catalogFeatures, HardwareModelSelect } from './Hardware.tsx';
 import styles from './fields.module.css';
 
@@ -140,6 +141,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
             hint={`${duressHint(catalog)} Encarece la llave inglesa, pero no la evita: un atacante informado puede saber que existe.`}
           />
         )}
+        {device.pinProtected && device.duressPin && <DuressNotes model={model} device={device.id} />}
         {device.kind === 'stateful' && (
           <>
             <Switch

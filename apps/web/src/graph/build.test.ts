@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
+import { addLocation, parseModel, setLocationInside, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { buildGraph, type LocationNode, type PersonNode } from './build.ts';
 import { layoutGraph, locationHeight } from './layout.ts';
@@ -33,6 +33,28 @@ describe('buildGraph', () => {
     expect(edge.data?.conditional).toBe(true);
     expect(edge.label).toBe('tras fallecer Yo');
     expect(graph.edges.find((e) => e.id === 'access:yo:casa')!.data?.conditional).toBe(false);
+  });
+});
+
+describe('ubicaciones anidadas', () => {
+  const casa = fixture('todo-en-casa');
+  const { model: withSafe, id: safe } = addLocation(casa, 'Caja fuerte');
+  const graph = buildGraph(setLocationInside(withSafe, safe, 'casa'));
+  const x = (id: string) => graph.nodes.find((n) => n.id === id)!.position.x;
+
+  it('una flecha va de lo contenido al continente', () => {
+    const edge = graph.edges.find((e) => e.id === `contains:casa:${safe}`)!;
+    expect(edge).toMatchObject({ source: safe, target: 'casa', sourceHandle: 'left', targetHandle: 'right', markerEnd: { type: 'arrowclosed' } });
+    expect(edge.data?.contains).toBe(true);
+  });
+
+  it('la de dentro va justo a la derecha de la que la contiene, aunque se creara la última', () => {
+    expect(x('casa')).toBeLessThan(x(safe));
+    expect(x(safe)).toBeLessThan(x('banco'));
+  });
+
+  it('sin anidar no hay aristas de contención', () => {
+    expect(buildGraph(casa).edges.some((e) => e.data?.contains)).toBe(false);
   });
 });
 

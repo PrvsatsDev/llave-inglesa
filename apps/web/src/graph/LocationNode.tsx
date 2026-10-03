@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
+  CircleSlash,
   Bug,
   Camera,
   Circle,
@@ -21,6 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { useScenario } from '../store/scenario.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
 import type { ItemIcon, ItemView, LocationNode as LocationNodeType } from './build.ts';
 import { LOCATION_WIDTH } from './layout.ts';
@@ -41,8 +43,18 @@ export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
 /** Etiqueta del desastre simulado en la ubicación ('total' según el tipo de ubicación). */
 const DISASTER_TAG = { fire: 'Incendio', flood: 'Inundación', physical: 'Sin acceso', device: 'Averiado', cloud: 'Cuenta perdida' } as const;
 
+/** Ubicación que hace falta en la simulación (texto además del color). */
+const USED_TAG = { attack: 'La usa el atacante', recovery: 'Necesaria' } as const;
+
 /** Cómo cae el dispositivo en el ataque simulado (texto además del color). */
 const COMPROMISE = { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' } as const;
+
+/** Añade la pérdida de un objeto a la desgracia que se está simulando. */
+function addLoss(item: string) {
+  const { active, set } = useScenario.getState();
+  if (active?.kind !== 'loss' || active.events.some((e) => e.type === 'item-loss' && e.item === item)) return;
+  set({ kind: 'loss', events: [...active.events, { type: 'item-loss', item }] });
+}
 
 function ItemRow({ item }: { item: ItemView }) {
   const Icon = ITEM_ICONS[item.icon];
@@ -68,9 +80,25 @@ function ItemRow({ item }: { item: ItemView }) {
           {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label="con PIN" />}
           {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label="cifrado" />}
         </span>
-        {item.survived && (
-          <span className={styles.survivedTag}>
-            <ShieldCheck size={11} aria-hidden /> Resiste
+        {(item.survived || item.canLose) && (
+          <span className={styles.itemTags}>
+            {item.survived && (
+              <span className={styles.survivedTag}>
+                <ShieldCheck size={11} aria-hidden /> Resiste
+              </span>
+            )}
+            {item.canLose && (
+              <button
+                className={`${styles.whatIf} nodrag`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addLoss(item.id);
+                }}
+                title="Añade su pérdida a las desgracias combinadas"
+              >
+                <CircleSlash size={11} aria-hidden /> {item.survived ? '¿Y si no resiste?' : '¿Y si se pierde?'}
+              </button>
+            )}
           </span>
         )}
         {item.compromise && (
@@ -128,8 +156,14 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
         <span className={styles.locationTitle}>
           <span className={styles.locationName}>{data.name}</span>
           {meta && <span className={styles.locationMeta}>{meta}</span>}
+          {(data.disaster || data.state === 'used' || data.state === 'reached') && (
+            <span className={styles.locationTags}>
+              {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
+              {data.state === 'used' && <span className={styles.stateTag}>{USED_TAG[data.tone ?? 'recovery']}</span>}
+              {data.state === 'reached' && <span className={`${styles.stateTag} ${styles.reachedTag}`}>Al alcance</span>}
+            </span>
+          )}
         </span>
-        {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
         <span className={styles.keyTags} aria-label="Keys materializadas aquí">
           {data.keys.map((k) => (
             <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`}>
@@ -148,6 +182,9 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
         <p className={styles.emptyLocation}>Vacía</p>
       )}
       <Handle type="target" position={Position.Bottom} id="bottom" className={styles.handle} isConnectable={false} />
+      {/* A la altura de la cabecera: la flecha sale de lo contenido (izquierda) y llega al continente (derecha). */}
+      <Handle type="source" position={Position.Left} id="left" className={`${styles.handle} ${styles.sideHandle}`} isConnectable={false} />
+      <Handle type="target" position={Position.Right} id="right" className={`${styles.handle} ${styles.sideHandle}`} isConnectable={false} />
     </div>
   );
 }

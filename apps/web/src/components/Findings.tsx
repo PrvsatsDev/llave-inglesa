@@ -1,8 +1,8 @@
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
 import { attackAtoms, createWorld, lossAtoms, ownerDeaths, type LossEvent } from '@llave-inglesa/engine';
-import { ChevronDown, ChevronUp, Flame, Hourglass, Play, Skull } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flame, Hourglass, Info, Play, ShieldCheck, Skull } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { attackText, lossText } from '../lib/text.ts';
+import { attackText, duressText, lossText } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
@@ -141,6 +141,43 @@ export function TheftRoutes({ model }: { model: CustodyModel }) {
         from="security"
       />
     </Section>
+  );
+}
+
+/**
+ * Qué aporta cada PIN de coacción a la seguridad y, si no aporta nada, por qué (con la vía que
+ * lo esquiva, simulable). Con `device`, solo el de ese dispositivo (para su ficha).
+ */
+export function DuressNotes({ model, device }: { model: CustodyModel; device?: string }) {
+  const analysis = useAnalysis((s) => s.analysis);
+  const simulate = useNavigation((s) => s.simulate);
+  if (!analysis) return null;
+  const index = indexModel(model);
+  const reports = analysis.duress.filter((r) => (device === undefined || r.device === device) && index.devices.has(r.device));
+  if (reports.length === 0) return null;
+  return (
+    <ul className={styles.list}>
+      {reports.map((r) => {
+        const Icon = r.helps ? ShieldCheck : Info;
+        const bypass = r.bypass;
+        return (
+          <li key={r.device} className={`${styles.note} ${r.helps ? styles.noteHelps : ''}`}>
+            <Icon size={14} aria-hidden />
+            <span>
+              {duressText(r, analysis.security, index)}
+              {bypass && (
+                <>
+                  {' '}
+                  <button className={styles.noteLink} onClick={() => simulate({ kind: 'attack', atoms: bypass }, device ? undefined : 'security')}>
+                    <Play size={11} aria-hidden /> Ver en el mapa
+                  </button>
+                </>
+              )}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

@@ -1,6 +1,8 @@
-import { ADVISORIES, advisoriesFor, indexModel, parseModel, type CustodyModel } from '@llave-inglesa/domain';
+import { readFileSync } from 'node:fs';
+import { ADVISORIES, advisoriesFor, indexModel, parseModel, removeArtifact, updateDevice, type CustodyModel } from '@llave-inglesa/domain';
+import { analyze } from '@llave-inglesa/engine';
 import { describe, expect, it } from 'vitest';
-import { ADVISORY_TITLE, advisoryText, attackText, inheritanceText, lossText, secretText } from '../src/index.ts';
+import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, lossText, secretText } from '../src/index.ts';
 
 const result = parseModel({
   format: 'llave-inglesa',
@@ -89,6 +91,28 @@ describe('texto de la herencia', () => {
   it('sin herederos, lo dice aunque un custodio pueda recuperar', () => {
     expect(inheritanceText({ ...ok, heirs: [], helpers: ['hermano'] }, people)).toBe(
       'Nadie tiene papel de heredero, pero Hermano (custodio/a) puede recuperar los fondos',
+    );
+  });
+});
+
+describe('texto del PIN de coacción', () => {
+  const r06 = parseModel(JSON.parse(readFileSync(new URL('../../../fixtures/referencia/r06-passphrase-solo-memoria.json', import.meta.url), 'utf8')));
+  if (!r06.ok) throw new Error('R06');
+  const withDuress = updateDevice(r06.model, 'nuevo-dispositivo', { duressPin: true });
+  const say = (m: CustodyModel) => {
+    const a = analyze(m);
+    return duressText(a.duress[0]!, a.security, indexModel(m));
+  };
+
+  it('no ayuda: explica que la llave inglesa da la placa', () => {
+    expect(say(withDuress)).toBe(
+      'El PIN de coacción de Trezor no cambia la nota: con llave inglesa a Yo en Casa no hace falta desbloquearlo, porque el atacante se lleva Backup K1.',
+    );
+  });
+
+  it('ayuda: dice cuánto encarece el robo más barato', () => {
+    expect(say(removeArtifact(withDuress, 'nuevo-backup'))).toBe(
+      'El PIN de coacción de Trezor encarece el robo más barato: esfuerzo 3,5 → 4,5 (seguridad 73 → 85).',
     );
   });
 });

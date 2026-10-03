@@ -404,6 +404,22 @@
   gap: 6px;
 }
 
+.suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.suggestion p {
+  margin: 0;
+}
+
 .twoCols {
   display: grid;
   grid-template-columns: 1fr 1fr;

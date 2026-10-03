@@ -191,3 +191,60 @@
   gap: var(--space-3);
   margin-top: var(--space-3);
 }
+
+/* Añadir dispositivos y backups desde el índice. */
+
+.actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.place {
+  position: relative;
+}
+
+.row.placeRow {
+  padding-right: 64px;
+}
+
+.addHere {
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  right: 30px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.addHere:hover,
+.addHere[aria-expanded='true'] {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 4px 0 8px;
+  padding: 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+
+.addButtons {
+  display: flex;
+  gap: 6px;
+}

@@ -1,6 +1,6 @@
 import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyModel, type Device, type Id, type Location, type Person, type SecretRef } from '@llave-inglesa/domain';
 import type { DeviceCompromise, Disaster } from '@llave-inglesa/engine';
-import type { Edge, Node } from '@xyflow/react';
+import type { Edge, MarkerType, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
 import { layoutGraph } from './layout.ts';
@@ -30,6 +30,8 @@ export type ItemView = {
   compromise?: DeviceCompromise;
   /** Ha resistido el incendio o la inundación simulados. */
   survived?: boolean;
+  /** En una desgracia simulada, lo usa la recuperación: se puede probar qué pasaría si también se perdiera. */
+  canLose?: boolean;
 };
 
 export type KeyTag = { id: Id; label: string; color: string };
@@ -53,7 +55,8 @@ export type PersonNodeData = { name: string; role: Person['role']; knows: Secret
 export type LocationNode = Node<LocationNodeData, 'location'>;
 export type PersonNode = Node<PersonNodeData, 'person'>;
 export type GraphNode = LocationNode | PersonNode;
-export type AccessEdge = Edge<{ conditional: boolean }>;
+/** Acceso persona→ubicación, o (con `contains`) una ubicación que contiene otra. */
+export type AccessEdge = Edge<{ conditional: boolean; contains?: boolean }>;
 
 export interface Graph {
   nodes: GraphNode[];
@@ -136,8 +139,31 @@ export function buildGraph(model: CustodyModel): Graph {
     }),
   );
 
+  // Lo que está dentro de otra ubicación (la caja fuerte de Casa) va justo a su derecha, unido a ella.
+  for (const l of model.locations) {
+    if (l.inside === undefined || !index.locations.has(l.inside)) continue;
+    // La flecha va de lo contenido al continente: "la caja fuerte está en Casa".
+    edges.push({
+      id: `contains:${l.inside}:${l.id}`,
+      source: l.id,
+      target: l.inside,
+      sourceHandle: 'left',
+      targetHandle: 'right',
+      type: 'straight',
+      markerEnd: { type: 'arrowclosed' as MarkerType, color: 'var(--text-muted)', width: 12, height: 12 },
+      data: { conditional: false, contains: true },
+      className: 'edge-contains',
+    });
+  }
+  const childrenOf = (id: Id) => locationData.filter((l) => model.locations.find((m) => m.id === l.id)?.inside === id);
+  const isChild = (id: Id) => {
+    const parent = model.locations.find((m) => m.id === id)?.inside;
+    return parent !== undefined && index.locations.has(parent);
+  };
+  const ordered = locationData.filter((l) => !isChild(l.id)).flatMap((l) => [l, ...childrenOf(l.id)]);
+
   const positions = layoutGraph(
-    locationData.map((l) => ({ id: l.id, rows: l.data.items.length })),
+    ordered.map((l) => ({ id: l.id, rows: l.data.items.length })),
     model.people.map((p) => ({ id: p.id, rows: p.knows.length, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
   );
   const at = (id: Id) => positions.get(id) ?? { x: 0, y: 0 };
@@ -161,14 +187,20 @@ export function applyScenario(graph: Graph, view: ScenarioView | null): Graph {
   const { tone } = view;
   const nodes = graph.nodes.map((n): GraphNode => {
     if (n.type === 'location') {
-      const items = n.data.items.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim', compromise: view.compromised.get(i.id), survived: view.survived.has(i.id) }));
+      const items = n.data.items.map((i) => {
+        const state = view.items.get(i.id) ?? 'dim';
+        const canLose = view.scenario.kind === 'loss' && state === 'used';
+        return { ...i, state, compromise: view.compromised.get(i.id), survived: view.survived.has(i.id), canLose };
+      });
       return { ...n, data: { ...n.data, items, state: view.locations.get(n.id) ?? 'dim', tone, disaster: view.disasters.get(n.id) } };
     }
     return { ...n, data: { ...n.data, state: view.people.get(n.id) ?? 'dim', tone } };
   });
   const edges = graph.edges.map((e): AccessEdge => {
+    if (e.data?.contains) return view.locations.get(e.source) === 'dim' ? { ...e, className: `${e.className ?? ''} edge-dim` } : e;
     const hot = view.edges.has(e.id);
-    return { ...e, animated: hot, className: `${e.className ?? ''} ${hot ? `edge-${tone}` : 'edge-dim'}` };
+    const state = hot ? `edge-${tone}` : view.reachedEdges.has(e.id) ? `edge-reached edge-reached-${tone}` : 'edge-dim';
+    return { ...e, animated: hot, className: `${e.className ?? ''} ${state}` };
   });
   return { nodes, edges };
 }

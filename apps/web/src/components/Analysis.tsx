@@ -30,7 +30,7 @@ import { ATTACK_KIND_TEXT, inheritanceText, plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
-import { HeirLossRoutes, LossRoutes, TheftRoutes } from './Findings.tsx';
+import { DuressNotes, HeirLossRoutes, LossRoutes, TheftRoutes } from './Findings.tsx';
 import { Button, Section } from './inspector/fields.tsx';
 import { Tree } from './ScenarioPanel.tsx';
 import { level } from './Scoreboard.tsx';
@@ -71,6 +71,11 @@ export function MetricAnalysis({ model, metric }: { model: CustodyModel; metric:
         <>
           <Score {...securityScore(analysis)} />
           <TheftRoutes model={model} />
+          {analysis.duress.length > 0 && (
+            <Section title="PIN de coacción">
+              <DuressNotes model={model} />
+            </Section>
+          )}
         </>
       );
     case 'resilience':

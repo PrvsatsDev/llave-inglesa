@@ -1,8 +1,8 @@
 #!/usr/bin/env -S npx tsx
 import { readFile } from 'node:fs/promises';
-import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
+import { indexModel, parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { analyze, explain, simulateAttack, simulateInheritance, type Analysis } from '@llave-inglesa/engine';
-import { inheritanceText } from '@llave-inglesa/text';
+import { duressText, inheritanceText } from '@llave-inglesa/text';
 import { bold, dim, formatIssue, Formatter, green, red, scoreBar, yellow } from './format.ts';
 
 const USAGE = 'Uso: llave-inglesa analyze <modelo.json>';
@@ -55,6 +55,7 @@ function report(model: CustodyModel, a: Analysis, fmt: Formatter) {
   if (thefts.length === 0) out.push(green(`  Ninguna combinación de hasta ${a.security.searchedUpTo} ataques permite robar.`));
   thefts.forEach((cut) => out.push(red('  • ' + cut.map((x) => fmt.attack(x)).join('  +  '))));
   if (a.security.cuts.length > thefts.length) out.push(dim(`  (+${a.security.cuts.length - thefts.length} combinaciones mínimas más costosas)`));
+  for (const r of a.duress) out.push((r.helps ? green : yellow)(`  ${duressText(r, a.security, indexModel(model))}`));
   const firstTheft = thefts[0];
   if (firstTheft) {
     out.push('', dim('  Por qué:'));

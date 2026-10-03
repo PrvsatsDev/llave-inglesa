@@ -174,7 +174,9 @@ ajuste las movió.
 ## Por dónde vamos
 
 Hecho: la galería completa (R01–R12), los ajustes 1 a 4 y las bandas revisadas (paso 1 del
-diagnóstico) y los pendientes del motor (paso 2). Siguiente: **paso 3**, las fricciones (rama aparte).
+diagnóstico), los pendientes del motor (paso 2) y las fricciones (paso 3, rama `fase-6-fricciones`):
+las 9 de la lista y 2 más que salieron al revisarlas, todas resueltas. Ninguna nota de la galería
+cambia. La calibración queda cerrada.
 
 ## Conclusión
 
@@ -287,20 +289,29 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   nada porque los 99 dados la protegen.)
 - **R01**: los ids se quedan con el nombre por defecto (`nuevo-dispositivo`, `nueva-persona`) aunque luego
   se renombre. No se ve en la interfaz, solo en el JSON exportado.
+  **Resuelto** en el paso 3: al exportar se cambian por los de su nombre.
 - **R01**: no es obvio dónde se crea un dispositivo o un backup: solo se puede desde la ficha de su
   ubicación. Ideas: botones "+ Dispositivo" y "+ Backup" también en el Esquema (preguntando la
   ubicación), o un "+" junto a cada ubicación del índice.
+  **Resuelto** en el paso 3: las dos cosas.
 - **R04**: dos backups con la misma etiqueta ("Backup K1", uno en la caja fuerte y otro en el banco) no
   se distinguen en las listas: "Pérdida de Backup K1 + Pérdida de Backup K1", o un bloqueo que nombra
   uno sin decir cuál. Ideas: avisar de etiquetas repetidas, o añadir la ubicación al nombre cuando
   dos coinciden.
+  **Resuelto** en el paso 3: las dos cosas (la ubicación se añade sola; aviso solo si ni así se distinguen).
 - **R05**: al simular el fallecimiento, el mapa pinta en verde todas las ubicaciones a las que entra
   Pareja (también Casa, donde solo hay un Trezor que no puede desbloquear), no solo las que necesita.
   Lo que se usa sí se distingue (resaltado) de lo que solo está al alcance, pero en las ubicaciones
   no. Idea: distinguir también las ubicaciones necesarias de las solo alcanzables.
+  **Resuelto** en el paso 3: etiquetas "Necesaria" / "Al alcance" y accesos distintos. En R05 Casa sí sale
+  necesaria, porque la caja fuerte con la semilla está dentro de ella.
 - **R06**: con un PIN de coacción, la seguridad no cambia si hay otro camino que no pasa por el
   dispositivo (la placa en la misma casa), pero la interfaz no explica por qué. Idea: avisar "el PIN de
   coacción no ayuda: con la llave inglesa también se llevan la placa de la caja fuerte".
+  **Resuelto** en el paso 3: el análisis compara la seguridad con y sin cada PIN de coacción y explica
+  por qué no ayuda (la vía que lo esquiva y lo que se lleva el atacante). De paso, la simulación y el "por
+  qué" seguían el camino del dispositivo aunque el robo no necesitara vencer su PIN de coacción: ahora
+  muestran el camino que no lo necesita.
 - **R07**: el fabricante del RNG en la procedencia es texto libre y quedó "Coldcard Q", no "Coinkite"
   como en el catálogo. El fallo publicado se detecta igual (va por el firmware con que se generó), pero
   el ataque "RNG con fallo aún desconocido" agrupa por fabricante: dos keys con "Coldcard Q" y
@@ -309,13 +320,31 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   En R08 el usuario lo confirma: en la key hay que escribir el fabricante a mano en *Entropía* y luego
   volver a elegir el dispositivo en *Generada en*. Bastaría con elegir *Generada en* y que el RNG se
   rellenara desde ahí.
+  **Resuelto** (con la de R01) en el paso 3: *Generada en* ofrece los dispositivos del esquema y rellena
+  desde ellos la entropía; el fabricante del RNG se elige del catálogo; y una key con la procedencia sin
+  rellenar propone rellenarla desde el dispositivo donde está.
+- **Paso 3 (revisión del paso de ubicaciones necesarias)**: al simular un incendio en casa, la placa de
+  acero de K2 "Resiste" y la primera vía de recuperación la usa. El usuario quiere comprobar qué pasaría
+  si tampoco resistiera: ¿hay otra vía o se pierde todo? Ya se puede, añadiendo "Pérdida de Placa K2" en
+  *Desgracias combinadas*, pero no se le ocurre a nadie desde el mapa. Idea: en la simulación de una
+  desgracia, un atajo junto a lo que se usa o resiste ("¿Y si se pierde?") que añada esa pérdida a la
+  combinación.
+  **Resuelto** en el paso 3: atajo "¿Y si se pierde?" / "¿Y si no resiste?" en el mapa.
+- **Paso 3 (revisión del PIN de coacción)**: en el mapa no se ve que una ubicación está dentro de otra
+  (la caja fuerte dentro de Casa); solo lo dice el subtítulo "dentro de Casa". Idea: unirlas con una
+  línea o flecha. Lo ideal sería dibujar una dentro de la otra, pero puede quedar peor por espacio.
+  **Resuelto** en el paso 3: la de dentro va a la derecha de la que la contiene, con una flecha de lo
+  contenido al continente (sin dibujar una dentro de otra).
 - **Esquema de prueba**: si nadie sabe el PIN de un dispositivo, el motor lo trata como inaccesible y la
   seguridad sube sin que el usuario se dé cuenta (en el esquema de prueba, 73 → 83).
   Idea: avisar "nadie sabe el PIN de X: no sirve para firmar" (aviso de validación).
+  **Resuelto** en el paso 3: aviso de validación `pin-unknown`.
 - **Esquema de prueba**: "verificada de forma independiente" no protege una key cuya única fuente es el
   RNG del dispositivo: verificar demuestra que la semilla sale de esa entropía, no que la entropía sea
   buena. La interfaz no lo explica y es fácil creer lo contrario. Idea: explicarlo junto a la casilla, y
   avisar si una key solo tiene el RNG del dispositivo como fuente.
+  **Resuelto** en el paso 3: la ficha de la key lo explica junto a la casilla cuando no hay ninguna fuente
+  propia (como pista, no como aviso global: usar solo el RNG del dispositivo es lo más habitual).
 - **Esquema de prueba (fallo del motor, no de interfaz)**: al firmar con una semilla cargada, `derive.ts`
   usa el primer dispositivo que admite semillas (sin estado, o con "acepta semilla externa") y no mira
   qué keys carga. Con un dispositivo que solo carga K2 y otro que carga K1, el "por qué" dice que

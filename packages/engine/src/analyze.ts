@@ -2,6 +2,8 @@ import type { CustodyModel, Id } from '@llave-inglesa/domain';
 import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './attacks.ts';
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
+import { explain, type ExplanationNode } from './explain.ts';
+import { factId } from './facts.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
 import { attackEffort, combinedRarity, cutRarity, EXPOSURE, inheritanceBreakdown, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
 import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
@@ -31,6 +33,26 @@ export interface SecurityReport extends CutReport<AttackAtom> {
   efforts: number[];
   /** Si cada corte exige vencer un PIN de coacción (mismo orden). */
   beatsDuress: boolean[];
+}
+
+/**
+ * Qué aporta el PIN de coacción de un dispositivo a la seguridad: se compara con el mismo esquema
+ * sin él (las vías de robo son las mismas; solo cambia su esfuerzo).
+ */
+export interface DuressReport {
+  device: Id;
+  /** ¿Mejora la puntuación de seguridad? */
+  helps: boolean;
+  /** Esfuerzo del robo más barato y puntuación sin este PIN de coacción. */
+  minEffortWithout: number | null;
+  scoreWithout: number;
+  /**
+   * Si no ayuda: la vía más barata que no tiene que vencerlo (p. ej. la llave inglesa también
+   * da la placa de la caja fuerte, o el robo más barato ni siquiera coacciona). null si no hay.
+   */
+  bypass: AttackAtom[] | null;
+  /** Objetos que usa esa vía para robar (dispositivos y backups). */
+  bypassItems: Id[];
 }
 
 export interface ResilienceReport {
@@ -82,6 +104,8 @@ export interface InheritanceReport {
 export interface Analysis {
   /** ¿Qué combinación de ataques permite robar, y con qué esfuerzo? */
   security: SecurityReport;
+  /** Un informe por dispositivo con PIN y PIN de coacción configurados. */
+  duress: DuressReport[];
   /** ¿Qué combinación de pérdidas deja los fondos inaccesibles para siempre? */
   resilience: ResilienceReport;
   /** ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? */
@@ -92,8 +116,20 @@ export interface Analysis {
 
 /** ¿Qué consigue un adversario con esta combinación de ataques? */
 export function simulateAttack(model: CustodyModel, atoms: readonly AttackAtom[]): Derivation {
-  const world = createWorld(model);
-  return derive(world, attackHoldings(world, atoms), 'any');
+  return attackDerivation(createWorld(model), atoms);
+}
+
+/**
+ * Lo que consigue el atacante. Si el robo funciona aunque el coaccionado dé el PIN de coacción,
+ * se explica por ese camino (el que no lo necesita); si no, el atacante vence el PIN de coacción.
+ */
+export function attackDerivation(world: World, atoms: readonly AttackAtom[]): Derivation {
+  const holdings = attackHoldings(world, atoms);
+  if (atoms.some((a) => a.type === 'coercion') && world.model.devices.some((d) => d.pinProtected && d.duressPin)) {
+    const honest = derive(world, withDuress(world, atoms, holdings), 'any');
+    if (honest.canSpend) return honest;
+  }
+  return derive(world, holdings, 'any');
 }
 
 /** ¿Qué puede hacer la coalición legítima tras estas pérdidas? */
@@ -250,6 +286,33 @@ function securityReport(world: World, found: AttackAtom[][], searchedUpTo: numbe
   };
 }
 
+/** Objetos que intervienen en el robo con estos ataques (dando el coaccionado el PIN de coacción). */
+function usedItems(world: World, atoms: readonly AttackAtom[]): Id[] {
+  const tree = explain(attackDerivation(world, atoms), factId({ kind: 'spend' }));
+  const items: Id[] = [];
+  const walk = (n: ExplanationNode) => {
+    if (n.fact.kind === 'item' && !items.includes(n.fact.item)) items.push(n.fact.item);
+    n.children.forEach(walk);
+  };
+  if (tree) walk(tree);
+  return items;
+}
+
+/** Para cada PIN de coacción, la seguridad con y sin él. */
+function duressReports(model: CustodyModel, intact: World, security: SecurityReport): DuressReport[] {
+  return model.devices
+    .filter((d) => d.pinProtected && d.duressPin)
+    .map((d) => {
+      const without = createWorld({ ...model, devices: model.devices.map((x) => (x.id === d.id ? { ...x, duressPin: false } : x)) });
+      const alt = securityReport(without, security.cuts, security.searchedUpTo);
+      const helps = alt.score !== security.score || alt.minEffort !== security.minEffort;
+      const bypass = helps
+        ? null
+        : (security.cuts.find((cut, i) => security.efforts[i] === security.minEffort && !duressObstacles(intact, cut).some((o) => o.device === d.id)) ?? null);
+      return { device: d.id, helps, minEffortWithout: alt.minEffort, scoreWithout: alt.score, bypass, bypassItems: bypass ? usedItems(intact, bypass) : [] };
+    });
+}
+
 export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Analysis {
   const maxCutSize = options.maxCutSize ?? 3;
   const intact = createWorld(model);
@@ -308,6 +371,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
 
   return {
     security,
+    duress: duressReports(model, intact, security),
     resilience,
     usability: { score: usabilityScore(usableVisits), locations: usableWith, visits: usableVisits },
     inheritance,

@@ -144,3 +144,43 @@
 .active .play {
   color: var(--text);
 }
+
+/* Notas del PIN de coacción: si ayuda (seguro) o por qué no. */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warn);
+  background: var(--surface);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.noteHelps {
+  border-left-color: var(--safe);
+}
+
+.noteLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.noteLink:hover {
+  text-decoration: underline;
+}

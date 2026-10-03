@@ -22,6 +22,9 @@ import {
   updateLocation,
   removePerson,
   setArtifactPassword,
+  setKeyGeneratedOn,
+  tidyIds,
+  isBlankProvenance,
   setThreshold,
   uniqueId,
   updateDevice,
@@ -214,7 +217,80 @@ const ops: Op[] = [
   (m, pick) => setLocationProtection(m, m.locations[pick(m.locations.length)]!.id, ([undefined, 'home-safe', 'bank-box'] as const)[pick(3)]),
   (m, pick) => setLocationInside(m, m.locations[pick(m.locations.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => updateLocation(m, m.locations[pick(m.locations.length)]!.id, { kind: (['physical', 'device', 'cloud'] as const)[pick(3)] }),
+  (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
 ];
+
+describe('procedencia generada en un dispositivo', () => {
+  it('una key nueva rellena su procedencia desde el dispositivo: RNG y generación', () => {
+    const { model, id } = addKey(casa);
+    expect(isBlankProvenance(model.keys.find((k) => k.id === id)!)).toBe(true);
+    const key = setKeyGeneratedOn(model, id, 'ccq').keys.find((k) => k.id === id)!;
+    expect(key.provenance).toEqual({
+      sources: [{ kind: 'device-rng', vendor: 'Coinkite', model: 'Coldcard Q' }],
+      generatedBy: { vendor: 'Coinkite', model: 'Coldcard Q' },
+      independentlyVerified: false,
+    });
+    expect(isBlankProvenance(key)).toBe(false);
+  });
+
+  it('conserva las fuentes conocidas y completa el RNG de fabricante desconocido', () => {
+    const m = updateKey(casa, 'k2', {
+      provenance: { sources: [{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'Desconocido' }], independentlyVerified: true },
+    });
+    const key = setKeyGeneratedOn(m, 'k2', 'seedsigner').keys.find((k) => k.id === 'k2')!;
+    expect(key.provenance.sources).toEqual([{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'SeedSigner' }]);
+    expect(key.provenance.generatedBy).toEqual({ vendor: 'SeedSigner' });
+    expect(key.provenance.independentlyVerified).toBe(true);
+  });
+
+  it('copia el firmware actual del dispositivo', () => {
+    const m = updateDevice(casa, 'ccq', { firmware: '1.3.1Q' });
+    expect(setKeyGeneratedOn(m, 'k3', 'ccq').keys.find((k) => k.id === 'k3')!.provenance.generatedBy).toEqual({
+      vendor: 'Coinkite',
+      model: 'Coldcard Q',
+      firmware: '1.3.1Q',
+    });
+  });
+
+  it('con un dispositivo que no existe no cambia nada', () => {
+    expect(setKeyGeneratedOn(casa, 'k1', 'nada')).toBe(casa);
+  });
+});
+
+describe('ordenar los ids al exportar', () => {
+  const r05 = fixture('referencia/r05-passphrase-copia-aparte');
+
+  it('cambia los ids por defecto por el de su nombre, en todas las referencias', () => {
+    const m = tidyIds(r05);
+    expect(m.locations.map((l) => l.id)).toEqual(['casa', 'caja-fuerte', 'casa-padres']);
+    expect(m.people.map((p) => p.id)).toEqual(['yo', 'pareja']);
+    expect(m.devices.map((d) => [d.id, d.location])).toEqual([['trezor', 'casa']]);
+    expect(m.artifacts.map((a) => [a.id, a.location])).toEqual([
+      ['backup-k1', 'caja-fuerte'],
+      ['backup-passphrase', 'casa-padres'],
+    ]);
+    expect(m.locations.find((l) => l.id === 'caja-fuerte')!.inside).toBe('casa');
+    expect(m.locations.find((l) => l.id === 'casa-padres')!.access).toContainEqual({ person: 'pareja', when: { type: 'after-death', person: 'yo' } });
+    expect(m.people[0]!.knows).toContainEqual({ type: 'pin', device: 'trezor' });
+    expect(errors(m)).toEqual([]);
+  });
+
+  it('no toca los ids puestos a mano ni los de las keys, y es idempotente', () => {
+    expect(tidyIds(casa)).toBe(casa);
+    const once = tidyIds(r05);
+    expect(tidyIds(once)).toBe(once);
+    expect(once.keys).toEqual(r05.keys);
+  });
+
+  it('sin cambiar el nombre, el id por defecto se queda; con nombres repetidos, numera', () => {
+    const a = addDevice(casa, 'casa');
+    expect(tidyIds(a.model)).toBe(a.model);
+    const b = addDevice(updateDevice(a.model, a.id, { label: 'Coldcard Q' }), 'casa');
+    const m = tidyIds(updateDevice(b.model, b.id, { label: 'Casa' }));
+    expect(m.devices.map((d) => d.id)).toEqual(['ccq', 'seedsigner', 'coldcard-q', 'casa-2']);
+    expect(errors(m)).toEqual([]);
+  });
+});
 
 describe('propiedad: editar nunca rompe el modelo', () => {
   it('cualquier secuencia de operaciones deja un modelo válido', () => {
@@ -228,6 +304,7 @@ describe('propiedad: editar nunca rompe el modelo', () => {
             let i = 0;
             m = ops[op]!(m, (n) => seeds[i++ % seeds.length]! % n);
             expect(errors(m)).toEqual([]);
+            expect(errors(tidyIds(m))).toEqual([]);
           }
         },
       ),
