@@ -13,7 +13,9 @@ export type DialogRequest =
   | { kind: 'confirm'; title: string; message: string; confirmLabel: string; danger?: boolean; resolve(ok: boolean): void }
   | { kind: 'alert'; title: string; lines: string[]; resolve(): void }
   /** Qué es la herramienta y por dónde empezar. null: cerrada sin elegir (se queda en el ejemplo). */
-  | { kind: 'welcome'; resolve(choice: WelcomeChoice | null): void };
+  | { kind: 'welcome'; resolve(choice: WelcomeChoice | null): void }
+  /** Qué es, quién la hace y cómo apoyarlo. */
+  | { kind: 'about'; resolve(): void };
 
 export type WelcomeChoice = { kind: 'example' } | { kind: 'new' } | { kind: 'open'; file: File };
 
@@ -50,3 +52,4 @@ export const confirmDialog = (title: string, message: string, confirmLabel: stri
 export const alertDialog = (title: string, lines: string[]) => show<void>({ kind: 'alert', title, lines }, undefined);
 
 export const welcomeDialog = () => show<WelcomeChoice | null>({ kind: 'welcome' }, null);
+export const aboutDialog = () => show<void>({ kind: 'about' }, undefined);

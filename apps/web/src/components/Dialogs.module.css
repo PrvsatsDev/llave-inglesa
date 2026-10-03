@@ -239,6 +239,81 @@
   font-size: var(--text-xs);
 }
 
+.close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.close:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.inlineLink {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Autor, al pie de la bienvenida y de «Acerca de» */
+
+.author {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.author strong {
+  color: var(--text);
+}
+
+.author a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.author a:hover {
+  text-decoration: underline;
+}
+
+.lightning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.copy:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
 @keyframes appear {
   from {
     opacity: 0;

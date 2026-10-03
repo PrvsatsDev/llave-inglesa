@@ -78,6 +78,12 @@ python3 scripts/logo.py   # regenera los SVG del logo (app, favicon y README)
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
 ```
 
+## Autor
+
+Hecha por **Psats** · [X](https://x.com/prvSats) · [Nostr](https://primal.net/p/npub1prv54tsy2tae3a5mn2ev8gvkuylwmwqcx3uj3zja0gm3ed5vzrys9cj2d0)
+
+Si te resulta útil, puedes apoyarla con Lightning: `unluckyhand034@walletofsatoshi.com` ⚡
+
 ## Licencia
 
 [MIT](LICENSE).

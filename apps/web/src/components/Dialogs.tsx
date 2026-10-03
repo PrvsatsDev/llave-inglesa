@@ -1,6 +1,7 @@
-import { AlertTriangle, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Check, Copy, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, X, Zap } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
+import { AUTOR } from '../lib/autor.ts';
 import { examples } from '../lib/examples.ts';
 import { APP_VERSION } from '../version.ts';
 import styles from './Dialogs.module.css';
@@ -69,15 +70,59 @@ function PasswordForm({ req }: { req: Extract<DialogRequest, { kind: 'password' 
   );
 }
 
-/** Qué es la herramienta, la advertencia de no usar secretos reales y por dónde empezar. */
-function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) {
-  const fileRef = useRef<HTMLInputElement>(null);
+/** Quién la hace: X y Nostr y, en «Acerca de», la dirección Lightning para apoyarlo (con botón de copiar). */
+function Author({ lightning }: { lightning: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard
+      ?.writeText(AUTOR.lightning)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => undefined);
+  };
   return (
-    <div className={styles.form}>
+    <p className={styles.author}>
+      Hecha por <strong>{AUTOR.nombre}</strong>
+      <span aria-hidden>·</span>
+      <a href={AUTOR.x} target="_blank" rel="noopener noreferrer">
+        X
+      </a>
+      <span aria-hidden>·</span>
+      <a href={AUTOR.nostr} target="_blank" rel="noopener noreferrer">
+        Nostr
+      </a>
+      {lightning && (
+        <>
+          <span aria-hidden>·</span>
+          <span className={styles.lightning}>
+            <Zap size={12} aria-hidden />
+            <a href={`lightning:${AUTOR.lightning}`} title="Apoyar con Lightning">
+              {AUTOR.lightning}
+            </a>
+            <button type="button" className={styles.copy} onClick={copy} aria-label="Copiar la dirección Lightning">
+              {copied ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
+              {copied ? 'Copiada' : 'Copiar'}
+            </button>
+          </span>
+        </>
+      )}
+    </p>
+  );
+}
+
+/** Cabecera (logo, nombre, versión y cerrar) y qué es la herramienta: común a la bienvenida y a «Acerca de». */
+function Intro({ onClose }: { onClose(): void }) {
+  return (
+    <>
       <header className={styles.header}>
         <img src="/logo.svg" alt="" width={40} height={40} />
         <h2 className={styles.title}>llave-inglesa</h2>
         <span className={styles.version}>v{APP_VERSION}</span>
+        <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar">
+          <X size={16} aria-hidden />
+        </button>
       </header>
       <p className={styles.lead}>Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.</p>
       <ul className={styles.points}>
@@ -91,8 +136,18 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
       <p className={styles.warning}>
         <AlertTriangle size={14} aria-hidden /> Nunca escribas frases semilla, claves privadas ni passphrases reales: no hacen falta.
       </p>
+    </>
+  );
+}
+
+/** Primera visita: qué es y por dónde empezar. Cerrarla equivale a ver el ejemplo. */
+function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className={styles.form}>
+      <Intro onClose={() => req.resolve(null)} />
       <footer className={styles.welcomeActions}>
-        <button className={styles.primary} onClick={() => req.resolve({ kind: 'example' })} autoFocus>
+        <button className={styles.primary} onClick={() => req.resolve({ kind: 'example' })} data-autofocus>
           <MapIcon size={14} aria-hidden /> Ver un ejemplo
         </button>
         <button className={styles.secondary} onClick={() => req.resolve({ kind: 'new' })}>
@@ -103,8 +158,10 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
         </button>
       </footer>
       <p className={styles.hint}>
-        En el selector de arriba hay {examples.length} ejemplos, de lo más habitual a lo más cuidado. Puedes volver aquí pulsando el logo.
+        En el selector de arriba hay {examples.length} ejemplos, de lo más habitual a lo más cuidado. Esto se puede volver a leer en «Acerca de»,
+        pulsando el logo.
       </p>
+      <Author lightning={false} />
       <input
         ref={fileRef}
         type="file"
@@ -120,6 +177,22 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
   );
 }
 
+/** «Acerca de»: lo mismo que la bienvenida, sin los botones de empezar, con el código y cómo apoyarlo. */
+function About({ req }: { req: Extract<DialogRequest, { kind: 'about' }> }) {
+  return (
+    <div className={styles.form}>
+      <Intro onClose={() => req.resolve()} />
+      <p className={styles.hint}>
+        Código abierto (MIT) y verificable: cada versión se puede recompilar y comparar con la publicada.{' '}
+        <a className={styles.inlineLink} href={AUTOR.repo} target="_blank" rel="noopener noreferrer">
+          Código en GitHub
+        </a>
+      </p>
+      <Author lightning />
+    </div>
+  );
+}
+
 /** Contenedor de todos los diálogos modales (uno a la vez, con <dialog> nativo). */
 export function Dialogs() {
   const current = useDialog((s) => s.current);
@@ -128,13 +201,18 @@ export function Dialogs() {
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (current && !dialog.open) dialog.showModal();
+    if (current && !dialog.open) {
+      dialog.showModal();
+      // showModal enfoca el primer botón (el ✕ de cerrar); el principal se marca con data-autofocus.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    }
     if (!current && dialog.open) dialog.close();
   }, [current]);
 
   const cancel = () => {
     if (!current) return;
     if (current.kind === 'password' || current.kind === 'welcome') current.resolve(null);
+    else if (current.kind === 'about') current.resolve();
     else if (current.kind === 'confirm') current.resolve(false);
     else current.resolve();
   };
@@ -142,7 +220,7 @@ export function Dialogs() {
   return (
     <dialog
       ref={ref}
-      className={`${styles.dialog} ${current?.kind === 'welcome' ? styles.wide : ''}`}
+      className={`${styles.dialog} ${current?.kind === 'welcome' || current?.kind === 'about' ? styles.wide : ''}`}
       onCancel={(e) => {
         e.preventDefault();
         cancel();
@@ -164,6 +242,7 @@ export function Dialogs() {
         </div>
       )}
       {current?.kind === 'welcome' && <Welcome req={current} />}
+      {current?.kind === 'about' && <About req={current} />}
       {current?.kind === 'alert' && (
         <div className={styles.form}>
           <h2 className={styles.title}>{current.title}</h2>

@@ -2,7 +2,8 @@ import { ChevronDown, Redo2, Undo2 } from 'lucide-react';
 import { EXAMPLE_GROUPS, examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { policyText } from '../lib/text.ts';
-import { loadExample, showWelcome } from '../storage/actions.ts';
+import { loadExample } from '../storage/actions.ts';
+import { aboutDialog } from '../store/dialog.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
 import { FileMenu } from './FileMenu.tsx';
 import { KeyChip } from './KeyChip.tsx';
@@ -45,7 +46,7 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <button className={styles.brand} onClick={() => void showWelcome()} title="Qué es llave-inglesa" aria-label="Qué es llave-inglesa">
+      <button className={styles.brand} onClick={() => void aboutDialog()} title="Acerca de llave-inglesa" aria-label="Acerca de llave-inglesa">
         <img className={styles.logo} src="/logo.svg" alt="" width={28} height={28} />
         <span className={styles.wordmark}>llave-inglesa</span>
       </button>
