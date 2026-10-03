@@ -51,3 +51,27 @@ describe('parseModel', () => {
     expect(codes({ ...valid, devices, people })).toEqual([]);
   });
 });
+
+describe('aviso: PIN que nadie sabe', () => {
+  const withDevice = (people: unknown[], artifacts: unknown[] = []) => ({
+    ...valid,
+    devices: [{ id: 'hw', label: 'HW', vendor: 'X', kind: 'stateful', holds: ['k1'], pinProtected: true, location: 'casa' }],
+    people,
+    artifacts,
+  });
+
+  it('avisa si el dispositivo tiene PIN y nadie lo sabe ni está apuntado', () => {
+    expect(codes(withDevice([{ id: 'yo', name: 'Yo', role: 'owner' }]))).toContain('pin-unknown');
+  });
+
+  it('no avisa si alguien lo sabe o está apuntado en un backup', () => {
+    expect(codes(withDevice([{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'pin', device: 'hw' }] }]))).not.toContain('pin-unknown');
+    const note = { id: 'nota', label: 'Nota', medium: 'paper', contents: [{ type: 'pin', device: 'hw' }], location: 'casa' };
+    expect(codes(withDevice([{ id: 'yo', name: 'Yo', role: 'owner' }], [note]))).not.toContain('pin-unknown');
+  });
+
+  it('sin PIN no hay nada que saber', () => {
+    const m = withDevice([{ id: 'yo', name: 'Yo', role: 'owner' }]);
+    expect(codes({ ...m, devices: [{ ...m.devices[0], pinProtected: false }] })).not.toContain('pin-unknown');
+  });
+});

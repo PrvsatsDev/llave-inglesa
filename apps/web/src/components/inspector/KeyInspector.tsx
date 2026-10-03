@@ -94,6 +94,8 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
   const patch = (p: Partial<Key>, field?: string) => apply((m) => updateKey(m, id, p), field && `key:${id}:${field}`);
   const setProvenance = (p: Partial<Provenance>, field?: string) => patch({ provenance: { ...key.provenance, ...p } }, field && `provenance:${field}`);
   const { sources, generatedBy, independentlyVerified } = key.provenance;
+  /** Alguna fuente que no es un RNG (dados, moneda, cartas): la única que una verificación puede proteger. */
+  const hasOwnEntropy = sources.some((s) => s.kind === 'dice' || s.kind === 'coin' || s.kind === 'cards');
   const generatorModel = catalogModelByName(generatedBy?.model);
   const generatorAdvisories = generatorModel ? advisoriesFor(generatorModel.id, generatedBy?.firmware).filter((m) => m.advisory.kind === 'weak-entropy') : [];
 
@@ -256,6 +258,13 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
           label="Verificada de forma independiente"
           hint="Comprobaste con otra herramienta que la semilla sale de tu entropía (p. ej. tus tiradas de dados)."
         />
+        {!hasOwnEntropy && (
+          <p className={independentlyVerified ? styles.warningHint : styles.hint}>
+            {independentlyVerified && <AlertTriangle size={12} aria-hidden />} Verificar solo protege si hay una fuente tuya (dados, moneda o cartas): demuestra que la
+            semilla sale de esa entropía, no que la entropía sea buena. Si solo hay RNG (de un dispositivo, de un software o desconocido), un fallo en él la
+            compromete igual.
+          </p>
+        )}
       </Section>
 
       <DeleteButton

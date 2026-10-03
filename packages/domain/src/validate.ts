@@ -7,6 +7,7 @@ export type IssueCode =
   | 'duplicate-id'
   | 'unknown-reference'
   | 'stateful-holds-nothing'
+  | 'pin-unknown'
   | 'threshold-out-of-range'
   | 'key-repeated-in-policy'
   | 'key-not-in-policy'
@@ -118,6 +119,11 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     d.holds.forEach((k, j) => ref(keys, k, ['devices', i, 'holds', j]));
     d.loads?.forEach((k, j) => ref(keys, k, ['devices', i, 'loads', j]));
     if (d.kind === 'stateful' && d.holds.length === 0) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
+    // Con PIN que nadie sabe ni está apuntado, el dispositivo no sirve para firmar (y la seguridad sube sin avisar).
+    const isPin = (s: SecretRef) => s.type === 'pin' && s.device === d.id;
+    if (d.pinProtected && !model.people.some((p) => p.knows.some(isPin)) && !model.artifacts.some((a) => a.contents.some(isPin))) {
+      report('warning', 'pin-unknown', ['devices', i, 'pinProtected'], d.id);
+    }
   });
 
   model.artifacts.forEach((a, i) => {

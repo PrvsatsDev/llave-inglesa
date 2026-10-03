@@ -325,13 +325,19 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   *Desgracias combinadas*, pero no se le ocurre a nadie desde el mapa. Idea: en la simulación de una
   desgracia, un atajo junto a lo que se usa o resiste ("¿Y si se pierde?") que añada esa pérdida a la
   combinación.
+- **Paso 3 (revisión del PIN de coacción)**: en el mapa no se ve que una ubicación está dentro de otra
+  (la caja fuerte dentro de Casa); solo lo dice el subtítulo "dentro de Casa". Idea: unirlas con una
+  línea o flecha. Lo ideal sería dibujar una dentro de la otra, pero puede quedar peor por espacio.
 - **Esquema de prueba**: si nadie sabe el PIN de un dispositivo, el motor lo trata como inaccesible y la
   seguridad sube sin que el usuario se dé cuenta (en el esquema de prueba, 73 → 83).
   Idea: avisar "nadie sabe el PIN de X: no sirve para firmar" (aviso de validación).
+  **Resuelto** en el paso 3: aviso de validación `pin-unknown`.
 - **Esquema de prueba**: "verificada de forma independiente" no protege una key cuya única fuente es el
   RNG del dispositivo: verificar demuestra que la semilla sale de esa entropía, no que la entropía sea
   buena. La interfaz no lo explica y es fácil creer lo contrario. Idea: explicarlo junto a la casilla, y
   avisar si una key solo tiene el RNG del dispositivo como fuente.
+  **Resuelto** en el paso 3: la ficha de la key lo explica junto a la casilla cuando no hay ninguna fuente
+  propia (como pista, no como aviso global: usar solo el RNG del dispositivo es lo más habitual).
 - **Esquema de prueba (fallo del motor, no de interfaz)**: al firmar con una semilla cargada, `derive.ts`
   usa el primer dispositivo que admite semillas (sin estado, o con "acepta semilla externa") y no mira
   qué keys carga. Con un dispositivo que solo carga K2 y otro que carga K1, el "por qué" dice que
