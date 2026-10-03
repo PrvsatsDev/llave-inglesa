@@ -174,7 +174,9 @@ ajuste las movió.
 ## Por dónde vamos
 
 Hecho: la galería completa (R01–R12), los ajustes 1 a 4 y las bandas revisadas (paso 1 del
-diagnóstico) y los pendientes del motor (paso 2). Siguiente: **paso 3**, las fricciones (rama aparte).
+diagnóstico), los pendientes del motor (paso 2) y las fricciones (paso 3, rama `fase-6-fricciones`):
+las 9 de la lista y 2 más que salieron al revisarlas, todas resueltas. Ninguna nota de la galería
+cambia. La calibración queda cerrada.
 
 ## Conclusión
 
