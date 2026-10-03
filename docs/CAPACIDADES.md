@@ -17,7 +17,7 @@ Nunca material secreto real: solo qué existe, dónde está y quién sabe qué.
 | **Persona** | Rol (titular, heredero, custodio, otro) y qué sabe de memoria. |
 | **Ubicación** | Tipo (física, dispositivo como un portátil, nube) y quién puede entrar y **cuándo**: siempre, tras el fallecimiento de alguien, o si alguien queda incapacitado o fallece (poder notarial). Las físicas tienen **protección** (ninguna, **caja fuerte** doméstica o **caja del banco**) y pueden estar **dentro de otra** física (p. ej. la caja fuerte dentro de Casa; un solo nivel): para entrar en ella hay que poder entrar también en la que la contiene. |
 
-La validación avisa de referencias rotas y de incoherencias (p. ej. un stateful que no guarda nada, una key fuera de la política, un dispositivo con PIN que nadie sabe ni está apuntado: el motor lo trata como inaccesible, así que no sirve para firmar y la seguridad sube sin que se note).
+La validación avisa de referencias rotas y de incoherencias (p. ej. un stateful que no guarda nada, una key fuera de la política, un dispositivo con PIN que nadie sabe ni está apuntado: el motor lo trata como inaccesible, así que no sirve para firmar y la seguridad sube sin que se note). Dos dispositivos o backups con el mismo nombre se distinguen solos en todas las listas añadiendo su ubicación ("Backup K1 (Banco)") y, si también coincide, un número; keys, personas o ubicaciones con el mismo nombre, u objetos iguales en el mismo sitio, dan un aviso.
 
 ## 2. Catálogo de hardware (fecha: ver `CATALOG_DATE`)
 

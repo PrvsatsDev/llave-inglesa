@@ -216,6 +216,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'unknown-reference': 'Algo hace referencia a un elemento que no existe',
   'stateful-holds-nothing': 'Hay un dispositivo que no guarda ninguna key',
   'pin-unknown': 'Hay un dispositivo con PIN que nadie sabe ni está apuntado: no sirve para firmar',
+  'duplicate-label': 'Hay varios elementos con el mismo nombre: no se distinguirán en las listas',
   'threshold-out-of-range': 'El umbral de la política es mayor que el número de keys',
   'key-repeated-in-policy': 'Una key aparece dos veces en la política',
   'key-not-in-policy': 'Hay una key que no participa en la política',
@@ -233,6 +234,7 @@ export function issueText(issue: Issue, label: Label): string {
     if (field === 'fingerprint') return 'El fingerprint debe tener 8 caracteres hexadecimales';
     return issue.detail ? `${base} (${issue.detail})` : base;
   }
+  if (issue.code === 'duplicate-label' && issue.detail) return `Hay varios elementos que se llaman «${issue.detail}»: ponles nombres distintos para distinguirlos en las listas`;
   if (issue.code === 'pin-unknown' && issue.ref) return `Nadie sabe el PIN de ${label(issue.ref)} ni está apuntado: no sirve para firmar`;
   return issue.ref ? `${base}: ${label(issue.ref)}` : base;
 }

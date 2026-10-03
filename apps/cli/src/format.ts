@@ -51,6 +51,7 @@ export function formatIssue(i: Issue): string {
     'duplicate-id': `id repetido${ref}`,
     'unknown-reference': `referencia a algo que no existe${ref}`,
     'stateful-holds-nothing': `dispositivo stateful sin ninguna key dentro${ref}`,
+    'duplicate-label': `nombre repetido «${i.detail ?? ''}» (no se distinguirán en las listas)`,
     'pin-unknown': `nadie sabe el PIN${ref} ni está apuntado: no sirve para firmar`,
     'threshold-out-of-range': 'el umbral es mayor que el número de opciones',
     'key-repeated-in-policy': `key repetida en la política${ref}`,

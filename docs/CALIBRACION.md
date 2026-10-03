@@ -295,6 +295,7 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   se distinguen en las listas: "Pérdida de Backup K1 + Pérdida de Backup K1", o un bloqueo que nombra
   uno sin decir cuál. Ideas: avisar de etiquetas repetidas, o añadir la ubicación al nombre cuando
   dos coinciden.
+  **Resuelto** en el paso 3: las dos cosas (la ubicación se añade sola; aviso solo si ni así se distinguen).
 - **R05**: al simular el fallecimiento, el mapa pinta en verde todas las ubicaciones a las que entra
   Pareja (también Casa, donde solo hay un Trezor que no puede desbloquear), no solo las que necesita.
   Lo que se usa sí se distingue (resaltado) de lo que solo está al alcance, pero en las ubicaciones
