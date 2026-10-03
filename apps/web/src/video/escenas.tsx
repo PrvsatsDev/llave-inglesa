@@ -18,9 +18,6 @@ export interface Escena {
   sonidos?: readonly Sonido[];
 }
 
-/** Tics cada `cada` fotogramas entre `desde` y `hasta` (una cifra que cuenta). */
-const tics = (desde: number, hasta: number, cada = 3): Sonido[] =>
-  Array.from({ length: Math.floor((hasta - desde) / cada) }, (_, k) => ({ f: desde + k * cada, tipo: 'tic' }));
 
 // ---------- Los dos esquemas del vídeo ----------
 
@@ -287,7 +284,7 @@ function Escena6({ f }: { f: number }) {
 
 export const ESCENAS: readonly Escena[] = [
   { id: 'escena-1', titulo: 'El punto de partida', fotogramas: 180, Componente: Escena1 },
-  { id: 'escena-2', titulo: 'El ataque', fotogramas: 180, Componente: Escena2 },
+  { id: 'escena-2', titulo: 'El ataque', fotogramas: 180, Componente: Escena2, sonidos: [{ f: 18, tipo: 'golpe' }] },
   {
     id: 'escena-3',
     titulo: 'La desgracia',
@@ -295,16 +292,13 @@ export const ESCENAS: readonly Escena[] = [
     Componente: Escena3,
     sonidos: [
       { f: 20, tipo: 'golpe' },
-      { f: 20, tipo: 'fuego', dur: 5.4 },
-      { f: 25, tipo: 'whoosh' },
-      ...tics(55, 105),
-      { f: 45, tipo: 'grave' },
+      { f: 20, tipo: 'fuego', dur: 2.2, vol: 0.8 },
     ],
   },
   { id: 'escena-4', titulo: 'Mejorar', fotogramas: 300, Componente: Escena4 },
-  { id: 'escena-5', titulo: 'La herencia', fotogramas: 210, Componente: EscenaHerencia },
+  { id: 'escena-5', titulo: 'La herencia', fotogramas: 210, Componente: EscenaHerencia, sonidos: [{ f: 45, tipo: 'acorde', dur: 2.4 }] },
   { id: 'escena-6', titulo: 'El porqué', fotogramas: 240, Componente: Escena5 },
-  { id: 'escena-7', titulo: 'Cierre', fotogramas: 210, Componente: Escena6 },
+  { id: 'escena-7', titulo: 'Cierre', fotogramas: 210, Componente: Escena6, sonidos: [{ f: 12, tipo: 'campana' }] },
 ];
 
 export const DURACION = ESCENAS.reduce((s, e) => s + e.fotogramas, 0);

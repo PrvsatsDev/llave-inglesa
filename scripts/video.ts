@@ -6,6 +6,9 @@
  *   npx tsx scripts/video.ts                       el vídeo completo
  *   npx tsx scripts/video.ts --escena 3            solo una escena (para probar)
  *   npx tsx scripts/video.ts --musica pista.mp3    con música de fondo (baja, con fundidos)
+ *   … --musica pista.mp3 --musica-desde 35         empezando la pista en su segundo 35
+ *
+ * La música va a volumen fijo: los efectos se suman encima sin hacerla bajar ni subir.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -22,6 +25,7 @@ const argumento = (nombre: string) => {
 };
 const escena = argumento('--escena');
 const musica = argumento('--musica');
+const musicaDesde = Number(argumento('--musica-desde') ?? 0);
 const nombre = escena ? `escena-${escena}` : 'llave-inglesa';
 
 rmSync(FOTOGRAMAS, { recursive: true, force: true });
@@ -67,12 +71,15 @@ try {
   const segundos = fotogramas / 30;
   const mp4 = `${SALIDA}${nombre}.mp4`;
   const entradas = ['-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-i', audio];
+  // Fundido de entrada marcado (2,5 s) y de salida más suave (1,5 s).
   const mezcla = musica
     ? [
+        '-ss',
+        String(musicaDesde),
         '-i',
         resolve(musica),
         '-filter_complex',
-        `[2:a]volume=0.22,afade=t=in:d=1.5,afade=t=out:st=${Math.max(0, segundos - 2.5)}:d=2.5[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
+        `[2:a]volume=0.22,afade=t=in:d=2.5,afade=t=out:st=${Math.max(0, segundos - 1.5)}:d=1.5[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
         '-map',
         '0:v',
         '-map',
