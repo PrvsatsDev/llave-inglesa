@@ -1,48 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
+import { CSP, netlifyHeaders, SECURITY_HEADERS } from './security-headers.ts';
 
 /** Versión publicada (la de package.json), visible en la app para compararla con la Release. */
 const VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
-
-/**
- * Política de seguridad del contenido para el build: la app no puede hacer
- * NINGUNA petición de red (connect-src 'none') ni cargar recursos externos.
- * Solo en build: el servidor de desarrollo necesita su websocket de recarga.
- */
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'", // React Flow posiciona nodos con estilos en línea
-  "font-src 'self'",
-  "img-src 'self' data:",
-  "worker-src 'self'",
-  "connect-src 'none'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-].join('; ');
-
-/**
- * Cabeceras HTTP de seguridad. El CSP es el mismo de la etiqueta <meta>, más lo que solo funciona
- * como cabecera: frame-ancestors (nadie puede meter la app en un iframe). Van a Netlify en el
- * fichero `_headers` y al `vite preview`, para que las pruebas e2e las usen también.
- */
-const SECURITY_HEADERS: Record<string, string> = {
-  'Content-Security-Policy': `${CSP}; frame-ancestors 'none'`,
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'no-referrer',
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()',
-};
-
-const block = (headers: Record<string, string>) => Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`).join('\n');
-const NETLIFY_HEADERS = `/*
-${block(SECURITY_HEADERS)}
-
-/assets/*
-${block({ 'Cache-Control': 'public, max-age=31536000, immutable' })}
-`;
 
 const contentSecurityPolicy = (): Plugin => ({
   name: 'llave-inglesa:csp',
@@ -51,7 +13,7 @@ const contentSecurityPolicy = (): Plugin => ({
     { tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: CSP }, injectTo: 'head-prepend' },
   ],
   generateBundle() {
-    this.emitFile({ type: 'asset', fileName: '_headers', source: NETLIFY_HEADERS });
+    this.emitFile({ type: 'asset', fileName: '_headers', source: netlifyHeaders() });
   },
 });
 
