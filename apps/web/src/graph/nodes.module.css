@@ -411,6 +411,35 @@
   font-weight: 700;
 }
 
+.itemTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Atajo de la simulación: probar qué pasaría si también se perdiera. */
+.whatIf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 0 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.whatIf:hover {
+  border-style: solid;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .survivedTag {
   display: inline-flex;
   align-items: center;
@@ -481,4 +510,8 @@
   50% {
     box-shadow: inset 0 0 0 1px var(--tone), 0 0 16px var(--tone-soft);
   }
+}
+
+.handle.sideHandle {
+  top: 28px;
 }

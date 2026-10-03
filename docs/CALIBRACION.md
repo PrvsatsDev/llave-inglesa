@@ -327,9 +327,12 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   *Desgracias combinadas*, pero no se le ocurre a nadie desde el mapa. Idea: en la simulación de una
   desgracia, un atajo junto a lo que se usa o resiste ("¿Y si se pierde?") que añada esa pérdida a la
   combinación.
+  **Resuelto** en el paso 3: atajo "¿Y si se pierde?" / "¿Y si no resiste?" en el mapa.
 - **Paso 3 (revisión del PIN de coacción)**: en el mapa no se ve que una ubicación está dentro de otra
   (la caja fuerte dentro de Casa); solo lo dice el subtítulo "dentro de Casa". Idea: unirlas con una
   línea o flecha. Lo ideal sería dibujar una dentro de la otra, pero puede quedar peor por espacio.
+  **Resuelto** en el paso 3: la de dentro va a la derecha de la que la contiene, con una flecha de lo
+  contenido al continente (sin dibujar una dentro de otra).
 - **Esquema de prueba**: si nadie sabe el PIN de un dispositivo, el motor lo trata como inaccesible y la
   seguridad sube sin que el usuario se dé cuenta (en el esquema de prueba, 73 → 83).
   Idea: avisar "nadie sabe el PIN de X: no sirve para firmar" (aviso de validación).

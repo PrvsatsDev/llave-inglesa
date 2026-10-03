@@ -139,6 +139,16 @@ describe('applyScenario', () => {
     expect(edge.animated).toBe(false);
   });
 
+  it('en una desgracia, lo que usa la recuperación ofrece probar su pérdida; en un ataque, no', () => {
+    const items = (scenario: Scenario) =>
+      applyScenario(buildGraph(casa), scenarioView(casa, scenario)).nodes.flatMap((n) => (n.type === 'location' ? n.data.items : []));
+    const fire = items({ kind: 'loss', events: [{ type: 'destroy-location', location: 'casa', disaster: 'fire' }] });
+    expect(fire.find((i) => i.id === 'metal-k2')).toMatchObject({ survived: true, canLose: true });
+    expect(fire.find((i) => i.id === 'ccq')?.canLose).toBe(false);
+    const wrench = items({ kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] });
+    expect(wrench.some((i) => i.canLose)).toBe(false);
+  });
+
   it('sin escenario, el grafo queda intacto', () => {
     const g = buildGraph(casa);
     expect(applyScenario(g, null)).toBe(g);

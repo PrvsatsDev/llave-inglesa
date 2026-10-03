@@ -93,6 +93,11 @@ textarea {
   stroke: var(--safe);
 }
 
+.react-flow__edge.edge-contains .react-flow__edge-path {
+  stroke: var(--text-muted);
+  stroke-width: 2;
+}
+
 .react-flow__edge.edge-dim {
   opacity: 0.2;
 }
