@@ -5,6 +5,7 @@ import type { ComponentType } from 'react';
 import { attackText, inheritanceText, lossText } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
 import { Aviso, ejemplo, Llamas, Mapa, Tarjeta, Titulo, type EstadoMapa } from './piezas.tsx';
+import type { Sonido } from './sonido.ts';
 import { interpolar, suave } from './tiempo.ts';
 import styles from './video.module.css';
 
@@ -13,7 +14,13 @@ export interface Escena {
   titulo: string;
   fotogramas: number;
   Componente: ComponentType<{ f: number }>;
+  /** Efectos de sonido, en fotogramas de la escena. */
+  sonidos?: readonly Sonido[];
 }
+
+/** Tics cada `cada` fotogramas entre `desde` y `hasta` (una cifra que cuenta). */
+const tics = (desde: number, hasta: number, cada = 3): Sonido[] =>
+  Array.from({ length: Math.floor((hasta - desde) / cada) }, (_, k) => ({ f: desde + k * cada, tipo: 'tic' }));
 
 // ---------- Los dos esquemas del vídeo ----------
 
@@ -281,7 +288,19 @@ function Escena6({ f }: { f: number }) {
 export const ESCENAS: readonly Escena[] = [
   { id: 'escena-1', titulo: 'El punto de partida', fotogramas: 180, Componente: Escena1 },
   { id: 'escena-2', titulo: 'El ataque', fotogramas: 180, Componente: Escena2 },
-  { id: 'escena-3', titulo: 'La desgracia', fotogramas: 180, Componente: Escena3 },
+  {
+    id: 'escena-3',
+    titulo: 'La desgracia',
+    fotogramas: 180,
+    Componente: Escena3,
+    sonidos: [
+      { f: 20, tipo: 'golpe' },
+      { f: 20, tipo: 'fuego', dur: 5.4 },
+      { f: 25, tipo: 'whoosh' },
+      ...tics(55, 105),
+      { f: 45, tipo: 'grave' },
+    ],
+  },
   { id: 'escena-4', titulo: 'Mejorar', fotogramas: 300, Componente: Escena4 },
   { id: 'escena-5', titulo: 'La herencia', fotogramas: 210, Componente: EscenaHerencia },
   { id: 'escena-6', titulo: 'El porqué', fotogramas: 240, Componente: Escena5 },
@@ -299,4 +318,24 @@ export function escenaEn(f: number): { escena: Escena; local: number } {
   }
   const ultima = ESCENAS[ESCENAS.length - 1]!;
   return { escena: ultima, local: ultima.fotogramas - 1 };
+}
+
+/** Todos los sonidos del vídeo, con su fotograma en el vídeo completo. */
+export function sonidosDelVideo(): { f: number; sonido: Sonido }[] {
+  let inicio = 0;
+  return ESCENAS.flatMap((e) => {
+    const lista = (e.sonidos ?? []).map((sonido) => ({ f: inicio + sonido.f, sonido }));
+    inicio += e.fotogramas;
+    return lista;
+  });
+}
+
+/** Primer fotograma de cada escena en el vídeo completo. */
+export function inicioDe(id: string): number {
+  let inicio = 0;
+  for (const e of ESCENAS) {
+    if (e.id === id) return inicio;
+    inicio += e.fotogramas;
+  }
+  throw new Error(`No existe la escena ${id}`);
 }

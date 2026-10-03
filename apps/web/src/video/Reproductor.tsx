@@ -1,7 +1,8 @@
 import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { DURACION, escenaEn } from './escenas.tsx';
+import { DURACION, ESCENAS, escenaEn, inicioDe, sonidosDelVideo } from './escenas.tsx';
+import { renderizarAudio, wavBase64 } from './sonido.ts';
 import { ALTO, ANCHO, FPS } from './tiempo.ts';
 import styles from './video.module.css';
 
@@ -10,6 +11,9 @@ declare global {
     /** Pinta un fotograma del vídeo y resuelve cuando ya está en pantalla (lo usan el render y el reproductor). */
     __fotograma?: (f: number) => Promise<void>;
     __duracion?: number;
+    /** Para el render: tramo de una escena, y el audio (WAV en base64) de un tramo. */
+    __tramo?: (escena: string) => { desde: number; fotogramas: number };
+    __audio?: (desde: number, fotogramas: number) => Promise<string>;
   }
 }
 
@@ -26,6 +30,8 @@ function Lienzo() {
   const [f, setF] = useState(0);
   useEffect(() => {
     window.__duracion = DURACION;
+    window.__tramo = (id) => ({ desde: inicioDe(id), fotogramas: ESCENAS.find((e) => e.id === id)!.fotogramas });
+    window.__audio = async (desde, fotogramas) => wavBase64(await renderizarAudio(sonidosDelVideo(), desde, fotogramas));
     window.__fotograma = (n) => {
       flushSync(() => setF(n));
       return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));

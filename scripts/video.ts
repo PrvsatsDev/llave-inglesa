@@ -1,15 +1,28 @@
 /**
  * Renderiza el vídeo: arranca el servidor de desarrollo, abre /video.html?render a 1920×1080, captura
- * cada fotograma con Playwright y los junta en un MP4 con ffmpeg. Sin dependencias nuevas.
- * Uso: npx tsx scripts/video.ts    (resultado en video/salida/, que no se sube al repo)
+ * cada fotograma con Playwright, sintetiza los efectos de sonido en el propio navegador (Web Audio) y
+ * lo junta todo en un MP4 con ffmpeg. Sin dependencias nuevas. El resultado va a video/salida/ (no se sube).
+ *
+ *   npx tsx scripts/video.ts                       el vídeo completo
+ *   npx tsx scripts/video.ts --escena 3            solo una escena (para probar)
+ *   npx tsx scripts/video.ts --musica pista.mp3    con música de fondo (baja, con fundidos)
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const PUERTO = 4190;
 const SALIDA = new URL('../video/salida/', import.meta.url).pathname;
 const FOTOGRAMAS = `${SALIDA}fotogramas/`;
+
+const argumento = (nombre: string) => {
+  const i = process.argv.indexOf(nombre);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+};
+const escena = argumento('--escena');
+const musica = argumento('--musica');
+const nombre = escena ? `escena-${escena}` : 'llave-inglesa';
 
 rmSync(FOTOGRAMAS, { recursive: true, force: true });
 mkdirSync(FOTOGRAMAS, { recursive: true });
@@ -37,16 +50,40 @@ try {
   // El mapa se encuadra cuando React Flow ha medido los nodos.
   await pagina.waitForSelector('.react-flow__node');
   await pagina.waitForTimeout(500);
-  const duracion = await pagina.evaluate(() => window.__duracion!);
-  for (let f = 0; f < duracion; f++) {
-    await pagina.evaluate((n) => window.__fotograma!(n), f);
-    await pagina.screenshot({ path: `${FOTOGRAMAS}${String(f).padStart(4, '0')}.png` });
-    if (f % 30 === 0) process.stdout.write(`fotograma ${f}/${duracion}\n`);
+
+  const { desde, fotogramas } = escena
+    ? await pagina.evaluate((id) => window.__tramo!(id), `escena-${escena}`)
+    : { desde: 0, fotogramas: await pagina.evaluate(() => window.__duracion!) };
+  for (let k = 0; k < fotogramas; k++) {
+    await pagina.evaluate((n) => window.__fotograma!(n), desde + k);
+    await pagina.screenshot({ path: `${FOTOGRAMAS}${String(k).padStart(4, '0')}.png` });
+    if (k % 30 === 0) process.stdout.write(`fotograma ${k}/${fotogramas}\n`);
   }
+  const audio = `${SALIDA}${nombre}.wav`;
+  writeFileSync(audio, Buffer.from(await pagina.evaluate(([d, n]) => window.__audio!(d!, n!), [desde, fotogramas]), 'base64'));
   await navegador.close();
 
-  const mp4 = `${SALIDA}llave-inglesa.mp4`;
-  const r = spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', mp4], { stdio: 'inherit' });
+  // Imagen + efectos (+ música de fondo, baja y con fundidos, si se indica).
+  const segundos = fotogramas / 30;
+  const mp4 = `${SALIDA}${nombre}.mp4`;
+  const entradas = ['-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-i', audio];
+  const mezcla = musica
+    ? [
+        '-i',
+        resolve(musica),
+        '-filter_complex',
+        `[2:a]volume=0.22,afade=t=in:d=1.5,afade=t=out:st=${Math.max(0, segundos - 2.5)}:d=2.5[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
+        '-map',
+        '0:v',
+        '-map',
+        '[a]',
+      ]
+    : ['-map', '0:v', '-map', '1:a'];
+  const r = spawnSync(
+    'ffmpeg',
+    ['-y', '-loglevel', 'error', ...entradas, ...mezcla, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-shortest', mp4],
+    { stdio: 'inherit' },
+  );
   if (r.status !== 0) throw new Error('ffmpeg ha fallado');
   console.log(mp4);
 } finally {
