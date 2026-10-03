@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:publicada": "E2E_URL=https://llave-inglesa.netlify.app playwright test"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
