@@ -226,6 +226,13 @@
   gap: 6px;
 }
 
+.version {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
 .hint {
   margin: 0;
   color: var(--text-faint);

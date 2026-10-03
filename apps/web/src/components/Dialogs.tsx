@@ -2,6 +2,7 @@ import { AlertTriangle, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldC
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
 import { examples } from '../lib/examples.ts';
+import { APP_VERSION } from '../version.ts';
 import styles from './Dialogs.module.css';
 
 const MIN_LENGTH = 10;
@@ -78,6 +79,7 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
           <Wrench size={18} />
         </span>
         <h2 className={styles.title}>llave-inglesa</h2>
+        <span className={styles.version}>v{APP_VERSION}</span>
       </header>
       <p className={styles.lead}>Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.</p>
       <ul className={styles.points}>

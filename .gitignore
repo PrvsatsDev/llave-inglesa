@@ -5,3 +5,4 @@ coverage/
 .DS_Store
 apps/web/e2e/.resultados/
 apps/web/e2e/.capturas/
+release/

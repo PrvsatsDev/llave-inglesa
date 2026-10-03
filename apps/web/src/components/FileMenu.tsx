@@ -1,6 +1,7 @@
 import { ChevronDown, Download, FilePlus2, FolderOpen, HardDriveDownload, Lock, Save, Trash2, Unlock, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { exportEncrypted, exportPlain, forgetLocal, hasLocalDocument, importFile, newDocument, openLocal, saveLocal } from '../storage/actions.ts';
+import { APP_VERSION } from '../version.ts';
 import styles from './FileMenu.module.css';
 
 interface Item {
@@ -109,7 +110,9 @@ export function FileMenu() {
               ))}
             </div>
           ))}
-          <p className={styles.footer}>Todo ocurre en tu equipo: nada se envía a ningún servidor.</p>
+          <p className={styles.footer}>
+            Todo ocurre en tu equipo: nada se envía a ningún servidor. <span className={styles.version}>v{APP_VERSION}</span>
+          </p>
         </div>
       )}
       <input

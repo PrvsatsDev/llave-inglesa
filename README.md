@@ -29,14 +29,15 @@ Cada resultado explica **por qué**, y cualquier combinación se puede **simular
 
 ## Cómo usarla
 
-La versión publicada estará enlazada aquí. Mientras tanto, se ejecuta en local:
+- **En línea**: https://llave-inglesa.netlify.app
+- **Sin conexión**: descarga el zip de la última [Release](https://github.com/PrvsatsDev/llave-inglesa/releases),
+  descomprímelo y sirve la carpeta en tu equipo (`python3 -m http.server 8000 --bind 127.0.0.1`); lo
+  explica el `LEEME.txt` que va dentro.
+- **Desde el código** (Node 22 o posterior): `npm install && npm run dev` y abre http://127.0.0.1:5173.
 
-```sh
-npm install
-npm run dev          # http://127.0.0.1:5173
-```
-
-Requiere Node 22 o posterior. Al abrirla por primera vez verás una bienvenida y 15 ejemplos, desde
+**No hace falta fiarse**: el build es reproducible y cada Release trae los hashes de todos sus
+ficheros. Cómo recompilarla y compararla, también con la web publicada, en
+[docs/VERIFICAR.md](docs/VERIFICAR.md). Al abrirla por primera vez verás una bienvenida y 15 ejemplos, desde
 "papel en el cajón" hasta un multisig 2 de 3 distribuido, cada uno con lo que enseña.
 
 Todo lo que la herramienta modela, y sus límites conocidos, está en
@@ -65,6 +66,7 @@ política de gasto es un árbol tipo Miniscript, preparada para añadir timelock
 npm run check        # typecheck + tests unitarios y de propiedades (fast-check)
 npm run e2e          # pruebas en Chromium contra el build de producción
 npm run build        # web estática en apps/web/dist
+npm run empaquetar   # build + zip reproducible y SHA256SUMS en release/
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
 ```
 

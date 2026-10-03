@@ -6,6 +6,8 @@ test('la primera visita muestra la bienvenida; "Ver un ejemplo" la cierra y no v
   await page.goto('/');
   await expect(welcome(page)).toBeVisible();
   await expect(welcome(page)).toContainText('Nunca escribas frases semilla');
+  // La versión, para compararla con la Release.
+  await expect(welcome(page)).toContainText(/v\d+\.\d+\.\d+/);
   await page.screenshot({ path: 'e2e/.capturas/bienvenida.png' });
   await page.getByRole('button', { name: 'Ver un ejemplo' }).click();
   await expect(welcome(page)).toBeHidden();
