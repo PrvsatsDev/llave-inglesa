@@ -292,13 +292,13 @@ export const ESCENAS: readonly Escena[] = [
     Componente: Escena3,
     sonidos: [
       { f: 20, tipo: 'golpe' },
-      { f: 20, tipo: 'fuego', dur: 2.2, vol: 0.8 },
+      { f: 20, tipo: 'fuego', dur: 2.2, vol: 1.5 },
     ],
   },
   { id: 'escena-4', titulo: 'Mejorar', fotogramas: 300, Componente: Escena4 },
-  { id: 'escena-5', titulo: 'La herencia', fotogramas: 210, Componente: EscenaHerencia, sonidos: [{ f: 45, tipo: 'acorde', dur: 2.4 }] },
+  { id: 'escena-5', titulo: 'La herencia', fotogramas: 210, Componente: EscenaHerencia },
   { id: 'escena-6', titulo: 'El porqué', fotogramas: 240, Componente: Escena5 },
-  { id: 'escena-7', titulo: 'Cierre', fotogramas: 210, Componente: Escena6, sonidos: [{ f: 12, tipo: 'campana' }] },
+  { id: 'escena-7', titulo: 'Cierre', fotogramas: 210, Componente: Escena6 },
 ];
 
 export const DURACION = ESCENAS.reduce((s, e) => s + e.fotogramas, 0);

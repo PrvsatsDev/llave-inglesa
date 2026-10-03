@@ -71,7 +71,7 @@ try {
   const segundos = fotogramas / 30;
   const mp4 = `${SALIDA}${nombre}.mp4`;
   const entradas = ['-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-i', audio];
-  // Fundido de entrada marcado (2,5 s) y de salida más suave (1,5 s).
+  // Fundidos marcados: 4 s de entrada y 3 s de salida.
   const mezcla = musica
     ? [
         '-ss',
@@ -79,7 +79,7 @@ try {
         '-i',
         resolve(musica),
         '-filter_complex',
-        `[2:a]volume=0.22,afade=t=in:d=2.5,afade=t=out:st=${Math.max(0, segundos - 1.5)}:d=1.5[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
+        `[2:a]volume=0.22,afade=t=in:d=4,afade=t=out:st=${Math.max(0, segundos - 3)}:d=3[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
         '-map',
         '0:v',
         '-map',
