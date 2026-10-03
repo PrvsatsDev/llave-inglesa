@@ -16,6 +16,7 @@ npm run e2e        # pruebas en Chromium contra el build de producción; captura
 npm run e2e:publicada -w @llave-inglesa/web   # las mismas pruebas contra https://llave-inglesa.vualt.net
 npm run analyze -- fixtures/todo-en-casa.json   # CLI
 npx tsx scripts/guia.ts   # recalcula las cifras de la guía (tras cambiar score.ts o un ejemplo)
+npx tsx scripts/video.ts  # vídeo de presentación a MP4 (Playwright + ffmpeg); escenas en apps/web/src/video/
 npm run build
 ```
 

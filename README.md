@@ -77,6 +77,7 @@ npm run e2e          # pruebas en Chromium contra el build de producción
 npm run build        # web estática en apps/web/dist
 npm run empaquetar   # build + zip reproducible y SHA256SUMS en release/
 python3 scripts/logo.py   # regenera los SVG del logo (app, favicon y README)
+npx tsx scripts/video.ts  # renderiza el vídeo de presentación (video/salida/, no se sube); revisarlo: npm run dev → /video.html
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
 ```
 
