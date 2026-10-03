@@ -1,5 +1,5 @@
 import { ChevronDown, Download, FilePlus2, FolderOpen, HardDriveDownload, Lock, Save, Trash2, Unlock, type LucideIcon } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { exportEncrypted, exportPlain, forgetLocal, hasLocalDocument, importFile, newDocument, openLocal, saveLocal } from '../storage/actions.ts';
 import styles from './FileMenu.module.css';
 
@@ -17,6 +17,33 @@ export function FileMenu() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Al abrirse, el foco pasa a la primera opción (como en cualquier menú).
+  useEffect(() => {
+    if (open) listRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+  }, [open]);
+
+  /** Flechas, Inicio y Fin recorren las opciones; Esc cierra y vuelve al botón; Tab cierra y sigue. */
+  const onMenuKey = (e: KeyboardEvent) => {
+    const items = [...(listRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
+    const at = items.indexOf(document.activeElement as HTMLElement);
+    const go = (i: number) => {
+      e.preventDefault();
+      items[(i + items.length) % items.length]?.focus();
+    };
+    if (e.key === 'ArrowDown') go(at + 1);
+    else if (e.key === 'ArrowUp') go(at - 1);
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(items.length - 1);
+    else if (e.key === 'Escape') {
+      // Que no llegue al Esc global ("volver").
+      e.stopPropagation();
+      setOpen(false);
+      triggerRef.current?.focus();
+    } else if (e.key === 'Tab') setOpen(false);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -44,11 +71,24 @@ export function FileMenu() {
 
   return (
     <div className={styles.wrap} ref={menuRef}>
-      <button className={styles.trigger} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" aria-label="Archivo">
+      <button
+        ref={triggerRef}
+        className={styles.trigger}
+        onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' && !open) {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="Archivo"
+      >
         <Download size={14} aria-hidden /> <span className={styles.triggerText}>Archivo</span> <ChevronDown size={13} aria-hidden />
       </button>
       {open && (
-        <div className={styles.menu} role="menu">
+        <div className={styles.menu} role="menu" aria-label="Archivo" ref={listRef} onKeyDown={onMenuKey}>
           {groups.map((group, g) => (
             <div key={g} className={styles.group}>
               {group.map((item) => (

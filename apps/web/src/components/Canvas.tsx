@@ -1,5 +1,5 @@
 import { Background, BackgroundVariant, Controls, ReactFlow, useEdgesState, useNodesState, type NodeTypes } from '@xyflow/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, type KeyboardEvent } from 'react';
 import { applyScenario, buildGraph, type AccessEdge, type GraphNode } from '../graph/build.ts';
 import { LocationNode } from '../graph/LocationNode.tsx';
 import { PersonNode } from '../graph/PersonNode.tsx';
@@ -12,10 +12,20 @@ import styles from './Canvas.module.css';
 
 const nodeTypes: NodeTypes = { location: LocationNode, person: PersonNode };
 
+/** Con el teclado, Enter o espacio sobre un nodo enfocado abre su ficha, como un clic. */
+function openFocusedNode(e: KeyboardEvent<HTMLElement>) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const node = (e.target as HTMLElement).closest<HTMLElement>('.react-flow__node');
+  const id = node?.dataset.id;
+  if (!node || !id || e.target !== node) return;
+  e.preventDefault();
+  useSelection.getState().select({ kind: node.classList.contains('react-flow__node-location') ? 'location' : 'person', id });
+}
+
 export function Canvas() {
   const generation = useDocument((s) => s.generation);
   return (
-    <main id="mapa" className={styles.canvas} aria-label="Mapa de custodia">
+    <main id="mapa" className={styles.canvas} aria-label="Mapa de custodia" onKeyDown={openFocusedNode}>
       {/* Cambiar de documento remonta el lienzo: layout y encuadre desde cero. */}
       <Graph key={generation} />
       <Legend />
