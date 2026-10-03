@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+import { tidyIds } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { analyze, BURGLARY_EFFORT, CLOUD_BREACH_EFFORT } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
@@ -132,5 +134,14 @@ describe('calibración: esquemas de referencia', () => {
 
   it('con un solo heredero, la herencia no pasa de ~84: su fallecimiento siempre cuenta', () => {
     for (const r of [r04, r08, r09, r10]) expect(r.inheritance.score).toBeLessThan(85);
+  });
+});
+
+describe('ordenar los ids al exportar no cambia nada del análisis', () => {
+  const names = readdirSync(new URL('../../../fixtures/referencia/', import.meta.url)).map((f) => f.replace(/\.json$/, ''));
+  it.each(names)('%s', (name) => {
+    const model = loadFixture(`referencia/${name}`);
+    const scores = (a: ReturnType<typeof analyze>) => [a.security.score, a.resilience.score, a.usability.score, a.inheritance.score];
+    expect(scores(analyze(tidyIds(model)))).toEqual(scores(analyze(model)));
   });
 });

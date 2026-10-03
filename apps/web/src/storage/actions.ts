@@ -1,4 +1,4 @@
-import { blankModel, type CustodyModel, type ParseResult } from '@llave-inglesa/domain';
+import { blankModel, tidyIds, type CustodyModel, type ParseResult } from '@llave-inglesa/domain';
 import {
   createKey,
   isEnvelope,
@@ -188,6 +188,9 @@ export async function forgetLocal() {
   if (origin.kind === 'local') useDocument.setState({ saved: null, origin: { kind: 'new' } });
 }
 
+/** El documento tal como sale en un fichero: con los ids por defecto cambiados por los de su nombre. */
+const exportable = () => tidyIds(useDocument.getState().model);
+
 export async function exportEncrypted() {
   const password = await askPassword(
     'create',
@@ -195,7 +198,7 @@ export async function exportEncrypted() {
     'Se descargará un fichero .llave cifrado. Para abrirlo hará falta esta contraseña (puede ser distinta de la del navegador).',
   );
   if (password === null) return;
-  const { model } = useDocument.getState();
+  const model = exportable();
   const envelope = await sealModel(model, await createKey(password));
   download(`${slug(model.name)}.llave`, JSON.stringify(envelope, null, 2), 'application/json');
 }
@@ -208,7 +211,7 @@ export async function exportPlain() {
     true,
   );
   if (!ok) return;
-  const { model } = useDocument.getState();
+  const model = exportable();
   download(`${slug(model.name)}.json`, serializeModel(model), 'application/json');
 }
 

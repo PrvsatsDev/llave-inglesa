@@ -81,7 +81,7 @@ Todo resultado lleva su **explicación**: el árbol de por qué se cumple cada p
   - **Ubicaciones protegidas** en el mapa y en el índice: icono de caja fuerte o de banco y, bajo el nombre, "Caja fuerte · dentro de Casa". En la ficha de una ubicación física se elige la protección (con lo que implica) y dentro de qué otra está; si contiene otras, se listan en su lugar.
   - **Migas de pan con «Volver»** (también Esc): la ficha de un elemento se abre encima de la sección en la que se estaba; abrir otra desde ella (p. ej. un dispositivo desde su ubicación) la apila; pulsar una vía del análisis abre su simulación, y volver regresa a la lista con la simulación aún en el mapa. En la raíz de cada sección, una frase dice qué hay en ella.
 
-  Deshacer/rehacer, guardado cifrado en el navegador, exportación cifrada (`.llave`) o en claro (`.json`).
+  Deshacer/rehacer, guardado cifrado en el navegador, exportación cifrada (`.llave`) o en claro (`.json`). Al exportar, los ids que puso la aplicación al crear algo (`nuevo-dispositivo-2`…) se cambian por los de su nombre actual (`trezor-de-casa`), con todas sus referencias; los ids puestos a mano y los de las keys se quedan. Dentro del editor no cambian (no se ven).
 - **CLI**: `npm run analyze -- fichero.json` imprime puntuaciones, vías más baratas con su porqué, pérdidas y bloqueos.
 - **Ejemplos** (`fixtures/`): todo en casa, distribuido 2 de 3, single-sig con passphrase.
 

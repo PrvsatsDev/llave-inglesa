@@ -23,6 +23,7 @@ import {
   removePerson,
   setArtifactPassword,
   setKeyGeneratedOn,
+  tidyIds,
   isBlankProvenance,
   setThreshold,
   uniqueId,
@@ -256,6 +257,41 @@ describe('procedencia generada en un dispositivo', () => {
   });
 });
 
+describe('ordenar los ids al exportar', () => {
+  const r05 = fixture('referencia/r05-passphrase-copia-aparte');
+
+  it('cambia los ids por defecto por el de su nombre, en todas las referencias', () => {
+    const m = tidyIds(r05);
+    expect(m.locations.map((l) => l.id)).toEqual(['casa', 'caja-fuerte', 'casa-padres']);
+    expect(m.people.map((p) => p.id)).toEqual(['yo', 'pareja']);
+    expect(m.devices.map((d) => [d.id, d.location])).toEqual([['trezor', 'casa']]);
+    expect(m.artifacts.map((a) => [a.id, a.location])).toEqual([
+      ['backup-k1', 'caja-fuerte'],
+      ['backup-passphrase', 'casa-padres'],
+    ]);
+    expect(m.locations.find((l) => l.id === 'caja-fuerte')!.inside).toBe('casa');
+    expect(m.locations.find((l) => l.id === 'casa-padres')!.access).toContainEqual({ person: 'pareja', when: { type: 'after-death', person: 'yo' } });
+    expect(m.people[0]!.knows).toContainEqual({ type: 'pin', device: 'trezor' });
+    expect(errors(m)).toEqual([]);
+  });
+
+  it('no toca los ids puestos a mano ni los de las keys, y es idempotente', () => {
+    expect(tidyIds(casa)).toBe(casa);
+    const once = tidyIds(r05);
+    expect(tidyIds(once)).toBe(once);
+    expect(once.keys).toEqual(r05.keys);
+  });
+
+  it('sin cambiar el nombre, el id por defecto se queda; con nombres repetidos, numera', () => {
+    const a = addDevice(casa, 'casa');
+    expect(tidyIds(a.model)).toBe(a.model);
+    const b = addDevice(updateDevice(a.model, a.id, { label: 'Coldcard Q' }), 'casa');
+    const m = tidyIds(updateDevice(b.model, b.id, { label: 'Casa' }));
+    expect(m.devices.map((d) => d.id)).toEqual(['ccq', 'seedsigner', 'coldcard-q', 'casa-2']);
+    expect(errors(m)).toEqual([]);
+  });
+});
+
 describe('propiedad: editar nunca rompe el modelo', () => {
   it('cualquier secuencia de operaciones deja un modelo válido', () => {
     fc.assert(
@@ -268,6 +304,7 @@ describe('propiedad: editar nunca rompe el modelo', () => {
             let i = 0;
             m = ops[op]!(m, (n) => seeds[i++ % seeds.length]! % n);
             expect(errors(m)).toEqual([]);
+            expect(errors(tidyIds(m))).toEqual([]);
           }
         },
       ),

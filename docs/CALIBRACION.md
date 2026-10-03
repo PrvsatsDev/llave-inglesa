@@ -287,6 +287,7 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   nada porque los 99 dados la protegen.)
 - **R01**: los ids se quedan con el nombre por defecto (`nuevo-dispositivo`, `nueva-persona`) aunque luego
   se renombre. No se ve en la interfaz, solo en el JSON exportado.
+  **Resuelto** en el paso 3: al exportar se cambian por los de su nombre.
 - **R01**: no es obvio dónde se crea un dispositivo o un backup: solo se puede desde la ficha de su
   ubicación. Ideas: botones "+ Dispositivo" y "+ Backup" también en el Esquema (preguntando la
   ubicación), o un "+" junto a cada ubicación del índice.
