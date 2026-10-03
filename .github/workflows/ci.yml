@@ -1,0 +1,36 @@
+# Comprobaciones en cada PR y en cada push a main: lo mismo que `npm run check` y `npm run e2e` en local.
+name: Comprobaciones
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck y tests
+        run: npm run check
+      - name: Chromium para las pruebas en navegador
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Pruebas en navegador (build de producción)
+        run: npm run e2e
+      - name: Capturas si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-resultados
+          path: apps/web/e2e/.resultados
+          retention-days: 7

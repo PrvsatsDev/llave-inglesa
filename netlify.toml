@@ -1,0 +1,8 @@
+# Despliegue en Netlify: web estática, sin funciones ni redirecciones.
+# Las cabeceras de seguridad (CSP como cabecera real) las genera el build en apps/web/dist/_headers.
+[build]
+  command = "npm run build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"

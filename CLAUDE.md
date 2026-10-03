@@ -13,6 +13,7 @@ El proyecto y toda la interfaz están en **español**. Las conversaciones con el
 npm run dev        # web en http://127.0.0.1:5173
 npm run check      # typecheck (raíz + web) + todos los tests — ejecutar antes de cada commit
 npm run e2e        # pruebas en Chromium contra el build de producción; capturas en apps/web/e2e/.capturas
+npm run e2e:publicada -w @llave-inglesa/web   # las mismas pruebas contra https://llave-inglesa.netlify.app
 npm run analyze -- fixtures/todo-en-casa.json   # CLI
 npm run build
 ```
