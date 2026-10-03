@@ -44,8 +44,8 @@ export function FileMenu() {
 
   return (
     <div className={styles.wrap} ref={menuRef}>
-      <button className={styles.trigger} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu">
-        <Download size={14} aria-hidden /> Archivo <ChevronDown size={13} aria-hidden />
+      <button className={styles.trigger} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" aria-label="Archivo">
+        <Download size={14} aria-hidden /> <span className={styles.triggerText}>Archivo</span> <ChevronDown size={13} aria-hidden />
       </button>
       {open && (
         <div className={styles.menu} role="menu">

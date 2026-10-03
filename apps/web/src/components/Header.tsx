@@ -95,9 +95,9 @@ export function Header() {
         </button>
       </div>
 
-      <span className={styles.offline} title="La aplicación no puede hacer peticiones de red">
+      <span className={styles.offline} title="La aplicación no puede hacer peticiones de red" aria-label="100% local: la aplicación no puede hacer peticiones de red">
         <span className={styles.offlineDot} aria-hidden />
-        100% local
+        <span className={styles.offlineText}>100% local</span>
       </span>
     </header>
   );

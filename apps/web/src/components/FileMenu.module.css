@@ -106,3 +106,10 @@
     transform: translateY(-4px);
   }
 }
+
+/* En móvil, solo el icono: deja sitio al selector de documento. */
+@media (max-width: 480px) {
+  .triggerText {
+    display: none;
+  }
+}
