@@ -1,7 +1,7 @@
 import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, type Edge, type Node, type NodeTypes } from '@xyflow/react';
 import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
 import { scoreBand } from '@llave-inglesa/engine';
-import type { CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { applyScenario, buildGraph } from '../graph/build.ts';
 import { LocationNode } from '../graph/LocationNode.tsx';
 import { PersonNode } from '../graph/PersonNode.tsx';
@@ -42,34 +42,51 @@ export interface EstadoMapa {
 /** El mapa real de la app, con los nodos y las líneas que digan el estado, y un encuadre fijo. */
 export function Mapa({ estado }: { estado: EstadoMapa }) {
   const { modelo, nodos: visibles, objetos = {}, lineas, posiciones = {}, vista } = estado;
-  const grafo = applyScenario(buildGraph(modelo), estado.escenario ? scenarioView(modelo, estado.escenario) : null);
-  const nodes: Node[] = grafo.nodes
-    .filter((n) => n.id in visibles)
-    .map((n) => {
-      const p = visibles[n.id]!;
-      const style = {
-        opacity: p,
-        '--escala': 0.94 + 0.06 * p,
-        ...Object.fromEntries((objetos[n.id] ?? []).map((v, k) => [`--obj${k + 1}`, v])),
-      } as CSSProperties;
-      const tachado = estado.tachados?.[n.id] ?? 0;
-      if (tachado > 0) Object.assign(style, { '--tachado': tachado });
-      return { ...n, position: posiciones[n.id] ?? n.position, style, className: tachado > 0 ? styles.tachado : undefined };
-    });
-  const edges: Edge[] = grafo.edges
-    .filter((e) => e.source in visibles && e.target in visibles)
-    .map((e) => {
-      const l = typeof lineas === 'number' ? lineas : (lineas[e.id] ?? 0);
-      // La etiqueta («tras fallecer Yo») se pinta aparte: aparece cuando la línea ya está casi dibujada.
-      const etiqueta = interpolar(l, 0.7, 1);
-      return {
-        ...e,
-        style: { strokeDasharray: 900, strokeDashoffset: 900 * (1 - l), opacity: l > 0 ? 1 : 0 },
-        labelStyle: { opacity: etiqueta },
-        labelBgStyle: { opacity: etiqueta },
-        ...(etiqueta === 0 && { label: undefined }),
-      };
-    });
+  // Nodos y líneas solo cambian si cambia lo que los dibuja; mientras tanto se pasan los mismos objetos.
+  // Si no, React Flow repasa sus medidas en cada fotograma, vuelve a montar las líneas y sus etiquetas
+  // («tras fallecer Yo») salen un instante sin medir: parpadean en el reproductor.
+  const escenario = estado.escenario ?? null;
+  const grafo = useMemo(
+    () => applyScenario(buildGraph(modelo), escenario ? scenarioView(modelo, escenario) : null),
+    [modelo, JSON.stringify(escenario)],
+  );
+  const claveNodos = JSON.stringify({ visibles, objetos, posiciones, tachados: estado.tachados ?? {} });
+  const nodes = useMemo<Node[]>(
+    () =>
+      grafo.nodes
+        .filter((n) => n.id in visibles)
+        .map((n) => {
+          const p = visibles[n.id]!;
+          const style = {
+            opacity: p,
+            '--escala': 0.94 + 0.06 * p,
+            ...Object.fromEntries((objetos[n.id] ?? []).map((v, k) => [`--obj${k + 1}`, v])),
+          } as CSSProperties;
+          const tachado = estado.tachados?.[n.id] ?? 0;
+          if (tachado > 0) Object.assign(style, { '--tachado': tachado });
+          return { ...n, position: posiciones[n.id] ?? n.position, style, className: tachado > 0 ? styles.tachado : undefined };
+        }),
+    [grafo, claveNodos],
+  );
+  const claveLineas = JSON.stringify({ lineas, nodos: Object.keys(visibles) });
+  const edges = useMemo<Edge[]>(
+    () =>
+      grafo.edges
+        .filter((e) => e.source in visibles && e.target in visibles)
+        .map((e) => {
+          const l = typeof lineas === 'number' ? lineas : (lineas[e.id] ?? 0);
+          // La etiqueta se pinta aparte: aparece cuando la línea ya está casi dibujada.
+          const etiqueta = interpolar(l, 0.7, 1);
+          return {
+            ...e,
+            style: { strokeDasharray: 900, strokeDashoffset: 900 * (1 - l), opacity: l > 0 ? 1 : 0 },
+            labelStyle: { opacity: etiqueta },
+            labelBgStyle: { opacity: etiqueta },
+            ...(etiqueta === 0 && { label: undefined }),
+          };
+        }),
+    [grafo, claveLineas],
+  );
   return (
     <div className={styles.escena} style={{ opacity: estado.opacidad ?? 1 }}>
       <ReactFlowProvider>
