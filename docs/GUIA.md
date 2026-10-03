@@ -101,7 +101,7 @@ La passphrase que te protegía del ladrón es también tu punto débil: olvidarl
 
 Un multisig impecable para ti puede ser inútil para tu familia: si tu pareja no puede entrar ni en el banco ni en casa de tus padres, no heredaría nada. Herencia **0** (muy mal). El mismo esquema, con tu pareja pudiendo entrar en el banco y en casa de tus padres tras tu fallecimiento: **77** (bueno).
 
-> 💡 **No existe el 100 en todo.** Firmar en un solo sitio choca con la llave inglesa; que tus herederos lo tengan fácil choca con que lo tenga fácil un ladrón; cada copia de más es otra puerta. Busca ser bueno en todo y elige qué sacrificas.
+> 💡 **No existe el 100 en todo.** Firmar en un solo sitio choca con la llave inglesa; que tus herederos lo tengan fácil choca con que lo tenga fácil un ladrón; cada copia de más es otra puerta. Busca ser bueno en todo y elige en qué ceder un poco: nada debería sacrificarse del todo.
 
 <a id="simular"></a>
 
@@ -115,7 +115,7 @@ Las desgracias suelen hacer daño **combinadas**. Con dos placas y el dispositiv
 
 El Trezor sigue en casa, pero sin su PIN no firma; y sin ninguna de las dos placas no queda copia. Prueba a quitar un suceso (✕ en el panel) y mira cómo vuelve a ser recuperable.
 
-No todos los robos necesitan a una persona. En un 2 de 3 en el que las tres frases semilla pasan por la misma SeedSigner, la vía más barata es un firmware malicioso de su fabricante, que filtraría las semillas al firmar:
+No todos los robos necesitan a una persona. En un 2 de 3 en el que las tres frases semilla pasan por la misma SeedSigner, la vía más barata es meterle un firmware malicioso (una actualización falsa que llega por phishing, un fabricante comprometido…), que filtraría las semillas al firmar:
 
 > ▶ En la app, con el ejemplo «2 de 3 con una SeedSigner»: *Simular un firmware malicioso en la SeedSigner*.
 
@@ -132,7 +132,7 @@ Por eso conviene que cada key pase por dispositivos distintos, o que tengan **an
 
 ## 5. Casos guiados
 
-Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa.
+Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa. Ninguno pretende ser el esquema de nadie: sirven como ejemplos para descubrir todas las variables que pueden afectar a un plan. Trabaja el tuyo.
 
 **1. Papel en el cajón.** Un Trezor en casa y la frase semilla en un papel, en el mismo sitio.
 
@@ -162,7 +162,7 @@ El acero resiste el fuego y la caja fuerte frena al ladrón, pero quien conoce l
 
 > ▶ En la app, con el ejemplo «Coldcard afectada»: *Adivinar la semilla por el fallo publicado*.
 
-Seguridad **12** (muy mal): da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que mover los fondos a una frase semilla nueva. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.
+Seguridad **12** (muy mal): da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que crear una cartera nueva, con buena entropía, y mover los fondos a ella. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.
 
 > 💡 Mezclar dados con el generador del dispositivo protege de sus fallos, pero normalmente no se puede verificar: la parte del dispositivo es secreta. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta.
 
@@ -172,7 +172,7 @@ Seguridad **12** (muy mal): da igual lo bien guardada que esté. Actualizar el f
 
 > ▶ En la app, con el ejemplo «2 de 3 distribuido»: *El robo más barato del 2 de 3 distribuido*.
 
-Seguridad **71** (bueno), resiliencia **72** (bueno), usabilidad **100** (excelente), herencia **77** (bueno): bueno en todo. Es el esquema «de manual».
+Seguridad **71** (bueno), resiliencia **72** (bueno), usabilidad **100** (excelente), herencia **77** (bueno): bueno en todo, sin destacar en nada. Es un punto de partida razonable, no una receta: quizá te compense ceder algo de usabilidad para ganar seguridad, por ejemplo teniendo en casa uno solo de los dispositivos, de modo que firmar exija ir a otro sitio y la llave inglesa en casa ya no baste.
 
 **9. Sin plan de herencia.** El mismo, pero tu pareja no puede entrar ni en el banco ni en casa de tus padres: herencia **0** (muy mal). Que los herederos puedan llegar es parte del diseño, no un añadido.
 
@@ -188,12 +188,12 @@ Empieza con **Archivo → Nuevo esquema** o, mejor, abre el ejemplo que más se 
 
 - **Política**: cuántas keys hacen falta para gastar (1 de 1, 2 de 3…). **+ Key** añade otra. En cada key: si lleva passphrase y cómo es (nunca cuál), y su procedencia: con qué entropía y en qué dispositivo se generó. Ahí se detectan los fallos de entropía publicados.
 - **Ubicaciones**: casa, banco, una nube, un portátil… Las físicas pueden ser caja fuerte o caja del banco, y estar dentro de otra (la caja fuerte dentro de casa). En cada una, quién puede entrar: siempre, solo tras el fallecimiento de alguien, o si queda incapacitado.
-- **Dispositivos y backups**: con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…
+- **Dispositivos y backups**: con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…
 - **Personas**: titular, heredero, custodio… y qué saben de memoria (un PIN, una passphrase). Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado.
 
 Arriba de la pestaña Esquema aparecen los **avisos**: cosas que probablemente no quieres, como un dispositivo con un PIN que nadie sabe (no serviría para firmar) o una passphrase sin indicar cómo es (se trata como débil).
 
-> 💡 **Guárdalo cifrado.** Ctrl+S lo guarda en este navegador con una contraseña; **Exportar cifrado** lo descarga como fichero .llave. Exportar sin cifrar (.json) es solo para trabajar con él: bórralo después.
+> 💡 **Guárdalo cifrado.** Ctrl+S lo guarda en este navegador con una contraseña; **Exportar cifrado** lo descarga como fichero .llave. Exportar sin cifrar (.json) es solo para trabajar con él: bórralo después. Aunque tampoco hace falta guardar nada: puedes solo trastear, aprender y descubrir huecos que no habías previsto. Si no quieres guardar nada, no lo guardes.
 
 No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y prueba variantes (mover una placa al banco, añadir una passphrase, cambiar quién entra dónde). Las notas se recalculan al momento.
 
@@ -203,7 +203,7 @@ No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y
 
 - **Key**: cada una de las claves que pueden firmar (K1, K2…). Su **frase semilla** son las palabras que la recuperan.
 - **Passphrase**: una palabra o frase extra que, junto a la frase semilla, da otra key. Sin ella, la frase semilla sola no firma.
-- **Multisig k de n**: hacen falta k firmas de n keys. Para gastar también hacen falta las **xpubs** de todas las keys, que suelen ir juntas en el **descriptor**.
+- **Umbral k de n**: hacen falta k firmas de n keys (un multisig 2 de 3, por ejemplo; en 1 de 1, single-sig, basta una). Para gastar también hacen falta las **xpubs** de todas las keys, que suelen ir juntas en el **descriptor**.
 - **Dispositivo stateful**: guarda la key dentro (Coldcard, Trezor…). **Stateless**: no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).
 - **PIN de coacción**: un segundo PIN que, bajo amenaza, abre una cartera señuelo o borra el dispositivo. Encarece la llave inglesa, pero no la evita.
 - **Anti-exfil**: protección de algunos dispositivos que impide que un firmware malicioso filtre la semilla dentro de las firmas.

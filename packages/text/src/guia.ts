@@ -327,7 +327,7 @@ export const GUIA: readonly Capitulo[] = [
         tipo: 'nota',
         texto: [
           n('No existe el 100 en todo.'),
-          ' Firmar en un solo sitio choca con la llave inglesa; que tus herederos lo tengan fácil choca con que lo tenga fácil un ladrón; cada copia de más es otra puerta. Busca ser bueno en todo y elige qué sacrificas.',
+          ' Firmar en un solo sitio choca con la llave inglesa; que tus herederos lo tengan fácil choca con que lo tenga fácil un ladrón; cada copia de más es otra puerta. Busca ser bueno en todo y elige en qué ceder un poco: nada debería sacrificarse del todo.',
         ],
       },
     ],
@@ -377,7 +377,7 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'parrafo',
         texto: [
-          'No todos los robos necesitan a una persona. En un 2 de 3 en el que las tres frases semilla pasan por la misma SeedSigner, la vía más barata es un firmware malicioso de su fabricante, que filtraría las semillas al firmar:',
+          'No todos los robos necesitan a una persona. En un 2 de 3 en el que las tres frases semilla pasan por la misma SeedSigner, la vía más barata es meterle un firmware malicioso (una actualización falsa que llega por phishing, un fabricante comprometido…), que filtraría las semillas al firmar:',
         ],
       },
       {
@@ -419,7 +419,7 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'parrafo',
         texto: [
-          'Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa.',
+          'Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa. Ninguno pretende ser el esquema de nadie: sirven como ejemplos para descubrir todas las variables que pueden afectar a un plan. Trabaja el tuyo.',
         ],
       },
       { tipo: 'parrafo', texto: [n('1. Papel en el cajón.'), ' Un Trezor en casa y la frase semilla en un papel, en el mismo sitio.'] },
@@ -528,7 +528,7 @@ export const GUIA: readonly Capitulo[] = [
         texto: [
           'Seguridad ',
           cifra(COLDCARD, 'security'),
-          ': da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que mover los fondos a una frase semilla nueva. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.',
+          ': da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que crear una cartera nueva, con buena entropía, y mover los fondos a ella. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.',
         ],
       },
       {
@@ -572,7 +572,7 @@ export const GUIA: readonly Capitulo[] = [
           cifra(DISTRIBUIDO, 'usability'),
           ', herencia ',
           cifra(DISTRIBUIDO, 'inheritance'),
-          ': bueno en todo. Es el esquema «de manual».',
+          ': bueno en todo, sin destacar en nada. Es un punto de partida razonable, no una receta: quizá te compense ceder algo de usabilidad para ganar seguridad, por ejemplo teniendo en casa uno solo de los dispositivos, de modo que firmar exija ir a otro sitio y la llave inglesa en casa ya no baste.',
         ],
       },
       {
@@ -631,7 +631,7 @@ export const GUIA: readonly Capitulo[] = [
           ],
           [
             n('Dispositivos y backups'),
-            ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
+            ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
           ],
           [
             n('Personas'),
@@ -653,7 +653,7 @@ export const GUIA: readonly Capitulo[] = [
           n('Guárdalo cifrado.'),
           ' Ctrl+S lo guarda en este navegador con una contraseña; ',
           n('Exportar cifrado'),
-          ' lo descarga como fichero .llave. Exportar sin cifrar (.json) es solo para trabajar con él: bórralo después.',
+          ' lo descarga como fichero .llave. Exportar sin cifrar (.json) es solo para trabajar con él: bórralo después. Aunque tampoco hace falta guardar nada: puedes solo trastear, aprender y descubrir huecos que no habías previsto. Si no quieres guardar nada, no lo guardes.',
         ],
       },
       {
@@ -674,7 +674,7 @@ export const GUIA: readonly Capitulo[] = [
         items: [
           [n('Key'), ': cada una de las claves que pueden firmar (K1, K2…). Su ', n('frase semilla'), ' son las palabras que la recuperan.'],
           [n('Passphrase'), ': una palabra o frase extra que, junto a la frase semilla, da otra key. Sin ella, la frase semilla sola no firma.'],
-          [n('Multisig k de n'), ': hacen falta k firmas de n keys. Para gastar también hacen falta las ', n('xpubs'), ' de todas las keys, que suelen ir juntas en el ', n('descriptor'), '.'],
+          [n('Umbral k de n'), ': hacen falta k firmas de n keys (un multisig 2 de 3, por ejemplo; en 1 de 1, single-sig, basta una). Para gastar también hacen falta las ', n('xpubs'), ' de todas las keys, que suelen ir juntas en el ', n('descriptor'), '.'],
           [n('Dispositivo stateful'), ': guarda la key dentro (Coldcard, Trezor…). ', n('Stateless'), ': no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).'],
           [n('PIN de coacción'), ': un segundo PIN que, bajo amenaza, abre una cartera señuelo o borra el dispositivo. Encarece la llave inglesa, pero no la evita.'],
           [n('Anti-exfil'), ': protección de algunos dispositivos que impide que un firmware malicioso filtre la semilla dentro de las firmas.'],
