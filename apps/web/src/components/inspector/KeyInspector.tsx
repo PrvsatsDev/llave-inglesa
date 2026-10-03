@@ -96,6 +96,8 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
   const { sources, generatedBy, independentlyVerified } = key.provenance;
   /** Alguna fuente que no es un RNG (dados, moneda, cartas): la única que una verificación puede proteger. */
   const hasOwnEntropy = sources.some((s) => s.kind === 'dice' || s.kind === 'coin' || s.kind === 'cards');
+  /** Tu entropía mezclada con un RNG: la parte del RNG es secreta y no se puede recalcular en otra herramienta. */
+  const mixesRng = hasOwnEntropy && sources.some((s) => s.kind === 'device-rng' || s.kind === 'software-rng' || s.kind === 'unknown');
   const generatorModel = catalogModelByName(generatedBy?.model);
   const generatorAdvisories = generatorModel ? advisoriesFor(generatorModel.id, generatedBy?.firmware).filter((m) => m.advisory.kind === 'weak-entropy') : [];
 
@@ -120,7 +122,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
           <Field label="Nombre">{(fid) => <TextInput id={fid} value={key.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
           <Field label="Fingerprint">
             {(fid) => (
-              <TextInput id={fid} value={key.fingerprint ?? ''} placeholder="opcional" onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
+              <TextInput id={fid} value={key.fingerprint ?? ''} placeholder="opcional" optional onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
             )}
           </Field>
         </div>
@@ -233,7 +235,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
                 </Field>
                 <Field label="Nombre del modelo">
                   {(fid) => (
-                    <TextInput id={fid} value={generatedBy.model ?? ''} placeholder="opcional" onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, model: v || undefined } }, 'model')} />
+                    <TextInput id={fid} value={generatedBy.model ?? ''} placeholder="opcional" optional onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, model: v || undefined } }, 'model')} />
                   )}
                 </Field>
               </div>
@@ -241,6 +243,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             <Field label="Firmware con el que se generó">
               {(fid) => (
                 <TextInput
+                  optional
                   id={fid}
                   value={generatedBy.firmware ?? ''}
                   placeholder="p. ej. 5.6.0"
@@ -263,6 +266,13 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             {independentlyVerified && <AlertTriangle size={12} aria-hidden />} Verificar solo protege si hay una fuente tuya (dados, moneda o cartas): demuestra que la
             semilla sale de esa entropía, no que la entropía sea buena. Si solo hay RNG (de un dispositivo, de un software o desconocido), un fallo en él la
             compromete igual.
+          </p>
+        )}
+        {mixesRng && (
+          <p className={independentlyVerified ? styles.warningHint : styles.hint}>
+            {independentlyVerified && <AlertTriangle size={12} aria-hidden />} Mezclando un RNG con tus tiradas, normalmente no se puede verificar: la
+            parte del RNG es secreta y otra herramienta no puede recalcularla. Para poder verificar, genera la frase semilla solo con tu entropía
+            (dados o moneda) y recalcúlala en otra herramienta.
           </p>
         )}
       </Section>

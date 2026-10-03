@@ -149,3 +149,13 @@ test('en escritorio no hay aviso de móvil', async ({ page }) => {
   await expect(page.getByText(/análisis exhaustivo/)).toBeVisible();
   await expect(page.getByText('Pensada para pantalla grande')).toBeHidden();
 });
+
+test('una key que mezcla RNG y dados explica que la mezcla no se puede verificar', async ({ page }) => {
+  await page.goto('/');
+  // En «Todo a mano en casa», K1 mezcla el RNG de la Coldcard con 99 dados.
+  await page.getByRole('button', { name: /^K1/ }).first().click();
+  await expect(page.getByText(/Mezclando un RNG con tus tiradas, normalmente no se puede verificar/)).toBeVisible();
+  // Un campo opcional vacío (fingerprint) no se marca como error.
+  await expect(page.getByLabel('Fingerprint')).not.toHaveClass(/invalid/);
+  await capture(page, 'pista-mezcla');
+});

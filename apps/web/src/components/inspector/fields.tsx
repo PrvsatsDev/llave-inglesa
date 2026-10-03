@@ -59,11 +59,12 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
   );
 }
 
-export function TextInput({ id, value, onChange, placeholder }: { id?: string; value: string; onChange(v: string): void; placeholder?: string }) {
+/** Campo de texto. Vacío se marca como error, salvo si es `optional`. */
+export function TextInput({ id, value, onChange, placeholder, optional = false }: { id?: string; value: string; onChange(v: string): void; placeholder?: string; optional?: boolean }) {
   return (
     <input
       id={id}
-      className={`${styles.input} ${value.trim() === '' ? styles.invalid : ''}`}
+      className={`${styles.input} ${!optional && value.trim() === '' ? styles.invalid : ''}`}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
