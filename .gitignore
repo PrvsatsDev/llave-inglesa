@@ -8,3 +8,4 @@ apps/web/e2e/.capturas/
 release/
 deploy/servidor.env
 deploy/sitio.caddy
+video/salida/

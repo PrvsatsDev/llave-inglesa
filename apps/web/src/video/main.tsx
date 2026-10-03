@@ -1,0 +1,14 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '@xyflow/react/dist/style.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import { Reproductor } from './Reproductor.tsx';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Reproductor />
+  </StrictMode>,
+);

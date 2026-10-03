@@ -1,0 +1,115 @@
+/* El vídeo se dibuja por fotograma: nada de transiciones ni animaciones CSS por su cuenta. */
+.lienzo,
+.lienzo * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.lienzo {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-canvas);
+}
+
+.escena {
+  position: absolute;
+  inset: 0;
+}
+
+/* Aparición de los nodos: la opacidad va en el nodo; la escala, en su contenido (el nodo ya usa transform). */
+.escena :global(.react-flow__node) > * {
+  transform: scale(var(--escala, 1));
+  transform-origin: center top;
+}
+
+/* Los objetos de una ubicación entran uno tras otro. */
+.escena :global(.react-flow__node-location) ul > li:nth-child(1) {
+  opacity: var(--obj1, 1);
+  transform: translateX(calc((1 - var(--obj1, 1)) * -16px));
+}
+
+.escena :global(.react-flow__node-location) ul > li:nth-child(2) {
+  opacity: var(--obj2, 1);
+  transform: translateX(calc((1 - var(--obj2, 1)) * -16px));
+}
+
+.titulo {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  color: var(--text);
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.titulo span {
+  display: inline-block;
+  white-space: pre;
+}
+
+/* Reproductor (solo para revisar en el navegador) */
+.reproductor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.controles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(1200px, 100%);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.controles input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.controles button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.contador {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* Destello rojo cuando empieza un ataque. */
+.destello {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 55%, transparent 30%, var(--danger-soft) 100%);
+  pointer-events: none;
+}
+
+/* Tarjeta de puntuación, al doble de tamaño (como en la app, pero para leerla en un vídeo). */
+.tarjeta {
+  position: absolute;
+  width: 170px;
+  transform-origin: top left;
+}
+
+/* Reproductor: el lienzo va en un iframe a tamaño real, reducido desde fuera. */
+.marco {
+  border: 0;
+  transform-origin: top left;
+}
