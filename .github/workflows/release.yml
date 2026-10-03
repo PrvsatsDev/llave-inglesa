@@ -1,0 +1,63 @@
+# Al subir una etiqueta vX.Y.Z: comprueba todo, construye, empaqueta (reproducible) y publica la Release
+# con el zip, los hashes (SHA256SUMS) y las instrucciones para usarla y verificarla.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: La etiqueta coincide con la versión de la app
+        run: test "${GITHUB_REF_NAME}" = "v$(node -p "require('./apps/web/package.json').version")"
+      - name: Typecheck y tests
+        run: npm run check
+      - name: Chromium para las pruebas en navegador
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Pruebas en navegador (build de producción)
+        run: npm run e2e
+      - name: Build y empaquetado
+        run: npm run build && python3 scripts/empaquetar.py
+      - name: Publicar la Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP="release/llave-inglesa-${GITHUB_REF_NAME}.zip"
+          HASH="$(sha256sum "$ZIP" | cut -d' ' -f1)"
+          {
+            echo "## llave-inglesa ${GITHUB_REF_NAME}"
+            echo
+            echo "En línea: https://llave-inglesa.netlify.app"
+            echo
+            echo "### Usarla sin conexión"
+            echo
+            echo "Descomprime el zip y sirve la carpeta en tu equipo (no funciona con doble clic en index.html):"
+            echo
+            echo '```sh'
+            echo "cd llave-inglesa-${GITHUB_REF_NAME}"
+            echo "python3 -m http.server 8000 --bind 127.0.0.1"
+            echo '```'
+            echo
+            echo "y abre http://127.0.0.1:8000."
+            echo
+            echo "### Verificar"
+            echo
+            echo "SHA-256 del zip: \`${HASH}\`"
+            echo
+            echo "\`SHA256SUMS\` tiene el hash de cada fichero. El build es reproducible: cómo recompilarlo y compararlo,"
+            echo "también con la web publicada, en [docs/VERIFICAR.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/VERIFICAR.md)."
+          } > notas.md
+          gh release create "${GITHUB_REF_NAME}" "$ZIP" release/SHA256SUMS --title "llave-inglesa ${GITHUB_REF_NAME}" --notes-file notas.md

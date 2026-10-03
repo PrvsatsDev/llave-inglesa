@@ -1,5 +1,9 @@
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
+
+/** Versión publicada (la de package.json), visible en la app para compararla con la Release. */
+const VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
 
 /**
  * Política de seguridad del contenido para el build: la app no puede hacer
@@ -53,6 +57,7 @@ const contentSecurityPolicy = (): Plugin => ({
 
 export default defineConfig({
   plugins: [react(), contentSecurityPolicy()],
+  define: { __APP_VERSION__: JSON.stringify(VERSION) },
   // Las fuentes nunca se incrustan como data: (el CSP solo admite font-src 'self'), aunque sean pequeñas.
   build: { assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined) },
   server: { host: '127.0.0.1' },

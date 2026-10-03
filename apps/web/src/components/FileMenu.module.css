@@ -113,3 +113,8 @@
     display: none;
   }
 }
+
+.version {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}

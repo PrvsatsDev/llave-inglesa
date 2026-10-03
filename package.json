@@ -1,5 +1,6 @@
 {
   "name": "llave-inglesa",
+  "version": "0.1.0",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -19,7 +20,8 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
     "check": "npm run typecheck && npm run test",
     "analyze": "tsx apps/cli/src/main.ts analyze",
-    "e2e": "npm run e2e -w @llave-inglesa/web"
+    "e2e": "npm run e2e -w @llave-inglesa/web",
+    "empaquetar": "npm run build && python3 scripts/empaquetar.py"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
