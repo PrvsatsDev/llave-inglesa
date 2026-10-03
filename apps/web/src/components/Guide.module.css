@@ -224,3 +224,21 @@
 .pagerButton:hover {
   background: var(--surface-hover);
 }
+
+/* Enlaces dentro del texto: a otra web (se abre aparte) o a otro capítulo. */
+.link,
+.chapterLink {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.chapterLink {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

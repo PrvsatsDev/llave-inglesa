@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { calcularCifras } from '../src/guia-cifras-calculo.ts';
+import { calcularCifras, nombresDeEjemplos } from '../src/guia-cifras-calculo.ts';
+import { guiaMarkdown } from '../src/guia-markdown.ts';
 import { CIFRAS, GUIA, type Bloque, type Escenario } from '../src/index.ts';
 
 const bloques = GUIA.flatMap((c) => c.bloques);
@@ -28,6 +29,11 @@ describe('guía de uso', () => {
     expect(CIFRAS).toEqual(calcularCifras());
   });
 
+  it('docs/GUIA.md está al día (si falla: npx tsx scripts/guia.ts)', () => {
+    const fichero = readFileSync(new URL('../../../docs/GUIA.md', import.meta.url), 'utf8');
+    expect(fichero).toBe(guiaMarkdown(nombresDeEjemplos()));
+  });
+
   it('cada capítulo tiene un id único', () => {
     expect(new Set(GUIA.map((c) => c.id)).size).toBe(GUIA.length);
   });
@@ -35,6 +41,14 @@ describe('guía de uso', () => {
   it('cada cifra citada y cada ejemplo existen', () => {
     for (const t of trozos) if (typeof t === 'object' && 'cifra' in t) expect(CIFRAS[t.cifra.ejemplo], t.cifra.ejemplo).toBeDefined();
     for (const b of bloques) if (b.tipo === 'ejemplo' || b.tipo === 'simular') expect(CIFRAS[b.ejemplo], b.ejemplo).toBeDefined();
+  });
+
+  it('cada enlace a otro capítulo apunta a uno que existe, y los externos son https', () => {
+    const capitulos = new Set(GUIA.map((c) => c.id));
+    for (const t of trozos) {
+      if (typeof t === 'object' && 'capitulo' in t) expect(capitulos.has(t.capitulo), t.capitulo).toBe(true);
+      if (typeof t === 'object' && 'enlace' in t) expect(t.enlace).toMatch(/^https:\/\//);
+    }
   });
 
   it('cada simulación nombra cosas que existen en su ejemplo', () => {

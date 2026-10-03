@@ -1,9 +1,9 @@
 /**
- * Regenera las cifras de la guía (packages/text/src/guia-cifras.ts) con el motor.
- * Uso: npx tsx scripts/guia.ts   (un test falla si están desfasadas)
+ * Regenera, con el motor, las cifras de la guía (packages/text/src/guia-cifras.ts) y la guía en
+ * Markdown (docs/GUIA.md). Uso: npx tsx scripts/guia.ts   (los tests fallan si están desfasadas)
  */
 import { writeFileSync } from 'node:fs';
-import { calcularCifras } from '../packages/text/src/guia-cifras-calculo.ts';
+import { calcularCifras, nombresDeEjemplos } from '../packages/text/src/guia-cifras-calculo.ts';
 
 const cifras = calcularCifras();
 const cuerpo = Object.entries(cifras)
@@ -20,3 +20,8 @@ ${cuerpo}
 `,
 );
 console.log('packages/text/src/guia-cifras.ts');
+
+// Después de escribir las cifras: el Markdown las lee.
+const { guiaMarkdown } = await import('../packages/text/src/guia-markdown.ts');
+writeFileSync(new URL('../docs/GUIA.md', import.meta.url), guiaMarkdown(nombresDeEjemplos()));
+console.log('docs/GUIA.md');

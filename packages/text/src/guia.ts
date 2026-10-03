@@ -8,8 +8,16 @@ import type { AttackAtom, LossEvent } from '@llave-inglesa/engine';
 
 export type Metrica = 'security' | 'resilience' | 'usability' | 'inheritance';
 
-/** Un trozo de texto: texto normal, en negrita, o la puntuación de un ejemplo en una métrica. */
-export type Trozo = string | { negrita: string } | { cifra: { ejemplo: string; metrica: Metrica } };
+/**
+ * Un trozo de texto: texto normal, en negrita, la puntuación de un ejemplo en una métrica, un enlace
+ * externo (se abre aparte) o un enlace a otro capítulo de la guía.
+ */
+export type Trozo =
+  | string
+  | { negrita: string }
+  | { cifra: { ejemplo: string; metrica: Metrica } }
+  | { enlace: string; texto: string }
+  | { capitulo: string; texto: string };
 
 export type Escenario = { kind: 'attack'; atoms: AttackAtom[] } | { kind: 'loss'; events: LossEvent[] };
 
@@ -33,6 +41,8 @@ export interface Capitulo {
 
 const cifra = (ejemplo: string, metrica: Metrica): Trozo => ({ cifra: { ejemplo, metrica } });
 const n = (negrita: string): Trozo => ({ negrita });
+const cap = (capitulo: string, texto: string): Trozo => ({ capitulo, texto });
+const REPO = 'https://github.com/PrvsatsDev/llave-inglesa';
 
 const CASA = 'todo-en-casa';
 const PAPEL = 'r01-papel-en-casa';
@@ -94,7 +104,9 @@ export const GUIA: readonly Capitulo[] = [
         tipo: 'parrafo',
         texto: [
           n('Lo que no es'),
-          ': no es una cartera, no toca la red de Bitcoin ni tus fondos, y no sustituye a tu criterio. Es un modelo: las notas comparan esquemas entre sí y explican sus puntos débiles, pero las probabilidades reales dependen de tu vida. Lo que el motor no tiene en cuenta está en el capítulo de límites.',
+          ': no es una cartera, no toca la red de Bitcoin ni tus fondos, y no sustituye a tu criterio. Es un modelo: las notas comparan esquemas entre sí y explican sus puntos débiles, pero las probabilidades reales dependen de tu vida. Lo que el motor no tiene en cuenta está en ',
+          cap('limites', 'Límites conocidos'),
+          '.',
         ],
       },
     ],
@@ -648,6 +660,89 @@ export const GUIA: readonly Capitulo[] = [
         tipo: 'parrafo',
         texto: [
           'No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y prueba variantes (mover una placa al banco, añadir una passphrase, cambiar quién entra dónde). Las notas se recalculan al momento.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'conceptos',
+    titulo: 'Conceptos',
+    resumen: 'Las palabras que usa la herramienta, en una línea cada una.',
+    bloques: [
+      {
+        tipo: 'lista',
+        items: [
+          [n('Key'), ': cada una de las claves que pueden firmar (K1, K2…). Su ', n('frase semilla'), ' son las palabras que la recuperan.'],
+          [n('Passphrase'), ': una palabra o frase extra que, junto a la frase semilla, da otra key. Sin ella, la frase semilla sola no firma.'],
+          [n('Multisig k de n'), ': hacen falta k firmas de n keys. Para gastar también hacen falta las ', n('xpubs'), ' de todas las keys, que suelen ir juntas en el ', n('descriptor'), '.'],
+          [n('Dispositivo stateful'), ': guarda la key dentro (Coldcard, Trezor…). ', n('Stateless'), ': no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).'],
+          [n('PIN de coacción'), ': un segundo PIN que, bajo amenaza, abre una cartera señuelo o borra el dispositivo. Encarece la llave inglesa, pero no la evita.'],
+          [n('Anti-exfil'), ': protección de algunos dispositivos que impide que un firmware malicioso filtre la semilla dentro de las firmas.'],
+          [n('Llave inglesa'), ': obligar a alguien por la fuerza a firmar o a revelar lo que sabe. Da nombre a la herramienta.'],
+          [n('Esfuerzo'), ': lo que le cuesta un ataque al atacante (riesgo, tiempo, dinero). Los de una misma vía se suman.'],
+          [n('Rareza'), ': lo improbable que es una desgracia, en órdenes de magnitud. Las que tienen que coincidir se suman.'],
+          [n('Bloqueo temporal'), ': los fondos quedan inmovilizados mientras alguien está incapacitado, pero se recuperan cuando heredan.'],
+          [n('Custodio'), ': alguien de confianza que guarda algo (una placa, un descriptor) sin ser titular ni heredero.'],
+          [n('Entropía'), ': el azar con el que se genera la frase semilla (el generador del dispositivo, dados, una moneda…). ', n('Verificar'), ' es recalcularla en otra herramienta para comprobar que sale de ese azar.'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'limites',
+    titulo: 'Límites conocidos',
+    resumen: 'Lo que el motor simplifica o no tiene en cuenta, para leer las notas con criterio.',
+    bloques: [
+      {
+        tipo: 'parrafo',
+        texto: ['Un modelo siempre simplifica. Estos son los atajos conscientes de llave-inglesa:'],
+      },
+      {
+        tipo: 'lista',
+        items: [
+          ['Las rarezas y los esfuerzos son estimaciones de orden de magnitud, iguales para todos: no dependen de tu edad, tu zona o tu casa. Las desgracias se tratan como independientes.'],
+          ['Se buscan combinaciones de hasta tres ataques o desgracias a la vez.'],
+          ['La seguridad mira el robo más barato y los casi igual de baratos: endurecer una vía más cara no mueve la nota.'],
+          ['La fortaleza de una passphrase son tres niveles aproximados (débil, frase, aleatoria larga); no se mide su entropía.'],
+          ['El metal se supone acero: una placa de aluminio o latón no resistiría un incendio. Tampoco se distinguen una bolsa estanca o una caja fuerte ignífuga.'],
+          ['La protección son tres niveles (ninguna, caja fuerte, caja del banco), sin distinguir la calidad de la caja ni alarmas. Las ubicaciones se anidan un solo nivel.'],
+          ['No se sabe dónde vive cada persona: la llave inglesa puede hacerse en cualquier sitio al que la víctima tenga acceso. Coaccionar a dos personas a la vez cuenta como dos ataques.'],
+          ['No se modela el ordenador o el móvil con el que se firma: los fallos explotables desde un ordenador con malware solo se avisan.'],
+          ['El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.'],
+          ['Todavía no hay timelocks (herencia con espera, claves de recuperación con retraso).'],
+          ['Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'verificar',
+    titulo: 'Privacidad y verificación',
+    resumen: 'Qué sale de tu equipo (nada), cómo se guarda tu esquema y cómo comprobar que la app es la que dice ser.',
+    bloques: [
+      {
+        tipo: 'lista',
+        items: [
+          [n('Sin red'), ': la política de seguridad del contenido de la página prohíbe cualquier petición. No hay cuentas, ni analítica, ni recursos de terceros.'],
+          [
+            n('Cifrado'),
+            ': tu esquema se guarda en el navegador o en un fichero .llave cifrado con AES-256-GCM y una clave que sale de tu contraseña (PBKDF2). Sin la contraseña no hay forma de abrirlo, ni para ti.',
+          ],
+          [n('Sin conexión'), ': cada versión se publica también como zip para usarla en tu equipo sin internet.'],
+          [
+            n('Verificable'),
+            ': el código es abierto y el build es reproducible. Recompilando una versión se obtienen exactamente los mismos ficheros que se publican, y se puede comparar con la web fichero a fichero.',
+          ],
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Cómo hacerlo, paso a paso: ',
+          { enlace: `${REPO}/blob/main/docs/VERIFICAR.md`, texto: 'Verificar llave-inglesa' },
+          '. El código y las versiones: ',
+          { enlace: REPO, texto: 'GitHub' },
+          '.',
         ],
       },
     ],

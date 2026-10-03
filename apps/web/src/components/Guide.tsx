@@ -111,6 +111,13 @@ function Text({ parts }: { parts: readonly Trozo[] }) {
       {parts.map((t, i) => {
         if (typeof t === 'string') return <span key={i}>{t}</span>;
         if ('negrita' in t) return <strong key={i}>{t.negrita}</strong>;
+        if ('enlace' in t)
+          return (
+            <a key={i} className={styles.link} href={t.enlace} target="_blank" rel="noopener noreferrer">
+              {t.texto}
+            </a>
+          );
+        if ('capitulo' in t) return <ChapterLink key={i} id={t.capitulo} label={t.texto} />;
         const value = CIFRAS[t.cifra.ejemplo]?.[t.cifra.metrica];
         if (value === undefined) return <span key={i}>?</span>;
         const { level: band, icon: Icon, text } = level(value);
@@ -122,6 +129,15 @@ function Text({ parts }: { parts: readonly Trozo[] }) {
         );
       })}
     </>
+  );
+}
+
+function ChapterLink({ id, label }: { id: string; label: string }) {
+  const openGuide = useNavigation((s) => s.openGuide);
+  return (
+    <button type="button" className={styles.chapterLink} onClick={() => openGuide(id)}>
+      {label}
+    </button>
   );
 }
 

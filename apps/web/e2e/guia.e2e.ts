@@ -73,3 +73,17 @@ test('si sales de la guía desde un capítulo, Archivo → Guía de uso te devue
   await expect(guide(page).getByRole('button', { name: /Primeros pasos/ })).toBeVisible();
 });
 
+test('los enlaces entre capítulos llevan al capítulo, y los externos se abren aparte', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('llave-inglesa:panel', JSON.stringify({ welcomeSeen: true })));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Archivo' }).click();
+  await page.getByRole('menuitem', { name: 'Guía de uso' }).click();
+  await guide(page).getByText('Qué es y qué no es', { exact: true }).click();
+  await guide(page).getByRole('button', { name: 'Límites conocidos' }).click();
+  await expect(guide(page).getByRole('heading', { name: 'Límites conocidos' })).toBeVisible();
+  await guide(page).getByRole('button', { name: /Privacidad y verificación/ }).click();
+  const external = guide(page).getByRole('link', { name: 'Verificar llave-inglesa' });
+  await expect(external).toHaveAttribute('target', '_blank');
+  await expect(external).toHaveAttribute('rel', 'noopener noreferrer');
+});
+
