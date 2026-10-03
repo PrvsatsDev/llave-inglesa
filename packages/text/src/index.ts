@@ -1,6 +1,6 @@
 import { ADVISORIES } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
-import type { AttackAtom, DuressReport, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -130,6 +130,15 @@ export function lossText(e: LossEvent, index: ModelIndex): string {
   }
 }
 
+/** Cómo se lee una puntuación (bandas de la calibración). */
+export const SCORE_BAND_TEXT: Record<ScoreBand, string> = {
+  'very-poor': 'Muy mal',
+  weak: 'Flojo',
+  fair: 'Aceptable',
+  good: 'Bueno',
+  excellent: 'Excelente',
+};
+
 const effortText = (e: number) => e.toLocaleString('es');
 
 /**
@@ -202,7 +211,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'device-xpub': return 'la exporta el dispositivo';
     case 'device-wallet': return `multisig registrado en ${name(v.device)}`;
     case 'seed-xpub': return 'derivada de la semilla';
-    case 'seed-sign': return 'tecleando la semilla en cualquier software';
+    case 'seed-sign': return 'tecleando la frase semilla en cualquier software';
     case 'seed-sign-on-device': return `cargando la semilla en ${name(v.device)}`;
     case 'spend': return `política ${policyText(policy, index.label)} satisfecha`;
   }

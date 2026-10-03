@@ -308,3 +308,20 @@ export function inheritanceBreakdown(locations: number | null, heirLossRarity: n
   const points = Math.round(HEIR_FRAGILITY_WEIGHT * (100 - rarityScore(heirLossRarity)));
   return { base, penalties: points > 0 ? [{ reason: 'heir-fragility', points }] : [], score: Math.max(0, base - points) };
 }
+
+/**
+ * Bandas para leer una puntuación (las mismas de la calibración, docs/CALIBRACION.md):
+ * muy mal < 25 · flojo 25–50 · aceptable 50–70 · bueno 70–85 · excelente ≥ 85.
+ */
+export type ScoreBand = 'very-poor' | 'weak' | 'fair' | 'good' | 'excellent';
+export const SCORE_BANDS: readonly { band: ScoreBand; from: number }[] = [
+  { band: 'very-poor', from: 0 },
+  { band: 'weak', from: 25 },
+  { band: 'fair', from: 50 },
+  { band: 'good', from: 70 },
+  { band: 'excellent', from: 85 },
+];
+
+export function scoreBand(score: number): ScoreBand {
+  return [...SCORE_BANDS].reverse().find((b) => score >= b.from)!.band;
+}

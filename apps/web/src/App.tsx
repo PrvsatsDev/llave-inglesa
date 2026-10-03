@@ -5,7 +5,7 @@ import { Dialogs } from './components/Dialogs.tsx';
 import { Header } from './components/Header.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
 import { useLiveAnalysis } from './store/analysis.ts';
-import { hasLocalDocument, openLocal, saveLocal } from './storage/actions.ts';
+import { hasLocalDocument, openLocal, saveLocal, showWelcome } from './storage/actions.ts';
 import { useDialog } from './store/dialog.ts';
 import { hasUnsavedChanges, useDocument } from './store/document.ts';
 import { useLayout } from './store/layout.ts';
@@ -47,13 +47,17 @@ function useShortcuts() {
   }, []);
 }
 
-/** Al arrancar, si hay un esquema guardado en este navegador, ofrece abrirlo (una sola vez). */
-let offeredSaved = false;
-function useOpenSavedOnStart() {
+/**
+ * Al arrancar (una sola vez): si hay un esquema guardado en este navegador, ofrece abrirlo; si no,
+ * en la primera visita, la bienvenida.
+ */
+let started = false;
+function useOnStart() {
   useEffect(() => {
-    if (offeredSaved || !hasLocalDocument()) return;
-    offeredSaved = true;
-    void openLocal();
+    if (started) return;
+    started = true;
+    if (hasLocalDocument()) void openLocal();
+    else if (!useLayout.getState().welcomeSeen) void showWelcome();
   }, []);
 }
 
@@ -70,7 +74,7 @@ function useUnsavedGuard() {
 
 export function App() {
   useShortcuts();
-  useOpenSavedOnStart();
+  useOnStart();
   useUnsavedGuard();
   useLiveAnalysis();
   const width = useLayout((s) => s.width);

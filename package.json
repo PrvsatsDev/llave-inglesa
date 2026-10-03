@@ -18,7 +18,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
     "check": "npm run typecheck && npm run test",
-    "analyze": "tsx apps/cli/src/main.ts analyze"
+    "analyze": "tsx apps/cli/src/main.ts analyze",
+    "e2e": "npm run e2e -w @llave-inglesa/web"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

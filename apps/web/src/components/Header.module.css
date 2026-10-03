@@ -15,6 +15,16 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.brand:hover .logo {
+  box-shadow: 0 0 24px var(--accent);
 }
 
 .logo {
@@ -95,6 +105,7 @@
 }
 
 .policyValue {
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--text);
@@ -182,9 +193,20 @@
   box-shadow: 0 0 8px var(--safe);
 }
 
-@media (max-width: 760px) {
-  .policyLabel,
+/* Pantallas estrechas: lo que ya se ve en el panel (keys, política) deja sitio al selector. */
+@media (max-width: 1000px) {
   .keys,
+  .policyLabel {
+    display: none;
+  }
+
+  .policy {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .policy,
   .divider,
   .wordmark {
     display: none;
@@ -192,5 +214,29 @@
 
   .header {
     gap: var(--space-3);
+  }
+
+  .select {
+    flex: 1 1 auto;
+  }
+
+  .select select {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+  }
+
+  .offlineText {
+    display: none;
+  }
+
+  .offline {
+    padding: 6px;
   }
 }

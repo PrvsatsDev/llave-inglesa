@@ -12,6 +12,7 @@ El proyecto y toda la interfaz están en **español**. Las conversaciones con el
 ```sh
 npm run dev        # web en http://127.0.0.1:5173
 npm run check      # typecheck (raíz + web) + todos los tests — ejecutar antes de cada commit
+npm run e2e        # pruebas en Chromium contra el build de producción; capturas en apps/web/e2e/.capturas
 npm run analyze -- fixtures/todo-en-casa.json   # CLI
 npm run build
 ```
@@ -55,6 +56,7 @@ docs/CAPACIDADES.md  Inventario de todo lo que la herramienta soporta (base de l
 
 - Una rama por fase o funcionalidad, PR en GitHub y el usuario hace la fusión.
 - Commits pequeños por paso, con mensaje en español.
-- Tras cada paso visual, el usuario lo revisa en el navegador antes del commit (Claude no puede verlo).
+- Tras cada paso visual, el usuario lo revisa en el navegador antes del commit. Antes, Claude ejecuta
+  `npm run e2e` y mira las capturas (puede leerlas) para llegar a esa revisión con menos fallos.
 - En WSL, Vite a veces no detecta ediciones rápidas seguidas: si el navegador muestra algo
   antiguo, reiniciar `npm run dev`.

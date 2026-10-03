@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R12",
-  "description": "2 de 3 con una SeedSigner",
+  "name": "2 de 3 con una SeedSigner",
+  "description": "Sin dispositivos que guarden keys: una sola SeedSigner con la que se firma cargando cada frase semilla. Todo pasa por el mismo aparato, y para firmar hay que ir a buscar las placas.",
   "keys": [
     {
       "id": "k1",

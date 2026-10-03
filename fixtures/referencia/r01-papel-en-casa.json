@@ -11,14 +11,19 @@
         "sources": [
           {
             "kind": "device-rng",
-            "vendor": "Desconocido"
+            "vendor": "Trezor",
+            "model": "Trezor Safe 5"
           },
           {
             "kind": "dice",
             "count": 99
           }
         ],
-        "independentlyVerified": false
+        "independentlyVerified": false,
+        "generatedBy": {
+          "vendor": "Trezor",
+          "model": "Trezor Safe 5"
+        }
       }
     }
   ],
@@ -98,5 +103,5 @@
       ]
     }
   ],
-  "description": "Ejemplo básico"
+  "description": "Trezor en casa y la frase semilla en papel en un cajón. Lo más habitual al empezar: quien entre en casa se la lleva, y un incendio la destruye."
 }

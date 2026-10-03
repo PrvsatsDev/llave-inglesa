@@ -32,6 +32,13 @@
   --warn: #ffc857;
   --warn-soft: rgb(255 200 87 / 0.14);
 
+  /* Bandas de puntuación (muy mal → excelente). Siempre con icono y texto, nunca solo color. */
+  --band-very-poor: var(--danger);
+  --band-weak: #ff9152;
+  --band-fair: var(--warn);
+  --band-good: #a6d96a;
+  --band-excellent: var(--safe);
+
   /*
    * Identidad de cada key (K1, K2…). Los tres primeros están validados en todas las
    * parejas (daltonismo incluido) sobre la superficie oscura, y evitan el rojo/verde

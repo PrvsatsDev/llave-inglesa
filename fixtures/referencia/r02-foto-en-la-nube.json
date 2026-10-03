@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R02",
-  "description": "Foto en la nube",
+  "name": "Foto en la nube",
+  "description": "Trezor en casa y una foto de la frase semilla en iCloud, sin cifrar. El error clásico: basta con hackear la cuenta.",
   "keys": [
     {
       "id": "k1",
@@ -12,14 +12,19 @@
         "sources": [
           {
             "kind": "device-rng",
-            "vendor": "Desconocido"
+            "vendor": "Trezor",
+            "model": "Trezor Safe 5"
           },
           {
             "kind": "dice",
             "count": 99
           }
         ],
-        "independentlyVerified": false
+        "independentlyVerified": false,
+        "generatedBy": {
+          "vendor": "Trezor",
+          "model": "Trezor Safe 5"
+        }
       }
     }
   ],

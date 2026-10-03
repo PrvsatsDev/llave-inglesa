@@ -34,6 +34,11 @@ export function Schema({ model }: { model: CustodyModel }) {
 
   return (
     <>
+      {model.description && (
+        <Section title="Sobre este esquema">
+          <p className={styles.description}>{model.description}</p>
+        </Section>
+      )}
       <Problems model={model} />
 
       <Section title="Política de gasto">

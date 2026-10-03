@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R10",
-  "description": "2 de 3 con custodio",
+  "name": "2 de 3 con custodio",
+  "description": "Como el distribuido, pero la tercera placa la guarda un abogado. Un tercero de confianza en lugar de la familia.",
   "keys": [
     {
       "id": "k1",

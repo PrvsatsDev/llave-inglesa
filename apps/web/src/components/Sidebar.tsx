@@ -1,4 +1,5 @@
 import type { CustodyModel } from '@llave-inglesa/domain';
+import { Monitor } from 'lucide-react';
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { useDocument } from '../store/document.ts';
 import { PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from '../store/layout.ts';
@@ -13,6 +14,28 @@ import { ScenarioPanel } from './ScenarioPanel.tsx';
 import { Schema } from './Schema.tsx';
 import { Scoreboard } from './Scoreboard.tsx';
 import styles from './Sidebar.module.css';
+
+/**
+ * Solo en pantallas de móvil (lo decide el CSS): la herramienta está pensada para pantalla grande.
+ * Se puede consultar, pero montar un esquema es más cómodo en un ordenador.
+ */
+function MobileNotice() {
+  const dismissed = useLayout((s) => s.mobileNoticeDismissed);
+  const dismiss = useLayout((s) => s.dismissMobileNotice);
+  if (dismissed) return null;
+  return (
+    <div className={styles.mobileNotice} role="note">
+      <Monitor size={16} aria-hidden />
+      <p>
+        Pensada para pantalla grande. Aquí puedes ver los ejemplos y consultar, pero para montar tu esquema es mejor un ordenador.
+        El mapa está más abajo: <a href="#mapa">ir al mapa</a>.
+      </p>
+      <button className={styles.mobileNoticeClose} onClick={dismiss}>
+        Entendido
+      </button>
+    </div>
+  );
+}
 
 function exists(model: CustodyModel, s: Selection | null): boolean {
   if (!s) return false;
@@ -31,6 +54,7 @@ export function Sidebar() {
   const section = useNavigation((s) => s.section);
   return (
     <aside className={styles.sidebar} aria-label="Panel">
+      <MobileNotice />
       {!collapsed && <SectionTabs model={model} />}
       <Scoreboard />
       {!collapsed && (

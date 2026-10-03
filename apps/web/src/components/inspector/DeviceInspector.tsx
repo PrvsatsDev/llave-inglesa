@@ -58,12 +58,12 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
           <div className={styles.twoCols}>
             <Field label="Fabricante">{(fid) => <TextInput id={fid} value={device.vendor} onChange={(vendor) => patch({ vendor }, 'vendor')} />}</Field>
             <Field label="Nombre del modelo">
-              {(fid) => <TextInput id={fid} value={device.model ?? ''} placeholder="opcional" onChange={(v) => patch({ model: v || undefined }, 'model')} />}
+              {(fid) => <TextInput id={fid} value={device.model ?? ''} placeholder="opcional" optional onChange={(v) => patch({ model: v || undefined }, 'model')} />}
             </Field>
           </div>
         )}
         <Field label="Firmware instalado">
-          {(fid) => <TextInput id={fid} value={device.firmware ?? ''} placeholder="p. ej. 5.6.0" onChange={(v) => patch({ firmware: v || undefined }, 'firmware')} />}
+          {(fid) => <TextInput id={fid} value={device.firmware ?? ''} placeholder="p. ej. 5.6.0" optional onChange={(v) => patch({ firmware: v || undefined }, 'firmware')} />}
         </Field>
         {catalog && <p className={styles.hint}>{catalogFeatures(catalog)}</p>}
         <AdvisoryList matches={advisories} />
@@ -122,7 +122,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
           />
           <p className={styles.hint}>
             {device.loads === undefined && device.kind === 'stateless'
-              ? 'Sin indicar: asumimos que cualquier semilla que tengas escrita puede pasar por él.'
+              ? 'Sin indicar: asumimos que cualquier frase semilla que tengas escrita puede pasar por él.'
               : 'Semillas que cargas en él para firmar.'}{' '}
             {catalog?.antiExfil
               ? 'Tiene anti-exfil: un firmware malicioso no podría filtrarlas en las firmas (si el software con el que firmas lo usa).'

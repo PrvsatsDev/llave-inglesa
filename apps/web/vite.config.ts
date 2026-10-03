@@ -29,6 +29,8 @@ const contentSecurityPolicy = (): Plugin => ({
 
 export default defineConfig({
   plugins: [react(), contentSecurityPolicy()],
+  // Las fuentes nunca se incrustan como data: (el CSP solo admite font-src 'self'), aunque sean pequeñas.
+  build: { assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined) },
   server: { host: '127.0.0.1' },
   preview: { host: '127.0.0.1' },
 });

@@ -213,7 +213,7 @@ function usabilityScoreRows(a: EngineAnalysis) {
     score: a.usability.score,
     rows: [{ label: n === null ? 'Los titulares no pueden firmar de forma segura' : `Firmar exige ir a ${plural(n, 'ubicación', 'ubicaciones')}`, points: a.usability.score }],
     how: [
-      'Cuántas ubicaciones tienen que visitar los titulares para firmar de forma segura: con dispositivos de firma, sin teclear ninguna semilla en un ordenador.',
+      'Cuántas ubicaciones tienen que visitar los titulares para firmar de forma segura: con dispositivos de firma, sin teclear ninguna frase semilla en un ordenador.',
       `${scale(usabilityScore, ['ubicación', 'ubicaciones'], 1, 4)}.`,
     ],
   };

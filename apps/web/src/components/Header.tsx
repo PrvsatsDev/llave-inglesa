@@ -1,8 +1,8 @@
 import { ChevronDown, Redo2, Undo2, Wrench } from 'lucide-react';
-import { examples } from '../lib/examples.ts';
+import { EXAMPLE_GROUPS, examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { policyText } from '../lib/text.ts';
-import { loadExample } from '../storage/actions.ts';
+import { loadExample, showWelcome } from '../storage/actions.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
 import { FileMenu } from './FileMenu.tsx';
 import { KeyChip } from './KeyChip.tsx';
@@ -45,12 +45,12 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <div className={styles.brand}>
+      <button className={styles.brand} onClick={() => void showWelcome()} title="Qué es llave-inglesa" aria-label="Qué es llave-inglesa">
         <span className={styles.logo} aria-hidden>
           <Wrench size={16} strokeWidth={2.5} />
         </span>
         <span className={styles.wordmark}>llave-inglesa</span>
-      </div>
+      </button>
 
       <div className={styles.divider} aria-hidden />
 
@@ -63,13 +63,17 @@ export function Header() {
               {model.name} ({originText(origin)})
             </option>
           )}
-          <optgroup label="Ejemplos">
-            {examples.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.model.name}
-              </option>
-            ))}
-          </optgroup>
+          {EXAMPLE_GROUPS.map((group) => (
+            <optgroup key={group} label={group}>
+              {examples
+                .filter((e) => e.group === group)
+                .map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.model.name}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
         </select>
         <ChevronDown size={14} className={styles.chevron} aria-hidden />
       </label>
@@ -95,9 +99,9 @@ export function Header() {
         </button>
       </div>
 
-      <span className={styles.offline} title="La aplicación no puede hacer peticiones de red">
+      <span className={styles.offline} title="La aplicación no puede hacer peticiones de red" aria-label="100% local: la aplicación no puede hacer peticiones de red">
         <span className={styles.offlineDot} aria-hidden />
-        100% local
+        <span className={styles.offlineText}>100% local</span>
       </span>
     </header>
   );

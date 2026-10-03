@@ -11,7 +11,11 @@ export type DialogRequest =
       resolve(password: string | null): void;
     }
   | { kind: 'confirm'; title: string; message: string; confirmLabel: string; danger?: boolean; resolve(ok: boolean): void }
-  | { kind: 'alert'; title: string; lines: string[]; resolve(): void };
+  | { kind: 'alert'; title: string; lines: string[]; resolve(): void }
+  /** Qué es la herramienta y por dónde empezar. null: cerrada sin elegir (se queda en el ejemplo). */
+  | { kind: 'welcome'; resolve(choice: WelcomeChoice | null): void };
+
+export type WelcomeChoice = { kind: 'example' } | { kind: 'new' } | { kind: 'open'; file: File };
 
 interface DialogState {
   current: DialogRequest | null;
@@ -44,3 +48,5 @@ export const confirmDialog = (title: string, message: string, confirmLabel: stri
   show<boolean>({ kind: 'confirm', title, message, confirmLabel, danger }, false);
 
 export const alertDialog = (title: string, lines: string[]) => show<void>({ kind: 'alert', title, lines }, undefined);
+
+export const welcomeDialog = () => show<WelcomeChoice | null>({ kind: 'welcome' }, null);
