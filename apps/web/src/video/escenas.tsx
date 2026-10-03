@@ -4,7 +4,7 @@ import { CIFRAS } from '@llave-inglesa/text';
 import type { ComponentType } from 'react';
 import { attackText, inheritanceText, lossText } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
-import { ejemplo, Mapa, Tarjeta, Titulo, type EstadoMapa } from './piezas.tsx';
+import { Aviso, ejemplo, Llamas, Mapa, Tarjeta, Titulo, type EstadoMapa } from './piezas.tsx';
 import { interpolar, suave } from './tiempo.ts';
 import styles from './video.module.css';
 
@@ -91,8 +91,15 @@ function Escena2({ f }: { f: number }) {
 function Escena3({ f }: { f: number }) {
   return (
     <div className={styles.escena}>
-      <Mapa estado={mapaPapel(f >= 20 ? { escenario: INCENDIO } : f < 8 ? { escenario: INTRUSION } : {})} />
+      <Mapa
+        estado={mapaPapel({
+          ...(f >= 20 ? { escenario: INCENDIO } : f < 8 ? { escenario: INTRUSION } : {}),
+          tachados: { casa: interpolar(f, 30, 45) },
+        })}
+      />
       <div className={`${styles.destello} ${styles.fuego}`} style={{ opacity: interpolar(f, 20, 26) - interpolar(f, 26, 50) }} />
+      <Llamas f={f} intensidad={interpolar(f, 20, 45)} />
+      <Aviso modelo={papel} escenario={INCENDIO} visible={interpolar(f, 45, 65)} />
       <Titulo f={f} texto={TEXTO_2} inicio={-200} salida={0} />
       <Titulo f={f} texto={TEXTO_3} inicio={70} />
       <Tarjeta etiqueta="Seguridad" valor={CIFRAS[PAPEL]!.security} visible={1} style={{ left: 330, top: 470 }} />
@@ -114,7 +121,9 @@ function Escena4({ f }: { f: number }) {
     interpolar(f, 180, 245, CIFRAS[PAPEL]![m], CIFRAS[DISTRIBUIDO]![m], suave.entradaSalida);
   return (
     <div className={styles.escena}>
-      {fuera > 0 && <Mapa estado={mapaPapel({ escenario: INCENDIO, opacidad: fuera })} />}
+      {fuera > 0 && <Mapa estado={mapaPapel({ escenario: INCENDIO, opacidad: fuera, tachados: { casa: 1 } })} />}
+      <Llamas f={180 + f} intensidad={fuera} />
+      <Aviso modelo={papel} escenario={INCENDIO} visible={fuera} />
       {f >= 25 && (
         <Mapa
           estado={{
@@ -151,6 +160,39 @@ function Escena4({ f }: { f: number }) {
   );
 }
 
+const FALLECIMIENTO: Scenario = { kind: 'loss', events: [{ type: 'death', person: 'yo' }] };
+const NODOS_DISTRIBUIDO = { casa: 1, 'nueva-ubicacion': 1, 'nueva-ubicacion-2': 1, 'nueva-ubicacion-3': 1, yo: 1, 'nueva-persona': 1 };
+
+/** 5 · La herencia (7 s): si faltas tú, tu pareja sigue llegando a los fondos. */
+function EscenaHerencia({ f }: { f: number }) {
+  // La tarjeta de Herencia se queda sola, a la izquierda; el aviso ocupa el centro de abajo.
+  const aIzquierda = interpolar(f, 10, 40, 0, 1, suave.entradaSalida);
+  return (
+    <div className={styles.escena}>
+      <Mapa estado={{ modelo: distribuido, nodos: NODOS_DISTRIBUIDO, lineas: 1, vista: VISTA_DISTRIBUIDO, ...(f >= 45 && { escenario: FALLECIMIENTO }) }} />
+      <div className={styles.destello} style={{ opacity: (interpolar(f, 45, 51) - interpolar(f, 51, 75)) * 0.6 }} />
+      <Titulo f={f} texto="Reparte. Combina. Prueba." inicio={-200} salida={0} />
+      <Titulo f={f} texto="¿Y si faltas tú?" inicio={20} salida={110} />
+      <Titulo f={f} texto="Tu familia sabría llegar." inicio={130} />
+      {METRICAS.map(([m, etiqueta], k) =>
+        m === 'inheritance' ? (
+          <Tarjeta
+            key={m}
+            etiqueta={etiqueta}
+            valor={CIFRAS[DISTRIBUIDO]![m]}
+            visible={1}
+            escala={1.5}
+            style={{ left: 390 + k * 295 + (120 - (390 + k * 295)) * aIzquierda, top: 850 }}
+          />
+        ) : (
+          <Tarjeta key={m} etiqueta={etiqueta} valor={CIFRAS[DISTRIBUIDO]![m]} visible={interpolar(f, 0, 20, 1, 0)} escala={1.5} style={{ left: 390 + k * 295, top: 850 }} />
+        ),
+      )}
+      <Aviso modelo={distribuido} escenario={FALLECIMIENTO} visible={interpolar(f, 60, 80)} />
+    </div>
+  );
+}
+
 // El análisis real del 2 de 3 distribuido: lo que enseña la escena 5.
 const analisis = analyze(distribuido);
 const indice = indexModel(distribuido);
@@ -177,30 +219,23 @@ const COLUMNAS = [
   },
 ] as const;
 
-/** 5 · El porqué (8 s): el análisis real de ese esquema, en tres columnas. */
+/** 6 · El porqué (8 s): el análisis real de ese esquema, en tres columnas. */
 function Escena5({ f }: { f: number }) {
   return (
     <div className={styles.escena}>
       <Mapa
         estado={{
           modelo: distribuido,
-          nodos: { casa: 1, 'nueva-ubicacion': 1, 'nueva-ubicacion-2': 1, 'nueva-ubicacion-3': 1, yo: 1, 'nueva-persona': 1 },
+          nodos: NODOS_DISTRIBUIDO,
           lineas: 1,
           vista: VISTA_DISTRIBUIDO,
+          escenario: FALLECIMIENTO,
           opacidad: interpolar(f, 0, 30, 1, 0.12),
         }}
       />
-      <Titulo f={f} texto="Reparte. Combina. Prueba." inicio={-200} salida={0} />
-      {METRICAS.map(([m, etiqueta], k) => (
-        <Tarjeta
-          key={m}
-          etiqueta={etiqueta}
-          valor={CIFRAS[DISTRIBUIDO]![m]}
-          visible={interpolar(f, 0, 20, 1, 0)}
-          escala={1.5}
-          style={{ left: 390 + k * 295, top: 850 }}
-        />
-      ))}
+      <Titulo f={f} texto="Tu familia sabría llegar." inicio={-200} salida={0} />
+      <Tarjeta etiqueta="Herencia" valor={CIFRAS[DISTRIBUIDO]!.inheritance} visible={interpolar(f, 0, 20, 1, 0)} escala={1.5} style={{ left: 120, top: 850 }} />
+      <Aviso modelo={distribuido} escenario={FALLECIMIENTO} visible={interpolar(f, 0, 20, 1, 0)} />
       <div className={styles.columnas}>
         {COLUMNAS.map((c, k) => (
           <section key={c.titulo} className={styles.columna} style={{ opacity: interpolar(f, 25 + k * 15, 45 + k * 15) }}>
@@ -221,7 +256,7 @@ function Escena5({ f }: { f: number }) {
   );
 }
 
-/** 6 · Cierre (7 s): el logo, la frase y dónde probarlo. */
+/** 7 · Cierre (7 s): el logo, la frase y dónde probarlo. */
 function Escena6({ f }: { f: number }) {
   const logo = interpolar(f, 10, 40);
   return (
@@ -248,8 +283,9 @@ export const ESCENAS: readonly Escena[] = [
   { id: 'escena-2', titulo: 'El ataque', fotogramas: 180, Componente: Escena2 },
   { id: 'escena-3', titulo: 'La desgracia', fotogramas: 180, Componente: Escena3 },
   { id: 'escena-4', titulo: 'Mejorar', fotogramas: 300, Componente: Escena4 },
-  { id: 'escena-5', titulo: 'El porqué', fotogramas: 240, Componente: Escena5 },
-  { id: 'escena-6', titulo: 'Cierre', fotogramas: 210, Componente: Escena6 },
+  { id: 'escena-5', titulo: 'La herencia', fotogramas: 210, Componente: EscenaHerencia },
+  { id: 'escena-6', titulo: 'El porqué', fotogramas: 240, Componente: Escena5 },
+  { id: 'escena-7', titulo: 'Cierre', fotogramas: 210, Componente: Escena6 },
 ];
 
 export const DURACION = ESCENAS.reduce((s, e) => s + e.fotogramas, 0);

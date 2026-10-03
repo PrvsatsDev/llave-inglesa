@@ -226,3 +226,51 @@
   color: var(--text-muted);
   font-size: 28px;
 }
+
+/* Una ubicación tachada: en gris, con un aspa roja encima. */
+.tachado {
+  filter: grayscale(calc(var(--tachado, 1) * 1));
+}
+
+.tachado::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  opacity: var(--tachado, 1);
+  background:
+    linear-gradient(to top right, transparent calc(50% - 3px), var(--danger) calc(50% - 3px), var(--danger) calc(50% + 3px), transparent calc(50% + 3px)),
+    linear-gradient(to bottom right, transparent calc(50% - 3px), var(--danger) calc(50% - 3px), var(--danger) calc(50% + 3px), transparent calc(50% + 3px));
+  pointer-events: none;
+}
+
+/* Aviso de simulación, abajo y centrado, al tamaño del vídeo. */
+.aviso {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform-origin: bottom center;
+}
+
+.aviso > div {
+  position: static;
+  transform: none;
+}
+
+/* Llamas del incendio, en las esquinas de abajo. */
+.llamas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.llama {
+  position: absolute;
+  bottom: -20px;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 60%, transparent));
+}
+
+/* Los botones de la app dentro de los nodos («¿Y si se pierde?») no pintan nada en un vídeo. */
+.escena :global(.react-flow__node) button {
+  display: none;
+}

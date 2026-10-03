@@ -6,7 +6,7 @@ import { useDocument } from '../store/document.ts';
 import { useScenario, useScenarioView } from '../store/scenario.ts';
 import styles from './ScenarioBanner.module.css';
 
-const OUTCOME: Record<Outcome, { icon: LucideIcon; text: string; level: 'bad' | 'good' | 'warn' }> = {
+export const OUTCOME: Record<Outcome, { icon: LucideIcon; text: string; level: 'bad' | 'good' | 'warn' }> = {
   stolen: { icon: Skull, text: 'El atacante puede gastar tus fondos', level: 'bad' },
   safe: { icon: CircleCheck, text: 'No le basta para robar', level: 'good' },
   recoverable: { icon: CircleCheck, text: 'Los fondos siguen siendo recuperables', level: 'good' },
