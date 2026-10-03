@@ -44,3 +44,51 @@
     overflow-y: visible;
   }
 }
+
+/* Aviso de móvil: oculto salvo en pantallas de teléfono. */
+.mobileNotice {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mobileNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: var(--space-3) var(--space-3) 0;
+    padding: 10px 12px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+
+  .mobileNotice svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--accent);
+  }
+
+  .mobileNotice p {
+    flex: 1;
+    margin: 0;
+  }
+
+  .mobileNotice a {
+    color: var(--accent);
+    font-weight: 600;
+  }
+}
+
+.mobileNoticeClose {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}

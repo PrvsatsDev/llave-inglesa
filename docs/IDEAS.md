@@ -29,6 +29,9 @@ pensarse antes de implementarla.
 ## Interfaz y documentación (2026-09-30)
 
 - **Guía de uso** que lo explique todo, partiendo de [CAPACIDADES.md](CAPACIDADES.md).
+- **Móvil con pestañas Panel / Mapa** (2026-10-03): hoy en móvil el mapa queda debajo de un panel muy
+  largo y solo hay un aviso de que está pensada para pantalla grande. Con dos pestañas, el mapa se vería
+  completo. Pendiente para un paso posterior, mejor con opiniones de usuarios.
 
 ## Simplificaciones conscientes del motor (para iterar)
 

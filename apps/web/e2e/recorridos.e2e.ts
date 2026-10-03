@@ -118,3 +118,22 @@ for (const [name, width, height] of [
     await capture(page, name);
   });
 }
+
+test('en móvil avisa de que está pensada para pantalla grande; cerrado, no vuelve', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const notice = page.getByRole('note').filter({ hasText: 'Pensada para pantalla grande' });
+  await expect(notice).toBeVisible();
+  await capture(page, 'movil-aviso');
+  await notice.getByRole('button', { name: 'Entendido' }).click();
+  await expect(notice).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText(/análisis exhaustivo/)).toBeVisible();
+  await expect(page.getByText('Pensada para pantalla grande')).toHaveCount(0);
+});
+
+test('en escritorio no hay aviso de móvil', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText(/análisis exhaustivo/)).toBeVisible();
+  await expect(page.getByText('Pensada para pantalla grande')).toBeHidden();
+});

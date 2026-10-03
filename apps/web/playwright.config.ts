@@ -11,15 +11,15 @@ export default defineConfig({
   fullyParallel: true,
   reporter: [['list']],
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: 'http://127.0.0.1:4180',
     locale: 'es-ES',
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    url: 'http://127.0.0.1:4173',
+    command: 'npm run build && npm run preview -- --port 4180 --strictPort',
+    url: 'http://127.0.0.1:4180',
     reuseExistingServer: false,
     timeout: 120_000,
   },
