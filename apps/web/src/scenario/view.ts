@@ -1,6 +1,7 @@
 import { indexModel, parseModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import {
   accessibleLocations,
+  attackDerivation,
   attackHoldings,
   compromisedDevices,
   createWorld,
@@ -147,7 +148,7 @@ function splitEdges(edges: Iterable<string>, used: ReadonlySet<Id>) {
 function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'attack' }>): ScenarioView {
   const world = createWorld(model);
   const holdings = attackHoldings(world, scenario.atoms);
-  const derivation = derive(world, holdings, 'any');
+  const derivation = attackDerivation(world, scenario.atoms);
   const used = usedFacts(derivation);
 
   const people = new Map<Id, PersonState>(model.people.map((p) => [p.id, 'dim']));

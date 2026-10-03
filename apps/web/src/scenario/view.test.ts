@@ -39,6 +39,17 @@ describe('scenarioView: ataques', () => {
   });
 });
 
+describe('scenarioView: PIN de coacción que no hace falta vencer', () => {
+  it('si la llave inglesa también da la placa, el mapa usa la placa y no el dispositivo', () => {
+    const r06 = updateDevice(fixture('referencia/r06-passphrase-solo-memoria'), 'nuevo-dispositivo', { duressPin: true });
+    const v = scenarioView(r06, { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] })!;
+    expect(v.outcome).toBe('stolen');
+    expect(v.duress).toEqual([]);
+    expect(v.items.get('nuevo-backup')).toBe('used');
+    expect(v.items.get('nuevo-dispositivo')).not.toBe('used');
+  });
+});
+
 describe('scenarioView: privacidad', () => {
   it('la llave inglesa en casa roba y además expone el saldo (vía el descriptor)', () => {
     const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] })!;

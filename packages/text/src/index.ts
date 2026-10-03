@@ -1,6 +1,6 @@
 import { ADVISORIES } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
-import type { AttackAtom, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AttackAtom, DuressReport, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -129,6 +129,33 @@ export function lossText(e: LossEvent, index: ModelIndex): string {
     case 'forget': return `${label(e.person)} olvida lo memorizado`;
   }
 }
+
+const effortText = (e: number) => e.toLocaleString('es');
+
+/**
+ * Qué aporta el PIN de coacción de un dispositivo a la seguridad (`score` y `minEffort`, los
+ * actuales). Si no aporta nada, por qué: la vía más barata no necesita desbloquear ese dispositivo.
+ */
+export function duressText(r: DuressReport, security: { score: number; minEffort: number | null }, index: ModelIndex): string {
+  const device = index.label(r.device);
+  if (r.helps) {
+    if (r.minEffortWithout !== null && security.minEffort !== null && r.minEffortWithout !== security.minEffort) {
+      return `El PIN de coacción de ${device} encarece el robo más barato: esfuerzo ${effortText(r.minEffortWithout)} → ${effortText(security.minEffort)} (seguridad ${r.scoreWithout} → ${security.score}).`;
+    }
+    return `El PIN de coacción de ${device} encarece algunas vías de robo: seguridad ${r.scoreWithout} → ${security.score}.`;
+  }
+  const prefix = `El PIN de coacción de ${device} no cambia la nota`;
+  if (!r.bypass) return `${prefix}.`;
+  const route = r.bypass.map((a) => attackText(a, index)).join(' + ');
+  if (!r.bypass.some((a) => a.type === 'coercion')) {
+    return `${prefix}: el robo más barato (${route}) no usa la llave inglesa, que es lo único que frena un PIN de coacción.`;
+  }
+  const items = r.bypassItems.filter((i) => i !== r.device).map(index.label);
+  const why = items.length ? `se lleva ${listText(items)}` : 'consigue lo que necesita por otro camino';
+  return `${prefix}: con ${lowerFirst(route)} no hace falta desbloquearlo, porque el atacante ${why}.`;
+}
+
+const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
 // ---------- Explicaciones del motor ----------
 

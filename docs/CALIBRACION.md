@@ -304,6 +304,10 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
 - **R06**: con un PIN de coacción, la seguridad no cambia si hay otro camino que no pasa por el
   dispositivo (la placa en la misma casa), pero la interfaz no explica por qué. Idea: avisar "el PIN de
   coacción no ayuda: con la llave inglesa también se llevan la placa de la caja fuerte".
+  **Resuelto** en el paso 3: el análisis compara la seguridad con y sin cada PIN de coacción y explica
+  por qué no ayuda (la vía que lo esquiva y lo que se lleva el atacante). De paso, la simulación y el "por
+  qué" seguían el camino del dispositivo aunque el robo no necesitara vencer su PIN de coacción: ahora
+  muestran el camino que no lo necesita.
 - **R07**: el fabricante del RNG en la procedencia es texto libre y quedó "Coldcard Q", no "Coinkite"
   como en el catálogo. El fallo publicado se detecta igual (va por el firmware con que se generó), pero
   el ataque "RNG con fallo aún desconocido" agrupa por fabricante: dos keys con "Coldcard Q" y

@@ -1,4 +1,4 @@
-import { indexModel, updateDevice } from '@llave-inglesa/domain';
+import { indexModel, removeArtifact, updateDevice } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { analyze, ATTACK_EFFORT, attackEffort, DURESS_SURCHARGE, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
@@ -43,5 +43,43 @@ describe('PIN de coacción', () => {
     s.cuts.forEach((cut, i) => {
       if (cut.every((a) => a.type !== 'coercion')) expect(s.efforts[i]).toBe(attackEffort(cut, index));
     });
+  });
+});
+
+describe('informe del PIN de coacción: ¿ayuda?', () => {
+  const r06 = loadFixture('referencia/r06-passphrase-solo-memoria');
+  const trezor = 'nuevo-dispositivo';
+  const withDuress = updateDevice(r06, trezor, { duressPin: true });
+
+  it('solo informa de los dispositivos con PIN y PIN de coacción', () => {
+    expect(analyze(r06).duress).toEqual([]);
+    expect(analyze(updateDevice(withDuress, trezor, { pinProtected: false })).duress).toEqual([]);
+  });
+
+  it('no ayuda si la llave inglesa también da la placa: dice por qué vía y con qué objetos', () => {
+    const [report] = analyze(withDuress).duress;
+    expect(report).toEqual({
+      device: trezor,
+      helps: false,
+      minEffortWithout: analyze(r06).security.minEffort,
+      scoreWithout: analyze(r06).security.score,
+      bypass: [{ type: 'coercion', person: 'yo', location: 'casa' }],
+      bypassItems: ['nuevo-backup'],
+    });
+  });
+
+  it('ayuda si el dispositivo es la única vía: compara con el esquema sin él', () => {
+    const onlyDevice = removeArtifact(withDuress, 'nuevo-backup');
+    const a = analyze(onlyDevice);
+    const [report] = a.duress;
+    expect(report!.helps).toBe(true);
+    expect(report!.bypass).toBeNull();
+    expect(report!.minEffortWithout).toBe(a.security.minEffort! - DURESS_SURCHARGE);
+    expect(report!.scoreWithout).toBe(analyze(updateDevice(onlyDevice, trezor, { duressPin: false })).security.score);
+    expect(report!.scoreWithout).toBeLessThan(a.security.score);
+  });
+
+  it('en Todo en casa ayuda: la llave inglesa necesita el Coldcard', () => {
+    expect(analyze(duress).duress).toMatchObject([{ device: 'ccq', helps: true }]);
   });
 });
