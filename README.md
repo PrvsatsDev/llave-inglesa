@@ -1,4 +1,11 @@
-# 🔧 llave-inglesa
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/logo-oscuro.svg">
+    <img src="docs/img/logo-claro.svg" alt="Logo de llave-inglesa: la B de Bitcoin con una llave inglesa" width="120">
+  </picture>
+</p>
+
+# llave-inglesa
 
 **Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.**
 
@@ -67,6 +74,7 @@ npm run check        # typecheck + tests unitarios y de propiedades (fast-check)
 npm run e2e          # pruebas en Chromium contra el build de producción
 npm run build        # web estática en apps/web/dist
 npm run empaquetar   # build + zip reproducible y SHA256SUMS en release/
+python3 scripts/logo.py   # regenera los SVG del logo (app, favicon y README)
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
 ```
 

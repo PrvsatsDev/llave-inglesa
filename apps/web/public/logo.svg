@@ -1,5 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <style>.llave{fill:#1E3A5F}@media (prefers-color-scheme: dark){.llave{fill:#8FB8F0}}</style>
   <defs>
     <!-- Hueco entre la B y la llave, para que no se fundan a tamaño pequeño. -->
     <mask id="hueco">
@@ -20,6 +19,6 @@
       <path fill-rule="evenodd" d="M17 50H57C70 50 77 57 77 66C77 75 70 82 57 82H17Z M32 60H54C59 60 62 62.5 62 66C62 69.5 59 72 54 72H32Z"/>
       <rect x="17" y="18" width="15" height="64"/>
     </g>
-    <g class="llave" fill="#1E3A5F" mask="url(#boca)"><rect x="36" y="44" width="38" height="12" rx="6"/><circle cx="71" cy="50" r="19"/></g>
+    <g class="llave" fill="#8FB8F0" mask="url(#boca)"><rect x="36" y="44" width="38" height="12" rx="6"/><circle cx="71" cy="50" r="19"/></g>
   </g>
 </svg>
