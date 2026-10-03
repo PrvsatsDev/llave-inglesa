@@ -1,4 +1,4 @@
-import type { Artifact, CustodyModel, Device, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
+import type { Artifact, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 import { canNest } from './validate.ts';
 
 /**
@@ -112,6 +112,39 @@ export function addKey(model: CustodyModel): Created {
 export function updateKey(model: CustodyModel, id: Id, patch: Patch<Key>): CustodyModel {
   return { ...model, keys: replace(model.keys, id, (k) => ({ ...k, ...patch })) };
 }
+
+/** Procedencia sin rellenar: tal como la deja `addKey`. */
+export function isBlankProvenance(key: Key): boolean {
+  const p = key.provenance;
+  return !p.generatedBy && !p.independentlyVerified && p.sources.every((s) => s.kind === 'unknown');
+}
+
+/**
+ * La semilla de `keyId` se generó en el dispositivo `deviceId`: copia su fabricante, modelo y
+ * firmware actual (se copian, no se enlazan: el firmware que cuenta es el de cuando se generó).
+ * Si la entropía estaba sin indicar, pasa a ser el RNG de ese dispositivo; un RNG de dispositivo
+ * con fabricante desconocido toma el suyo.
+ */
+export function setKeyGeneratedOn(model: CustodyModel, keyId: Id, deviceId: Id): CustodyModel {
+  const device = model.devices.find((d) => d.id === deviceId);
+  if (!device) return model;
+  const { vendor, model: name, firmware } = device;
+  const rng: EntropySource = { kind: 'device-rng', vendor, ...(name && { model: name }) };
+  return {
+    ...model,
+    keys: replace(model.keys, keyId, (k) => {
+      const sources = k.provenance.sources.every((s) => s.kind === 'unknown')
+        ? [rng]
+        : k.provenance.sources.map((s) => (s.kind === 'device-rng' && isUnknownVendor(s.vendor) ? rng : s));
+      return {
+        ...k,
+        provenance: { ...k.provenance, sources, generatedBy: { vendor, ...(name && { model: name }), ...(firmware && { firmware }) } },
+      };
+    }),
+  };
+}
+
+const isUnknownVendor = (vendor: string) => ['', 'desconocido'].includes(vendor.trim().toLowerCase());
 
 export function removeKey(model: CustodyModel, id: Id): CustodyModel {
   const policy = removeFromPolicy(model.policy, id);

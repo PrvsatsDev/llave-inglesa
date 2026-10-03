@@ -1,9 +1,9 @@
-import { activeHolds, advisoriesFor, catalogModelByName, indexModel, removeKey, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
-import { AlertTriangle, KeyRound, MapPin, Plus, X } from 'lucide-react';
+import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
+import { AlertTriangle, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
-import { AdvisoryList, HardwareModelSelect } from './Hardware.tsx';
+import { AdvisoryList, HardwareModelSelect, VendorSelect } from './Hardware.tsx';
 import styles from './fields.module.css';
 
 type SourceKind = EntropySource['kind'];
@@ -40,9 +40,14 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
       <span className={styles.rowGrow}>
         <Select value={source.kind} options={SOURCE_OPTIONS} onChange={(kind) => onChange(emptySource(kind))} />
       </span>
-      {(source.kind === 'device-rng' || source.kind === 'software-rng') && (
+      {source.kind === 'device-rng' && (
         <span className={styles.rowGrow}>
-          <TextInput value={source.vendor} placeholder="Fabricante" onChange={(vendor) => onChange({ ...source, vendor })} />
+          <VendorSelect value={source.vendor} onChange={(vendor) => onChange({ ...source, vendor })} />
+        </span>
+      )}
+      {source.kind === 'software-rng' && (
+        <span className={styles.rowGrow}>
+          <TextInput value={source.vendor} placeholder="Software" onChange={(vendor) => onChange({ ...source, vendor })} />
         </span>
       )}
       {(source.kind === 'dice' || source.kind === 'coin' || source.kind === 'cards') && (
@@ -91,6 +96,10 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
   const { sources, generatedBy, independentlyVerified } = key.provenance;
   const generatorModel = catalogModelByName(generatedBy?.model);
   const generatorAdvisories = generatorModel ? advisoriesFor(generatorModel.id, generatedBy?.firmware).filter((m) => m.advisory.kind === 'weak-entropy') : [];
+
+  const generateOn = (device: string) => apply((m) => setKeyGeneratedOn(m, id, device));
+  /** Dispositivos donde vive o se carga esta key: candidatos a haberla generado. */
+  const carriers = model.devices.filter((d) => activeHolds(d).includes(id) || d.loads?.includes(id));
 
   const index = indexModel(model);
   const places = [
@@ -179,6 +188,21 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
       </Section>
 
       <Section title="Generación">
+        {isBlankProvenance(key) && carriers.length > 0 && (
+          <div className={styles.suggestion}>
+            <p>
+              {carriers.length === 1 ? `Esta key está en ${carriers[0]!.label}. ¿Se generó ahí?` : 'Esta key está en varios dispositivos. ¿Se generó en alguno?'}
+            </p>
+            <div className={styles.buttonRow}>
+              {carriers.map((d) => (
+                <Button key={d.id} icon={Cpu} onClick={() => generateOn(d.id)}>
+                  {carriers.length === 1 ? 'Sí, rellenar' : d.label}
+                </Button>
+              ))}
+            </div>
+            <p className={styles.hint}>Rellena la entropía (RNG del dispositivo) y el fabricante, modelo y firmware con que se generó.</p>
+          </div>
+        )}
         <Switch
           checked={!generatedBy}
           onChange={(manual) => setProvenance({ generatedBy: manual ? undefined : { vendor: 'Desconocido' } })}
@@ -192,6 +216,8 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
                 <HardwareModelSelect
                   id={fid}
                   value={generatorModel}
+                  devices={model.devices}
+                  onPickDevice={generateOn}
                   onChange={(m) =>
                     setProvenance({ generatedBy: m ? { vendor: m.vendor, model: m.name, firmware: generatedBy.firmware } : { vendor: generatedBy.vendor, firmware: generatedBy.firmware } })
                   }

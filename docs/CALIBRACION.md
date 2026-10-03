@@ -309,6 +309,9 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
   En R08 el usuario lo confirma: en la key hay que escribir el fabricante a mano en *Entropía* y luego
   volver a elegir el dispositivo en *Generada en*. Bastaría con elegir *Generada en* y que el RNG se
   rellenara desde ahí.
+  **Resuelto** (con la de R01) en el paso 3: *Generada en* ofrece los dispositivos del esquema y rellena
+  desde ellos la entropía; el fabricante del RNG se elige del catálogo; y una key con la procedencia sin
+  rellenar propone rellenarla desde el dispositivo donde está.
 - **Esquema de prueba**: si nadie sabe el PIN de un dispositivo, el motor lo trata como inaccesible y la
   seguridad sube sin que el usuario se dé cuenta (en el esquema de prueba, 73 → 83).
   Idea: avisar "nadie sabe el PIN de X: no sirve para firmar" (aviso de validación).

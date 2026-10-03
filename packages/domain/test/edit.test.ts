@@ -22,6 +22,8 @@ import {
   updateLocation,
   removePerson,
   setArtifactPassword,
+  setKeyGeneratedOn,
+  isBlankProvenance,
   setThreshold,
   uniqueId,
   updateDevice,
@@ -214,7 +216,45 @@ const ops: Op[] = [
   (m, pick) => setLocationProtection(m, m.locations[pick(m.locations.length)]!.id, ([undefined, 'home-safe', 'bank-box'] as const)[pick(3)]),
   (m, pick) => setLocationInside(m, m.locations[pick(m.locations.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => updateLocation(m, m.locations[pick(m.locations.length)]!.id, { kind: (['physical', 'device', 'cloud'] as const)[pick(3)] }),
+  (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
 ];
+
+describe('procedencia generada en un dispositivo', () => {
+  it('una key nueva rellena su procedencia desde el dispositivo: RNG y generación', () => {
+    const { model, id } = addKey(casa);
+    expect(isBlankProvenance(model.keys.find((k) => k.id === id)!)).toBe(true);
+    const key = setKeyGeneratedOn(model, id, 'ccq').keys.find((k) => k.id === id)!;
+    expect(key.provenance).toEqual({
+      sources: [{ kind: 'device-rng', vendor: 'Coinkite', model: 'Coldcard Q' }],
+      generatedBy: { vendor: 'Coinkite', model: 'Coldcard Q' },
+      independentlyVerified: false,
+    });
+    expect(isBlankProvenance(key)).toBe(false);
+  });
+
+  it('conserva las fuentes conocidas y completa el RNG de fabricante desconocido', () => {
+    const m = updateKey(casa, 'k2', {
+      provenance: { sources: [{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'Desconocido' }], independentlyVerified: true },
+    });
+    const key = setKeyGeneratedOn(m, 'k2', 'seedsigner').keys.find((k) => k.id === 'k2')!;
+    expect(key.provenance.sources).toEqual([{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'SeedSigner' }]);
+    expect(key.provenance.generatedBy).toEqual({ vendor: 'SeedSigner' });
+    expect(key.provenance.independentlyVerified).toBe(true);
+  });
+
+  it('copia el firmware actual del dispositivo', () => {
+    const m = updateDevice(casa, 'ccq', { firmware: '1.3.1Q' });
+    expect(setKeyGeneratedOn(m, 'k3', 'ccq').keys.find((k) => k.id === 'k3')!.provenance.generatedBy).toEqual({
+      vendor: 'Coinkite',
+      model: 'Coldcard Q',
+      firmware: '1.3.1Q',
+    });
+  });
+
+  it('con un dispositivo que no existe no cambia nada', () => {
+    expect(setKeyGeneratedOn(casa, 'k1', 'nada')).toBe(casa);
+  });
+});
 
 describe('propiedad: editar nunca rompe el modelo', () => {
   it('cualquier secuencia de operaciones deja un modelo válido', () => {
