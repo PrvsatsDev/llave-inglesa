@@ -12,7 +12,7 @@ export function Legend() {
       </button>
       {open && (
         <ul className={styles.list}>
-          <li><span className={`${styles.dot} ${styles.filled}`} /> la key en sí (semilla o en memoria)</li>
+          <li><span className={`${styles.dot} ${styles.filled}`} /> la key en sí (frase semilla o en memoria)</li>
           <li><span className={`${styles.dot} ${styles.ring}`} /> passphrase</li>
           <li><span className={`${styles.dot} ${styles.hollow}`} /> solo xpub</li>
           <li><Lock size={11} className={styles.icon} /> protegido por PIN</li>

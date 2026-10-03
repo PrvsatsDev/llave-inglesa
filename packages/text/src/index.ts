@@ -202,7 +202,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'device-xpub': return 'la exporta el dispositivo';
     case 'device-wallet': return `multisig registrado en ${name(v.device)}`;
     case 'seed-xpub': return 'derivada de la semilla';
-    case 'seed-sign': return 'tecleando la semilla en cualquier software';
+    case 'seed-sign': return 'tecleando la frase semilla en cualquier software';
     case 'seed-sign-on-device': return `cargando la semilla en ${name(v.device)}`;
     case 'spend': return `política ${policyText(policy, index.label)} satisfecha`;
   }

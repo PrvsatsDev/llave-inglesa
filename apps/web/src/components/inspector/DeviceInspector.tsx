@@ -122,7 +122,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
           />
           <p className={styles.hint}>
             {device.loads === undefined && device.kind === 'stateless'
-              ? 'Sin indicar: asumimos que cualquier semilla que tengas escrita puede pasar por él.'
+              ? 'Sin indicar: asumimos que cualquier frase semilla que tengas escrita puede pasar por él.'
               : 'Semillas que cargas en él para firmar.'}{' '}
             {catalog?.antiExfil
               ? 'Tiene anti-exfil: un firmware malicioso no podría filtrarlas en las firmas (si el software con el que firmas lo usa).'

@@ -108,7 +108,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
     ...model.devices.filter((d) => activeHolds(d).includes(id)).map((d) => ({ item: d.label, location: d.location, how: 'en memoria' })),
     ...model.artifacts
       .filter((a) => a.contents.some((c) => c.type === 'seed' && c.key === id))
-      .map((a) => ({ item: a.label, location: a.location, how: 'semilla' })),
+      .map((a) => ({ item: a.label, location: a.location, how: 'frase semilla' })),
   ];
 
   return (

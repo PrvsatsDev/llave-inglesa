@@ -6,14 +6,14 @@ import styles from './nodes.module.css';
 const KIND_TEXT = { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ' } as const;
 const KIND_TITLE = {
   holds: 'Key guardada en el dispositivo',
-  seed: 'Semilla (palabras)',
+  seed: 'Frase semilla',
   passphrase: 'Passphrase',
   xpub: 'Clave pública extendida',
 } as const;
 
 /**
  * Insignia de un secreto. El relleno del punto dice qué es:
- * lleno = la key en sí (semilla o en memoria), anillo = passphrase, hueco = solo xpub.
+ * lleno = la key en sí (frase semilla o en memoria), anillo = passphrase, hueco = solo xpub.
  */
 export function SecretBadge({ badge, withDevice = false }: { badge: Badge; withDevice?: boolean }) {
   switch (badge.kind) {
