@@ -216,6 +216,15 @@ export async function exportPlain() {
   download(`${slug(model.name)}.json`, serializeModel(model), 'application/json');
 }
 
+/**
+ * Descarga el documento en claro sin preguntar nada: solo para la pantalla de fallo, cuando la
+ * interfaz (y sus diálogos) ya no responden y es la única forma de no perder los cambios.
+ */
+export function rescueDownload() {
+  const model = exportable();
+  download(`${slug(model.name)}-rescate.json`, serializeModel(model), 'application/json');
+}
+
 /** Abre un fichero .llave (cifrado) o .json (en claro). */
 export async function importFile(file: File) {
   if (!(await confirmDiscard())) return;
