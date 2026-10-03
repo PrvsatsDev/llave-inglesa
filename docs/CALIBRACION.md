@@ -103,8 +103,8 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 |---|---|---|---|---|
 | R01 Papel en el cajón | muy mal / flojo | flojo | excelente | bueno ¹ |
 | R02 Foto en la nube | muy mal | flojo | excelente | muy mal |
-| R03 Acero en la caja fuerte | aceptable | aceptable | excelente | bueno ¹ |
-| R04 Acero + copia en el banco | aceptable | bueno | excelente | bueno ¹ |
+| R03 Acero en la caja fuerte | flojo / aceptable ² | aceptable | excelente | bueno ¹ |
+| R04 Acero + copia en el banco | flojo / aceptable ² | bueno | excelente | bueno ¹ |
 | R05 Passphrase con copia aparte | bueno | flojo ¹ | excelente | aceptable ¹ |
 | R06 Passphrase solo en la memoria | bueno | flojo ¹ | excelente | muy mal |
 | R07 Coldcard afectada | muy mal | aceptable | excelente | bueno ¹ |
@@ -120,6 +120,14 @@ era optimista. Herencia: desde el ajuste 2 descuenta la fragilidad del camino de
 exige dos herederos o más. Resiliencia: en R05 la passphrase es un segundo secreto que se puede perder;
 en R06 basta con olvidarla (en el borde de muy mal); en R12 las placas son la única copia.
 
+² **Procedencia corregida (fase 7, al publicar la galería como ejemplos).** R01–R06 se montaron como
+"RNG desconocido + dados, calculada a mano"; ahora siguen la convención, como R08–R12: generadas en el
+Trezor mezclando 99 dados, **sin verificar**. Una mezcla del RNG del dispositivo con dados no se puede
+verificar de forma independiente (la parte del RNG es secreta, no se puede recalcular), así que un fallo
+aún desconocido del RNG de Trezor es una vía más (esfuerzo 3). En R03 y R04 cae en el margen de las casi
+igual de baratas y resta 2: seguridad 51 → 49, en el borde entre *flojo* y *aceptable*. Es un matiz que la
+galería debe enseñar: los dados solo protegen del todo si se generan solo con ellos y se verifican.
+
 Las bandas son un test (`packages/engine/test/calibracion.test.ts`): cada esquema de la galería debe
 caer en la suya en las cuatro métricas.
 
@@ -133,8 +141,8 @@ ajuste las movió.
 |---|---|---|---|---|---|
 | R01 Papel en el cajón | 35 ✓ | 41 ✓ | 100 ✓ | 70 ✓ | ajuste 2 (Her 100 → 70) |
 | R02 Foto en la nube | 23 ✓ | 41 ✓ | 100 ✓ | 0 ✓ | ajuste 1 (Res 34 → 41) |
-| R03 Acero en la caja fuerte | 51 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | ajuste 3 (Seg 49 → 51) |
-| R04 Acero + copia en el banco | 51 ✓ | 77 ✓ | 100 ✓ | 82 ✓ | ajuste 3 (Seg 49 → 51) |
+| R03 Acero en la caja fuerte | 49 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | procedencia ² (Seg 51 → 49) |
+| R04 Acero + copia en el banco | 49 ✓ | 77 ✓ | 100 ✓ | 82 ✓ | procedencia ² (Seg 51 → 49) |
 | R05 Passphrase con copia aparte | 71 ✓ | 45 ✓ | 100 ✓ | 64 ✓ | ajuste 4 (Her 59 → 64) |
 | R06 Passphrase solo en la memoria | 73 ✓ | 28 ✓ | 100 ✓ | 0 ✓ | ajuste 3 (Seg 65 → 73) |
 | R07 Coldcard afectada | 12 ✓ | 61 ✓ | 100 ✓ | 76 ✓ | — |

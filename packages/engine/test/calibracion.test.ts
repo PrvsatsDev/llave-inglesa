@@ -107,8 +107,9 @@ describe('calibración: esquemas de referencia', () => {
     const BANDS: Record<string, [Band | Band[], Band, Band, Band]> = {
       'r01-papel-en-casa': [['muy mal', 'flojo'], 'flojo', 'excelente', 'bueno'],
       'r02-foto-en-la-nube': ['muy mal', 'flojo', 'excelente', 'muy mal'],
-      'r03-acero-en-caja-fuerte': ['aceptable', 'aceptable', 'excelente', 'bueno'],
-      'r04-acero-y-banco': ['aceptable', 'bueno', 'excelente', 'bueno'],
+      // Seguridad en el borde (49): generada en el Trezor mezclando dados, sin verificar (ver docs/CALIBRACION.md).
+      'r03-acero-en-caja-fuerte': [['flojo', 'aceptable'], 'aceptable', 'excelente', 'bueno'],
+      'r04-acero-y-banco': [['flojo', 'aceptable'], 'bueno', 'excelente', 'bueno'],
       'r05-passphrase-copia-aparte': ['bueno', 'flojo', 'excelente', 'aceptable'],
       'r06-passphrase-solo-memoria': ['bueno', 'flojo', 'excelente', 'muy mal'],
       'r07-coldcard-afectada': ['muy mal', 'aceptable', 'excelente', 'bueno'],

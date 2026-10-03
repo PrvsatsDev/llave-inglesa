@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R05",
-  "description": "Passphrase con copia aparte",
+  "name": "Passphrase con copia aparte",
+  "description": "La placa en la caja fuerte y una passphrase (una frase) que el titular sabe de memoria y tiene apuntada en casa de sus padres. La frase semilla sola ya no basta para robar.",
   "keys": [
     {
       "id": "k1",
@@ -12,14 +12,19 @@
         "sources": [
           {
             "kind": "device-rng",
-            "vendor": "Desconocido"
+            "vendor": "Trezor",
+            "model": "Trezor Safe 5"
           },
           {
             "kind": "dice",
             "count": 99
           }
         ],
-        "independentlyVerified": false
+        "independentlyVerified": false,
+        "generatedBy": {
+          "vendor": "Trezor",
+          "model": "Trezor Safe 5"
+        }
       },
       "passphraseStrength": "phrase"
     }

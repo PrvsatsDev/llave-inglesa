@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R09",
-  "description": "2 de 3 distribuido",
+  "name": "2 de 3 distribuido",
+  "description": "Los dispositivos en casa y cada placa, con su descriptor, en un sitio distinto: caja fuerte, banco y casa de los padres. El esquema «de manual».",
   "keys": [
     {
       "id": "k1",

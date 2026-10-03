@@ -248,3 +248,11 @@
   display: flex;
   gap: 6px;
 }
+
+.description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  white-space: pre-line;
+}

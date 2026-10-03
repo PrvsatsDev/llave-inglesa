@@ -103,7 +103,7 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
         </button>
       </footer>
       <p className={styles.hint}>
-        Hay {examples.length} ejemplos en el selector de arriba. Puedes volver aquí pulsando el logo.
+        En el selector de arriba hay {examples.length} ejemplos, de lo más habitual a lo más cuidado. Puedes volver aquí pulsando el logo.
       </p>
       <input
         ref={fileRef}

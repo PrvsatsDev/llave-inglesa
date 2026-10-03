@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R07",
-  "description": "Coldcard afectada",
+  "name": "Coldcard afectada",
+  "description": "Como el acero en la caja fuerte, pero la frase semilla se generó sin dados en una Coldcard Q con el firmware del fallo de entropía de 2026: se puede adivinar en remoto.",
   "keys": [
     {
       "id": "k1",

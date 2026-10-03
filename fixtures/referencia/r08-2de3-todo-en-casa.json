@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R08",
-  "description": "2 de 3 todo en casa",
+  "name": "2 de 3 todo en casa",
+  "description": "Tres dispositivos y sus tres placas, todo en casa. Multisig sin distribuir: quien llegue a casa lo tiene todo.",
   "keys": [
     {
       "id": "k1",

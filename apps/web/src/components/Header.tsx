@@ -1,5 +1,5 @@
 import { ChevronDown, Redo2, Undo2, Wrench } from 'lucide-react';
-import { examples } from '../lib/examples.ts';
+import { EXAMPLE_GROUPS, examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { policyText } from '../lib/text.ts';
 import { loadExample, showWelcome } from '../storage/actions.ts';
@@ -63,13 +63,17 @@ export function Header() {
               {model.name} ({originText(origin)})
             </option>
           )}
-          <optgroup label="Ejemplos">
-            {examples.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.model.name}
-              </option>
-            ))}
-          </optgroup>
+          {EXAMPLE_GROUPS.map((group) => (
+            <optgroup key={group} label={group}>
+              {examples
+                .filter((e) => e.group === group)
+                .map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.model.name}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
         </select>
         <ChevronDown size={14} className={styles.chevron} aria-hidden />
       </label>

@@ -27,13 +27,17 @@ test('cada ejemplo carga, se analiza y no tiene errores de modelo', async ({ pag
   const errors = watchErrors(page);
   await page.goto('/');
   const picker = page.getByLabel('Documento abierto o ejemplo');
-  const examples = await picker.locator('optgroup[label="Ejemplos"] option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+  const examples = await picker.locator('optgroup option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
   expect(examples.length).toBeGreaterThanOrEqual(3);
   for (const id of examples) {
     await picker.selectOption(id);
     await expect(page.getByText(/análisis exhaustivo/)).toBeVisible();
     await expect(page.getByText('Errores que corregir')).toHaveCount(0);
   }
+  // La galería se muestra con su descripción, que explica qué enseña cada esquema.
+  await picker.selectOption('r02-foto-en-la-nube');
+  await expect(page.getByText('El error clásico: basta con hackear la cuenta.').first()).toBeVisible();
+  await capture(page, 'galeria');
   expect(errors).toEqual([]);
 });
 

@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R04",
-  "description": "Acero en casa y copia en el banco",
+  "name": "Acero en casa y copia en el banco",
+  "description": "La placa de la caja fuerte y una segunda en la caja del banco. Redundancia geográfica: un incendio ya no lo pierde todo.",
   "keys": [
     {
       "id": "k1",
@@ -12,14 +12,19 @@
         "sources": [
           {
             "kind": "device-rng",
-            "vendor": "Desconocido"
+            "vendor": "Trezor",
+            "model": "Trezor Safe 5"
           },
           {
             "kind": "dice",
             "count": 99
           }
         ],
-        "independentlyVerified": false
+        "independentlyVerified": false,
+        "generatedBy": {
+          "vendor": "Trezor",
+          "model": "Trezor Safe 5"
+        }
       }
     }
   ],

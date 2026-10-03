@@ -1,8 +1,8 @@
 {
   "format": "llave-inglesa",
   "version": 1,
-  "name": "R11",
-  "description": "2 de 3 sin plan de herencia",
+  "name": "2 de 3 sin plan de herencia",
+  "description": "Como el distribuido, pero la pareja no puede entrar ni en el banco ni en casa de los padres. Seguro para el titular, inútil para los herederos.",
   "keys": [
     {
       "id": "k1",
