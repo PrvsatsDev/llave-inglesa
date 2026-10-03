@@ -290,6 +290,7 @@ ajustes en `score.ts` (la llave inglesa debería castigar menos) y arreglar las 
 - **R01**: no es obvio dónde se crea un dispositivo o un backup: solo se puede desde la ficha de su
   ubicación. Ideas: botones "+ Dispositivo" y "+ Backup" también en el Esquema (preguntando la
   ubicación), o un "+" junto a cada ubicación del índice.
+  **Resuelto** en el paso 3: las dos cosas.
 - **R04**: dos backups con la misma etiqueta ("Backup K1", uno en la caja fuerte y otro en el banco) no
   se distinguen en las listas: "Pérdida de Backup K1 + Pérdida de Backup K1", o un bloqueo que nombra
   uno sin decir cuál. Ideas: avisar de etiquetas repetidas, o añadir la ubicación al nombre cuando

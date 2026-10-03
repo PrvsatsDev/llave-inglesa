@@ -1,6 +1,6 @@
-import { addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel } from '@llave-inglesa/domain';
-import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Crown, MapPin, Plus, User, UserPlus, XCircle } from 'lucide-react';
-import { useMemo } from 'react';
+import { addArtifact, addDevice, addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel, type Id } from '@llave-inglesa/domain';
+import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, MapPin, Plus, RectangleHorizontal, User, UserPlus, X, XCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
 import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.tsx';
 import { ROLE } from '../graph/PersonNode.tsx';
@@ -10,7 +10,7 @@ import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, provenanceText } from '../
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
-import { Button, Field, Section, Segmented, TextArea, TextInput } from './inspector/fields.tsx';
+import { Button, Field, Section, Segmented, Select, TextArea, TextInput } from './inspector/fields.tsx';
 import { KeyChip } from './KeyChip.tsx';
 import styles from './Schema.module.css';
 
@@ -74,7 +74,13 @@ export function Schema({ model }: { model: CustodyModel }) {
         </ul>
       </Section>
 
-      <Places model={model} onAdd={() => create((m) => addLocation(m), 'location')} />
+      <Places
+        model={model}
+        onAdd={() => create((m) => addLocation(m), 'location')}
+        onAddItem={(kind, location) =>
+          kind === 'artifact' ? create((m) => addArtifact(m, location), 'artifact') : create((m) => addDevice(m, location, kind), 'device')
+        }
+      />
       <People model={model} onAdd={() => create((m) => addPerson(m), 'person')} />
 
       <details className={styles.meta}>
@@ -121,19 +127,93 @@ function Problems({ model }: { model: CustodyModel }) {
 
 const useGraph = (model: CustodyModel) => useMemo(() => buildGraph(model), [model]);
 
+type ItemKind = 'stateful' | 'stateless' | 'artifact';
+
+const ITEM_KINDS = [
+  { value: 'stateful', label: 'Dispositivo' },
+  { value: 'stateless', label: 'Stateless' },
+  { value: 'artifact', label: 'Backup' },
+] as const;
+
+/** Formulario para añadir un dispositivo o backup: qué y dónde. */
+interface Adding {
+  kind: ItemKind;
+  location: Id;
+  /** Abierto desde el "+" de una ubicación (se muestra debajo de ella) o desde la cabecera. */
+  fromRow: boolean;
+}
+
 /** Índice de ubicaciones con lo que hay en cada una, como en el mapa. */
-function Places({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
+function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): void; onAddItem(kind: ItemKind, location: Id): void }) {
   const select = useSelection((s) => s.select);
   const locations = useGraph(model).nodes.filter((n): n is LocationNode => n.type === 'location');
+  const [adding, setAdding] = useState<Adding | null>(null);
+  const label = indexModel(model).label;
+  // Si la ubicación elegida desaparece (deshacer, eliminarla…), el formulario se cierra.
+  const current = adding && model.locations.some((l) => l.id === adding.location) ? adding : null;
+  const startFromHeader = (kind: ItemKind) => setAdding({ kind, location: current?.location ?? model.locations[0]!.id, fromRow: false });
+
+  const form = current && (
+    <div className={styles.addForm}>
+      <Segmented label="Qué añadir" value={current.kind} options={ITEM_KINDS} onChange={(kind) => setAdding({ ...current, kind })} />
+      {!current.fromRow && (
+        <Field label="Dónde">
+          {(id) => (
+            <Select
+              id={id}
+              value={current.location}
+              options={model.locations.map((l) => ({ value: l.id, label: label(l.id) }))}
+              onChange={(location) => setAdding({ ...current, location })}
+            />
+          )}
+        </Field>
+      )}
+      <div className={styles.addButtons}>
+        <Button
+          variant="primary"
+          icon={Plus}
+          onClick={() => {
+            onAddItem(current.kind, current.location);
+            setAdding(null);
+          }}
+        >
+          Añadir
+        </Button>
+        <Button icon={X} onClick={() => setAdding(null)}>
+          Cancelar
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <Section title={`Ubicaciones (${locations.length})`} action={<Button icon={MapPin} onClick={onAdd}>Ubicación</Button>}>
+    <Section
+      title={`Ubicaciones (${locations.length})`}
+      action={
+        <span className={styles.actions}>
+          <Button icon={MapPin} onClick={onAdd}>Ubicación</Button>
+          <Button icon={Cpu} onClick={() => startFromHeader('stateful')}>Dispositivo</Button>
+          <Button icon={RectangleHorizontal} onClick={() => startFromHeader('artifact')}>Backup</Button>
+        </span>
+      }
+    >
+      {current && !current.fromRow && form}
       <ul className={styles.list}>
         {locations.map(({ id, data }) => {
           const Icon = locationIcon(data);
           const meta = locationMeta(data);
           return (
             <li key={id} className={styles.place}>
-              <button className={styles.row} onClick={() => select({ kind: 'location', id })}>
+              <button
+                className={styles.addHere}
+                onClick={() => setAdding(current?.fromRow && current.location === id ? null : { kind: current?.kind ?? 'stateful', location: id, fromRow: true })}
+                aria-label={`Añadir dispositivo o backup en ${data.name || 'esta ubicación'}`}
+                aria-expanded={current?.fromRow === true && current.location === id}
+                title="Añadir dispositivo o backup aquí"
+              >
+                <Plus size={14} aria-hidden />
+              </button>
+              <button className={`${styles.row} ${styles.placeRow}`} onClick={() => select({ kind: 'location', id })}>
                 <span className={styles.rowMain}>
                   <Icon size={14} className={styles.icon} aria-hidden />
                   <span className={styles.name}>{data.name || 'Sin nombre'}</span>
@@ -146,6 +226,7 @@ function Places({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
                 {(meta || data.items.length === 0) && <span className={styles.rowSub}>{[meta, data.items.length === 0 && 'Vacía'].filter(Boolean).join(' · ')}</span>}
                 <ChevronRight size={14} className={styles.chevron} aria-hidden />
               </button>
+              {current?.fromRow && current.location === id && form}
               {data.items.length > 0 && (
                 <ul className={styles.items}>
                   {data.items.map((item) => {
@@ -173,7 +254,6 @@ function Places({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
           );
         })}
       </ul>
-      <p className={styles.hint}>Los dispositivos y backups se añaden desde la ficha de cada ubicación.</p>
     </Section>
   );
 }
