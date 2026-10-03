@@ -1,5 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <style>.llave{fill:#1E3A5F}@media (prefers-color-scheme: dark){.llave{fill:#8FB8F0}}</style>
   <defs>
     <!-- Hueco entre la B y la llave, para que no se fundan a tamaño pequeño. -->
     <mask id="hueco">

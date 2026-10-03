@@ -24,18 +24,14 @@
 }
 
 .brand:hover .logo {
-  box-shadow: 0 0 24px var(--accent);
+  transform: rotate(-8deg);
 }
 
 .logo {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  box-shadow: 0 0 18px var(--accent-soft);
+  transition: transform var(--duration) var(--ease);
 }
 
 .wordmark {

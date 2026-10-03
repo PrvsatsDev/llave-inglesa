@@ -1,4 +1,4 @@
-import { AlertTriangle, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, Wrench } from 'lucide-react';
+import { AlertTriangle, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
 import { examples } from '../lib/examples.ts';
@@ -75,9 +75,7 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
   return (
     <div className={styles.form}>
       <header className={styles.header}>
-        <span className={styles.icon}>
-          <Wrench size={18} />
-        </span>
+        <img src="/logo.svg" alt="" width={40} height={40} />
         <h2 className={styles.title}>llave-inglesa</h2>
         <span className={styles.version}>v{APP_VERSION}</span>
       </header>

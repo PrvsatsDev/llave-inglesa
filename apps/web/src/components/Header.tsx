@@ -1,4 +1,4 @@
-import { ChevronDown, Redo2, Undo2, Wrench } from 'lucide-react';
+import { ChevronDown, Redo2, Undo2 } from 'lucide-react';
 import { EXAMPLE_GROUPS, examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { policyText } from '../lib/text.ts';
@@ -46,9 +46,7 @@ export function Header() {
   return (
     <header className={styles.header}>
       <button className={styles.brand} onClick={() => void showWelcome()} title="Qué es llave-inglesa" aria-label="Qué es llave-inglesa">
-        <span className={styles.logo} aria-hidden>
-          <Wrench size={16} strokeWidth={2.5} />
-        </span>
+        <img className={styles.logo} src="/logo.svg" alt="" width={28} height={28} />
         <span className={styles.wordmark}>llave-inglesa</span>
       </button>
 
