@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Copy, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, X, Zap } from 'lucide-react';
+import { AlertTriangle, Bitcoin, Check, Copy, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, X, Zap, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
 import { AUTOR } from '../lib/autor.ts';
@@ -70,45 +70,64 @@ function PasswordForm({ req }: { req: Extract<DialogRequest, { kind: 'password' 
   );
 }
 
-/** Quién la hace: X y Nostr y, en «Acerca de», la dirección Lightning para apoyarlo (con botón de copiar). */
-function Author({ lightning }: { lightning: boolean }) {
+/** Una dirección para apoyar el proyecto, con botón de copiar. Las largas se muestran abreviadas. */
+function SupportAddress({ icon: Icon, label, value, href }: { icon: LucideIcon; label: string; value: string; href?: string }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard
-      ?.writeText(AUTOR.lightning)
+      ?.writeText(value)
       .then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => undefined);
   };
+  const shown = value.length > 40 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
   return (
-    <p className={styles.author}>
-      Hecha por <strong>{AUTOR.nombre}</strong>
-      <span aria-hidden>·</span>
-      <a href={AUTOR.x} target="_blank" rel="noopener noreferrer">
-        X
-      </a>
-      <span aria-hidden>·</span>
-      <a href={AUTOR.nostr} target="_blank" rel="noopener noreferrer">
-        Nostr
-      </a>
-      {lightning && (
-        <>
-          <span aria-hidden>·</span>
-          <span className={styles.lightning}>
-            <Zap size={12} aria-hidden />
-            <a href={`lightning:${AUTOR.lightning}`} title="Apoyar con Lightning">
-              {AUTOR.lightning}
-            </a>
-            <button type="button" className={styles.copy} onClick={copy} aria-label="Copiar la dirección Lightning">
-              {copied ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
-              {copied ? 'Copiada' : 'Copiar'}
-            </button>
-          </span>
-        </>
+    <span className={styles.support}>
+      <Icon size={12} aria-hidden />
+      <span className={styles.supportLabel}>{label}</span>
+      {href ? (
+        <a href={href} title={value}>
+          {shown}
+        </a>
+      ) : (
+        <span className={styles.supportValue} title={value}>
+          {shown}
+        </span>
       )}
-    </p>
+      <button type="button" className={styles.copy} onClick={copy} aria-label={`Copiar la dirección ${label}`}>
+        {copied ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
+        {copied ? 'Copiada' : 'Copiar'}
+      </button>
+    </span>
+  );
+}
+
+/** Quién la hace: X y Nostr y, en «Acerca de», cómo apoyarlo (Lightning y silent payments on-chain). */
+function Author({ support }: { support: boolean }) {
+  return (
+    <div className={styles.author}>
+      <p className={styles.authorLine}>
+        <span>
+          Hecha por <strong>{AUTOR.nombre}</strong>
+        </span>
+        <span aria-hidden>·</span>
+        <a href={AUTOR.x} target="_blank" rel="noopener noreferrer">
+          X
+        </a>
+        <span aria-hidden>·</span>
+        <a href={AUTOR.nostr} target="_blank" rel="noopener noreferrer">
+          Nostr
+        </a>
+      </p>
+      {support && (
+        <p className={styles.authorLine}>
+          <SupportAddress icon={Zap} label="Lightning" value={AUTOR.lightning} href={`lightning:${AUTOR.lightning}`} />
+          <SupportAddress icon={Bitcoin} label="Silent payments" value={AUTOR.silentPayment} />
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -161,7 +180,7 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
         En el selector de arriba hay {examples.length} ejemplos, de lo más habitual a lo más cuidado. Esto se puede volver a leer en «Acerca de»,
         pulsando el logo.
       </p>
-      <Author lightning={false} />
+      <Author support={false} />
       <input
         ref={fileRef}
         type="file"
@@ -188,7 +207,7 @@ function About({ req }: { req: Extract<DialogRequest, { kind: 'about' }> }) {
           Código en GitHub
         </a>
       </p>
-      <Author lightning />
+      <Author support />
     </div>
   );
 }

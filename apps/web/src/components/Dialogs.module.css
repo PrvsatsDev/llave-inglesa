@@ -266,14 +266,24 @@
 
 .author {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
+  flex-direction: column;
+  gap: 8px;
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
   color: var(--text-muted);
   font-size: var(--text-xs);
+}
+
+.authorLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.authorLine > span[aria-hidden] {
+  margin: 0 -6px;
 }
 
 .author strong {
@@ -289,11 +299,23 @@
   text-decoration: underline;
 }
 
-.lightning {
+.support {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+}
+
+.support svg {
   color: var(--accent);
+}
+
+.supportLabel {
+  color: var(--text-muted);
+}
+
+.supportValue {
+  font-family: var(--font-mono);
+  color: var(--text);
 }
 
 .copy {

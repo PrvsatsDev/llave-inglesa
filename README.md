@@ -82,7 +82,11 @@ npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
 
 Hecha por **Psats** · [X](https://x.com/prvSats) · [Nostr](https://primal.net/p/npub1prv54tsy2tae3a5mn2ev8gvkuylwmwqcx3uj3zja0gm3ed5vzrys9cj2d0)
 
-Si te resulta útil, puedes apoyarla con Lightning: `unluckyhand034@walletofsatoshi.com` ⚡
+Si te resulta útil, puedes apoyarla:
+
+- ⚡ Lightning: `unluckyhand034@walletofsatoshi.com`
+- ₿ On-chain con [silent payments](https://bips.dev/352/):
+  `sp1qqdlemcyjr48vrc20gd2vnm7gffv3hr9q0xjn3pv7gla2euyanmjtuqlwhnqp05clsnse3jn42ccpueqdjafkrrxym84e37jqgs257w3eu5uvul77`
 
 ## Licencia
 

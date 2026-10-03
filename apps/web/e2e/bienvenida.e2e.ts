@@ -43,6 +43,7 @@ test('la bienvenida dice quién la hace (X y Nostr), sin pedir donaciones', asyn
   await expect(dialog.getByRole('link', { name: 'X', exact: true })).toHaveAttribute('href', 'https://x.com/prvSats');
   await expect(dialog.getByRole('link', { name: 'Nostr' })).toHaveAttribute('href', /^https:\/\/primal\.net\/p\/npub1/);
   await expect(dialog).not.toContainText('walletofsatoshi');
+  await expect(dialog).not.toContainText('Silent payments');
 });
 
 test('«Acerca de» se abre con el logo y desde Archivo, con el código y la dirección Lightning', async ({ page }) => {
@@ -54,6 +55,9 @@ test('«Acerca de» se abre con el logo y desde Archivo, con el código y la dir
   await expect(about.getByRole('button', { name: 'Ver un ejemplo' })).toHaveCount(0);
   await expect(about.getByRole('link', { name: 'unluckyhand034@walletofsatoshi.com' })).toHaveAttribute('href', 'lightning:unluckyhand034@walletofsatoshi.com');
   await expect(about.getByRole('link', { name: 'Código en GitHub' })).toHaveAttribute('href', 'https://github.com/PrvsatsDev/llave-inglesa');
+  await expect(about).toContainText('Silent payments');
+  await expect(about.getByTitle(/^sp1qqdlem.*uvul77$/)).toBeVisible();
+  await expect(about.getByRole('button', { name: 'Copiar la dirección Silent payments' })).toBeVisible();
   for (const name of ['X', 'Nostr', 'Código en GitHub']) await expect(about.getByRole('link', { name, exact: true })).toHaveAttribute('rel', 'noopener noreferrer');
   await page.locator('dialog').screenshot({ path: 'e2e/.capturas/acerca-de.png' });
   await about.getByRole('button', { name: 'Cerrar' }).click();
