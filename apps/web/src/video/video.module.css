@@ -33,6 +33,26 @@
   transform: translateX(calc((1 - var(--obj2, 1)) * -16px));
 }
 
+.escena :global(.react-flow__node-location) ul > li:nth-child(3) {
+  opacity: var(--obj3, 1);
+  transform: translateX(calc((1 - var(--obj3, 1)) * -16px));
+}
+
+.escena :global(.react-flow__node-location) ul > li:nth-child(4) {
+  opacity: var(--obj4, 1);
+  transform: translateX(calc((1 - var(--obj4, 1)) * -16px));
+}
+
+.escena :global(.react-flow__node-location) ul > li:nth-child(5) {
+  opacity: var(--obj5, 1);
+  transform: translateX(calc((1 - var(--obj5, 1)) * -16px));
+}
+
+.escena :global(.react-flow__node-location) ul > li:nth-child(6) {
+  opacity: var(--obj6, 1);
+  transform: translateX(calc((1 - var(--obj6, 1)) * -16px));
+}
+
 .titulo {
   position: absolute;
   top: 120px;
@@ -112,4 +132,97 @@
 .marco {
   border: 0;
   transform-origin: top left;
+}
+
+.destello.fuego {
+  background: radial-gradient(ellipse at 50% 55%, transparent 25%, color-mix(in srgb, var(--accent) 30%, transparent) 100%);
+}
+
+/* Escena 5: el análisis en tres columnas. */
+.columnas {
+  position: absolute;
+  top: 250px;
+  left: 120px;
+  right: 120px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+}
+
+.columna {
+  padding: 28px 30px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.columna h2 {
+  margin: 0 0 20px;
+  color: var(--accent);
+  font-size: 30px;
+}
+
+.columna ul {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.columna li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.meta {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 18px;
+}
+
+/* Escena 6: cierre. */
+.cierre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--bg-canvas);
+}
+
+.cierre p {
+  margin: 0;
+}
+
+.marca {
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lema {
+  max-width: 1300px;
+  color: var(--text);
+  font-size: 40px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.url {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 700;
+}
+
+.promesa {
+  color: var(--text-muted);
+  font-size: 28px;
 }
