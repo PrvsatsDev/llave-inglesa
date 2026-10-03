@@ -1,7 +1,8 @@
-import { ChevronDown, Download, FilePlus2, FolderOpen, HardDriveDownload, Info, Lock, Save, Trash2, Unlock, type LucideIcon } from 'lucide-react';
+import { BookOpen, ChevronDown, Download, FilePlus2, FolderOpen, HardDriveDownload, Info, Lock, Save, Trash2, Unlock, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { exportEncrypted, exportPlain, forgetLocal, hasLocalDocument, importFile, newDocument, openLocal, saveLocal } from '../storage/actions.ts';
 import { aboutDialog } from '../store/dialog.ts';
+import { useNavigation } from '../store/navigation.ts';
 import { APP_VERSION } from '../version.ts';
 import styles from './FileMenu.module.css';
 
@@ -69,7 +70,10 @@ export function FileMenu() {
       { icon: HardDriveDownload, label: 'Exportar sin cifrar…', hint: '.json', run: exportPlain },
     ],
     ...(stored ? [[{ icon: Trash2, label: 'Borrar guardado del navegador', danger: true, run: forgetLocal }]] : []),
-    [{ icon: Info, label: 'Acerca de llave-inglesa', run: () => void aboutDialog() }],
+    [
+      { icon: BookOpen, label: 'Guía de uso', run: () => useNavigation.getState().openGuide() },
+      { icon: Info, label: 'Acerca de llave-inglesa', run: () => void aboutDialog() },
+    ],
   ];
 
   return (

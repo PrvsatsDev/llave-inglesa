@@ -8,6 +8,7 @@ import { useScenarioView } from '../store/scenario.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
 import { MetricAnalysis } from './Analysis.tsx';
 import { TryScenario } from './Findings.tsx';
+import { Guide } from './Guide.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
 import { Breadcrumbs, SectionTabs } from './Navigation.tsx';
 import { ScenarioPanel } from './ScenarioPanel.tsx';
@@ -52,6 +53,7 @@ export function Sidebar() {
   const selected = useSelection((s) => s.selected);
   const collapsed = useLayout((s) => s.collapsed);
   const section = useNavigation((s) => s.section);
+  const guide = useNavigation((s) => s.guide !== null);
   return (
     <aside className={styles.sidebar} aria-label="Panel">
       <MobileNotice />
@@ -61,7 +63,7 @@ export function Sidebar() {
         <>
           <Breadcrumbs model={model} />
           <div className={styles.content}>
-            {exists(model, selected) ? <Inspector /> : <SectionContent section={section} model={model} />}
+            {exists(model, selected) ? <Inspector /> : guide ? <Guide /> : <SectionContent section={section} model={model} />}
           </div>
           <ResizeHandle />
         </>

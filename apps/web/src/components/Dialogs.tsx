@@ -1,4 +1,4 @@
-import { AlertTriangle, Bitcoin, Check, Copy, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, X, Zap, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Bitcoin, BookOpen, Check, Copy, FilePlus2, FolderOpen, KeyRound, Map as MapIcon, ShieldCheck, X, Zap, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
 import { AUTOR } from '../lib/autor.ts';
@@ -176,6 +176,9 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
           <FolderOpen size={14} aria-hidden /> Abrir fichero
         </button>
       </footer>
+      <button type="button" className={styles.guideLink} onClick={() => req.resolve({ kind: 'guide' })}>
+        <BookOpen size={14} aria-hidden /> ¿Primera vez? Guía de 5 minutos
+      </button>
       <p className={styles.hint}>
         En el selector de arriba hay {examples.length} ejemplos, de lo más habitual a lo más cuidado. Esto se puede volver a leer en «Acerca de»,
         pulsando el logo.
@@ -200,13 +203,16 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
 function About({ req }: { req: Extract<DialogRequest, { kind: 'about' }> }) {
   return (
     <div className={styles.form}>
-      <Intro onClose={() => req.resolve()} />
+      <Intro onClose={() => req.resolve(false)} />
       <p className={styles.hint}>
         Código abierto (MIT) y verificable: cada versión se puede recompilar y comparar con la publicada.{' '}
         <a className={styles.inlineLink} href={AUTOR.repo} target="_blank" rel="noopener noreferrer">
           Código en GitHub
         </a>
       </p>
+      <button type="button" className={styles.guideLink} onClick={() => req.resolve(true)}>
+        <BookOpen size={14} aria-hidden /> Guía de uso
+      </button>
       <Author support />
     </div>
   );
@@ -231,7 +237,7 @@ export function Dialogs() {
   const cancel = () => {
     if (!current) return;
     if (current.kind === 'password' || current.kind === 'welcome') current.resolve(null);
-    else if (current.kind === 'about') current.resolve();
+    else if (current.kind === 'about') current.resolve(false);
     else if (current.kind === 'confirm') current.resolve(false);
     else current.resolve();
   };

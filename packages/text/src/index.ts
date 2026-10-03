@@ -299,3 +299,8 @@ export function advisoryText(match: AdvisoryMatch): { title: string; detail: str
     mitigations: a.mitigations.length > 0 ? `Mitiga: ${a.mitigations.map(mitigationText).join(' o ')}.` : null,
   };
 }
+
+// ---------- Guía de uso ----------
+
+export * from './guia.ts';
+export { CIFRAS } from './guia-cifras.ts';

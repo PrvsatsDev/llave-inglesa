@@ -12,6 +12,7 @@ import {
 } from '@llave-inglesa/vault';
 import { alertDialog, askPassword, confirmDialog, welcomeDialog } from '../store/dialog.ts';
 import { useLayout } from '../store/layout.ts';
+import { useNavigation } from '../store/navigation.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
 import { useScenario } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
@@ -256,4 +257,5 @@ export async function showWelcome() {
   useLayout.getState().markWelcomeSeen();
   if (choice?.kind === 'new') await newDocument();
   else if (choice?.kind === 'open') await importFile(choice.file);
+  else if (choice?.kind === 'guide') useNavigation.getState().openGuide('primeros-pasos');
 }

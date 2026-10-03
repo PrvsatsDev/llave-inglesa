@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useNavigation } from './navigation.ts';
 
 export type DialogRequest =
   | {
@@ -14,10 +15,10 @@ export type DialogRequest =
   | { kind: 'alert'; title: string; lines: string[]; resolve(): void }
   /** Qué es la herramienta y por dónde empezar. null: cerrada sin elegir (se queda en el ejemplo). */
   | { kind: 'welcome'; resolve(choice: WelcomeChoice | null): void }
-  /** Qué es, quién la hace y cómo apoyarlo. */
-  | { kind: 'about'; resolve(): void };
+  /** Qué es, quién la hace y cómo apoyarlo. `guide`: se pidió abrir la guía. */
+  | { kind: 'about'; resolve(guide?: boolean): void };
 
-export type WelcomeChoice = { kind: 'example' } | { kind: 'new' } | { kind: 'open'; file: File };
+export type WelcomeChoice = { kind: 'example' } | { kind: 'new' } | { kind: 'open'; file: File } | { kind: 'guide' };
 
 interface DialogState {
   current: DialogRequest | null;
@@ -52,4 +53,8 @@ export const confirmDialog = (title: string, message: string, confirmLabel: stri
 export const alertDialog = (title: string, lines: string[]) => show<void>({ kind: 'alert', title, lines }, undefined);
 
 export const welcomeDialog = () => show<WelcomeChoice | null>({ kind: 'welcome' }, null);
-export const aboutDialog = () => show<void>({ kind: 'about' }, undefined);
+/** «Acerca de». Si desde ahí se pide la guía, la abre al cerrarse. */
+export async function aboutDialog() {
+  const guide = await show<boolean>({ kind: 'about' }, false);
+  if (guide) useNavigation.getState().openGuide();
+}

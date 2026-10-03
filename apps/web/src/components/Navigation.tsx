@@ -6,6 +6,9 @@ import { useLayout } from '../store/layout.ts';
 import { goBack, routePosition, useNavigation, type Section } from '../store/navigation.ts';
 import { useScenario } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
+import { GUIA } from '@llave-inglesa/text';
+
+const GUIDE_INTRO = 'Cómo usar llave-inglesa, paso a paso. Los botones abren ejemplos y simulan en el mapa sin salir de la guía.';
 import styles from './Navigation.module.css';
 
 const SECTIONS: { id: Section; icon: LucideIcon }[] = [
@@ -77,7 +80,8 @@ interface Crumb {
 
 /** Dónde estoy: migas de pan con "volver" y, en la raíz de cada sección, qué hay en ella. */
 export function Breadcrumbs({ model }: { model: CustodyModel }) {
-  const { section, metric, simulatedFrom, routes, simulate } = useNavigation();
+  const { section, metric, simulatedFrom, routes, simulate, guide, openGuide } = useNavigation();
+  const chapter = guide?.chapter ? GUIA.find((c) => c.id === guide.chapter) : undefined;
   const active = useScenario((s) => s.active);
   const trail = useSelection((s) => s.trail);
   const select = useSelection((s) => s.select);
@@ -89,11 +93,12 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
   // Recorrer con ‹ › la lista de vías de la que salió la simulación.
   const position = routePosition(routes, active);
   const routeLabel = position >= 0 ? `Vía ${position + 1} de ${routes.length}` : routes.length > 0 ? 'Vía modificada' : 'Simulación';
-  const stepper = section === 'simulate' && simulatedFrom && position >= 0 && routes.length > 1 && fichas.length === 0;
+  const stepper = !guide && section === 'simulate' && simulatedFrom && position >= 0 && routes.length > 1 && fichas.length === 0;
   const goRoute = (i: number) => simulate(routes[i]!, simulatedFrom!, routes);
 
-  const base: Crumb[] =
-    section === 'analysis'
+  const base: Crumb[] = guide
+    ? [{ label: 'Guía', onClick: chapter ? () => openGuide(null) : undefined }, ...(chapter ? [{ label: chapter.titulo }] : [])]
+    : section === 'analysis'
       ? [{ label: SECTION_LABEL.analysis }, { label: METRIC_LABEL[metric] }]
       : section === 'simulate' && simulatedFrom
         ? [{ label: METRIC_LABEL[simulatedFrom], onClick: goBack }, { label: routeLabel }]
@@ -106,8 +111,8 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
       onClick: n < fichas.length - 1 ? () => backTo(f.i) : undefined,
     })),
   ];
-  const canGoBack = fichas.length > 0 || (section === 'simulate' && simulatedFrom !== null);
-  const intro = fichas.length > 0 ? null : section === 'analysis' ? METRIC_INTRO[metric] : section === 'simulate' && simulatedFrom ? null : SECTION_INTRO[section];
+  const canGoBack = fichas.length > 0 || guide !== null || (section === 'simulate' && simulatedFrom !== null);
+  const intro = fichas.length > 0 || chapter ? null : guide ? GUIDE_INTRO : section === 'analysis' ? METRIC_INTRO[metric] : section === 'simulate' && simulatedFrom ? null : SECTION_INTRO[section];
 
   return (
     <div className={styles.crumbsBar}>
