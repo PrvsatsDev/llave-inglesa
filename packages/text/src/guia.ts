@@ -38,6 +38,11 @@ const CASA = 'todo-en-casa';
 const PAPEL = 'r01-papel-en-casa';
 const ACERO_BANCO = 'r04-acero-y-banco';
 const SOLO_MEMORIA = 'r06-passphrase-solo-memoria';
+const FOTO = 'r02-foto-en-la-nube';
+const ACERO = 'r03-acero-en-caja-fuerte';
+const COPIA_APARTE = 'r05-passphrase-copia-aparte';
+const COLDCARD = 'r07-coldcard-afectada';
+const TODO_EN_CASA = 'r08-2de3-todo-en-casa';
 const DISTRIBUIDO = 'r09-2de3-distribuido';
 const CUSTODIO = 'r10-2de3-custodio';
 const SIN_HERENCIA = 'r11-2de3-sin-herencia';
@@ -301,8 +306,8 @@ export const GUIA: readonly Capitulo[] = [
         texto: [
           'Un multisig impecable para ti puede ser inútil para tu familia: si tu pareja no puede entrar ni en el banco ni en casa de tus padres, no heredaría nada. Herencia ',
           cifra(SIN_HERENCIA, 'inheritance'),
-          '. El mismo esquema con la tercera placa en manos de un abogado: ',
-          cifra(CUSTODIO, 'inheritance'),
+          '. El mismo esquema, con tu pareja pudiendo entrar en el banco y en casa de tus padres tras tu fallecimiento: ',
+          cifra(DISTRIBUIDO, 'inheritance'),
           '.',
         ],
       },
@@ -391,6 +396,196 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'nota',
         texto: ['Para quitar la simulación del mapa, pulsa la ✕ de su recuadro.'],
+      },
+    ],
+  },
+  {
+    id: 'casos',
+    titulo: 'Casos guiados',
+    resumen: 'De la frase semilla en un papel a un multisig distribuido: qué falla en cada paso y qué lo arregla.',
+    bloques: [
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa.',
+        ],
+      },
+      { tipo: 'parrafo', texto: [n('1. Papel en el cajón.'), ' Un Trezor en casa y la frase semilla en un papel, en el mismo sitio.'] },
+      {
+        tipo: 'simular',
+        ejemplo: PAPEL,
+        escenario: { kind: 'attack', atoms: [{ type: 'burglary', location: 'casa' }] },
+        texto: 'Una intrusión en casa',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Quien entre se lleva el papel, y con él todo: seguridad ',
+          cifra(PAPEL, 'security'),
+          '. Y un incendio quema a la vez el papel y el Trezor: resiliencia ',
+          cifra(PAPEL, 'resilience'),
+          '.',
+        ],
+      },
+      { tipo: 'parrafo', texto: [n('2. Foto en la nube.'), ' En vez de papel, una foto de la frase semilla en iCloud, sin cifrar. El error clásico.'] },
+      {
+        tipo: 'simular',
+        ejemplo: FOTO,
+        escenario: { kind: 'attack', atoms: [{ type: 'burglary', location: 'nueva-ubicacion' }] },
+        texto: 'Un hackeo de la cuenta de iCloud',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Ni siquiera hace falta ir a tu casa: se hace en remoto y a escala. Seguridad ',
+          cifra(FOTO, 'security'),
+          '; y como tu pareja ni entra en tu iCloud ni sabe el PIN, herencia ',
+          cifra(FOTO, 'inheritance'),
+          '.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [n('3. Acero en la caja fuerte.'), ' La frase semilla en una placa de acero, dentro de la caja fuerte de casa.'],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: ACERO,
+        escenario: { kind: 'attack', atoms: [{ type: 'insider', person: 'nueva-persona' }] },
+        texto: 'Una traición de quien entra en la caja fuerte',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'El acero resiste el fuego y la caja fuerte frena al ladrón, pero quien conoce la caja (tu pareja, aquí) puede abrirla, y forzarla tampoco es imposible. Seguridad ',
+          cifra(ACERO, 'security'),
+          ', resiliencia ',
+          cifra(ACERO, 'resilience'),
+          '.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('4. Una segunda placa en el banco.'),
+          ' Ahora una sola desgracia ya no basta: resiliencia ',
+          cifra(ACERO_BANCO, 'resilience'),
+          ' y herencia ',
+          cifra(ACERO_BANCO, 'inheritance'),
+          '. La seguridad no cambia (',
+          cifra(ACERO_BANCO, 'security'),
+          '): el robo más barato sigue estando en casa.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('5. Una passphrase.'),
+          ' Con ella, la frase semilla sola ya no sirve: hay que obligarte a decirla, o encontrar también su copia. Con la passphrase apuntada en casa de tus padres, seguridad ',
+          cifra(COPIA_APARTE, 'security'),
+          ', pero resiliencia ',
+          cifra(COPIA_APARTE, 'resilience'),
+          ': ahora hay dos cosas que no puedes perder. Si solo la sabes tú, la resiliencia cae a ',
+          cifra(SOLO_MEMORIA, 'resilience'),
+          ' y la herencia a ',
+          cifra(SOLO_MEMORIA, 'inheritance'),
+          '.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: COPIA_APARTE,
+        escenario: { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] },
+        texto: 'Con passphrase: lo más barato ya es la llave inglesa',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('6. Una Coldcard afectada.'),
+          ' Como el paso 3, pero la frase semilla se generó sin dados en una Coldcard Q con el firmware del fallo de entropía de 2026: se puede adivinar desde cualquier parte.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: COLDCARD,
+        escenario: { kind: 'attack', atoms: [{ type: 'known-weak-entropy', advisory: 'coldcard-rng-2026' }] },
+        texto: 'Adivinar la semilla por el fallo publicado',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Seguridad ',
+          cifra(COLDCARD, 'security'),
+          ': da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que mover los fondos a una frase semilla nueva. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.',
+        ],
+      },
+      {
+        tipo: 'nota',
+        texto: [
+          'Mezclar dados con el generador del dispositivo protege de sus fallos, pero normalmente no se puede verificar: la parte del dispositivo es secreta. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('7. Multisig 2 de 3, todo en casa.'),
+          ' Tres dispositivos y tres placas, pero todo en el mismo sitio: quien llega a casa (o tu pareja) lo tiene todo. Seguridad ',
+          cifra(TODO_EN_CASA, 'security'),
+          ', resiliencia ',
+          cifra(TODO_EN_CASA, 'resilience'),
+          '. Un multisig sin distribuir se parece mucho a un single-sig.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('8. 2 de 3 distribuido.'),
+          ' Los dispositivos en casa y cada placa en un sitio distinto (caja fuerte, banco y casa de tus padres), con su descriptor. Ya ningún sitio basta por sí solo, y lo más barato es obligarte a ti a firmar en casa.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: DISTRIBUIDO,
+        escenario: { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] },
+        texto: 'El robo más barato del 2 de 3 distribuido',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Seguridad ',
+          cifra(DISTRIBUIDO, 'security'),
+          ', resiliencia ',
+          cifra(DISTRIBUIDO, 'resilience'),
+          ', usabilidad ',
+          cifra(DISTRIBUIDO, 'usability'),
+          ', herencia ',
+          cifra(DISTRIBUIDO, 'inheritance'),
+          ': bueno en todo. Es el esquema «de manual».',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('9. Sin plan de herencia.'),
+          ' El mismo, pero tu pareja no puede entrar ni en el banco ni en casa de tus padres: herencia ',
+          cifra(SIN_HERENCIA, 'inheritance'),
+          '. Que los herederos puedan llegar es parte del diseño, no un añadido.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('10. Con custodio.'),
+          ' La tercera placa la guarda un abogado en su despacho. Con una sola key no puede robar, y su copia aleja más las desgracias: resiliencia ',
+          cifra(CUSTODIO, 'resilience'),
+          '.',
+        ],
+      },
+      {
+        tipo: 'nota',
+        texto: [
+          'Nada de esto es «la respuesta»: es un mapa de compromisos. Abre el que se parezca al tuyo, cambia una cosa cada vez y mira qué nota sube y cuál baja.',
+        ],
       },
     ],
   },
