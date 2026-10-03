@@ -5,10 +5,11 @@
  *
  *   npx tsx scripts/video.ts                       el vídeo completo
  *   npx tsx scripts/video.ts --escena 3            solo una escena (para probar)
- *   npx tsx scripts/video.ts --musica pista.mp3    con música de fondo (baja, con fundidos)
+ *   npx tsx scripts/video.ts --musica pista.mp3    con música de fondo (baja, con fundidos largos)
  *   … --musica pista.mp3 --musica-desde 35         empezando la pista en su segundo 35
  *
- * La música va a volumen fijo: los efectos se suman encima sin hacerla bajar ni subir.
+ * La música va a volumen fijo: los efectos se suman encima sin hacerla bajar ni subir. Al final, todo
+ * se normaliza al volumen estándar de las redes (-14 LUFS) con una ganancia uniforme.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -67,31 +68,47 @@ try {
   writeFileSync(audio, Buffer.from(await pagina.evaluate(([d, n]) => window.__audio!(d!, n!), [desde, fotogramas]), 'base64'));
   await navegador.close();
 
-  // Imagen + efectos (+ música de fondo, baja y con fundidos, si se indica).
   const segundos = fotogramas / 30;
+  const ffmpeg = (args: string[]) => {
+    const r = spawnSync('ffmpeg', ['-y', '-hide_banner', ...args], { encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(`ffmpeg ha fallado: ${r.stderr}`);
+    return r.stderr;
+  };
+
+  // 1. La mezcla: efectos y, si se indica, la música de fondo a volumen fijo, con fundidos largos
+  //    (6 s de entrada y 5 s de salida). Los efectos se suman encima sin hacerla bajar ni subir.
+  const mezcla = `${SALIDA}${nombre}-mezcla.wav`;
+  if (musica) {
+    ffmpeg([
+      '-loglevel', 'error', '-i', audio, '-ss', String(musicaDesde), '-i', resolve(musica),
+      '-filter_complex',
+      `[1:a]volume=0.22,afade=t=in:d=6,afade=t=out:st=${Math.max(0, segundos - 5)}:d=5[m];[0:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
+      '-map', '[a]', '-ar', '48000', mezcla,
+    ]);
+  } else {
+    ffmpeg(['-loglevel', 'error', '-i', audio, mezcla]);
+  }
+
+  // 2. Volumen al estándar de las redes (-14 LUFS, picos por debajo de -1,5 dB), en dos pasadas: se mide
+  //    y se aplica una ganancia uniforme (linear), sin comprimir: la proporción música/efectos no cambia.
+  const medida = ffmpeg(['-i', mezcla, '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json', '-f', 'null', '-']);
+  const m = JSON.parse(medida.slice(medida.lastIndexOf('{'), medida.lastIndexOf('}') + 1)) as Record<string, string>;
+  const normalizada = `${SALIDA}${nombre}-normalizada.wav`;
+  ffmpeg([
+    '-loglevel', 'error', '-i', mezcla,
+    '-af',
+    `loudnorm=I=-14:TP=-1.5:LRA=11:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true`,
+    '-ar', '48000', normalizada,
+  ]);
+
+  // 3. Imagen + sonido.
   const mp4 = `${SALIDA}${nombre}.mp4`;
-  const entradas = ['-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-i', audio];
-  // Fundidos marcados: 4 s de entrada y 3 s de salida.
-  const mezcla = musica
-    ? [
-        '-ss',
-        String(musicaDesde),
-        '-i',
-        resolve(musica),
-        '-filter_complex',
-        `[2:a]volume=0.22,afade=t=in:d=4,afade=t=out:st=${Math.max(0, segundos - 3)}:d=3[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`,
-        '-map',
-        '0:v',
-        '-map',
-        '[a]',
-      ]
-    : ['-map', '0:v', '-map', '1:a'];
-  const r = spawnSync(
-    'ffmpeg',
-    ['-y', '-loglevel', 'error', ...entradas, ...mezcla, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-shortest', mp4],
-    { stdio: 'inherit' },
-  );
-  if (r.status !== 0) throw new Error('ffmpeg ha fallado');
+  ffmpeg([
+    '-loglevel', 'error', '-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-i', normalizada,
+    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-shortest', mp4,
+  ]);
+  // Solo queda el vídeo: los audios intermedios sobran.
+  for (const f of [audio, mezcla, normalizada]) rmSync(f, { force: true });
   console.log(mp4);
 } finally {
   process.kill(-servidor.pid!);
