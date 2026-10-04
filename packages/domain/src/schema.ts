@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// Sin JIT: zod probaría `Function('')` para compilar validadores y la CSP de la web (sin 'unsafe-eval')
+// lo bloquea, dejando un aviso en la consola. Nuestros documentos son pequeños: no hace falta.
+z.config({ jitless: true });
+
 /**
  * Formato de documento de un esquema de custodia.
  *

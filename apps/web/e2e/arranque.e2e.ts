@@ -14,6 +14,17 @@ test('la app arranca sin errores y sin hacer peticiones de red', async ({ page, 
   expect(external).toEqual([]);
 });
 
+test('nada de la app choca con la CSP (ni siquiera intentos que se capturan, como el eval de zod)', async ({ page }) => {
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    (window as unknown as { cspViolations: string[] }).cspViolations = seen;
+    document.addEventListener('securitypolicyviolation', (e) => seen.push(`${e.effectiveDirective} ${e.blockedURI}`));
+  });
+  await page.goto('/');
+  await expect(page.getByText('Seguridad').first()).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations)).toEqual([]);
+});
+
 test('el servidor manda las cabeceras de seguridad (las mismas que el bloque de Caddy)', async ({ request }) => {
   const res = await request.get('/');
   const h = res.headers();
