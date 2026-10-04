@@ -12,16 +12,20 @@
   --panel-width: var(--panel-rail-width);
 }
 
+/*
+ * Pantalla estrecha: panel y mapa no caben juntos. Ocupan el mismo hueco y se ve uno, según la pestaña
+ * de abajo (data-view, que leen el panel y el mapa). El oculto sigue montado y con su tamaño (visibility, no display), para que el
+ * mapa conserve su encuadre y React Flow pueda medir los nodos.
+ */
 @media (max-width: 900px) {
   .shell,
   .collapsed {
     grid-template-areas:
       'header'
-      'panel'
-      'canvas';
+      'main'
+      'tabs';
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: var(--header-height) auto minmax(360px, 60vh);
-    height: auto;
-    min-height: 100%;
+    grid-template-rows: var(--header-height) minmax(0, 1fr) auto;
+    height: 100dvh;
   }
 }

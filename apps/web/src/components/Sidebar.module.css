@@ -35,12 +35,25 @@
   background: linear-gradient(to right, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px);
 }
 
+/* Pantalla estrecha: el panel es una pestaña a pantalla completa y se desplaza entero, notas incluidas. */
 @media (max-width: 900px) {
+  .sidebar {
+    grid-area: main;
+    overflow-y: auto;
+    border-right: 0;
+  }
+
+  :global([data-view='map']) > .sidebar {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .resize {
     display: none;
   }
 
   .content {
+    flex: none;
     overflow-y: visible;
   }
 }

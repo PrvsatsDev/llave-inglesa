@@ -1,9 +1,11 @@
 import { Brain, ChevronDown, Lock } from 'lucide-react';
 import { useState } from 'react';
+import { NARROW_QUERY } from '../store/mobile.ts';
 import styles from './Legend.module.css';
 
 export function Legend() {
-  const [open, setOpen] = useState(true);
+  // En pantalla estrecha empieza plegada: abierta taparía medio mapa.
+  const [open, setOpen] = useState(() => !window.matchMedia?.(NARROW_QUERY).matches);
   return (
     <aside className={styles.legend} aria-label="Leyenda">
       <button className={styles.toggle} onClick={() => setOpen(!open)} aria-expanded={open}>

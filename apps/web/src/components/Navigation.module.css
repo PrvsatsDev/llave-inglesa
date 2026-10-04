@@ -84,6 +84,7 @@
 }
 
 .fold {
+  /* En pantalla estrecha no se pliega: panel y mapa van en pestañas (ver MobileTabs). */
   display: grid;
   place-items: center;
   width: 30px;
@@ -224,4 +225,10 @@
 .step:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+@media (max-width: 900px) {
+  .fold {
+    display: none;
+  }
 }

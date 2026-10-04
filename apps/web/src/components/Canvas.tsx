@@ -4,6 +4,7 @@ import { applyScenario, buildGraph, type AccessEdge, type GraphNode } from '../g
 import { LocationNode } from '../graph/LocationNode.tsx';
 import { PersonNode } from '../graph/PersonNode.tsx';
 import { useDocument } from '../store/document.ts';
+import { showPanel, useNarrow } from '../store/mobile.ts';
 import { useScenarioView } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
 import { Legend } from './Legend.tsx';
@@ -19,6 +20,7 @@ function openFocusedNode(e: KeyboardEvent<HTMLElement>) {
   const id = node?.dataset.id;
   if (!node || !id || e.target !== node) return;
   e.preventDefault();
+  showPanel();
   useSelection.getState().select({ kind: node.classList.contains('react-flow__node-location') ? 'location' : 'person', id });
 }
 
@@ -42,6 +44,9 @@ function Graph() {
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<AccessEdge>(graph.edges);
   const select = useSelection((s) => s.select);
+  // En el móvil cada píxel cuenta: menos margen alrededor del esquema al encuadrarlo. Y los nodos no se
+  // arrastran: ocupan casi todo el mapa y, arrastrables, se tragan el pellizco (no amplía ni desplaza).
+  const narrow = useNarrow();
 
   // Si el modelo cambia, se actualizan los datos pero se respetan las posiciones movidas a mano.
   useEffect(() => {
@@ -61,14 +66,19 @@ function Graph() {
       nodeTypes={nodeTypes}
       colorMode="dark"
       fitView
-      fitViewOptions={{ padding: '40px' }}
+      fitViewOptions={{ padding: narrow ? '12px' : '40px' }}
       minZoom={0.2}
       maxZoom={2}
+      nodesDraggable={!narrow}
       nodesConnectable={false}
       edgesFocusable={false}
       elementsSelectable={false}
       deleteKeyCode={null}
-      onNodeClick={(_, node) => select({ kind: node.type === 'location' ? 'location' : 'person', id: node.id })}
+      onNodeClick={(_, node) => {
+        // En pantalla estrecha la ficha está en la otra pestaña: se pasa a ella.
+        showPanel();
+        select({ kind: node.type === 'location' ? 'location' : 'person', id: node.id });
+      }}
       onPaneClick={() => select(null)}
     >
       <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--border-strong)" />

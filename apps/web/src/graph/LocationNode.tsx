@@ -24,6 +24,7 @@ import {
 import type { CSSProperties } from 'react';
 import { useScenario } from '../store/scenario.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
+import { showPanel } from '../store/mobile.ts';
 import type { ItemIcon, ItemView, LocationNode as LocationNodeType } from './build.ts';
 import { LOCATION_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
@@ -68,6 +69,7 @@ function ItemRow({ item }: { item: ItemView }) {
       className={`${styles.item} ${selected ? styles.itemSelected : ''}`}
       onClick={(e) => {
         e.stopPropagation();
+        showPanel();
         select({ kind: item.kind, id: item.id });
       }}
     >

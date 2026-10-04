@@ -13,9 +13,9 @@ pensarse antes de implementarla.
 
 ## Interfaz y distribución
 
-- **Móvil con pestañas Panel / Mapa** (2026-10-03): hoy en móvil el mapa queda debajo de un panel muy
-  largo y solo hay un aviso de que está pensada para pantalla grande. Con dos pestañas, el mapa se vería
-  completo.
+- **Mapa en vertical en el móvil** (2026-10-04): con las pestañas Panel / Mapa el esquema se ve entero,
+  pero en horizontal y pequeño (zoom ~0,35 en 390 px). Colocar las ubicaciones en columna en pantalla
+  estrecha lo haría legible sin ampliar; exige otra colocación y otras asas para las líneas.
 - **App para Umbrel** (2026-10-03): Docker + `umbrel-app.yml`. Umbrel sirve por http en la red local,
   donde el navegador no da WebCrypto (`crypto.subtle`), así que el cifrado necesitaría una alternativa
   en JavaScript puro (p. ej. @noble/ciphers + @noble/hashes).

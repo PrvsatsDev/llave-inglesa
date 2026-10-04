@@ -3,12 +3,14 @@ import { useEffect, type CSSProperties } from 'react';
 import { Canvas } from './components/Canvas.tsx';
 import { Dialogs } from './components/Dialogs.tsx';
 import { Header } from './components/Header.tsx';
+import { MobileTabs } from './components/MobileTabs.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
 import { useLiveAnalysis } from './store/analysis.ts';
 import { hasLocalDocument, openLocal, saveLocal, showWelcome } from './storage/actions.ts';
 import { useDialog } from './store/dialog.ts';
 import { hasUnsavedChanges, useDocument } from './store/document.ts';
 import { useLayout } from './store/layout.ts';
+import { useMobile, useNarrow } from './store/mobile.ts';
 import { goBack } from './store/navigation.ts';
 import styles from './App.module.css';
 
@@ -78,17 +80,21 @@ export function App() {
   useUnsavedGuard();
   useLiveAnalysis();
   const width = useLayout((s) => s.width);
-  const collapsed = useLayout((s) => s.collapsed);
+  // En pantalla estrecha la columna no se pliega: panel y mapa van en pestañas.
+  const collapsed = useLayout((s) => s.collapsed) && !useNarrow();
+  const view = useMobile((s) => s.view);
   return (
     <ReactFlowProvider>
       {/* Plegada, el ancho lo pone la clase: el estilo en línea tendría prioridad sobre ella. */}
       <div
         className={`${styles.shell} ${collapsed ? styles.collapsed : ''}`}
+        data-view={view}
         style={collapsed ? undefined : ({ '--panel-width': `${width}px` } as CSSProperties)}
       >
         <Header />
         <Sidebar />
         <Canvas />
+        <MobileTabs />
       </div>
       <Dialogs />
     </ReactFlowProvider>

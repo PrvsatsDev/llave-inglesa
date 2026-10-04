@@ -1,8 +1,9 @@
 import type { CustodyModel } from '@llave-inglesa/domain';
 import { Monitor } from 'lucide-react';
-import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { useDocument } from '../store/document.ts';
 import { PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from '../store/layout.ts';
+import { useNarrow } from '../store/mobile.ts';
 import { useNavigation, type Section as SectionId } from '../store/navigation.ts';
 import { useScenarioView } from '../store/scenario.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
@@ -28,8 +29,7 @@ function MobileNotice() {
     <div className={styles.mobileNotice} role="note">
       <Monitor size={16} aria-hidden />
       <p>
-        Pensada para pantalla grande. Aquí puedes ver los ejemplos y consultar, pero para montar tu esquema es mejor un ordenador.
-        El mapa está más abajo: <a href="#mapa">ir al mapa</a>.
+        Pensada para pantalla grande. Aquí puedes ver los ejemplos y simular, pero para montar tu esquema es mejor un ordenador.
       </p>
       <button className={styles.mobileNoticeClose} onClick={dismiss}>
         Entendido
@@ -51,9 +51,18 @@ function exists(model: CustodyModel, s: Selection | null): boolean {
 export function Sidebar() {
   const model = useDocument((s) => s.model);
   const selected = useSelection((s) => s.selected);
-  const collapsed = useLayout((s) => s.collapsed);
+  const narrow = useNarrow();
+  const collapsed = useLayout((s) => s.collapsed) && !narrow;
   const section = useNavigation((s) => s.section);
-  const guide = useNavigation((s) => s.guide !== null);
+  const guide = useNavigation((s) => s.guide);
+  const top = useRef<HTMLDivElement>(null);
+  // En pantalla estrecha se desplaza el panel entero: al abrir una ficha, un capítulo o una sección
+  // estando más abajo, se sube a su principio (justo bajo las notas); si no, se vería a medias.
+  useEffect(() => {
+    const mark = top.current;
+    const panel = mark?.closest('aside');
+    if (narrow && mark && panel && mark.getBoundingClientRect().top < panel.getBoundingClientRect().top) mark.scrollIntoView({ block: 'start' });
+  }, [narrow, selected, section, guide?.chapter]);
   return (
     <aside className={styles.sidebar} aria-label="Panel">
       <MobileNotice />
@@ -61,6 +70,7 @@ export function Sidebar() {
       <Scoreboard />
       {!collapsed && (
         <>
+          <div ref={top} />
           <Breadcrumbs model={model} />
           <div className={styles.content}>
             {exists(model, selected) ? <Inspector /> : guide ? <Guide /> : <SectionContent section={section} model={model} />}

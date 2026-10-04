@@ -5,3 +5,17 @@
   min-height: 0;
   background: var(--bg-canvas);
 }
+
+/* Pantalla estrecha: el mapa es la otra pestaña, a pantalla completa. */
+@media (max-width: 900px) {
+  .canvas {
+    grid-area: main;
+  }
+
+  /* Los nodos de React Flow se ponen visibility: visible por su cuenta: hay que ocultarlos también. */
+  :global([data-view='panel']) > .canvas,
+  :global([data-view='panel']) > .canvas * {
+    visibility: hidden !important;
+    pointer-events: none;
+  }
+}
