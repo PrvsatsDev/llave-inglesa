@@ -29,3 +29,17 @@ test('la página solo carga scripts propios (ningún alojamiento inyecta nada)',
   expect(scripts.length).toBeGreaterThan(0);
   for (const src of scripts) expect(src, 'script ajeno al build').toMatch(/\/assets\/[\w-]+\.js$/);
 });
+
+test('la vista previa del enlace tiene título, descripción e imagen, y la imagen se sirve', async ({ page, request }) => {
+  await page.goto('/');
+  const meta = (selector: string) => page.locator(`head meta[${selector}]`).getAttribute('content');
+  expect(await meta('property="og:title"')).toBe('llave-inglesa');
+  expect(await meta('name="description"')).toContain('Simula tu custodia de Bitcoin');
+  expect(await meta('name="twitter:card"')).toBe('summary_large_image');
+  // X exige una URL absoluta; aquí se comprueba que su ruta existe en el build.
+  const image = new URL((await meta('property="og:image"'))!);
+  expect(image.protocol).toBe('https:');
+  const res = await request.get(image.pathname);
+  expect(res.ok()).toBe(true);
+  expect(res.headers()['content-type']).toBe('image/png');
+});

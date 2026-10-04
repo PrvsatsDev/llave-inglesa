@@ -79,6 +79,7 @@ npm run empaquetar   # build + zip reproducible y SHA256SUMS en release/
 python3 scripts/logo.py   # regenera los SVG del logo (app, favicon y README)
 npx tsx scripts/video.ts  # renderiza el vídeo de presentación (video/salida/, no se sube); revisarlo: npm run dev → /video.html
                           # con música de fondo: --musica pista.mp3 --musica-desde 35 (la pista no se sube al repo)
+npx tsx scripts/portada.ts  # imagen de vista previa del enlace (apps/web/public/portada.png)
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
 ```
 

@@ -1,6 +1,7 @@
 import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { Portada } from './Portada.tsx';
 import { DURACION, ESCENAS, escenaEn, inicioDe, sonidosDelVideo } from './escenas.tsx';
 import { renderizarAudio, wavBase64 } from './sonido.ts';
 import { ALTO, ANCHO, FPS } from './tiempo.ts';
@@ -21,9 +22,12 @@ declare global {
  * Página de vídeo (solo en desarrollo). Con ?render: el lienzo a 1920×1080 exactos, que scripts/video.ts
  * captura fotograma a fotograma. Sin él: un reproductor para revisar, con ese mismo lienzo dentro de un
  * iframe a tamaño real (reducirlo con CSS por fuera no altera cómo mide React Flow los nodos).
+ * Con ?portada: la imagen de vista previa del enlace (scripts/portada.ts).
  */
 export function Reproductor() {
-  return new URLSearchParams(location.search).has('render') ? <Lienzo /> : <Revision />;
+  const params = new URLSearchParams(location.search);
+  if (params.has('portada')) return <Portada />;
+  return params.has('render') ? <Lienzo /> : <Revision />;
 }
 
 function Lienzo() {
