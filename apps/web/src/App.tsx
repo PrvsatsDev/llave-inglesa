@@ -81,7 +81,10 @@ export function App() {
   useLiveAnalysis();
   const width = useLayout((s) => s.width);
   // En pantalla estrecha la columna no se pliega: panel y mapa van en pestañas.
-  const collapsed = useLayout((s) => s.collapsed) && !useNarrow();
+  // Los dos hooks siempre, nunca tras un `&&`: si no, plegar cambia cuántos hooks llama App y React falla.
+  const foldPreference = useLayout((s) => s.collapsed);
+  const narrow = useNarrow();
+  const collapsed = foldPreference && !narrow;
   const view = useMobile((s) => s.view);
   return (
     <ReactFlowProvider>

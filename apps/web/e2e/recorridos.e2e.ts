@@ -65,6 +65,16 @@ test('simular un incendio y probar que la placa tampoco resiste', async ({ page 
   expect(errors).toEqual([]);
 });
 
+test('plegar y desplegar el panel no rompe la interfaz', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Plegar el panel' }).click();
+  await page.getByRole('button', { name: 'Desplegar el panel' }).click();
+  await expect(page.getByRole('button', { name: 'Plegar el panel' })).toBeVisible();
+  await expect(page.getByText('Algo ha fallado')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('añadir un dispositivo desde el Esquema avisa de que nadie sabe su PIN', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/');
