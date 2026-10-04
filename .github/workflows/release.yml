@@ -1,5 +1,6 @@
 # Al subir una etiqueta vX.Y.Z: comprueba todo, construye, empaqueta (reproducible) y publica la Release
 # con el zip, los hashes (SHA256SUMS) y las instrucciones para usarla y verificarla.
+# Las actions van fijadas a un commit (no a una etiqueta, que se puede mover) y sin credenciales en git.
 name: Release
 
 on:
@@ -14,8 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
