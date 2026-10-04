@@ -97,7 +97,7 @@ export const GUIA: readonly Capitulo[] = [
           n('Archivo → Guardar en este navegador'),
           ' o ',
           n('Exportar cifrado'),
-          ').',
+          '), o úsalo como herramienta de entrenamiento sin poner tu plan real y sin guardar nada.',
         ],
       },
       {

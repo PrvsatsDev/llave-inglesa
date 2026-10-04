@@ -29,7 +29,7 @@ llave-inglesa es un **simulador**. Describes cómo guardas tus bitcoins (qué ke
 
 > 💡 **Nunca escribas frases semilla, claves privadas ni passphrases reales.** No hacen falta: el modelo solo dice que una placa contiene la frase semilla de K1, nunca cuál es.
 
-Todo ocurre en tu navegador: la aplicación no puede hacer ninguna petición de red, no hay cuentas ni telemetría. Aun sin secretos, tu esquema es un **mapa del tesoro** (dónde está cada copia y quién sabe cada PIN), así que guárdalo cifrado (**Archivo → Guardar en este navegador** o **Exportar cifrado**).
+Todo ocurre en tu navegador: la aplicación no puede hacer ninguna petición de red, no hay cuentas ni telemetría. Aun sin secretos, tu esquema es un **mapa del tesoro** (dónde está cada copia y quién sabe cada PIN), así que guárdalo cifrado (**Archivo → Guardar en este navegador** o **Exportar cifrado**), o úsalo como herramienta de entrenamiento sin poner tu plan real y sin guardar nada.
 
 **Lo que no es**: no es una cartera, no toca la red de Bitcoin ni tus fondos, y no sustituye a tu criterio. Es un modelo: las notas comparan esquemas entre sí y explican sus puntos débiles, pero las probabilidades reales dependen de tu vida. Lo que el motor no tiene en cuenta está en [Límites conocidos](#limites).
 

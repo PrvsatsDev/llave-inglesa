@@ -151,6 +151,10 @@ function Intro({ onClose }: { onClose(): void }) {
           herederos llegarían a ellos. Y siempre explica por qué.
         </li>
         <li>Todo ocurre en tu navegador: sin cuentas, sin red. Puedes guardar tu esquema cifrado.</li>
+        <li>
+          ¿Prefieres no poner tu plan real? Úsala para entrenar, con un esquema parecido o inventado y sin guardar nada: también te
+          descubrirá huecos que no habías previsto.
+        </li>
       </ul>
       <p className={styles.warning}>
         <AlertTriangle size={14} aria-hidden /> Nunca escribas frases semilla, claves privadas ni passphrases reales: no hacen falta.
