@@ -11,36 +11,20 @@ pensarse antes de implementarla.
   - PDF del descriptor (para imprimir y guardar como backup).
   - PDF de herencia (carta/manual para los herederos).
 
-- **Resistencia del soporte de cada backup.** No es lo mismo papel que metal ante un
-  incendio o una inundación. Idea a pensar: separar "destrucción de la ubicación" en
-  tipos de desastre (incendio, inundación…) y que cada soporte sobreviva o no a cada
-  uno (p. ej. el papel no sobrevive a ninguno; una placa de acero, a ambos). Enlaza
-  con la *resiliencia ponderada* de abajo.
-- **Fortaleza de la passphrase.** Hoy basta con que exista para que proteja, pero
-  una passphrase "1234" no protege nada. Idea a pensar: indicar su fortaleza
-  aproximada (sin escribirla nunca: p. ej. "palabra corta", "frase de varias
-  palabras", "aleatoria larga") y que una débil se pueda adivinar por fuerza bruta
-  cuando el atacante ya tiene la semilla. Importa sobre todo en los casos en que la
-  passphrase es lo único que queda: semilla adivinable por un fallo publicado
-  (Coldcard 2026) o extracción física (Trezor One/T).
-- **Vídeo de presentación** con animaciones usando la propia aplicación. Idea
-  ambiciosa, "lo mismo no lo hacemos".
+## Interfaz y distribución
 
-## Interfaz y documentación (2026-09-30)
-
-- **Guía de uso** que lo explique todo, partiendo de [CAPACIDADES.md](CAPACIDADES.md).
 - **Móvil con pestañas Panel / Mapa** (2026-10-03): hoy en móvil el mapa queda debajo de un panel muy
   largo y solo hay un aviso de que está pensada para pantalla grande. Con dos pestañas, el mapa se vería
-  completo. Pendiente para un paso posterior, mejor con opiniones de usuarios.
+  completo.
+- **App para Umbrel** (2026-10-03): Docker + `umbrel-app.yml`. Umbrel sirve por http en la red local,
+  donde el navegador no da WebCrypto (`crypto.subtle`), así que el cifrado necesitaría una alternativa
+  en JavaScript puro (p. ej. @noble/ciphers + @noble/hashes).
 
 ## Simplificaciones conscientes del motor (para iterar)
 
-- **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras.
-- **Resiliencia ponderada**: hoy todas las desgracias pesan igual (un incendio
-  cuenta lo mismo que olvidar una contraseña).
-- **Profundidad de la seguridad**: decidido en la calibración (2026-10-02) dejarlo así y
-  documentarlo como límite: contar las vías secundarias penalizaría a un multisig 2 de 3
-  frente a semilla + passphrase separadas (ver R09 en docs/CALIBRACION.md).
+- **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras. Hoy el número
+  de tiradas solo cuenta para mitigar un fallo de RNG publicado; una semilla de solo 20 tiradas no
+  se marca como débil.
 - **Dónde vive cada persona** (de la calibración): la llave inglesa en una ubicación donde la
   víctima no vive exige llevarla allí o retener a quien vive allí; podría costar algo más
   (+0,5), como ya pasa en la caja del banco (+1). Requiere modelar quién vive dónde.
