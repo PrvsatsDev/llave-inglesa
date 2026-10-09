@@ -12,6 +12,7 @@ import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
 import { Button, Field, Section, Segmented, Select, TextArea, TextInput } from './inspector/fields.tsx';
 import { KeyChip } from './KeyChip.tsx';
+import { WalletSection } from './Wallet.tsx';
 import styles from './Schema.module.css';
 
 /** Sección Esquema: problemas (si los hay), política, keys y el índice de todo lo que hay y dónde. */
@@ -65,6 +66,11 @@ export function Schema({ model }: { model: CustodyModel }) {
                 <span className={styles.rowMain}>
                   <KeyChip label={k.label} color={keyColor(model, k.id)} />
                   {k.passphrase && <span className={styles.badge}>+ passphrase {k.passphraseStrength ? PASSPHRASE_STRENGTH_TEXT[k.passphraseStrength] : 'sin indicar'}</span>}
+                  {k.xpub && (
+                    <span className={styles.badge} title="Tiene su xpub: entra en el descriptor">
+                      xpub
+                    </span>
+                  )}
                   {k.provenance.independentlyVerified && (
                     <span className={`${styles.badge} ${styles.verified}`} title="Derivación verificada con una herramienta independiente">
                       <BadgeCheck size={12} aria-hidden /> verificada
@@ -78,6 +84,8 @@ export function Schema({ model }: { model: CustodyModel }) {
           ))}
         </ul>
       </Section>
+
+      <WalletSection model={model} />
 
       <Places
         model={model}

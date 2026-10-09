@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@llave-inglesa/bitcoin": "0.0.0",
     "@llave-inglesa/domain": "0.0.0",
     "@llave-inglesa/engine": "0.0.0"
   }

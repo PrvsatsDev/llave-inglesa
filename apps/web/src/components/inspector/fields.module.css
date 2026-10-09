@@ -470,3 +470,25 @@
   font-size: var(--text-xs);
   font-weight: 600;
 }
+
+.errorHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.errorHint svg,
+.warningHint svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}

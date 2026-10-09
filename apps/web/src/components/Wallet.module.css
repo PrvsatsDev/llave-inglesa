@@ -1,0 +1,179 @@
+.hint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.fieldTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.badge {
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--text-xs);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.blockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mono {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.address {
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.problems {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.problems li,
+.error,
+.warning,
+.privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.problems svg,
+.error svg,
+.warning svg,
+.privacy svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.problems li,
+.error {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.warning {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.privacy {
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  font-size: var(--text-xs);
+}
+
+.importForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.okBox,
+.warningBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.okBox p,
+.warningBox p {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.okBox {
+  color: var(--safe);
+  background: var(--safe-soft);
+}
+
+.warningBox {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.okBox svg,
+.warningBox svg {
+  vertical-align: -2px;
+}
+
+.close {
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}

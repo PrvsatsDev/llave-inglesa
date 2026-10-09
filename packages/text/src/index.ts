@@ -300,6 +300,10 @@ export function advisoryText(match: AdvisoryMatch): { title: string; detail: str
   };
 }
 
+// ---------- Descriptor de la cartera ----------
+
+export * from './cartera.ts';
+
 // ---------- Guía de uso ----------
 
 export * from './guia.ts';

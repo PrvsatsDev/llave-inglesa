@@ -4,6 +4,7 @@ import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
 import { AdvisoryList, HardwareModelSelect, VendorSelect } from './Hardware.tsx';
+import { PathField, XpubField } from './WalletFields.tsx';
 import styles from './fields.module.css';
 
 type SourceKind = EntropySource['kind'];
@@ -118,14 +119,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
       <PanelHeader icon={KeyRound} kind="Key" title={key.label} />
 
       <Section>
-        <div className={styles.twoCols}>
-          <Field label="Nombre">{(fid) => <TextInput id={fid} value={key.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
-          <Field label="Fingerprint">
-            {(fid) => (
-              <TextInput id={fid} value={key.fingerprint ?? ''} placeholder="opcional" optional onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
-            )}
-          </Field>
-        </div>
+        <Field label="Nombre">{(fid) => <TextInput id={fid} value={key.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
         <Switch checked={key.passphrase} onChange={(passphrase) => patch({ passphrase })} label="Requiere passphrase" hint="Sin la passphrase, la semilla sola no sirve." />
         {key.passphrase && (
           <>
@@ -141,6 +135,22 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             </p>
           </>
         )}
+      </Section>
+
+      <Section title="En la cartera">
+        <div className={styles.twoCols}>
+          <Field label="Fingerprint">
+            {(fid) => (
+              <TextInput id={fid} value={key.fingerprint ?? ''} placeholder="opcional" optional onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
+            )}
+          </Field>
+          <PathField key={`path:${id}`} value={key.derivation} onChange={(derivation) => patch({ derivation }, 'derivation')} />
+        </div>
+        <XpubField key={`xpub:${id}`} value={key.xpub} onChange={(xpub) => patch({ xpub }, 'xpub')} />
+        <p className={styles.hint}>
+          Opcional: con las xpubs de todas las keys, Esquema muestra el descriptor y la primera dirección. Más cómodo: importar el descriptor desde
+          Esquema.
+        </p>
       </Section>
 
       <Section title="Dónde está">
