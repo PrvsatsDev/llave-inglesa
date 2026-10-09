@@ -11,11 +11,13 @@ type Access = Location['access'][number];
 
 const T = UI.ubicacion;
 
-const KIND_OPTIONS = (['physical', 'device', 'cloud'] as const).map((value) => ({ value, label: T.tipos[value] }));
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const kindOptions = () => (['physical', 'device', 'cloud'] as const).map((value) => ({ value, label: T.tipos[value] }));
 const KIND_HINT: Record<Location['kind'], string> = T.pistasTipo;
 
-const PROTECTION_OPTIONS = (['none', 'home-safe', 'bank-box'] as const).map((value) => ({ value, label: T.protecciones[value] }));
-const PROTECTION_HINT: Record<(typeof PROTECTION_OPTIONS)[number]['value'], string> = T.pistasProteccion;
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const protectionOptions = () => (['none', 'home-safe', 'bank-box'] as const).map((value) => ({ value, label: T.protecciones[value] }));
+const PROTECTION_HINT: Record<'none' | 'home-safe' | 'bank-box', string> = T.pistasProteccion;
 
 const NOT_INSIDE = '';
 
@@ -60,7 +62,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         <Field label={UI.campos.nombre}>
           {(fid) => <TextInput id={fid} value={location.name} onChange={(name) => apply((m) => updateLocation(m, id, { name }), `location:${id}:name`)} />}
         </Field>
-        <Segmented label={T.tipoUbicacion} value={location.kind} options={KIND_OPTIONS} onChange={(kind) => apply((m) => updateLocation(m, id, { kind }))} />
+        <Segmented label={T.tipoUbicacion} value={location.kind} options={kindOptions()} onChange={(kind) => apply((m) => updateLocation(m, id, { kind }))} />
         <p className={styles.hint}>{KIND_HINT[location.kind]}</p>
       </Section>
 
@@ -69,7 +71,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
           <Segmented
             label={T.proteccion}
             value={location.protection ?? 'none'}
-            options={PROTECTION_OPTIONS}
+            options={protectionOptions()}
             onChange={(p) => apply((m) => setLocationProtection(m, id, p === 'none' ? undefined : p))}
           />
           <p className={styles.hint}>{PROTECTION_HINT[location.protection ?? 'none']}</p>
@@ -164,9 +166,9 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
           ))}
         </ul>
         <div className={styles.buttonRow}>
-          <Button icon={Cpu} onClick={() => create((m) => addDevice(m, id, 'stateful'), 'device')}>{T.dispositivo}</Button>
-          <Button icon={Camera} onClick={() => create((m) => addDevice(m, id, 'stateless'), 'device')}>{T.stateless}</Button>
-          <Button icon={RectangleHorizontal} onClick={() => create((m) => addArtifact(m, id), 'artifact')}>{T.backup}</Button>
+          <Button icon={Cpu} onClick={() => create((m) => addDevice(m, id, 'stateful', UI.nuevos.dispositivo), 'device')}>{T.dispositivo}</Button>
+          <Button icon={Camera} onClick={() => create((m) => addDevice(m, id, 'stateless', UI.nuevos.stateless), 'device')}>{T.stateless}</Button>
+          <Button icon={RectangleHorizontal} onClick={() => create((m) => addArtifact(m, id, UI.nuevos.backup), 'artifact')}>{T.backup}</Button>
         </div>
       </Section>
 

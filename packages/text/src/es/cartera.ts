@@ -1,6 +1,6 @@
 import type { DescriptorProblem, ScriptType, XpubProblem } from '@llave-inglesa/bitcoin';
 import type { ImportProblem, Match, WalletProblem, WalletWarning } from '@llave-inglesa/domain';
-import type { Label } from './index.ts';
+import type { Label } from '../tipos.ts';
 
 /** Textos del descriptor de la cartera: xpubs, importación y lo que falta para escribirlo. */
 
@@ -27,9 +27,11 @@ export function xpubProblemText(p: XpubProblem): string {
   }
 }
 
-/** Frase semilla pegada por error: se borra sin guardar nada. */
-export const SEED_WORDS_TEXT =
-  'Eso parecen las palabras de una frase semilla. Nunca las escribas aquí ni en ningún dispositivo conectado: se han borrado sin guardar nada.';
+export const WALLET_TEXT = {
+  /** Frase semilla pegada por error: se borra sin guardar nada. */
+  seedWords:
+    'Eso parecen las palabras de una frase semilla. Nunca las escribas aquí ni en ningún dispositivo conectado: se han borrado sin guardar nada.',
+};
 
 const ordinal = (i: number) => `la ${i + 1}.ª key`;
 

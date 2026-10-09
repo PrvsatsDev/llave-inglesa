@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { ADVISORIES, advisoriesFor, indexModel, parseModel, removeArtifact, updateDevice, type CustodyModel } from '@llave-inglesa/domain';
 import { analyze, inheritanceLetter } from '@llave-inglesa/engine';
 import { describe, expect, it } from 'vitest';
-import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, LETTER_CALM, letterSteps, lossText, secretText } from '../src/index.ts';
+import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, LETTER_TEXT, letterSteps, lossText, secretText } from '../src/index.ts';
 
 /** Un ejemplo, quizá modificado, con su carta para los herederos. */
 const loadCarta = (name: string) => (change: (m: CustodyModel) => CustodyModel = (m) => m) => {
@@ -139,6 +139,6 @@ describe('carta para los herederos', () => {
   });
 
   it('no mete prisa', () => {
-    expect(LETTER_CALM[0]).toContain('meses o años');
+    expect(LETTER_TEXT.calm[0]).toContain('meses o años');
   });
 });

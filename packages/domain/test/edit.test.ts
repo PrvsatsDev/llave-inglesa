@@ -290,6 +290,21 @@ describe('ordenar los ids al exportar', () => {
     expect(m.devices.map((d) => d.id)).toEqual(['ccq', 'seedsigner', 'coldcard-q', 'casa-2']);
     expect(errors(m)).toEqual([]);
   });
+
+  it('los nombres de lo nuevo vienen de fuera (en el idioma de la interfaz); los ids, no, y al exportar salen del nombre', () => {
+    const blank = blankModel({ scheme: 'My scheme', owner: 'Me', home: 'Home' });
+    expect([blank.name, blank.people[0]!.name, blank.locations[0]!.name]).toEqual(['My scheme', 'Me', 'Home']);
+    const p = addPerson(casa, 'New person');
+    const l = addLocation(p.model, 'New location');
+    const d = addDevice(l.model, 'casa', 'stateless', 'New stateless signer');
+    const a = addArtifact(d.model, 'casa', (key) => `${key} backup`);
+    expect([p.id, l.id, d.id, a.id]).toEqual(['nueva-persona', 'nueva-ubicacion', 'nuevo-firmante-stateless', 'nuevo-backup']);
+    expect(a.model.artifacts.at(-1)!.label).toBe('K1 backup');
+    const tidy = tidyIds(a.model);
+    expect(tidy.people.at(-1)!.id).toBe('new-person');
+    expect(tidy.devices.at(-1)!.id).toBe('new-stateless-signer');
+    expect(errors(tidy)).toEqual([]);
+  });
 });
 
 describe('propiedad: editar nunca rompe el modelo', () => {

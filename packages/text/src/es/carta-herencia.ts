@@ -1,7 +1,8 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
 import { flatPolicy, walletOf } from '@llave-inglesa/domain';
 import type { InheritanceLetter, LetterPiece } from '@llave-inglesa/engine';
-import { listText, type Label } from './index.ts';
+import type { Label } from '../tipos.ts';
+import { listText } from './textos.ts';
 
 /**
  * Textos de la carta para los herederos. Pensada para alguien que no sabe de Bitcoin: frases cortas, sin jerga, y
@@ -25,14 +26,6 @@ export function letterWhatThereIs(model: CustodyModel): string {
   return 'Los bitcoins están en una cartera que necesita una combinación de varias llaves para moverlos. Con lo que se lista abajo basta.';
 }
 
-/** Lo primero: reglas que protegen al heredero de prisas, engaños y descuidos. */
-export const LETTER_CALM: readonly string[] = [
-  'No hay prisa. Los bitcoins no caducan: pueden esperar meses o años sin que pase nada. Lo único que conviene hacer pronto es comprobar que llegas a las piezas de la lista, sin sacarlas de su sitio.',
-  'No se lo cuentes a nadie que no lo necesite saber, ni lo comentes en redes.',
-  'Nadie legítimo te pedirá las palabras de una frase semilla: ni un banco, ni un abogado, ni un «soporte técnico». Quien las pida, quiere robarlas.',
-  'Nunca escribas esas palabras en una web, en un móvil ni en un ordenador, ni les hagas fotos.',
-  'Desconfía de quien se ofrezca a «gestionarlos» por ti o a recuperarlos a cambio de una comisión.',
-];
 
 export const letterHelpers = (letter: InheritanceLetter, label: Label) =>
   letter.helpers.length === 0
@@ -66,10 +59,6 @@ export function letterPieceText(p: LetterPiece, label: Label): string {
 
 export const letterMemoryText = (m: { person: string; secret: SecretRef }, label: Label) =>
   `${label(m.person)} sabe de memoria ${secretText(m.secret, label)}.`;
-
-/** Aviso bajo «Qué reunir y dónde» cuando hay backups de reserva. */
-export const LETTER_SPARE_NOTE =
-  'Lo marcado «de reserva» no hace falta, pero es bueno que sepas que existe por si no llegas a alguna de las otras piezas.';
 
 const SCRIPT_PLAIN = {
   wsh: 'SegWit nativo (P2WSH, direcciones bc1q…)',
@@ -118,12 +107,24 @@ export function letterSteps(model: CustodyModel, letter: InheritanceLetter): str
   return steps;
 }
 
-/** Aviso al preparar la carta (en pantalla): multisig sin copia del descriptor al alcance de los herederos. */
-export const LETTER_NO_DESCRIPTOR =
-  'Los herederos no llegan a ninguna copia del descriptor: tendrán que reconstruir la cartera con las frases semilla de todas las llaves, lo que es más difícil y obliga a reunirlas todas. Guarda junto a la carta el «PDF con descriptor» (Esquema › Descriptor de la cartera) y añádelo al esquema.';
-
-export const LETTER_FOOTER = 'Esta carta no contiene ninguna llave ni contraseña: solo dice qué buscar y dónde. Guárdala en un lugar seguro.';
-
-/** Consejos al imprimir (en pantalla, no en la carta). */
-export const LETTER_PRINT_ADVICE =
-  'Imprímela en una impresora tuya conectada por cable o sin red, y nunca en una copistería, el trabajo o una impresora compartida: la carta es un mapa de dónde están tus llaves.';
+/** Frases fijas de la carta y de la hoja que la prepara. */
+export const LETTER_TEXT = {
+  /** Lo primero: reglas que protegen al heredero de prisas, engaños y descuidos. */
+  calm: [
+    'No hay prisa. Los bitcoins no caducan: pueden esperar meses o años sin que pase nada. Lo único que conviene hacer pronto es comprobar que llegas a las piezas de la lista, sin sacarlas de su sitio.',
+    'No se lo cuentes a nadie que no lo necesite saber, ni lo comentes en redes.',
+    'Nadie legítimo te pedirá las palabras de una frase semilla: ni un banco, ni un abogado, ni un «soporte técnico». Quien las pida, quiere robarlas.',
+    'Nunca escribas esas palabras en una web, en un móvil ni en un ordenador, ni les hagas fotos.',
+    'Desconfía de quien se ofrezca a «gestionarlos» por ti o a recuperarlos a cambio de una comisión.',
+  ] as readonly string[],
+  /** Aviso bajo «Qué reunir y dónde» cuando hay backups de reserva. */
+  spareNote:
+    'Lo marcado «de reserva» no hace falta, pero es bueno que sepas que existe por si no llegas a alguna de las otras piezas.',
+  /** Aviso al preparar la carta (en pantalla): multisig sin copia del descriptor al alcance de los herederos. */
+  noDescriptor:
+    'Los herederos no llegan a ninguna copia del descriptor: tendrán que reconstruir la cartera con las frases semilla de todas las llaves, lo que es más difícil y obliga a reunirlas todas. Guarda junto a la carta el «PDF con descriptor» (Esquema › Descriptor de la cartera) y añádelo al esquema.',
+  footer: 'Esta carta no contiene ninguna llave ni contraseña: solo dice qué buscar y dónde. Guárdala en un lugar seguro.',
+  /** Consejos al imprimir (en pantalla, no en la carta). */
+  printAdvice:
+    'Imprímela en una impresora tuya conectada por cable o sin red, y nunca en una copistería, el trabajo o una impresora compartida: la carta es un mapa de dónde están tus llaves.',
+};

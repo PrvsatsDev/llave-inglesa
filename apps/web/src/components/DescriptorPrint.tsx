@@ -133,9 +133,6 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
   );
 }
 
-/** Distinto del «Descriptor impreso» que se crea a mano, para saber de dónde salió cada copia. */
-const PRINTED_LABEL = T.nombreBackup;
-
 /** Imprimirlo crea un backup más: se ofrece añadirlo al esquema para que el análisis sepa dónde está y quién lo puede ver. */
 function AddToScheme({ model, keys }: { model: CustodyModel; keys: readonly string[] }) {
   const apply = useDocument((s) => s.apply);
@@ -147,7 +144,7 @@ function AddToScheme({ model, keys }: { model: CustodyModel; keys: readonly stri
       const r = addArtifact(m, location);
       // Las xpubs ya van en el descriptor (el motor las deduce de él); se apuntan también para que se vean en el mapa.
       const contents: SecretRef[] = [{ type: 'descriptor' }, ...keys.map((key): SecretRef => ({ type: 'xpub', key }))];
-      return updateArtifact(r.model, r.id, { label: PRINTED_LABEL, medium: 'paper', contents });
+      return updateArtifact(r.model, r.id, { label: T.nombreBackup, medium: 'paper', contents });
     });
     setAdded(label(location));
   };
@@ -155,7 +152,7 @@ function AddToScheme({ model, keys }: { model: CustodyModel; keys: readonly stri
     <aside className={styles.aside}>
       {added ? (
         <p>
-          <Check size={14} aria-hidden /> {T.anadido(PRINTED_LABEL, added)}
+          <Check size={14} aria-hidden /> {T.anadido(T.nombreBackup, added)}
         </p>
       ) : (
         <>

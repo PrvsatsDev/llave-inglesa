@@ -48,7 +48,7 @@ export const banner = {
   simulandoAtaque: 'Simulando ataque',
   simulandoDesgracia: 'Simulando desgracia',
   coaccion: 'Venciendo un PIN de coacción',
-  comprometidos: ['dispositivo comprometido', 'dispositivos comprometidos'] as const,
+  comprometidos: ['dispositivo comprometido', 'dispositivos comprometidos'] as [string, string],
   yAdemas: 'Y además',
   pero: 'Pero',
   veSaldo: 've tu saldo y tu historial',

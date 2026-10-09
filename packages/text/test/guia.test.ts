@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { calcularCifras, nombresDeEjemplos } from '../src/guia-cifras-calculo.ts';
-import { guiaMarkdown } from '../src/guia-markdown.ts';
+import { guiaMarkdown } from '../src/es/guia-markdown.ts';
 import { CIFRAS, GUIA, type Bloque, type Escenario } from '../src/index.ts';
 
 const bloques = GUIA.flatMap((c) => c.bloques);

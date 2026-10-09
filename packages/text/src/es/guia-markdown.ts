@@ -1,7 +1,8 @@
 import { scoreBand } from '@llave-inglesa/engine';
-import { CIFRAS } from './guia-cifras.ts';
-import { GUIA, type Bloque, type Trozo } from './guia.ts';
-import { SCORE_BAND_TEXT } from './index.ts';
+import { CIFRAS } from '../guia-cifras.ts';
+import type { Bloque, Trozo } from '../tipos.ts';
+import { GUIA } from './guia.ts';
+import { SCORE_BAND_TEXT } from './textos.ts';
 
 const URL_APP = 'https://llave-inglesa.vualt.net';
 

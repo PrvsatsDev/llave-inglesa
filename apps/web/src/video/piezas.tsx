@@ -10,7 +10,7 @@ import { scenarioView, type Scenario } from '../scenario/view.ts';
 import { level } from '../components/Scoreboard.tsx';
 import { OUTCOME } from '../components/ScenarioBanner.tsx';
 import aviso from '../components/ScenarioBanner.module.css';
-import { attackText, lossText } from '../lib/text.ts';
+import { attackText, lossText, UI } from '../lib/text.ts';
 import tarjeta from '../components/Scoreboard.module.css';
 import { interpolar } from './tiempo.ts';
 import styles from './video.module.css';
@@ -159,7 +159,8 @@ export function Aviso({ modelo, escenario, visible }: { modelo: CustodyModel; es
   const view = scenarioView(modelo, escenario);
   if (!view) return null;
   const index = indexModel(modelo);
-  const { icon: Icon, text, level } = OUTCOME[view.outcome];
+  const { icon: Icon, level } = OUTCOME[view.outcome];
+  const text = UI.banner.resultado[view.outcome];
   const pasos = escenario.kind === 'attack' ? escenario.atoms.map((a) => attackText(a, index)) : escenario.events.map((e) => lossText(e, index));
   return (
     <div className={styles.aviso} style={{ opacity: visible, transform: `translateX(-50%) translateY(${(1 - visible) * 20}px) scale(1.7)` }}>

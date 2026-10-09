@@ -8,7 +8,8 @@ import { DeleteButton, Field, PanelHeader, Section, SecretToggles, Select, Switc
 import styles from './fields.module.css';
 
 const T = UI.backup;
-const MEDIUM_OPTIONS = (['metal', 'washers', 'paper', 'digital', 'other'] as const).map((value) => ({ value, label: T.soportes[value] }));
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const mediumOptions = () => (['metal', 'washers', 'paper', 'digital', 'other'] as const).map((value) => ({ value, label: T.soportes[value] }));
 
 export function ArtifactInspector({ model, artifact }: { model: CustodyModel; artifact: Artifact }) {
   const apply = useDocument((s) => s.apply);
@@ -26,7 +27,7 @@ export function ArtifactInspector({ model, artifact }: { model: CustodyModel; ar
       <Section>
         <Field label={UI.campos.nombre}>{(fid) => <TextInput id={fid} value={artifact.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
         <div className={styles.twoCols}>
-          <Field label={T.soporte}>{(fid) => <Select id={fid} value={artifact.medium} options={MEDIUM_OPTIONS} onChange={(medium) => patch({ medium })} />}</Field>
+          <Field label={T.soporte}>{(fid) => <Select id={fid} value={artifact.medium} options={mediumOptions()} onChange={(medium) => patch({ medium })} />}</Field>
           <Field label={UI.campos.ubicacion}>
             {(fid) => (
               <Select id={fid} value={artifact.location} options={model.locations.map((l) => ({ value: l.id, label: l.name }))} onChange={(location) => patch({ location })} />

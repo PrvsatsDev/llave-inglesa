@@ -9,7 +9,8 @@ import { AdvisoryList, catalogFeatures, HardwareModelSelect } from './Hardware.t
 import styles from './fields.module.css';
 
 const T = UI.dispositivo;
-const KIND_OPTIONS = (['stateful', 'stateless'] as const).map((value) => ({ value, label: T.tipos[value] }));
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const kindOptions = () => (['stateful', 'stateless'] as const).map((value) => ({ value, label: T.tipos[value] }));
 
 function duressHint(catalog: CatalogModel | undefined): string {
   const kinds = catalog?.duress ?? [];
@@ -74,7 +75,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
       </Section>
 
       <Section title={T.tipoTitulo}>
-        <Segmented label={T.tipoDispositivo} value={device.kind} options={KIND_OPTIONS} onChange={(kind) => patch({ kind })} />
+        <Segmented label={T.tipoDispositivo} value={device.kind} options={kindOptions()} onChange={(kind) => patch({ kind })} />
         <p className={styles.hint}>
           {device.kind === 'stateful'
             ? T.pistaStateful

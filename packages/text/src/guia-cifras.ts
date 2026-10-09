@@ -1,4 +1,4 @@
-import type { Metrica } from './guia.ts';
+import type { Metrica } from './tipos.ts';
 
 /** Generado por scripts/guia.ts con el motor: puntuaciones de cada ejemplo que cita la guía. No editar a mano. */
 export const CIFRAS: Record<string, Record<Metrica, number>> = {

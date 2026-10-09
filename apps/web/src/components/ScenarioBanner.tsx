@@ -8,12 +8,13 @@ import styles from './ScenarioBanner.module.css';
 
 const T = UI.banner;
 
-export const OUTCOME: Record<Outcome, { icon: LucideIcon; text: string; level: 'bad' | 'good' | 'warn' }> = {
-  stolen: { icon: Skull, text: T.resultado.stolen, level: 'bad' },
-  safe: { icon: CircleCheck, text: T.resultado.safe, level: 'good' },
-  recoverable: { icon: CircleCheck, text: T.resultado.recoverable, level: 'good' },
-  lockout: { icon: Hourglass, text: T.resultado.lockout, level: 'warn' },
-  lost: { icon: XCircle, text: T.resultado.lost, level: 'bad' },
+/** Icono y tono de cada resultado; su texto, en `UI.banner.resultado`. */
+export const OUTCOME: Record<Outcome, { icon: LucideIcon; level: 'bad' | 'good' | 'warn' }> = {
+  stolen: { icon: Skull, level: 'bad' },
+  safe: { icon: CircleCheck, level: 'good' },
+  recoverable: { icon: CircleCheck, level: 'good' },
+  lockout: { icon: Hourglass, level: 'warn' },
+  lost: { icon: XCircle, level: 'bad' },
 };
 
 /** Veredicto del escenario simulado, sobre el mapa. */
@@ -24,7 +25,8 @@ export function ScenarioBanner() {
   if (!view) return null;
 
   const index = indexModel(model);
-  const { icon: Icon, text, level } = OUTCOME[view.outcome];
+  const { icon: Icon, level } = OUTCOME[view.outcome];
+  const text = T.resultado[view.outcome];
   const steps = view.scenario.kind === 'attack' ? view.scenario.atoms.map((a) => attackText(a, index)) : view.scenario.events.map((e) => lossText(e, index));
 
   return (

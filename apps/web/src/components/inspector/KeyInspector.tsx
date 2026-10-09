@@ -1,10 +1,10 @@
-import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
+import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
 import { AlertTriangle, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { UI } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
-import { AdvisoryList, HardwareModelSelect, UNKNOWN_VENDOR, VendorSelect } from './Hardware.tsx';
+import { AdvisoryList, HardwareModelSelect, VendorSelect } from './Hardware.tsx';
 import { PathField, XpubField } from './WalletFields.tsx';
 import styles from './fields.module.css';
 
@@ -15,7 +15,8 @@ const T = UI.key;
 /** Proyecto de Estudio Bitcoin para generar la semilla a mano con una moneda. */
 const SEMILLA_MONEDA_URL = 'https://estudiobitcoin.com/semilla-moneda-crea-tu-semilla-a-mano/';
 
-const SOURCE_OPTIONS: readonly { value: SourceKind; label: string }[] = (['device-rng', 'software-rng', 'dice', 'coin', 'cards', 'unknown'] as const).map((value) => ({
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const sourceOptions = (): readonly { value: SourceKind; label: string }[] => (['device-rng', 'software-rng', 'dice', 'coin', 'cards', 'unknown'] as const).map((value) => ({
   value,
   label: T.fuentes[value],
 }));
@@ -38,7 +39,7 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
   return (
     <li className={styles.row}>
       <span className={styles.rowGrow}>
-        <Select value={source.kind} options={SOURCE_OPTIONS} onChange={(kind) => onChange(emptySource(kind))} />
+        <Select value={source.kind} options={sourceOptions()} onChange={(kind) => onChange(emptySource(kind))} />
       </span>
       {source.kind === 'device-rng' && (
         <span className={styles.rowGrow}>
@@ -73,7 +74,8 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
 }
 
 /** Solo cómo es, nunca cuál es. */
-const STRENGTH_OPTIONS = (['weak', 'phrase', 'random'] as const).map((value) => ({ value, label: T.fuerzas[value] }));
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const strengthOptions = () => (['weak', 'phrase', 'random'] as const).map((value) => ({ value, label: T.fuerzas[value] }));
 
 const STRENGTH_HINT = T.pistasFuerza;
 
@@ -117,7 +119,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             <Segmented
               label={T.comoEsPassphrase}
               value={key.passphraseStrength ?? 'unset'}
-              options={STRENGTH_OPTIONS}
+              options={strengthOptions()}
               onChange={(v) => v !== 'unset' && patch({ passphraseStrength: v })}
             />
             <p className={key.passphraseStrength ? styles.hint : styles.warningHint}>

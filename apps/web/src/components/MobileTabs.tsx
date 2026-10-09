@@ -5,9 +5,9 @@ import styles from './MobileTabs.module.css';
 
 const T = UI.marco.pestanas;
 
-const TABS: { id: MobileView; label: string; icon: LucideIcon }[] = [
-  { id: 'panel', label: T.panel, icon: LayoutList },
-  { id: 'map', label: T.mapa, icon: MapIcon },
+const TABS: { id: MobileView; texto: 'panel' | 'mapa'; icon: LucideIcon }[] = [
+  { id: 'panel', texto: 'panel', icon: LayoutList },
+  { id: 'map', texto: 'mapa', icon: MapIcon },
 ];
 
 /**
@@ -20,10 +20,10 @@ export function MobileTabs() {
   const show = useMobile((s) => s.show);
   return (
     <nav className={styles.bar} aria-label={T.nombre}>
-      {TABS.map(({ id, label, icon: Icon }) => (
+      {TABS.map(({ id, texto, icon: Icon }) => (
         <button key={id} className={`${styles.tab} ${view === id ? styles.current : ''}`} aria-current={view === id ? 'page' : undefined} onClick={() => show(id)}>
           <Icon size={18} aria-hidden />
-          {label}
+          {T[texto]}
           {id === 'map' && mapChanged && (
             <span className={styles.badge} title={T.pistaNuevo}>
               <span className={styles.dot} aria-hidden /> {T.nuevo}

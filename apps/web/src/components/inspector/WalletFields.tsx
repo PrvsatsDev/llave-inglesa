@@ -1,7 +1,7 @@
 import { looksLikeSeedWords, normalizePath, parseXpub } from '@llave-inglesa/bitcoin';
 import { XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SEED_WORDS_TEXT, UI, xpubProblemText } from '../../lib/text.ts';
+import { UI, WALLET_TEXT, xpubProblemText } from '../../lib/text.ts';
 import { Field } from './fields.tsx';
 import styles from './fields.module.css';
 
@@ -64,7 +64,7 @@ export function XpubField({ value, onChange }: { value: string | undefined; onCh
   const change = (t: string) => {
     if (looksLikeSeedWords(t)) {
       setText('');
-      setMessage({ tone: 'error', text: SEED_WORDS_TEXT });
+      setMessage({ tone: 'error', text: WALLET_TEXT.seedWords });
       emit(undefined, onChange);
       return;
     }
