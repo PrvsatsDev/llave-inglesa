@@ -1,0 +1,46 @@
+# Imagen Docker para Umbrel (ver umbrel/README.md): amd64 + arm64 en GitHub Container Registry, construida desde el
+# mismo zip reproducible de la Release, así que sirve exactamente los ficheros de su SHA256SUMS.
+#   - Al subir una etiqueta vX.Y.Z: ghcr.io/<dueño>/llave-inglesa:X.Y.Z
+#   - A mano (Actions → Imagen para Umbrel → Run workflow): X.Y.Z-prueba-<commit>, para probarla antes de una versión.
+name: Imagen para Umbrel
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  imagen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: La etiqueta coincide con la versión de la app
+        if: github.event_name == 'push'
+        run: test "${GITHUB_REF_NAME}" = "v$(node -p "require('./apps/web/package.json').version")"
+      - name: Build y empaquetado (el mismo zip que la Release)
+        run: npm run empaquetar
+      - name: Publicar la imagen
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+          EVENTO: ${{ github.event_name }}
+        run: |
+          echo "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker buildx create --use
+          if [ "$EVENTO" = "workflow_dispatch" ]; then
+            export ETIQUETA="$(node -p "require('./apps/web/package.json').version")-prueba-$(git rev-parse --short HEAD)"
+          fi
+          scripts/imagen.sh --publicar "ghcr.io/${OWNER,,}/llave-inglesa"
