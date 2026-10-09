@@ -76,6 +76,13 @@ export const KeySchema = z.object({
   id: IdSchema,
   label: z.string().min(1),
   fingerprint: z.string().regex(/^[0-9a-fA-F]{8}$/).optional(),
+  /** Derivación de la semilla a la xpub, en la forma de los descriptores: 48'/0'/0'/2'. */
+  derivation: z.string().regex(/^\d+'?(\/\d+'?)*$/).optional(),
+  /**
+   * Clave pública extendida de la cuenta, normalizada a xpub/tpub. No permite gastar, pero sí ver saldo e historial:
+   * por eso el documento se guarda cifrado. Nunca una xprv.
+   */
+  xpub: z.string().regex(/^[xt]pub[1-9A-HJ-NP-Za-km-z]{100,112}$/).optional(),
   /** La key requiere passphrase BIP39 además de la semilla. */
   passphrase: z.boolean().default(false),
   /**
@@ -169,6 +176,17 @@ export const LocationSchema = z.object({
 });
 export type Location = z.infer<typeof LocationSchema>;
 
+/**
+ * Cómo se escribe la cartera como descriptor. Sin indicar: wsh (multisig) o wpkh (single-sig) con sortedmulti, lo
+ * habitual hoy. La red no se guarda: sale de las xpubs (xpub o tpub).
+ */
+export const WalletSchema = z.object({
+  script: z.enum(['wsh', 'sh-wsh', 'wpkh', 'sh-wpkh']),
+  /** sortedmulti (claves ordenadas, BIP-67) o multi (el orden de la política importa). */
+  sorted: z.boolean().default(true),
+});
+export type Wallet = z.infer<typeof WalletSchema>;
+
 export const CustodyModelSchema = z.object({
   format: z.literal('llave-inglesa'),
   version: z.literal(1),
@@ -176,6 +194,7 @@ export const CustodyModelSchema = z.object({
   description: z.string().optional(),
   keys: z.array(KeySchema).min(1),
   policy: PolicySchema,
+  wallet: WalletSchema.optional(),
   devices: z.array(DeviceSchema).default([]),
   artifacts: z.array(ArtifactSchema).default([]),
   people: z.array(PersonSchema).min(1),
