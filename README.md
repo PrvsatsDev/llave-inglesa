@@ -22,6 +22,10 @@ calcula:
 
 Cada resultado explica **por qué**, y cualquier combinación se puede **simular en el mapa**.
 
+Si quieres, también pone por escrito tu plan, sin guardar nada secreto: importa tu **descriptor** (o las
+xpubs de cada key) y te da la primera dirección para comprobarlo, una **hoja en PDF con su QR** para
+guardarla como backup y una **carta para tus herederos** con solo lo que necesitan y dónde está.
+
 ![llave-inglesa simulando una llave inglesa en casa sobre un multisig 2 de 3 distribuido](docs/img/llave-inglesa.png)
 
 ## Privacidad y seguridad

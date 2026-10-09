@@ -642,6 +642,31 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'parrafo',
         texto: [
+          'Cuando el esquema esté como quieres, puedes ponerlo por escrito. Nada de esto lleva secretos, y es opcional:',
+        ],
+      },
+      {
+        tipo: 'lista',
+        items: [
+          [
+            n('Descriptor de la cartera'),
+            ' (Esquema, bajo las keys): ',
+            n('Importar'),
+            ' y pega el descriptor que ya tienes (Sparrow, Nunchuk, Coldcard…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.',
+          ],
+          [
+            n('Imprimir o guardar en PDF'),
+            ': una hoja con el descriptor, su QR, las keys y las primeras direcciones. Al imprimirla, añádela al esquema donde la vayas a guardar: es un backup más. En un multisig, que no haya ninguna copia del descriptor resta resiliencia, y que los herederos no lleguen a ninguna resta mucha herencia.',
+          ],
+          [
+            n('Carta para los herederos'),
+            ' (Análisis › Herencia): qué reunir y dónde, a quién acudir y los pasos, en palabras sencillas y con solo lo que necesitan. Los nombres reales y un mensaje personal se escriben al vuelo y no se guardan. Imprímela en una impresora tuya sin red, nunca en una copistería.',
+          ],
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
           'Arriba de la pestaña Esquema aparecen los ',
           n('avisos'),
           ': cosas que probablemente no quieres, como un dispositivo con un PIN que nadie sabe (no serviría para firmar) o una passphrase sin indicar cómo es (se trata como débil).',

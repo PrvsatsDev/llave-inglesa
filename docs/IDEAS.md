@@ -3,14 +3,6 @@
 Ideas anotadas para no olvidarlas. **Ninguna es definitiva**: cada una necesita
 pensarse antes de implementarla.
 
-## Propuestas del usuario (2026-09-29)
-
-- **Introducir las xpubs y generar el descriptor.** Opción de pegar las xpubs (y
-  fingerprints/derivaciones) de cada key para construir el descriptor real.
-- **PDFs a partir de esa información:**
-  - PDF del descriptor (para imprimir y guardar como backup).
-  - PDF de herencia (carta/manual para los herederos).
-
 ## Interfaz y distribución
 
 - **App para Umbrel** (2026-10-03): Docker + `umbrel-app.yml`. Umbrel sirve por http en la red local,

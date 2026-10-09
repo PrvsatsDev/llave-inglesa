@@ -191,6 +191,12 @@ Empieza con **Archivo → Nuevo esquema** o, mejor, abre el ejemplo que más se 
 - **Dispositivos y backups**: con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…
 - **Personas**: titular, heredero, custodio… y qué saben de memoria (un PIN, una passphrase). Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado.
 
+Cuando el esquema esté como quieres, puedes ponerlo por escrito. Nada de esto lleva secretos, y es opcional:
+
+- **Descriptor de la cartera** (Esquema, bajo las keys): **Importar** y pega el descriptor que ya tienes (Sparrow, Nunchuk, Coldcard…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.
+- **Imprimir o guardar en PDF**: una hoja con el descriptor, su QR, las keys y las primeras direcciones. Al imprimirla, añádela al esquema donde la vayas a guardar: es un backup más. En un multisig, que no haya ninguna copia del descriptor resta resiliencia, y que los herederos no lleguen a ninguna resta mucha herencia.
+- **Carta para los herederos** (Análisis › Herencia): qué reunir y dónde, a quién acudir y los pasos, en palabras sencillas y con solo lo que necesitan. Los nombres reales y un mensaje personal se escriben al vuelo y no se guardan. Imprímela en una impresora tuya sin red, nunca en una copistería.
+
 Arriba de la pestaña Esquema aparecen los **avisos**: cosas que probablemente no quieres, como un dispositivo con un PIN que nadie sabe (no serviría para firmar) o una passphrase sin indicar cómo es (se trata como débil).
 
 > 💡 **Guárdalo cifrado.** Ctrl+S lo guarda en este navegador con una contraseña; **Exportar cifrado** lo descarga como fichero .llave. Exportar sin cifrar (.json) es solo para trabajar con él: bórralo después. Aunque tampoco hace falta guardar nada: puedes solo trastear, aprender y descubrir huecos que no habías previsto. Si no quieres guardar nada, no lo guardes.
