@@ -54,3 +54,9 @@ test('la vista previa del enlace tiene título, descripción e imagen, y la imag
   expect(res.ok()).toBe(true);
   expect(res.headers()['content-type']).toBe('image/png');
 });
+
+test('robots.txt deja pasar a todos los rastreadores', async ({ request }) => {
+  const res = await request.get('/robots.txt');
+  expect(res.ok()).toBe(true);
+  expect(await res.text()).toBe('User-agent: *\nAllow: /\n');
+});
