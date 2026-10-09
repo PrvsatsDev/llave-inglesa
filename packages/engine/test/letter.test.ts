@@ -20,7 +20,7 @@ describe('carta para los herederos', () => {
     expect(letter.stops.flatMap((s) => s.pieces.map((p) => p.item))).not.toContain('ccq');
   });
 
-  it('sin ninguna copia del descriptor recuperan reuniendo todas las semillas, y se avisa', () => {
+  it('sin ninguna copia del descriptor recuperan reuniendo todas las semillas (reconstruyendo), y se avisa', () => {
     const model = loadFixture('todo-en-casa');
     const letter = letterOf({ ...model, artifacts: model.artifacts.filter((a) => !a.contents.some((c) => c.type === 'descriptor')) });
     expect(letter).toMatchObject({ status: 'ok', usesDescriptor: false, noDescriptorCopy: true });

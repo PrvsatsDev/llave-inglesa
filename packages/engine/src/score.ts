@@ -156,7 +156,7 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'other-routes' | 'lockout' | 'heir-fragility'; points: number }[];
+  penalties: { reason: 'exposure' | 'other-routes' | 'lockout' | 'heir-fragility' | 'no-descriptor'; points: number }[];
   score: number;
 }
 
@@ -251,14 +251,25 @@ export const rarityScore = (rarity: number | null) => (rarity === null ? 100 : M
  * Resiliencia: lo improbable que es la pérdida más probable, menos lo que suman las demás vías
  * y lo fácil que sea un bloqueo temporal.
  */
-export function resilienceBreakdown(minRarity: number | null, combined: number | null, lockoutMinRarity: number | null): ScoreBreakdown {
+/**
+ * Multisig sin descriptor. Con las semillas de todas las keys salen sus xpubs, pero no cómo se combinan: tipo de script,
+ * k de n y derivación (que puede no ser la habitual, p. ej. otra cuenta). Reconstruir así es difícil, a veces imposible.
+ * resilience: no hay ninguna copia del descriptor en todo el esquema (si fallan los dispositivos con la cartera
+ * registrada, hay que reconstruirla). inheritance: los herederos no llegan a ninguna copia ni a un dispositivo con la
+ * cartera registrada que puedan desbloquear.
+ */
+export const NO_DESCRIPTOR_PENALTY = { resilience: 15, inheritance: 35 } as const;
+
+export function resilienceBreakdown(minRarity: number | null, combined: number | null, lockoutMinRarity: number | null, noDescriptorCopy = false): ScoreBreakdown {
   const base = rarityScore(minRarity);
   const others = base - rarityScore(combined);
   const lockout = lockoutPenalty(lockoutMinRarity);
+  const noDescriptor = noDescriptorCopy ? NO_DESCRIPTOR_PENALTY.resilience : 0;
   const penalties: ScoreBreakdown['penalties'] = [];
   if (others > 0) penalties.push({ reason: 'other-routes', points: others });
   if (lockout > 0) penalties.push({ reason: 'lockout', points: lockout });
-  return { base, penalties, score: Math.max(0, base - others - lockout) };
+  if (noDescriptor > 0) penalties.push({ reason: 'no-descriptor', points: noDescriptor });
+  return { base, penalties, score: Math.max(0, base - others - lockout - noDescriptor) };
 }
 
 /**
@@ -300,13 +311,17 @@ export const HEIR_FRAGILITY_WEIGHT = 0.4;
 /**
  * Herencia: la facilidad, menos la fragilidad. Los herederos heredan lo que quede tras toda una vida:
  * el fallecimiento es seguro, así que se da por hecho y se miden las desgracias que, además, les
- * dejarían sin los fondos (`heirLossRarity`: rareza equivalente de todas ellas).
+ * dejarían sin los fondos (`heirLossRarity`: rareza equivalente de todas ellas). `rebuild`: en un
+ * multisig, solo recuperan reconstruyendo la cartera sin descriptor (ver NO_DESCRIPTOR_PENALTY).
  */
-export function inheritanceBreakdown(locations: number | null, heirLossRarity: number | null): ScoreBreakdown {
+export function inheritanceBreakdown(locations: number | null, heirLossRarity: number | null, rebuild = false): ScoreBreakdown {
   const base = inheritanceScore(locations);
   if (locations === null) return { base, penalties: [], score: base };
   const points = Math.round(HEIR_FRAGILITY_WEIGHT * (100 - rarityScore(heirLossRarity)));
-  return { base, penalties: points > 0 ? [{ reason: 'heir-fragility', points }] : [], score: Math.max(0, base - points) };
+  const penalties: ScoreBreakdown['penalties'] = [];
+  if (points > 0) penalties.push({ reason: 'heir-fragility', points });
+  if (rebuild) penalties.push({ reason: 'no-descriptor', points: NO_DESCRIPTOR_PENALTY.inheritance });
+  return { base, penalties, score: Math.max(0, base - penalties.reduce((sum, p) => sum + p.points, 0)) };
 }
 
 /**

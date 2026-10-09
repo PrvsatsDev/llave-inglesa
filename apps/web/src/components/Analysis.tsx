@@ -16,6 +16,7 @@ import {
   inheritanceScore,
   LOCKOUT_PENALTY,
   LOSS_RARITY,
+  NO_DESCRIPTOR_PENALTY,
   ownerDeaths,
   resilienceBreakdown,
   securityBreakdown,
@@ -185,11 +186,13 @@ function resilienceScore(a: EngineAnalysis) {
   if (!res.recoverableNow) {
     return { score: res.score, rows: [{ label: 'Ahora mismo nadie puede recuperar los fondos', points: 0 }], how: [] as string[] };
   }
-  const b = resilienceBreakdown(res.minRarity, res.combinedRarity, res.lockoutMinRarity);
+  const b = resilienceBreakdown(res.minRarity, res.combinedRarity, res.lockoutMinRarity, res.noDescriptorCopy);
   const label = (reason: string, points: number): Row =>
     reason === 'other-routes'
       ? { label: `${plural(res.cuts.length - 1, 'vía más', 'vías más')}: todas juntas equivalen a rareza ${num(round1(res.combinedRarity!))}`, points: -points }
-      : { label: `Bloqueo temporal más probable: rareza ${num(res.lockoutMinRarity!)}`, points: -points };
+      : reason === 'no-descriptor'
+        ? { label: 'Sin ninguna copia del descriptor: si fallan los dispositivos, habría que reconstruir la cartera', points: -points }
+        : { label: `Bloqueo temporal más probable: rareza ${num(res.lockoutMinRarity!)}`, points: -points };
   const rows: Row[] = [
     res.minRarity === null
       ? { label: `Ninguna combinación de hasta ${res.searchedUpTo} desgracias lo pierde todo`, points: b.base }
@@ -205,6 +208,7 @@ function resilienceScore(a: EngineAnalysis) {
       `Varias desgracias a la vez suman sus rarezas (como multiplicar probabilidades). Se buscan las combinaciones de hasta ${res.searchedUpTo} tras las que nadie podría recuperar los fondos nunca; cuanto más rara la más probable, más puntuación: ${[1, 2, 3, 4, 5, 6].map((x) => `${x}${x === 6 ? ' o más' : ''} → ${rarityScore(x)}`).join(' · ')}.`,
       'Las demás vías también cuentan: sus probabilidades se suman, y la puntuación sale de la rareza equivalente de todas juntas.',
       `Un bloqueo temporal (fondos inmovilizados mientras alguien está incapacitado) no pierde nada, pero resta: ${LOCKOUT_PENALTY.map((p) => `rareza menor que ${num(p.below)} −${p.points}`).join(' · ')}.`,
+      `Un multisig sin ninguna copia del descriptor resta ${NO_DESCRIPTOR_PENALTY.resilience}: con las semillas salen las xpubs, pero no cómo se combinan (tipo de script, k de n, derivación), y reconstruir la cartera así es difícil o, con derivaciones poco habituales, casi imposible.`,
     ],
   };
 }
@@ -229,18 +233,21 @@ function inheritanceScoreRows(a: EngineAnalysis) {
       : inh.status === 'no-heirs'
         ? 'No hay herederos'
         : 'Los herederos no pueden recuperar los fondos';
-  const b = inheritanceBreakdown(inh.visits, inh.lossCombinedRarity);
+  const b = inheritanceBreakdown(inh.visits, inh.lossCombinedRarity, inh.rebuild);
+  const penalty = (reason: string, points: number): Row =>
+    reason === 'no-descriptor' ? { label: 'Sin descriptor: los herederos tendrían que reconstruir la cartera con las semillas', points: -points } : fragility(points);
   const fragility = (points: number): Row => ({
     label: `Fragilidad: ${plural(inh.losses.length, 'forma', 'formas')} de quedarse sin los fondos; la más probable, rareza ${num(inh.lossRarities[0]!)}${inh.losses.length > 1 ? `, todas juntas ${num(round1(inh.lossCombinedRarity!))}` : ''}`,
     points: -points,
   });
   return {
     score: inh.score,
-    rows: [{ label, points: b.base }, ...b.penalties.map((p) => fragility(p.points))],
+    rows: [{ label, points: b.base }, ...b.penalties.map((p) => penalty(p.reason, p.points))],
     how: [
       'Tras el fallecimiento de todos los titulares, si los herederos pueden recuperar los fondos con lo que tienen a su alcance (incluidos los accesos "tras fallecer"), y cuántas ubicaciones les cuesta.',
       `${scale(inheritanceScore, ['ubicación', 'ubicaciones'], 1, 4)}.`,
       `Después se resta la fragilidad de ese camino. El fallecimiento es seguro, así que se da por hecho y se buscan las desgracias que, además, dejarían a los herederos sin los fondos (perder la única copia, un incendio, que fallezca el heredero…). Su robustez se puntúa como la resiliencia, y se resta ${num(HEIR_FRAGILITY_WEIGHT)} × lo que le falta para 100: como mucho ${num(Math.round(HEIR_FRAGILITY_WEIGHT * 100))}.`,
+      `En un multisig, si los herederos no llegan a ninguna copia del descriptor (ni a un dispositivo con la cartera registrada que puedan desbloquear), se resta ${NO_DESCRIPTOR_PENALTY.inheritance}: tendrían que reconstruir la cartera con las semillas sin saber el tipo de script ni la derivación. Si hay una vía con descriptor, se elige esa aunque cueste un viaje más.`,
     ],
   };
 }

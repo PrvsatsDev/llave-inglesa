@@ -80,9 +80,11 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
   const storage = storageFor(model, world, heirs);
   const people = [...heirs, ...helpers];
   const reachable = new Set(people.flatMap((p) => accessibleLocations(world, p)));
+  // Si recuperan, lo dice el análisis (el mismo criterio que la penalización); si no, si no llegan a ninguna copia.
   const noDescriptorCopy =
-    flatPolicy(model)?.kind !== 'single' &&
-    !model.artifacts.some((a) => reachable.has(a.location) && a.contents.some((c) => c.type === 'descriptor'));
+    status === 'ok'
+      ? inheritance.rebuild
+      : flatPolicy(model)?.kind !== 'single' && !model.artifacts.some((a) => reachable.has(a.location) && a.contents.some((c) => c.type === 'descriptor'));
   const base = { status, owners, heirs, helpers, storage, noDescriptorCopy };
 
   if (status !== 'ok' || !inheritance.locations) {

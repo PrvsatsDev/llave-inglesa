@@ -58,6 +58,8 @@ export interface DuressReport {
 export interface ResilienceReport {
   score: number;
   recoverableNow: boolean;
+  /** Multisig sin ninguna copia del descriptor en todo el esquema (resta, ver NO_DESCRIPTOR_PENALTY). */
+  noDescriptorCopy: boolean;
   searchedUpTo: number;
   /** Combinaciones mínimas que lo pierden todo para siempre, de la más probable a la menos. */
   cuts: LossEvent[][];
@@ -90,6 +92,11 @@ export interface InheritanceReport {
   locations: Id[] | null;
   /** Viajes: las ubicaciones sin contar las que están dentro de otra de la lista. */
   visits: number | null;
+  /**
+   * Multisig: los herederos solo recuperan reconstruyendo la cartera sin descriptor (no llegan a ninguna copia ni a
+   * un dispositivo con la cartera registrada que puedan desbloquear). Resta, ver NO_DESCRIPTOR_PENALTY.
+   */
+  rebuild: boolean;
   /**
    * Desgracias que, además del fallecimiento de los titulares, dejarían a los herederos sin los fondos,
    * de la más probable a la menos (vacío si no se recupera ni sin ellas).
@@ -178,14 +185,24 @@ function inheritanceReport(world: World, maxCutSize: number): InheritanceReport 
   const legit = legitHoldings(world);
   const role = (id: Id) => world.model.people.find((p) => p.id === id)?.role;
   const heirs = legit.people.filter((p) => role(p) === 'heir');
-  const locations = legit.people.length > 0 ? minimalLocationSet(world, legit.people, legit.locations, 'any') : null;
+  // En un multisig, mejor una vía con el descriptor (aunque cueste un viaje más: la facilidad cambia menos que la
+  // penalización); si no la hay, reconstruyendo la cartera con las semillas, penalizado.
+  const multisig = world.model.policy.type === 'thresh';
+  const withConfig = (d: Derivation) => d.canSpend && (!multisig || knowsWallet(d));
+  let locations = legit.people.length > 0 ? minimalLocationSet(world, legit.people, legit.locations, 'any', withConfig) : null;
+  let rebuild = false;
+  if (multisig && legit.people.length > 0 && !locations) {
+    locations = minimalLocationSet(world, legit.people, legit.locations, 'any');
+    rebuild = locations !== null;
+  }
+  const accept = rebuild ? (d: Derivation) => d.canSpend : withConfig;
   const status = legit.people.length === 0 ? 'no-heirs' : locations ? 'ok' : 'unrecoverable';
   let helpers = legit.people.filter((p) => role(p) !== 'heir');
   if (locations) {
     for (const p of [...helpers]) {
       const people = [...heirs, ...helpers.filter((h) => h !== p)];
       const reachable = new Set(people.flatMap((q) => accessibleLocations(world, q)));
-      if (derive(world, { people, locations: locations.filter((l) => reachable.has(l)) }, 'any').canSpend) helpers = helpers.filter((h) => h !== p);
+      if (accept(derive(world, { people, locations: locations.filter((l) => reachable.has(l)) }, 'any'))) helpers = helpers.filter((h) => h !== p);
     }
   } else {
     helpers = [];
@@ -207,12 +224,26 @@ function inheritanceReport(world: World, maxCutSize: number): InheritanceReport 
   }
   const lossCombinedRarity = combinedRarity(losses.map((l) => l.rarity));
   return {
-    score: inheritanceBreakdown(n, lossCombinedRarity).score,
-    status, heirs, helpers, locations, visits: n,
+    score: inheritanceBreakdown(n, lossCombinedRarity, rebuild).score,
+    status, heirs, helpers, locations, visits: n, rebuild,
     losses: losses.map((l) => l.cut),
     lossRarities: losses.map((l) => l.rarity),
     lossCombinedRarity,
   };
+}
+
+/** ¿Sabe cómo es la cartera (el descriptor, o un dispositivo desbloqueado con la cartera registrada)? */
+function knowsWallet(d: Derivation): boolean {
+  return d.has({ kind: 'secret', secret: { type: 'descriptor' } }) || [...d.facts.values()].some((f) => f.justification.rule === 'device-wallet');
+}
+
+/** Multisig sin ninguna copia del descriptor: ni en un backup ni en la memoria de nadie. */
+export function noDescriptorCopy(model: CustodyModel): boolean {
+  return (
+    model.policy.type === 'thresh' &&
+    !model.artifacts.some((a) => a.contents.some((c) => c.type === 'descriptor')) &&
+    !model.people.some((p) => p.knows.some((s) => s.type === 'descriptor'))
+  );
 }
 
 /** Viajes necesarios para ir a `locations`: la caja fuerte de casa se abre en la misma visita a casa. */
@@ -229,6 +260,7 @@ export function minimalLocationSet(
   people: readonly Id[],
   candidates: readonly Id[],
   mode: SigningMode,
+  accept: (d: Derivation) => boolean = (d) => d.canSpend,
 ): Id[] | null {
   // Se cuentan visitas: entrar en casa incluye abrir la caja fuerte que hay dentro.
   const visits = candidates.filter((l) => world.index.locations.get(l)?.inside === undefined);
@@ -237,7 +269,7 @@ export function minimalLocationSet(
     for (const combo of combinations(visits.length, size)) {
       const chosen = combo.map((i) => visits[i]!);
       const locations = chosen.flatMap(within);
-      if (derive(world, { people, locations }, mode).canSpend) return locations;
+      if (accept(derive(world, { people, locations }, mode))) return locations;
     }
   }
   return null;
@@ -342,9 +374,11 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     const minRarity = losses[0]?.rarity ?? null;
     const combined = combinedRarity(losses.map((l) => l.rarity));
     const lockoutMinRarity = lockouts[0]?.rarity ?? null;
+    const noCopy = noDescriptorCopy(model);
     resilience = {
-      score: resilienceBreakdown(minRarity, combined, lockoutMinRarity).score,
+      score: resilienceBreakdown(minRarity, combined, lockoutMinRarity, noCopy).score,
       recoverableNow,
+      noDescriptorCopy: noCopy,
       searchedUpTo: maxCutSize,
       cuts: losses.map((l) => l.cut),
       rarities: losses.map((l) => l.rarity),
@@ -357,7 +391,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     };
   } else {
     resilience = {
-      score: 0, recoverableNow, searchedUpTo: 0, cuts: [[]], rarities: [0], minRarity: 0, combinedRarity: 0, cheapest: [[]],
+      score: 0, recoverableNow, noDescriptorCopy: noDescriptorCopy(model), searchedUpTo: 0, cuts: [[]], rarities: [0], minRarity: 0, combinedRarity: 0, cheapest: [[]],
       lockouts: [], lockoutRarities: [], lockoutMinRarity: null,
     };
   }
