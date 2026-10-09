@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { addLocation, parseModel, setLocationInside, type CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
 import { buildGraph, type LocationNode, type PersonNode } from './build.ts';
-import { layoutGraph, locationHeight } from './layout.ts';
+import { LOCATION_WIDTH, layoutGraph, locationHeight, personHeight } from './layout.ts';
 
 function fixture(name: string): CustodyModel {
   const result = parseModel(JSON.parse(readFileSync(new URL(`../../../../fixtures/${name}.json`, import.meta.url), 'utf8')));
@@ -72,5 +72,40 @@ describe('layoutGraph', () => {
     expect(x('izquierda')).toBeLessThan(x('derecha'));
     expect(x('derecha')).toBeLessThan(x('suelta'));
     expect(positions.get('izquierda')!.y).toBeGreaterThan(locationHeight(4));
+  });
+});
+
+describe('en vertical (pantalla estrecha)', () => {
+  it('ubicaciones apiladas en una columna y personas en otra a su derecha, sin solaparse', () => {
+    const positions = layoutGraph(
+      [{ id: 'a', rows: 3 }, { id: 'b', rows: 1 }, { id: 'c', rows: 2 }],
+      [
+        { id: 'abajo', rows: 4, links: ['c'] },
+        { id: 'arriba', rows: 2, links: ['a', 'b'] },
+        { id: 'tambien-arriba', rows: 0, links: ['a'] },
+      ],
+      'vertical',
+    );
+    const at = (id: string) => positions.get(id)!;
+    expect(['a', 'b', 'c'].map((id) => at(id).x)).toEqual([0, 0, 0]);
+    expect(at('a').y + locationHeight(3)).toBeLessThan(at('b').y);
+    expect(at('b').y + locationHeight(1)).toBeLessThan(at('c').y);
+    for (const id of ['abajo', 'arriba', 'tambien-arriba']) expect(at(id).x).toBeGreaterThan(LOCATION_WIDTH);
+    // Cada persona, a la altura de sus ubicaciones, empujada hacia abajo si no cabe.
+    expect(at('tambien-arriba').y).toBeLessThan(at('arriba').y);
+    expect(at('tambien-arriba').y + personHeight(0)).toBeLessThan(at('arriba').y);
+    expect(at('arriba').y + personHeight(2)).toBeLessThan(at('abajo').y);
+    expect(at('abajo').y).toBeGreaterThanOrEqual(at('c').y - personHeight(4));
+  });
+
+  it('accesos de lado a lado, y lo contenido debajo de su continente con la flecha hacia arriba', () => {
+    const { model: withSafe, id: safe } = addLocation(fixture('todo-en-casa'), 'Caja fuerte');
+    const graph = buildGraph(setLocationInside(withSafe, safe, 'casa'), 'vertical');
+    const at = (id: string) => graph.nodes.find((n) => n.id === id)!.position;
+    expect(graph.edges.find((e) => e.id === 'access:yo:casa')).toMatchObject({ sourceHandle: 'left', targetHandle: 'right' });
+    expect(graph.edges.find((e) => e.id === `contains:casa:${safe}`)).toMatchObject({ source: safe, target: 'casa', sourceHandle: 'top', targetHandle: 'bottom' });
+    expect(at(safe).x).toBe(at('casa').x);
+    expect(at('casa').y).toBeLessThan(at(safe).y);
+    expect(at(safe).y).toBeLessThan(at('banco').y);
   });
 });

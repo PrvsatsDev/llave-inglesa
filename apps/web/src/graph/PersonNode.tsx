@@ -34,6 +34,8 @@ export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
       style={{ width: PERSON_WIDTH }}
     >
       <Handle type="source" position={Position.Top} id="top" className={styles.handle} isConnectable={false} />
+      {/* En vertical, la persona está a la derecha de las ubicaciones. */}
+      <Handle type="source" position={Position.Left} id="left" className={styles.handle} isConnectable={false} />
       <div className={styles.personHeader}>
         <span className={styles.avatar} aria-hidden>
           <Avatar size={15} strokeWidth={2} />

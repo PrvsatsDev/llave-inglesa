@@ -3,7 +3,7 @@ import type { DeviceCompromise, Disaster } from '@llave-inglesa/engine';
 import type { Edge, MarkerType, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
-import { layoutGraph } from './layout.ts';
+import { layoutGraph, type Orientation } from './layout.ts';
 
 /** Vista de un secreto como insignia visual. */
 export type SecretBadge =
@@ -86,8 +86,12 @@ export function secretBadge(model: CustodyModel, s: SecretRef, label = indexMode
   }
 }
 
-/** Traduce el modelo de dominio a nodos y aristas de React Flow. Pura y determinista. */
-export function buildGraph(model: CustodyModel): Graph {
+/**
+ * Traduce el modelo de dominio a nodos y aristas de React Flow. Pura y determinista. En vertical (pantalla estrecha) las
+ * personas van a la derecha de las ubicaciones y lo contenido debajo de su continente, así que cambian también las asas.
+ */
+export function buildGraph(model: CustodyModel, orientation: Orientation = 'horizontal'): Graph {
+  const vertical = orientation === 'vertical';
   const index = indexModel(model);
   const label = (id: Id) => index.label(id);
   const badge = (s: SecretRef) => secretBadge(model, s, label);
@@ -132,14 +136,14 @@ export function buildGraph(model: CustodyModel): Graph {
 
   const edges: AccessEdge[] = model.locations.flatMap((l) =>
     l.access.map((a): AccessEdge => {
-      const base = { id: `access:${a.person}:${l.id}`, source: a.person, target: l.id, sourceHandle: 'top', targetHandle: 'bottom' };
+      const base = { id: `access:${a.person}:${l.id}`, source: a.person, target: l.id, ...(vertical ? { sourceHandle: 'left', targetHandle: 'right' } : { sourceHandle: 'top', targetHandle: 'bottom' }) };
       if (a.when.type === 'always') return { ...base, data: { conditional: false }, className: 'access-always' };
       const text = a.when.type === 'after-death' ? `tras fallecer ${label(a.when.person)}` : `si ${label(a.when.person)} no puede actuar`;
       return { ...base, data: { conditional: true }, label: text, className: 'access-conditional' };
     }),
   );
 
-  // Lo que está dentro de otra ubicación (la caja fuerte de Casa) va justo a su derecha, unido a ella.
+  // Lo que está dentro de otra ubicación (la caja fuerte de Casa) va justo a su derecha (o debajo, en vertical), unido a ella.
   for (const l of model.locations) {
     if (l.inside === undefined || !index.locations.has(l.inside)) continue;
     // La flecha va de lo contenido al continente: "la caja fuerte está en Casa".
@@ -147,8 +151,7 @@ export function buildGraph(model: CustodyModel): Graph {
       id: `contains:${l.inside}:${l.id}`,
       source: l.id,
       target: l.inside,
-      sourceHandle: 'left',
-      targetHandle: 'right',
+      ...(vertical ? { sourceHandle: 'top', targetHandle: 'bottom' } : { sourceHandle: 'left', targetHandle: 'right' }),
       type: 'straight',
       markerEnd: { type: 'arrowclosed' as MarkerType, color: 'var(--text-muted)', width: 12, height: 12 },
       data: { conditional: false, contains: true },
@@ -164,7 +167,8 @@ export function buildGraph(model: CustodyModel): Graph {
 
   const positions = layoutGraph(
     ordered.map((l) => ({ id: l.id, rows: l.data.items.length })),
-    model.people.map((p) => ({ id: p.id, rows: p.knows.length, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
+    model.people.map((p) => ({ id: p.id, rows: p.knows.filter(active).length, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
+    orientation,
   );
   const at = (id: Id) => positions.get(id) ?? { x: 0, y: 0 };
 

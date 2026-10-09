@@ -184,7 +184,10 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
         <p className={styles.emptyLocation}>Vacía</p>
       )}
       <Handle type="target" position={Position.Bottom} id="bottom" className={styles.handle} isConnectable={false} />
-      {/* A la altura de la cabecera: la flecha sale de lo contenido (izquierda) y llega al continente (derecha). */}
+      {/* En vertical, lo contenido va debajo de su continente: la flecha sale de arriba. */}
+      <Handle type="source" position={Position.Top} id="top" className={styles.handle} isConnectable={false} />
+      {/* A la altura de la cabecera: la flecha sale de lo contenido (izquierda) y llega al continente (derecha). En vertical, a la
+          derecha llegan también los accesos de las personas. */}
       <Handle type="source" position={Position.Left} id="left" className={`${styles.handle} ${styles.sideHandle}`} isConnectable={false} />
       <Handle type="target" position={Position.Right} id="right" className={`${styles.handle} ${styles.sideHandle}`} isConnectable={false} />
     </div>

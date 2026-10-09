@@ -55,6 +55,31 @@ test('simular desde el panel avisa en la pestaña del mapa, sin saltar sola', as
   await capture(page, 'movil-simulacion');
 });
 
+test('el mapa va en vertical: cada ejemplo cabe a lo ancho, legible y sin nodos montados', async ({ page }) => {
+  await page.goto('/');
+  await tabs(page).getByRole('button', { name: /^Mapa/ }).click();
+  const picker = page.getByLabel('Documento abierto o ejemplo');
+  const examples = await picker.locator('optgroup option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+  for (const id of examples) {
+    await picker.selectOption(id);
+    await expect(page.locator('.react-flow__node').first()).toBeVisible();
+    const zoom = await page.locator('.react-flow__viewport').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+    expect(zoom, id).toBeGreaterThan(0.5);
+    const boxes = await page.locator('.react-flow__node').evaluateAll((ns) => ns.map((n) => n.getBoundingClientRect().toJSON() as DOMRect));
+    for (const [i, a] of boxes.entries()) {
+      expect(a.left, id).toBeGreaterThanOrEqual(0);
+      expect(a.right, id).toBeLessThanOrEqual(390);
+      for (const b of boxes.slice(i + 1)) {
+        const overlap = a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        expect(overlap, `${id}: nodos montados`).toBe(false);
+      }
+    }
+  }
+  // Una ubicación dentro de otra queda debajo de ella, con la flecha hacia arriba.
+  await picker.selectOption('r10-2de3-custodio');
+  await capture(page, 'movil-mapa-vertical');
+});
+
 test('en tableta en vertical también hay pestañas, y en escritorio no', async ({ page }) => {
   await page.setViewportSize({ width: 820, height: 1000 });
   await page.goto('/');
