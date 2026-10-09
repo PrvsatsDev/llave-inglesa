@@ -1,0 +1,213 @@
+/* Hoja a pantalla completa encima de la aplicación; al imprimir solo sale la hoja (ver global.css). */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.toolbar,
+.aside {
+  width: min(210mm, 100%);
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.aside p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.asideRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.asideRow > :first-child {
+  flex: 1;
+}
+
+/* ---------- La hoja: papel A4, negro sobre blanco ---------- */
+.sheet {
+  width: min(210mm, 100%);
+  flex-shrink: 0;
+  padding: 14mm;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-size: 10.5pt;
+  line-height: 1.45;
+  color-scheme: light;
+}
+
+.sheet h1 {
+  margin: 0 0 4px;
+  font-size: 18pt;
+}
+
+.sheet h2 {
+  margin: 14px 0 6px;
+  font-size: 11pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.header {
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--paper-ink);
+}
+
+.meta {
+  margin: 0;
+  color: var(--paper-muted);
+}
+
+.intro {
+  margin: 10px 0;
+}
+
+.descriptor {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  break-inside: avoid;
+}
+
+.qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 14px 0 0;
+  color: var(--paper-muted);
+  font-size: 8.5pt;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.lines {
+  margin: 0;
+  padding: 6px 8px 6px 34px;
+  border: 1px solid var(--paper-border);
+  background: var(--paper-soft);
+  font-family: var(--font-mono);
+  font-size: 9pt;
+  line-height: 1.7;
+}
+
+.lines li {
+  padding-left: 4px;
+  white-space: pre;
+}
+
+.lines li::marker {
+  color: var(--paper-muted);
+  font-size: 7.5pt;
+}
+
+.note {
+  margin: 6px 0 0;
+  color: var(--paper-muted);
+  font-size: 9pt;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+  break-inside: avoid;
+}
+
+.table th,
+.table td {
+  padding: 4px 6px;
+  border: 1px solid var(--paper-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  background: var(--paper-soft);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.xpub {
+  overflow-wrap: anywhere;
+  font-size: 8pt;
+}
+
+.addresses {
+  margin: 0;
+  padding-left: 24px;
+  font-size: 9.5pt;
+}
+
+.footer {
+  margin-top: 16px;
+  padding-top: 6px;
+  border-top: 1px solid var(--paper-border);
+  color: var(--paper-muted);
+  font-size: 8.5pt;
+}
+
+@media (max-width: 600px) {
+  .sheet {
+    padding: 16px;
+  }
+  .descriptor {
+    flex-direction: column;
+    align-items: center;
+  }
+  .lines li {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media print {
+  .overlay {
+    position: static;
+    display: block;
+    padding: 0;
+    overflow: visible;
+    background: none;
+  }
+  .toolbar,
+  .aside {
+    display: none;
+  }
+  .sheet {
+    width: auto;
+    padding: 0;
+  }
+}

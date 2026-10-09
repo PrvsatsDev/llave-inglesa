@@ -1,6 +1,6 @@
 import { deriveAddress, formatDescriptor, isMultisigScript, looksLikeSeedWords, parseDescriptor, type ScriptType } from '@llave-inglesa/bitcoin';
 import { flatPolicy, importDescriptor, indexModel, setWallet, walletDescriptor, walletOf, type CustodyModel, type Match } from '@llave-inglesa/domain';
-import { AlertTriangle, Check, Copy, Eye, FileInput, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Eye, FileInput, Printer, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   descriptorProblemText,
@@ -12,6 +12,7 @@ import {
   walletWarningText,
 } from '../lib/text.ts';
 import { useDocument } from '../store/document.ts';
+import { DescriptorPrint } from './DescriptorPrint.tsx';
 import { Button, Section, Segmented } from './inspector/fields.tsx';
 import styles from './Wallet.module.css';
 
@@ -42,6 +43,7 @@ export function WalletSection({ model }: { model: CustodyModel }) {
   const result = useMemo(() => walletDescriptor(model), [model]);
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<Match[] | null>(null);
+  const [printing, setPrinting] = useState(false);
   const label = indexModel(model).label;
   const flat = flatPolicy(model);
   const wallet = walletOf(model);
@@ -81,7 +83,13 @@ export function WalletSection({ model }: { model: CustodyModel }) {
       )}
 
       {result.ok ? (
-        <Descriptor descriptor={formatDescriptor(result.descriptor)} address={deriveAddress(result.descriptor, result.network)} testnet={result.network === 'testnet'} />
+        <>
+          <Descriptor descriptor={formatDescriptor(result.descriptor)} address={deriveAddress(result.descriptor, result.network)} testnet={result.network === 'testnet'} />
+          <Button icon={Printer} onClick={() => setPrinting(true)}>
+            Imprimir o guardar en PDF
+          </Button>
+          {printing && <DescriptorPrint model={model} descriptor={result.descriptor} network={result.network} onClose={() => setPrinting(false)} />}
+        </>
       ) : (
         hasXpubs && (
           <ul className={styles.problems}>

@@ -68,3 +68,48 @@ test('una clave privada o unas palabras nunca se quedan: se borran y se avisa', 
   await expect(page.getByLabel('Xpub')).toHaveValue('');
   await capture(page, 'descriptor-privada');
 });
+
+test('la hoja para imprimir lleva QR, descriptor por líneas, keys y direcciones; y se puede añadir al esquema', async ({ page }) => {
+  await page.goto('/');
+  await section(page).getByRole('button', { name: 'Importar', exact: true }).click();
+  await page.getByLabel('Descriptor a importar').fill(descriptor);
+  await page.getByRole('button', { name: 'Importar descriptor' }).click();
+  const shown = await page.getByTestId('descriptor').textContent();
+
+  await page.getByRole('button', { name: 'Imprimir o guardar en PDF' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Descriptor para imprimir' });
+  await expect(sheet.getByRole('img', { name: 'QR del descriptor' })).toBeVisible();
+  const lines = await sheet.getByTestId('descriptor-lineas').locator('li').allTextContents();
+  expect(lines.join('')).toBe(shown);
+  await expect(sheet).toContainText('Multisig 2 de 3 · SegWit nativo (P2WSH) · mainnet');
+  await expect(sheet.locator('ol').last().locator('li').first()).toHaveText(firstAddress);
+  await expect(sheet.getByRole('row')).toHaveCount(4);
+  await capture(page, 'descriptor-hoja');
+
+  // La copia impresa es un backup más: se añade al esquema donde se vaya a guardar.
+  await sheet.getByRole('combobox').selectOption({ label: 'Caja del banco' });
+  await sheet.getByRole('button', { name: 'Añadir al esquema' }).click();
+  await expect(sheet).toContainText('Añadido «PDF con descriptor» en Caja del banco');
+
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  // Con el descriptor y las xpubs de las tres keys a la vista.
+  const printed = page.locator('.react-flow__node-location').filter({ hasText: 'Caja del banco' }).locator('li').filter({ hasText: 'PDF con descriptor' });
+  await expect(printed).toContainText('descriptor');
+  for (const k of ['K1', 'K2', 'K3']) await expect(printed).toContainText(k);
+  // Su ficha, desde el índice de Esquema.
+  await page.getByRole('complementary').getByRole('button', { name: /PDF con descriptor/ }).click();
+  await expect(page.getByLabel('Nombre')).toHaveValue('PDF con descriptor');
+  await capture(page, 'descriptor-backup-añadido');
+
+  // Al imprimir solo sale la hoja (al final: emular la impresión oculta el mapa y React Flow lo mide a tamaño cero).
+  await page.getByRole('button', { name: 'Volver' }).click();
+  await page.getByRole('button', { name: 'Imprimir o guardar en PDF' }).click();
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.getByRole('button', { name: 'Imprimir o guardar como PDF' })).toBeHidden();
+  await expect(page.locator('#root')).toBeHidden();
+  await capture(page, 'descriptor-hoja-impresa');
+  // El PDF que sale al imprimir (A4) cabe en una página.
+  const pdf = await page.pdf({ path: 'e2e/.capturas/descriptor.pdf', preferCSSPageSize: true });
+  expect(pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1);
+});

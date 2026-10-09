@@ -126,3 +126,20 @@ textarea {
 .react-flow__attribution a {
   color: var(--text-faint);
 }
+
+/* Al imprimir un documento (el descriptor), solo sale él: el resto de la aplicación se oculta. */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  body:has(.print-root) > :not(.print-root) {
+    display: none !important;
+  }
+  html,
+  body {
+    height: auto;
+    background: var(--paper);
+  }
+}

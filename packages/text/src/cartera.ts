@@ -101,3 +101,16 @@ export function walletProblemText(p: WalletProblem, label: Label): string {
 export function walletWarningText(w: WalletWarning, label: Label): string {
   return `A ${names(w.keys, label)} ${w.keys.length === 1 ? 'le' : 'les'} falta el fingerprint o la derivación: el descriptor sirve para vigilar la cartera, pero los dispositivos lo necesitan completo para firmar.`;
 }
+
+const SCRIPT_TECH: Record<ScriptType, string> = {
+  wsh: 'SegWit nativo (P2WSH)',
+  'sh-wsh': 'SegWit envuelto (P2SH-P2WSH)',
+  wpkh: 'SegWit nativo (P2WPKH)',
+  'sh-wpkh': 'SegWit envuelto (P2SH-P2WPKH)',
+};
+
+/** "Multisig 2 de 3 · SegWit nativo (P2WSH) · mainnet": la cabecera del PDF del descriptor. */
+export function walletKindText(d: { script: ScriptType; threshold?: number; keys: readonly unknown[] }, network: 'mainnet' | 'testnet'): string {
+  const kind = d.threshold === undefined ? 'Single-sig' : `Multisig ${d.threshold} de ${d.keys.length}`;
+  return `${kind} · ${SCRIPT_TECH[d.script]} · ${network === 'mainnet' ? 'mainnet' : 'testnet o signet'}`;
+}

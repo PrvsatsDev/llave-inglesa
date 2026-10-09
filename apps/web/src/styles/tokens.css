@@ -81,4 +81,11 @@
 
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration: 180ms;
+
+  /* Papel: documentos para imprimir (el descriptor en PDF). Negro sobre blanco, también en pantalla. */
+  --paper: #ffffff;
+  --paper-ink: #000000;
+  --paper-muted: #4a4f5c;
+  --paper-border: #c9ccd3;
+  --paper-soft: #f2f3f5;
 }
