@@ -28,6 +28,7 @@ packages/domain   Esquema (zod = tipos + validación), integridad, índice, oper
 packages/engine   Motor puro y determinista: inferencia con justificaciones, ataques, pérdidas,
                   cortes mínimos, puntuaciones (parámetros en score.ts)
 packages/text     Todos los textos en español (compartidos por web y CLI)
+packages/bitcoin  Bitcoin puro: xpubs (SLIP-132), descriptores con checksum (BIP-380), direcciones
 packages/vault    Cifrado de documentos (AES-256-GCM + PBKDF2) y lectura de ficheros
 apps/web          React + React Flow + zustand; el motor corre en un Web Worker
 apps/cli          Informe en terminal
