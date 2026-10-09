@@ -19,9 +19,9 @@
     "@llave-inglesa/engine": "0.0.0",
     "@llave-inglesa/text": "0.0.0",
     "@llave-inglesa/vault": "0.0.0",
-    "@paulmillr/qr": "^0.3.0",
     "@xyflow/react": "^12.12.0",
     "lucide-react": "^1.48.0",
+    "qr": "^0.7.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zustand": "^5.0.15"

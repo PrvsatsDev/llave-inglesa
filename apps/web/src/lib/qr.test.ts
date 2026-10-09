@@ -1,5 +1,5 @@
 import { formatDescriptor, type Descriptor } from '@llave-inglesa/bitcoin';
-import decodeQR from '@paulmillr/qr/decode.js';
+import decodeQR from 'qr/decode.js';
 import { HDKey } from '@scure/bip32';
 import { describe, expect, it } from 'vitest';
 import { qrMatrix } from './qr.ts';
