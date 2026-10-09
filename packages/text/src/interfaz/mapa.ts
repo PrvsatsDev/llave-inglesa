@@ -1,0 +1,38 @@
+/** El mapa de custodia: nodos de ubicación y persona, insignias de secretos y etiquetas de la simulación. */
+export const mapa = {
+  soportes: { paper: 'papel', metal: 'metal', washers: 'arandelas', digital: 'digital', other: 'otro soporte' },
+  cifrado: 'cifrado',
+  guardaKeys: 'guarda keys',
+  sinEstado: 'sin estado',
+  trasFallecer: (persona: string) => `tras fallecer ${persona}`,
+  siNoPuede: (persona: string) => `si ${persona} no puede actuar`,
+  dentroDe: (lugar: string) => `dentro de ${lugar}`,
+  /** Papel de la persona en el escenario activo. */
+  estados: { coerced: 'Coacción', attacker: 'Traición', dead: 'Fallecimiento', incapacitated: 'Incapacidad', forgot: 'Olvido' },
+  /** Desastre simulado en la ubicación ('total' según el tipo de ubicación). */
+  desastres: { fire: 'Incendio', flood: 'Inundación', physical: 'Sin acceso', device: 'Averiado', cloud: 'Cuenta perdida' },
+  usada: { attack: 'La usa el atacante', recovery: 'Necesaria' },
+  alAlcance: 'Al alcance',
+  comprometido: { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' },
+  conPin: 'con PIN',
+  cifradoAccesible: 'cifrado',
+  resiste: 'Resiste',
+  pistaPerdida: 'Añade su pérdida a las desgracias combinadas',
+  ySiNoResiste: '¿Y si no resiste?',
+  ySiSePierde: '¿Y si se pierde?',
+  multisig: 'multisig',
+  keysAqui: 'Keys materializadas aquí',
+  keyAqui: (key: string) => `${key} está aquí`,
+  sabeDeMemoria: 'Sabe de memoria',
+  insignias: {
+    pin: 'PIN',
+    pistaPin: (dispositivo: string) => `PIN de ${dispositivo}`,
+    contrasena: 'contraseña',
+    pistaContrasena: (backup: string) => `Contraseña de ${backup}`,
+    descriptor: 'descriptor',
+    pistaDescriptor: 'Descriptor del wallet: política y todas las xpubs',
+    prefijo: { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ' },
+    pistas: { holds: 'Key guardada en el dispositivo', seed: 'Frase semilla', passphrase: 'Passphrase', xpub: 'Clave pública extendida' },
+    pistaKey: (que: string, key: string) => `${que} de ${key}`,
+  },
+};

@@ -1,0 +1,40 @@
+/** Diálogos modales: contraseña, bienvenida y «Acerca de». */
+export const dialogos = {
+  contrasena: {
+    etiqueta: 'Contraseña',
+    repetir: 'Repítela',
+    noCoinciden: 'No coinciden.',
+    siLaOlvidas: 'Si la olvidas, no hay forma de recuperar el documento.',
+    cifrar: 'Cifrar',
+    abrir: 'Abrir',
+    minimo: (n: number) => `Mínimo ${n} caracteres. Mejor una frase larga.`,
+    fuerza: {
+      corta: (n: number) => `Demasiado corta (mínimo ${n})`,
+      fuerte: 'Fuerte',
+      aceptable: 'Aceptable',
+      debil: 'Débil: alárgala',
+    },
+  },
+  copiarDireccion: (red: string) => `Copiar la dirección ${red}`,
+  hechaPor: 'Hecha por',
+  nostr: 'Nostr',
+  lightning: 'Lightning',
+  silentPayments: 'Silent payments',
+  lema: 'Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.',
+  puntos: [
+    'Describe qué keys, dispositivos y backups tienes, dónde están y quién sabe qué.',
+    'La herramienta calcula cómo podrían robarte, qué desgracias te dejarían sin fondos, lo cómodo que es firmar y si tus herederos llegarían a ellos. Y siempre explica por qué.',
+    'Todo ocurre en tu navegador: sin cuentas, sin red. Puedes guardar tu esquema cifrado.',
+    '¿Prefieres no poner tu plan real? Úsala para entrenar, con un esquema parecido o inventado y sin guardar nada: también te descubrirá huecos que no habías previsto.',
+  ],
+  nuncaSecretos: 'Nunca escribas frases semilla, claves privadas ni passphrases reales: no hacen falta.',
+  verEjemplo: 'Ver un ejemplo',
+  empezarDeCero: 'Empezar de cero',
+  abrirFichero: 'Abrir fichero',
+  guiaRapida: '¿Primera vez? Guía de 5 minutos',
+  pistaEjemplos: (n: number) =>
+    `En el selector de arriba hay ${n} ejemplos, de lo más habitual a lo más cuidado. Esto se puede volver a leer en «Acerca de», pulsando el logo.`,
+  codigoAbierto: 'Código abierto (MIT) y verificable: cada versión se puede recompilar y comparar con la publicada.',
+  codigoEnGithub: 'Código en GitHub',
+  guia: 'Guía de uso',
+};

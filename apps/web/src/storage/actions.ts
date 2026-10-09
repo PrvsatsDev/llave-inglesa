@@ -10,6 +10,7 @@ import {
   type Envelope,
   type VaultKey,
 } from '@llave-inglesa/vault';
+import { UI } from '../lib/text.ts';
 import { alertDialog, askPassword, confirmDialog, welcomeDialog } from '../store/dialog.ts';
 import { useLayout } from '../store/layout.ts';
 import { useNavigation } from '../store/navigation.ts';
@@ -21,6 +22,8 @@ import { useSelection } from '../store/selection.ts';
  * Guardar, abrir, importar y exportar. Nada sale del navegador: el guardado local va
  * cifrado en localStorage y los ficheros se descargan o se leen desde el disco.
  */
+
+const T = UI.ficheros;
 
 const STORAGE_KEY = 'llave-inglesa:documento:v1';
 
@@ -59,7 +62,7 @@ function slug(name: string): string {
       .replace(/[̀-ͯ]/g, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'esquema'
+      .replace(/^-+|-+$/g, '') || T.nombrePorDefecto
   );
 }
 
@@ -81,13 +84,13 @@ function openDocument(model: CustodyModel, origin: DocumentOrigin, saved = false
 /** Si hay cambios sin guardar, pide confirmación antes de descartarlos. */
 export async function confirmDiscard(): Promise<boolean> {
   if (!hasUnsavedChanges(useDocument.getState())) return true;
-  return confirmDialog('Cambios sin guardar', 'Si continúas, se perderán los cambios que no has guardado.', 'Descartar cambios', true);
+  return confirmDialog(T.descartar.titulo, T.descartar.mensaje, T.descartar.confirmar, true);
 }
 
 function reportInvalid(result: Extract<ParseResult, { ok: false }>) {
-  return alertDialog('El documento no es válido', [
-    'No se ha podido abrir porque tiene errores:',
-    ...result.issues.slice(0, 5).map((i) => `• ${i.path.join('.') || 'documento'}: ${i.detail ?? i.code}`),
+  return alertDialog(T.invalido.titulo, [
+    T.invalido.intro,
+    ...result.issues.slice(0, 5).map((i) => `• ${i.path.join('.') || T.invalido.raiz}: ${i.detail ?? i.code}`),
   ]);
 }
 
@@ -101,7 +104,7 @@ async function unlock(envelope: Envelope, title: string, message: string): Promi
       return await unsealModel(envelope, password);
     } catch (e) {
       if (!(e instanceof WrongPasswordError)) throw e;
-      error = 'Contraseña incorrecta.';
+      error = T.contrasenaIncorrecta;
     }
   }
 }
@@ -124,32 +127,18 @@ export async function loadExample(id: string) {
 export async function saveLocal(): Promise<boolean> {
   // Hay un solo hueco de guardado: no sustituir en silencio otro esquema guardado.
   if (sessionKey && useDocument.getState().origin.kind !== 'local' && hasLocalDocument()) {
-    const ok = await confirmDialog(
-      'Sustituir el esquema guardado',
-      'En este navegador ya hay un esquema guardado. Si continúas, se sustituirá por el que tienes abierto.',
-      'Sustituir',
-      true,
-    );
+    const ok = await confirmDialog(T.sustituir.titulo, T.sustituir.mensaje, T.sustituir.confirmar, true);
     if (!ok) return false;
   }
   if (!sessionKey) {
     const replacing = hasLocalDocument();
-    const password = await askPassword(
-      'create',
-      'Guardar en este navegador',
-      replacing
-        ? 'Ya hay un esquema guardado en este navegador y se sustituirá. Elige la contraseña con la que se cifrará.'
-        : 'El esquema se guardará cifrado en este navegador. Nadie podrá leerlo sin esta contraseña.',
-    );
+    const password = await askPassword('create', T.guardar.titulo, replacing ? T.guardar.mensajeSustituye : T.guardar.mensaje);
     if (password === null) return false;
     sessionKey = await createKey(password);
   }
   const ok = writeStored(await sealModel(useDocument.getState().model, sessionKey));
   if (!ok) {
-    await alertDialog('No se ha podido guardar', [
-      'Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado).',
-      'Usa "Exportar cifrado" para guardarlo como fichero.',
-    ]);
+    await alertDialog(T.noGuardado.titulo, [...T.noGuardado.lineas]);
     return false;
   }
   useDocument.getState().markSaved();
@@ -161,7 +150,7 @@ export async function openLocal(): Promise<boolean> {
   const envelope = readStored();
   if (!envelope) return false;
   if (!(await confirmDiscard())) return false;
-  const opened = await unlock(envelope, 'Abrir tu esquema', 'Hay un esquema guardado y cifrado en este navegador. Introduce su contraseña.');
+  const opened = await unlock(envelope, T.abrirLocal.titulo, T.abrirLocal.mensaje);
   if (!opened) return false;
   if (!opened.result.ok) {
     await reportInvalid(opened.result);
@@ -173,12 +162,7 @@ export async function openLocal(): Promise<boolean> {
 }
 
 export async function forgetLocal() {
-  const ok = await confirmDialog(
-    'Borrar el guardado de este navegador',
-    'Se eliminará el esquema cifrado guardado aquí. No se puede deshacer. Exporta antes una copia si la quieres conservar.',
-    'Borrar',
-    true,
-  );
+  const ok = await confirmDialog(T.borrarLocal.titulo, T.borrarLocal.mensaje, T.borrarLocal.confirmar, true);
   if (!ok) return;
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -194,11 +178,7 @@ export async function forgetLocal() {
 const exportable = () => tidyIds(useDocument.getState().model);
 
 export async function exportEncrypted() {
-  const password = await askPassword(
-    'create',
-    'Exportar cifrado',
-    'Se descargará un fichero .llave cifrado. Para abrirlo hará falta esta contraseña (puede ser distinta de la del navegador).',
-  );
+  const password = await askPassword('create', T.exportarCifrado.titulo, T.exportarCifrado.mensaje);
   if (password === null) return;
   const model = exportable();
   const envelope = await sealModel(model, await createKey(password));
@@ -206,12 +186,7 @@ export async function exportEncrypted() {
 }
 
 export async function exportPlain() {
-  const ok = await confirmDialog(
-    'Exportar sin cifrar',
-    'El fichero JSON no va cifrado: cualquiera que lo lea sabrá dónde están tus backups, quién sabe qué y cómo atacarte. Úsalo solo para trabajar con él y bórralo después.',
-    'Exportar de todos modos',
-    true,
-  );
+  const ok = await confirmDialog(T.exportarPlano.titulo, T.exportarPlano.mensaje, T.exportarPlano.confirmar, true);
   if (!ok) return;
   const model = exportable();
   download(`${slug(model.name)}.json`, serializeModel(model), 'application/json');
@@ -223,7 +198,7 @@ export async function exportPlain() {
  */
 export function rescueDownload() {
   const model = exportable();
-  download(`${slug(model.name)}-rescate.json`, serializeModel(model), 'application/json');
+  download(`${slug(model.name)}-${T.sufijoRescate}.json`, serializeModel(model), 'application/json');
 }
 
 /** Abre un fichero .llave (cifrado) o .json (en claro). */
@@ -231,14 +206,12 @@ export async function importFile(file: File) {
   if (!(await confirmDiscard())) return;
   const read = readDocument(await file.text());
   if (read.kind === 'invalid') {
-    await alertDialog('No se puede abrir', [
-      read.reason === 'not-json' ? 'El fichero no es JSON.' : 'El fichero no es un esquema de llave-inglesa.',
-    ]);
+    await alertDialog(T.noSePuedeAbrir.titulo, [read.reason === 'not-json' ? T.noSePuedeAbrir.noJson : T.noSePuedeAbrir.noEsquema]);
     return;
   }
   let result: ParseResult;
   if (read.kind === 'encrypted') {
-    const opened = await unlock(read.envelope, `Abrir ${file.name}`, 'Este fichero está cifrado. Introduce su contraseña.');
+    const opened = await unlock(read.envelope, T.abrirCifrado.titulo(file.name), T.abrirCifrado.mensaje);
     if (!opened) return;
     result = opened.result;
   } else {

@@ -1,6 +1,7 @@
 import type { CustodyModel } from '@llave-inglesa/domain';
 import { Monitor } from 'lucide-react';
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { UI } from '../lib/text.ts';
 import { useDocument } from '../store/document.ts';
 import { PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, useLayout } from '../store/layout.ts';
 import { useNarrow } from '../store/mobile.ts';
@@ -28,11 +29,9 @@ function MobileNotice() {
   return (
     <div className={styles.mobileNotice} role="note">
       <Monitor size={16} aria-hidden />
-      <p>
-        Pensada para pantalla grande. Aquí puedes ver los ejemplos y simular, pero para montar tu esquema es mejor un ordenador.
-      </p>
+      <p>{UI.marco.avisoMovil}</p>
       <button className={styles.mobileNoticeClose} onClick={dismiss}>
-        Entendido
+        {UI.comun.entendido}
       </button>
     </div>
   );
@@ -64,7 +63,7 @@ export function Sidebar() {
     if (narrow && mark && panel && mark.getBoundingClientRect().top < panel.getBoundingClientRect().top) mark.scrollIntoView({ block: 'start' });
   }, [narrow, selected, section, guide?.chapter]);
   return (
-    <aside className={styles.sidebar} aria-label="Panel">
+    <aside className={styles.sidebar} aria-label={UI.marco.panel}>
       <MobileNotice />
       {!collapsed && <SectionTabs model={model} />}
       <Scoreboard />
@@ -119,12 +118,12 @@ function ResizeHandle() {
       className={styles.resize}
       role="separator"
       aria-orientation="vertical"
-      aria-label="Ancho del panel"
+      aria-label={UI.marco.anchoPanel}
       aria-valuemin={PANEL_MIN}
       aria-valuemax={PANEL_MAX}
       aria-valuenow={width}
       tabIndex={0}
-      title="Arrastra para cambiar el ancho (doble clic: ancho por defecto)"
+      title={UI.marco.pistaAncho}
       onPointerDown={onPointerDown}
       onDoubleClick={() => setWidth(PANEL_DEFAULT)}
       onKeyDown={onKeyDown}

@@ -4,6 +4,7 @@ import { applyScenario, buildGraph, type AccessEdge, type GraphNode } from '../g
 import { LOCATION_WIDTH, PERSON_WIDTH } from '../graph/layout.ts';
 import { LocationNode } from '../graph/LocationNode.tsx';
 import { PersonNode } from '../graph/PersonNode.tsx';
+import { UI } from '../lib/text.ts';
 import { useDocument } from '../store/document.ts';
 import { showPanel, useNarrow } from '../store/mobile.ts';
 import { useScenarioView } from '../store/scenario.ts';
@@ -47,7 +48,7 @@ export function Canvas() {
   const generation = useDocument((s) => s.generation);
   const narrow = useNarrow();
   return (
-    <main id="mapa" className={styles.canvas} aria-label="Mapa de custodia" onKeyDown={openFocusedNode}>
+    <main id="mapa" className={styles.canvas} aria-label={UI.marco.mapa} onKeyDown={openFocusedNode}>
       {/* Cambiar de documento, o girar la pantalla de vertical a horizontal, remonta el lienzo: layout y encuadre desde cero. */}
       <Graph key={`${generation}:${narrow}`} narrow={narrow} />
       <Legend />

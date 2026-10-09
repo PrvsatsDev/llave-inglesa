@@ -6,10 +6,11 @@ import { useLayout } from '../store/layout.ts';
 import { goBack, routePosition, useNavigation, type Section } from '../store/navigation.ts';
 import { useScenario } from '../store/scenario.ts';
 import { useSelection } from '../store/selection.ts';
-import { GUIA } from '@llave-inglesa/text';
-
-const GUIDE_INTRO = 'Cómo usar llave-inglesa, paso a paso. Los botones abren ejemplos y simulan en el mapa sin salir de la guía.';
+import { GUIA, UI } from '../lib/text.ts';
 import styles from './Navigation.module.css';
+
+const T = UI.navegacion;
+const GUIDE_INTRO = T.introGuia;
 
 const SECTIONS: { id: Section; icon: LucideIcon }[] = [
   { id: 'schema', icon: LayoutList },
@@ -22,19 +23,19 @@ function TabBadge({ section, issues, simulating }: { section: Section; issues: r
   if (section === 'schema' && issues.length > 0) {
     const errors = issues.filter((i) => i.severity === 'error').length;
     return errors > 0 ? (
-      <span className={`${styles.badge} ${styles.error}`} title={`${errors} errores en el modelo`}>
+      <span className={`${styles.badge} ${styles.error}`} title={T.errores(errors)}>
         <XCircle size={12} aria-hidden /> {errors}
       </span>
     ) : (
-      <span className={`${styles.badge} ${styles.warning}`} title={`${issues.length} avisos en el modelo`}>
+      <span className={`${styles.badge} ${styles.warning}`} title={T.avisos(issues.length)}>
         <AlertTriangle size={12} aria-hidden /> {issues.length}
       </span>
     );
   }
   if (section === 'simulate' && simulating) {
     return (
-      <span className={`${styles.badge} ${styles.live}`} title="Hay una simulación en el mapa">
-        <span className={styles.liveDot} aria-hidden /> activa
+      <span className={`${styles.badge} ${styles.live}`} title={T.simulacionActiva}>
+        <span className={styles.liveDot} aria-hidden /> {T.activa}
       </span>
     );
   }
@@ -51,7 +52,7 @@ export function SectionTabs({ model }: { model: CustodyModel }) {
   const { issues } = useValidation(model);
   const simulating = useScenario((s) => s.active !== null);
   return (
-    <nav className={styles.tabsRow} aria-label="Secciones">
+    <nav className={styles.tabsRow} aria-label={T.nombreSecciones}>
       <div className={styles.tabs}>
         {SECTIONS.map(({ id, icon: Icon }) => (
           <button
@@ -66,7 +67,7 @@ export function SectionTabs({ model }: { model: CustodyModel }) {
           </button>
         ))}
       </div>
-      <button className={styles.fold} onClick={() => setCollapsed(true)} aria-label="Plegar el panel" title="Plegar el panel para ver más mapa">
+      <button className={styles.fold} onClick={() => setCollapsed(true)} aria-label={T.plegar} title={T.pistaPlegar}>
         <ChevronsLeft size={16} />
       </button>
     </nav>
@@ -92,12 +93,12 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
 
   // Recorrer con ‹ › la lista de vías de la que salió la simulación.
   const position = routePosition(routes, active);
-  const routeLabel = position >= 0 ? `Vía ${position + 1} de ${routes.length}` : routes.length > 0 ? 'Vía modificada' : 'Simulación';
+  const routeLabel = position >= 0 ? T.via(position + 1, routes.length) : routes.length > 0 ? T.viaModificada : T.simulacion;
   const stepper = !guide && section === 'simulate' && simulatedFrom && position >= 0 && routes.length > 1 && fichas.length === 0;
   const goRoute = (i: number) => simulate(routes[i]!, simulatedFrom!, routes);
 
   const base: Crumb[] = guide
-    ? [{ label: 'Guía', onClick: chapter ? () => openGuide(null) : undefined }, ...(chapter ? [{ label: chapter.titulo }] : [])]
+    ? [{ label: T.guia, onClick: chapter ? () => openGuide(null) : undefined }, ...(chapter ? [{ label: chapter.titulo }] : [])]
     : section === 'analysis'
       ? [{ label: SECTION_LABEL.analysis }, { label: METRIC_LABEL[metric] }]
       : section === 'simulate' && simulatedFrom
@@ -107,7 +108,7 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
   const crumbs: Crumb[] = [
     ...base,
     ...fichas.map((f, n) => ({
-      label: `${KIND_LABEL[f.s.kind]}: ${f.name || 'Sin nombre'}`,
+      label: `${KIND_LABEL[f.s.kind]}: ${f.name || UI.comun.sinNombre}`,
       onClick: n < fichas.length - 1 ? () => backTo(f.i) : undefined,
     })),
   ];
@@ -118,11 +119,11 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
     <div className={styles.crumbsBar}>
       <div className={styles.crumbsRow}>
         {canGoBack && (
-          <button className={styles.back} onClick={goBack} title="Volver (Esc)">
-            <ArrowLeft size={14} aria-hidden /> Volver
+          <button className={styles.back} onClick={goBack} title={T.pistaVolver}>
+            <ArrowLeft size={14} aria-hidden /> {T.volver}
           </button>
         )}
-        <ol className={styles.crumbs} aria-label="Estás en">
+        <ol className={styles.crumbs} aria-label={T.estasEn}>
           {crumbs.map((c, i) => (
             <li key={i} className={styles.crumb}>
               {i > 0 && <ChevronRight size={12} className={styles.sep} aria-hidden />}
@@ -140,15 +141,15 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
         </ol>
         {stepper && (
           <span className={styles.stepper}>
-            <button className={styles.step} onClick={() => goRoute(position - 1)} disabled={position === 0} aria-label="Vía anterior" title="Vía anterior">
+            <button className={styles.step} onClick={() => goRoute(position - 1)} disabled={position === 0} aria-label={T.viaAnterior} title={T.viaAnterior}>
               <ChevronLeft size={16} />
             </button>
             <button
               className={styles.step}
               onClick={() => goRoute(position + 1)}
               disabled={position === routes.length - 1}
-              aria-label="Vía siguiente"
-              title="Vía siguiente"
+              aria-label={T.viaSiguiente}
+              title={T.viaSiguiente}
             >
               <ChevronRight size={16} />
             </button>

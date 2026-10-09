@@ -1,3 +1,4 @@
+import { UI } from '../lib/text.ts';
 import type { CustodyModel } from '@llave-inglesa/domain';
 import type { AnalysisResponse } from './protocol.ts';
 
@@ -16,7 +17,7 @@ function spawn(): Worker {
   w.onerror = (e) => {
     const pending = inFlight;
     inFlight = null;
-    pending?.resolve({ id: pending.id, ok: false, error: e.message || 'El worker de análisis ha fallado' });
+    pending?.resolve({ id: pending.id, ok: false, error: e.message || UI.marco.falloAnalisis });
     w.terminate();
     if (worker === w) worker = null;
   };

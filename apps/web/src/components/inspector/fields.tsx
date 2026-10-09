@@ -4,6 +4,7 @@ import { useId, type ReactNode } from 'react';
 import { secretBadge } from '../../graph/build.ts';
 import { SecretBadge } from '../../graph/SecretBadge.tsx';
 import { sameSecret } from '../../lib/secrets.ts';
+import { UI } from '../../lib/text.ts';
 import styles from './fields.module.css';
 
 export function PanelHeader({ icon: Icon, kind, title, onClose, closeLabel }: {
@@ -21,7 +22,7 @@ export function PanelHeader({ icon: Icon, kind, title, onClose, closeLabel }: {
       </span>
       <span className={styles.panelTitles}>
         <span className={styles.kicker}>{kind}</span>
-        <span className={styles.panelTitle}>{title || 'Sin nombre'}</span>
+        <span className={styles.panelTitle}>{title || UI.comun.sinNombre}</span>
       </span>
       {onClose && (
         <button className={styles.iconButton} onClick={onClose} aria-label={closeLabel} title={closeLabel}>
@@ -130,7 +131,7 @@ export function SecretToggles({ model, options, selected, onToggle, empty }: {
   onToggle(s: SecretRef): void;
   empty?: string;
 }) {
-  if (options.length === 0) return <p className={styles.hint}>{empty ?? 'No hay opciones.'}</p>;
+  if (options.length === 0) return <p className={styles.hint}>{empty ?? UI.campos.sinOpciones}</p>;
   return (
     <div className={styles.toggles}>
       {options.map((s, i) => {

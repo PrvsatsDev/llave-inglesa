@@ -3,7 +3,7 @@ import { addArtifact, flatPolicy, indexModel, updateArtifact, type CustodyModel,
 import { Check, Plus, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { walletKindText } from '../lib/text.ts';
+import { UI, walletKindText } from '../lib/text.ts';
 import { useDocument } from '../store/document.ts';
 import { Button, Select } from './inspector/fields.tsx';
 import { qrMatrix } from '../lib/qr.ts';
@@ -14,6 +14,8 @@ import styles from './PrintSheet.module.css';
 const LINE = 44;
 /** Direcciones de recepción que se listan para comprobar. */
 const ADDRESSES = 3;
+
+const T = UI.hojaDescriptor;
 
 const chunk = (s: string, n: number) => Array.from({ length: Math.ceil(s.length / n) }, (_, i) => s.slice(i * n, (i + 1) * n));
 
@@ -29,7 +31,7 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
   const flat = flatPolicy(model)!;
   const ids = flat.kind === 'single' ? [flat.key] : flat.keys;
   const multisig = descriptor.threshold !== undefined;
-  const today = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  const today = UI.comun.fecha(new Date());
 
   // Esc cierra la hoja (antes que el "volver" global de la aplicación).
   useEffect(() => {
@@ -43,63 +45,60 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
   }, [onClose]);
 
   return createPortal(
-    <div className={`${styles.overlay} print-root`} role="dialog" aria-modal="true" aria-label="Descriptor para imprimir">
+    <div className={`${styles.overlay} print-root`} role="dialog" aria-modal="true" aria-label={T.nombre}>
       <div className={styles.toolbar}>
         <Button variant="primary" icon={Printer} onClick={() => window.print()}>
-          Imprimir o guardar como PDF
+          {UI.comun.imprimir}
         </Button>
         <Button icon={X} onClick={onClose}>
-          Cerrar
+          {UI.comun.cerrar}
         </Button>
       </div>
       <AddToScheme model={model} keys={ids} />
 
       <article className={styles.sheet}>
         <header className={styles.header}>
-          <h1>Descriptor de la cartera</h1>
+          <h1>{T.titulo}</h1>
           <p className={styles.meta}>
             <strong>{model.name}</strong> · {walletKindText(descriptor, network)}
           </p>
-          <p className={styles.meta}>Generado el {today}</p>
+          <p className={styles.meta}>{T.generado(today)}</p>
         </header>
 
         <p className={styles.intro}>
           {multisig
-            ? 'La configuración pública de la cartera: qué keys la forman y cuántas firmas hacen falta. En un multisig las semillas solas no bastan para recuperarla: hacen falta las xpubs de todas las keys, y están aquí.'
-            : 'La configuración pública de la cartera. Con la semilla basta para recuperarla, pero este papel dice qué tipo de dirección y qué derivación usa, para encontrar los fondos a la primera.'}{' '}
-          <strong>No permite gastar, pero quien lo tenga ve el saldo y todos los movimientos.</strong>
+            ? T.introMultisig
+            : T.introSingle}{' '}
+          <strong>{T.noGasta}</strong>
         </p>
 
         <section className={styles.descriptor}>
           {matrix && (
             <figure className={styles.qr}>
-              <Qr matrix={matrix} size={220} label="QR del descriptor" />
-              <figcaption>Escanéalo al importar la cartera</figcaption>
+              <Qr matrix={matrix} size={220} label={T.qr} />
+              <figcaption>{T.escanealo}</figcaption>
             </figure>
           )}
           <div className={styles.text}>
-            <h2>Descriptor</h2>
+            <h2>{T.descriptor}</h2>
             <ol className={styles.lines} data-testid="descriptor-lineas">
               {chunk(text, LINE).map((line, i) => (
                 <li key={i}>{line}</li>
               ))}
             </ol>
-            <p className={styles.note}>
-              Todo seguido, sin espacios ni saltos de línea. La suma de control del final (#{text.split('#')[1]}) detecta cualquier error al copiarlo
-              a mano.
-            </p>
+            <p className={styles.note}>{T.todoSeguido(text.split('#')[1] ?? '')}</p>
           </div>
         </section>
 
         <section>
-          <h2>Keys</h2>
+          <h2>{T.keys}</h2>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Key</th>
-                <th>Fingerprint</th>
-                <th>Derivación</th>
-                <th>Xpub</th>
+                <th>{T.columnas.key}</th>
+                <th>{T.columnas.fingerprint}</th>
+                <th>{T.columnas.derivacion}</th>
+                <th>{T.columnas.xpub}</th>
               </tr>
             </thead>
             <tbody>
@@ -116,7 +115,7 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
         </section>
 
         <section>
-          <h2>Primeras direcciones de recepción</h2>
+          <h2>{T.direcciones}</h2>
           <ol className={styles.addresses} start={0}>
             {addresses.map((a) => (
               <li key={a} className={styles.mono}>
@@ -124,10 +123,10 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
               </li>
             ))}
           </ol>
-          <p className={styles.note}>Al restaurar la cartera, comprueba que la primera coincide: si es así, el descriptor está bien copiado.</p>
+          <p className={styles.note}>{T.compruebaDireccion}</p>
         </section>
 
-        <footer className={styles.footer}>Solo datos públicos: ni palabras ni claves privadas. Generado sin conexión con llave-inglesa.</footer>
+        <footer className={styles.footer}>{T.pie}</footer>
       </article>
     </div>,
     document.body,
@@ -135,7 +134,7 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
 }
 
 /** Distinto del «Descriptor impreso» que se crea a mano, para saber de dónde salió cada copia. */
-const PRINTED_LABEL = 'PDF con descriptor';
+const PRINTED_LABEL = T.nombreBackup;
 
 /** Imprimirlo crea un backup más: se ofrece añadirlo al esquema para que el análisis sepa dónde está y quién lo puede ver. */
 function AddToScheme({ model, keys }: { model: CustodyModel; keys: readonly string[] }) {
@@ -156,11 +155,11 @@ function AddToScheme({ model, keys }: { model: CustodyModel; keys: readonly stri
     <aside className={styles.aside}>
       {added ? (
         <p>
-          <Check size={14} aria-hidden /> Añadido «{PRINTED_LABEL}» en {added}: el análisis ya lo tiene en cuenta.
+          <Check size={14} aria-hidden /> {T.anadido(PRINTED_LABEL, added)}
         </p>
       ) : (
         <>
-          <p>Una copia impresa es un backup más. ¿Dónde la vas a guardar? Añádela al esquema para que el análisis sepa quién puede verla.</p>
+          <p>{T.otroBackup}</p>
           <div className={styles.asideRow}>
             <Select
               value={location}
@@ -168,7 +167,7 @@ function AddToScheme({ model, keys }: { model: CustodyModel; keys: readonly stri
               onChange={setLocation}
             />
             <Button icon={Plus} onClick={add}>
-              Añadir al esquema
+              {T.anadir}
             </Button>
           </div>
         </>

@@ -1,17 +1,19 @@
 import { indexModel } from '@llave-inglesa/domain';
 import { Bug, CircleCheck, Eye, Hourglass, ShieldQuestion, Skull, X, XCircle, type LucideIcon } from 'lucide-react';
-import { attackText, lossText, plural } from '../lib/text.ts';
+import { attackText, lossText, plural, UI } from '../lib/text.ts';
 import type { Outcome } from '../scenario/view.ts';
 import { useDocument } from '../store/document.ts';
 import { useScenario, useScenarioView } from '../store/scenario.ts';
 import styles from './ScenarioBanner.module.css';
 
+const T = UI.banner;
+
 export const OUTCOME: Record<Outcome, { icon: LucideIcon; text: string; level: 'bad' | 'good' | 'warn' }> = {
-  stolen: { icon: Skull, text: 'El atacante puede gastar tus fondos', level: 'bad' },
-  safe: { icon: CircleCheck, text: 'No le basta para robar', level: 'good' },
-  recoverable: { icon: CircleCheck, text: 'Los fondos siguen siendo recuperables', level: 'good' },
-  lockout: { icon: Hourglass, text: 'Bloqueados hasta el fallecimiento; después, recuperables', level: 'warn' },
-  lost: { icon: XCircle, text: 'Fondos perdidos para siempre', level: 'bad' },
+  stolen: { icon: Skull, text: T.resultado.stolen, level: 'bad' },
+  safe: { icon: CircleCheck, text: T.resultado.safe, level: 'good' },
+  recoverable: { icon: CircleCheck, text: T.resultado.recoverable, level: 'good' },
+  lockout: { icon: Hourglass, text: T.resultado.lockout, level: 'warn' },
+  lost: { icon: XCircle, text: T.resultado.lost, level: 'bad' },
 };
 
 /** Veredicto del escenario simulado, sobre el mapa. */
@@ -29,26 +31,26 @@ export function ScenarioBanner() {
     <div className={`${styles.banner} ${styles[level]}`} role="status" aria-live="polite">
       <Icon size={18} className={styles.icon} aria-hidden />
       <div className={styles.text}>
-        <span className={styles.kicker}>{view.scenario.kind === 'attack' ? 'Simulando ataque' : 'Simulando desgracia'}</span>
+        <span className={styles.kicker}>{view.scenario.kind === 'attack' ? T.simulandoAtaque : T.simulandoDesgracia}</span>
         <span className={styles.steps}>{steps.join(' + ')}</span>
         <span className={styles.outcome}>{text}</span>
         {view.duress.length > 0 && (
           <span className={styles.privacy}>
-            <ShieldQuestion size={12} aria-hidden /> Venciendo un PIN de coacción
+            <ShieldQuestion size={12} aria-hidden /> {T.coaccion}
           </span>
         )}
         {view.compromised.size > 0 && (
           <span className={styles.privacy}>
-            <Bug size={12} aria-hidden /> {plural(view.compromised.size, 'dispositivo comprometido', 'dispositivos comprometidos')}
+            <Bug size={12} aria-hidden /> {plural(view.compromised.size, ...T.comprometidos)}
           </span>
         )}
         {view.exposure.exposed && (
           <span className={styles.privacy}>
-            <Eye size={12} aria-hidden /> {view.outcome === 'stolen' ? 'Y además' : 'Pero'} ve tu saldo y tu historial
+            <Eye size={12} aria-hidden /> {view.outcome === 'stolen' ? T.yAdemas : T.pero} {T.veSaldo}
           </span>
         )}
       </div>
-      <button className={styles.close} onClick={() => clear(null)} aria-label="Salir de la simulación" title="Salir (Esc)">
+      <button className={styles.close} onClick={() => clear(null)} aria-label={T.salir} title={T.pistaSalir}>
         <X size={16} />
       </button>
     </div>

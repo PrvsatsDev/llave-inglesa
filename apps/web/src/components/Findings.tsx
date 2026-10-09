@@ -2,7 +2,7 @@ import { indexModel, type CustodyModel } from '@llave-inglesa/domain';
 import { attackAtoms, createWorld, lossAtoms, ownerDeaths, type LossEvent } from '@llave-inglesa/engine';
 import { ChevronDown, ChevronUp, Flame, Hourglass, Info, Play, ShieldCheck, Skull } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { attackText, duressText, lossText } from '../lib/text.ts';
+import { attackText, duressText, lossText, UI } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
@@ -11,8 +11,9 @@ import { Field, Section, Select } from './inspector/fields.tsx';
 import styles from './Findings.module.css';
 
 const MAX_SHOWN = 5;
+const T = UI.hallazgos;
 
-const atOnce = (cut: readonly unknown[]) => (cut.length === 1 ? '1 suceso' : `${cut.length} a la vez`);
+const atOnce = (cut: readonly unknown[]) => T.aLaVez(cut.length);
 
 /**
  * Combinaciones: primero las que marcan la puntuación (`cuts`, como mucho MAX_SHOWN) y,
@@ -52,7 +53,7 @@ function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', 
                 className={`${styles.cut} ${styles[tone]} ${on ? styles.active : ''}`}
                 onClick={() => simulate(scenario, from, all.map(toScenario))}
                 aria-current={on || undefined}
-                title="Simular en el mapa"
+                title={T.simularEnMapa}
               >
                 {cut.map((atom, j) => (
                   <span key={j} className={styles.atomWrap}>
@@ -70,7 +71,7 @@ function CutList<A>({ cuts, all, text, meta, empty, restTitle, tone = 'danger', 
       {hidden > 0 && (
         <button className={styles.more} onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
           {expanded ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
-          {expanded ? 'Ocultar las demás' : `Ver las ${hidden} restantes`}
+          {expanded ? T.ocultarDemas : T.verRestantes(hidden)}
         </button>
       )}
     </>
@@ -85,23 +86,23 @@ export function TryScenario({ model }: { model: CustodyModel }) {
   const attacks = attackAtoms(world);
   const losses = lossAtoms(world);
   return (
-    <Section title="Empezar con un suceso">
-      <Field label="Un ataque">
+    <Section title={T.empezar}>
+      <Field label={T.unAtaque}>
         {(id) => (
           <Select
             id={id}
             value=""
-            options={[{ value: '', label: 'Elige un ataque…' }, ...attacks.map((a, i) => ({ value: String(i), label: attackText(a, index) }))]}
+            options={[{ value: '', label: T.eligeAtaque }, ...attacks.map((a, i) => ({ value: String(i), label: attackText(a, index) }))]}
             onChange={(v) => v !== '' && simulate({ kind: 'attack', atoms: [attacks[Number(v)]!] })}
           />
         )}
       </Field>
-      <Field label="Una desgracia">
+      <Field label={T.unaDesgracia}>
         {(id) => (
           <Select
             id={id}
             value=""
-            options={[{ value: '', label: 'Elige una desgracia…' }, ...losses.map((e, i) => ({ value: String(i), label: lossText(e, index) }))]}
+            options={[{ value: '', label: T.eligeDesgracia }, ...losses.map((e, i) => ({ value: String(i), label: lossText(e, index) }))]}
             onChange={(v) => v !== '' && simulate({ kind: 'loss', events: [losses[Number(v)]!] })}
           />
         )}
@@ -121,22 +122,22 @@ export function TheftRoutes({ model }: { model: CustodyModel }) {
   const route = new Map(security.cuts.map((cut, i) => [cut, { effort: security.efforts[i]!, duress: security.beatsDuress[i]! }]));
   const theftMeta = (cut: (typeof security.cuts)[number]) => {
     const r = route.get(cut)!;
-    return `esfuerzo ${r.effort.toLocaleString('es')}${r.duress ? ' · vence un PIN de coacción' : ''}`;
+    return T.robos.esfuerzo(r.effort, r.duress);
   };
 
   return (
-    <Section title="Formas más baratas de robar">
+    <Section title={T.robos.titulo}>
       <div className={styles.header}>
         <Skull size={14} aria-hidden />
-        <span>Cualquiera de estas combinaciones basta para gastar tus fondos. Pulsa una para verla en el mapa.</span>
+        <span>{T.robos.intro}</span>
       </div>
       <CutList
         cuts={cheapThefts}
         all={security.cuts}
         text={(a) => attackText(a, index)}
         meta={theftMeta}
-        empty={`Ninguna combinación de hasta ${security.searchedUpTo} ataques lo consigue.`}
-        restTitle="Más costosas"
+        empty={T.robos.ninguna(security.searchedUpTo)}
+        restTitle={T.robos.resto}
         toScenario={(atoms) => ({ kind: 'attack', atoms })}
         from="security"
       />
@@ -169,7 +170,7 @@ export function DuressNotes({ model, device }: { model: CustodyModel; device?: s
                 <>
                   {' '}
                   <button className={styles.noteLink} onClick={() => simulate({ kind: 'attack', atoms: bypass }, device ? undefined : 'security')}>
-                    <Play size={11} aria-hidden /> Ver en el mapa
+                    <Play size={11} aria-hidden /> {T.verEnMapa}
                   </button>
                 </>
               )}
@@ -191,14 +192,14 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
     ...resilience.cuts.map((cut, i) => [cut, resilience.rarities[i]!] as const),
     ...resilience.lockouts.map((cut, i) => [cut, resilience.lockoutRarities[i]!] as const),
   ]);
-  const lossMeta = (cut: LossEvent[]) => `rareza ${rarity.get(cut)!.toLocaleString('es')} · ${atOnce(cut)}`;
+  const lossMeta = (cut: LossEvent[]) => T.rareza(rarity.get(cut)!, atOnce(cut));
 
   return (
     <>
-      <Section title="Formas más probables de perderlo todo">
+      <Section title={T.perdidas.titulo}>
         <div className={styles.header}>
           <Flame size={14} aria-hidden />
-          <span>Tras cualquiera de estas, nadie podría recuperar los fondos. Pulsa una para verla en el mapa.</span>
+          <span>{T.perdidas.intro}</span>
         </div>
         {resilience.recoverableNow ? (
           <CutList
@@ -206,20 +207,20 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
             all={resilience.cuts}
             text={(e) => lossText(e, index)}
             meta={lossMeta}
-            empty={`Ninguna combinación de hasta ${resilience.searchedUpTo} desgracias lo consigue.`}
-            restTitle="Menos probables"
+            empty={T.ningunaDesgracia(resilience.searchedUpTo)}
+            restTitle={T.menosProbables}
             toScenario={(events) => ({ kind: 'loss', events })}
             from="resilience"
           />
         ) : (
-          <p className={styles.critical}>Ya ahora mismo nadie puede recuperar los fondos.</p>
+          <p className={styles.critical}>{T.perdidas.yaNo}</p>
         )}
       </Section>
       {resilience.lockouts.length > 0 && (
-        <Section title="Bloqueos temporales">
+        <Section title={T.bloqueos.titulo}>
           <div className={styles.header}>
             <Hourglass size={14} aria-hidden />
-            <span>Los fondos quedarían inmovilizados mientras dure la incapacidad; se recuperan tras el fallecimiento.</span>
+            <span>{T.bloqueos.intro}</span>
           </div>
           <CutList
             cuts={resilience.lockouts.filter((_, i) => resilience.lockoutRarities[i] === resilience.lockoutMinRarity)}
@@ -227,7 +228,7 @@ export function LossRoutes({ model }: { model: CustodyModel }) {
             text={(e) => lossText(e, index)}
             meta={lossMeta}
             empty=""
-            restTitle="Menos probables"
+            restTitle={T.menosProbables}
             tone="warn"
             toScenario={(events) => ({ kind: 'loss', events })}
             from="resilience"
@@ -247,18 +248,18 @@ export function HeirLossRoutes({ model }: { model: CustodyModel }) {
   const rarity = new Map(inh.losses.map((cut, i) => [cut, inh.lossRarities[i]!] as const));
   const deaths = ownerDeaths(model);
   return (
-    <Section title="Formas más probables de quedarse sin herencia">
+    <Section title={T.herencia.titulo}>
       <div className={styles.header}>
         <Flame size={14} aria-hidden />
-        <span>Si además del fallecimiento pasa cualquiera de estas, los herederos no podrían recuperar los fondos. Pulsa una para verla en el mapa.</span>
+        <span>{T.herencia.intro}</span>
       </div>
       <CutList
         cuts={inh.losses.filter((_, i) => inh.lossRarities[i] === inh.lossRarities[0])}
         all={inh.losses}
         text={(e) => lossText(e, index)}
-        meta={(cut) => `rareza ${rarity.get(cut)!.toLocaleString('es')} · ${atOnce(cut)}`}
-        empty={`Ninguna combinación de hasta ${analysis.resilience.searchedUpTo} desgracias lo consigue.`}
-        restTitle="Menos probables"
+        meta={(cut) => T.rareza(rarity.get(cut)!, atOnce(cut))}
+        empty={T.ningunaDesgracia(analysis.resilience.searchedUpTo)}
+        restTitle={T.menosProbables}
         tone="warn"
         toScenario={(events) => ({ kind: 'loss', events: [...deaths, ...events] })}
         from="inheritance"

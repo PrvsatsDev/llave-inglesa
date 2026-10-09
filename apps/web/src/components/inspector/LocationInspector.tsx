@@ -1,6 +1,7 @@
 import { addArtifact, addDevice, canNest, removeLocation, setLocationInside, setLocationProtection, updateLocation, type CustodyModel, type Location } from '@llave-inglesa/domain';
 import { Camera, Cpu, MapPin, Plus, RectangleHorizontal, X } from 'lucide-react';
 import { locationIcon } from '../../graph/LocationNode.tsx';
+import { UI } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, TextInput } from './fields.tsx';
@@ -8,29 +9,13 @@ import styles from './fields.module.css';
 
 type Access = Location['access'][number];
 
-const KIND_OPTIONS = [
-  { value: 'physical', label: 'Física' },
-  { value: 'device', label: 'Dispositivo' },
-  { value: 'cloud', label: 'Nube' },
-] as const;
+const T = UI.ubicacion;
 
-const KIND_HINT: Record<Location['kind'], string> = {
-  physical: 'Casa, caja del banco… Se ataca con una intrusión y se pierde con un incendio o una inundación.',
-  device: 'Portátil, disco duro… Se ataca con robo o malware y se pierde con una avería o un robo.',
-  cloud: 'Una cuenta en la nube. Se ataca en remoto (hackeo) y se pierde si se cierra o pierdes el acceso. Cifra lo que guardes aquí.',
-};
+const KIND_OPTIONS = (['physical', 'device', 'cloud'] as const).map((value) => ({ value, label: T.tipos[value] }));
+const KIND_HINT: Record<Location['kind'], string> = T.pistasTipo;
 
-const PROTECTION_OPTIONS = [
-  { value: 'none', label: 'Ninguna' },
-  { value: 'home-safe', label: 'Caja fuerte' },
-  { value: 'bank-box', label: 'Caja del banco' },
-] as const;
-
-const PROTECTION_HINT: Record<(typeof PROTECTION_OPTIONS)[number]['value'], string> = {
-  none: 'Una casa, un piso, una oficina… Entrar sin nadie presente cuesta poco.',
-  'home-safe': 'Una caja fuerte doméstica: hay que encontrarla y forzarla. Si está dentro de casa, el robo exige entrar en ambas, y un incendio o una inundación en casa también le llegan.',
-  'bank-box': 'Una caja de seguridad en un banco: lo más difícil de asaltar. Para obligarte a abrirla hay que llevarte allí en horario, y su cámara acorazada resiste mucho mejor un incendio o una inundación.',
-};
+const PROTECTION_OPTIONS = (['none', 'home-safe', 'bank-box'] as const).map((value) => ({ value, label: T.protecciones[value] }));
+const PROTECTION_HINT: Record<(typeof PROTECTION_OPTIONS)[number]['value'], string> = T.pistasProteccion;
 
 const NOT_INSIDE = '';
 
@@ -69,20 +54,20 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
 
   return (
     <>
-      <PanelHeader icon={MapPin} kind="Ubicación" title={location.name} />
+      <PanelHeader icon={MapPin} kind={T.tipo} title={location.name} />
 
       <Section>
-        <Field label="Nombre">
+        <Field label={UI.campos.nombre}>
           {(fid) => <TextInput id={fid} value={location.name} onChange={(name) => apply((m) => updateLocation(m, id, { name }), `location:${id}:name`)} />}
         </Field>
-        <Segmented label="Tipo de ubicación" value={location.kind} options={KIND_OPTIONS} onChange={(kind) => apply((m) => updateLocation(m, id, { kind }))} />
+        <Segmented label={T.tipoUbicacion} value={location.kind} options={KIND_OPTIONS} onChange={(kind) => apply((m) => updateLocation(m, id, { kind }))} />
         <p className={styles.hint}>{KIND_HINT[location.kind]}</p>
       </Section>
 
       {location.kind === 'physical' && (
-        <Section title="Protección">
+        <Section title={T.proteccion}>
           <Segmented
-            label="Protección"
+            label={T.proteccion}
             value={location.protection ?? 'none'}
             options={PROTECTION_OPTIONS}
             onChange={(p) => apply((m) => setLocationProtection(m, id, p === 'none' ? undefined : p))}
@@ -90,7 +75,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
           <p className={styles.hint}>{PROTECTION_HINT[location.protection ?? 'none']}</p>
           {contained.length > 0 ? (
             <>
-              <p className={styles.hint}>Dentro de esta ubicación hay otras, así que no puede ir dentro de ninguna:</p>
+              <p className={styles.hint}>{T.contieneOtras}</p>
               <ul className={styles.list}>
                 {contained.map((l) => {
                   const Icon = locationIcon(l);
@@ -106,12 +91,12 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
               </ul>
             </>
           ) : (
-            <Field label="Dentro de" hint="P. ej. la caja fuerte, dentro de Casa: para llegar a ella hay que entrar primero en la casa.">
+            <Field label={T.dentroDe} hint={T.pistaDentroDe}>
               {(fid) => (
                 <Select
                   id={fid}
                   value={location.inside ?? NOT_INSIDE}
-                  options={[{ value: NOT_INSIDE, label: 'Ninguna: está por su cuenta' }, ...containers.map((l) => ({ value: l.id, label: l.name }))]}
+                  options={[{ value: NOT_INSIDE, label: T.porSuCuenta }, ...containers.map((l) => ({ value: l.id, label: l.name }))]}
                   onChange={(parent) => apply((m) => setLocationInside(m, id, parent === NOT_INSIDE ? undefined : parent))}
                 />
               )}
@@ -121,17 +106,17 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
       )}
 
       <Section
-        title="Quién puede entrar"
+        title={T.quienEntra}
         action={
           withoutAccess.length > 0 && (
             <Button icon={Plus} onClick={() => setAccess([...location.access, { person: withoutAccess[0]!.id, when: { type: 'always' } }])}>
-              Acceso
+              {T.acceso}
             </Button>
           )
         }
       >
-        {location.access.length === 0 && <p className={styles.hint}>Nadie tiene acceso: lo que haya aquí es inalcanzable.</p>}
-        <p className={styles.hint}>"No puede actuar" = incapacidad o fallecimiento (p. ej. poder notarial preventivo o tutela).</p>
+        {location.access.length === 0 && <p className={styles.hint}>{T.nadie}</p>}
+        <p className={styles.hint}>{T.pistaNoPuede}</p>
         <ul className={styles.list}>
           {location.access.map((a, i) => {
             const others = model.people.filter((p) => p.id !== a.person);
@@ -149,16 +134,16 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
                   <Select
                     value={conditionValue(a)}
                     options={[
-                      { value: 'always', label: 'Siempre' },
+                      { value: 'always', label: T.siempre },
                       ...others.flatMap((p) => [
-                        { value: `after-death:${p.id}`, label: `Tras fallecer ${p.name}` },
-                        { value: `incapacity-or-death:${p.id}`, label: `Si ${p.name} no puede actuar` },
+                        { value: `after-death:${p.id}`, label: T.trasFallecer(p.name) },
+                        { value: `incapacity-or-death:${p.id}`, label: T.siNoPuede(p.name) },
                       ]),
                     ]}
                     onChange={(v) => change({ when: parseCondition(v) })}
                   />
                 </span>
-                <button className={styles.iconButton} onClick={() => setAccess(location.access.filter((_, j) => j !== i))} aria-label="Quitar acceso">
+                <button className={styles.iconButton} onClick={() => setAccess(location.access.filter((_, j) => j !== i))} aria-label={T.quitarAcceso}>
                   <X size={14} />
                 </button>
               </li>
@@ -167,7 +152,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         </ul>
       </Section>
 
-      <Section title="Qué hay aquí">
+      <Section title={T.queHay}>
         <ul className={styles.list}>
           {items.map((item) => (
             <li key={item.id}>
@@ -179,20 +164,20 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
           ))}
         </ul>
         <div className={styles.buttonRow}>
-          <Button icon={Cpu} onClick={() => create((m) => addDevice(m, id, 'stateful'), 'device')}>Dispositivo</Button>
-          <Button icon={Camera} onClick={() => create((m) => addDevice(m, id, 'stateless'), 'device')}>Stateless</Button>
-          <Button icon={RectangleHorizontal} onClick={() => create((m) => addArtifact(m, id), 'artifact')}>Backup</Button>
+          <Button icon={Cpu} onClick={() => create((m) => addDevice(m, id, 'stateful'), 'device')}>{T.dispositivo}</Button>
+          <Button icon={Camera} onClick={() => create((m) => addDevice(m, id, 'stateless'), 'device')}>{T.stateless}</Button>
+          <Button icon={RectangleHorizontal} onClick={() => create((m) => addArtifact(m, id), 'artifact')}>{T.backup}</Button>
         </div>
       </Section>
 
       <DeleteButton
-        label={items.length ? `Eliminar ubicación y sus ${items.length} objetos` : 'Eliminar ubicación'}
+        label={items.length ? T.eliminarCon(items.length) : T.eliminar}
         onClick={() => {
           apply((m) => removeLocation(m, id));
           back();
         }}
         disabled={model.locations.length <= 1}
-        reason="Tiene que haber al menos una ubicación."
+        reason={T.haceFalta}
       />
     </>
   );

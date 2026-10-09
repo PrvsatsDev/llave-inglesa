@@ -309,3 +309,4 @@ export * from './carta-herencia.ts';
 
 export * from './guia.ts';
 export { CIFRAS } from './guia-cifras.ts';
+export { UI, type TextosInterfaz } from './interfaz/index.ts';

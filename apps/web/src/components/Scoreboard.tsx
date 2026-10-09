@@ -2,12 +2,15 @@ import { scoreBand, type Analysis, type ScoreBand } from '@llave-inglesa/engine'
 import { AlertTriangle, BadgeCheck, ChevronsRight, Loader2, ShieldAlert, ShieldCheck, ShieldX, type LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { METRIC_LABEL } from '../lib/sections.ts';
-import { plural, SCORE_BAND_TEXT } from '../lib/text.ts';
+import { plural, SCORE_BAND_TEXT, UI } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useLayout } from '../store/layout.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
 import styles from './Scoreboard.module.css';
+
+const T = UI.puntuaciones;
+const num = UI.comun.numero;
 
 const BAND_ICON: Record<ScoreBand, LucideIcon> = {
   'very-poor': ShieldX,
@@ -37,37 +40,37 @@ function metrics(a: Analysis): Metric[] {
   const sec = a.security;
   const secDetail =
     sec.minEffort === null
-      ? `ningún robo con ≤${sec.searchedUpTo} ataques`
-      : `robo más barato: esfuerzo ${sec.minEffort.toLocaleString('es')}` + (sec.cheapRoutes > 1 ? ` · ${sec.cheapRoutes} vías` : '');
+      ? T.seguridad.sinRobo(sec.searchedUpTo)
+      : T.seguridad.roboMasBarato(num(sec.minEffort)) + (sec.cheapRoutes > 1 ? ` · ${T.seguridad.vias(sec.cheapRoutes)}` : '');
   return [
-    { id: 'security', label: METRIC_LABEL.security, short: 'Seg', score: sec.score, detail: secDetail },
+    { id: 'security', label: METRIC_LABEL.security, short: T.abreviaturas.security, score: sec.score, detail: secDetail },
     {
       id: 'resilience',
-      label: METRIC_LABEL.resilience, short: 'Res',
+      label: METRIC_LABEL.resilience, short: T.abreviaturas.resilience,
       score: a.resilience.score,
       detail: !a.resilience.recoverableNow
-        ? 'ya ahora no se puede recuperar'
+        ? T.resiliencia.yaNoRecuperable
         : (a.resilience.minRarity === null
-            ? `ninguna pérdida con ≤${a.resilience.searchedUpTo} desgracias`
-            : `pérdida más probable: rareza ${a.resilience.minRarity.toLocaleString('es')}`) +
-          (a.resilience.lockoutMinRarity !== null ? ` · bloqueo temporal: rareza ${a.resilience.lockoutMinRarity.toLocaleString('es')}` : ''),
+            ? T.resiliencia.sinPerdida(a.resilience.searchedUpTo)
+            : T.resiliencia.perdidaMasProbable(num(a.resilience.minRarity))) +
+          (a.resilience.lockoutMinRarity !== null ? ` · ${T.resiliencia.bloqueo(num(a.resilience.lockoutMinRarity))}` : ''),
     },
     {
       id: 'usability',
-      label: METRIC_LABEL.usability, short: 'Usa',
+      label: METRIC_LABEL.usability, short: T.abreviaturas.usability,
       score: a.usability.score,
-      detail: a.usability.locations ? `firmar en ${plural(a.usability.visits!, 'ubicación', 'ubicaciones')}` : 'no puede firmar de forma segura',
+      detail: a.usability.locations ? T.usabilidad.firmarEn(plural(a.usability.visits!, ...T.ubicaciones)) : T.usabilidad.noPuede,
     },
     {
       id: 'inheritance',
-      label: METRIC_LABEL.inheritance, short: 'Her',
+      label: METRIC_LABEL.inheritance, short: T.abreviaturas.inheritance,
       score: inh.score,
       detail:
         inh.status === 'ok'
-          ? `herederos: ${plural(inh.visits!, 'ubicación', 'ubicaciones')}`
+          ? T.herencia.herederos(plural(inh.visits!, ...T.ubicaciones))
           : inh.status === 'no-heirs'
-            ? 'no hay herederos'
-            : 'los herederos no recuperan',
+            ? T.herencia.sinHerederos
+            : T.herencia.noRecuperan,
     },
   ];
 }
@@ -82,12 +85,12 @@ function Tile({ metric, previous, stale, current }: { metric: Metric; previous: 
       className={`${styles.tile} ${styles[lvl]} ${stale ? styles.stale : ''} ${current ? styles.current : ''}`}
       onClick={() => goMetric(metric.id)}
       aria-current={current ? 'page' : undefined}
-      title={`${metric.label}: ${metric.detail}. Pulsa para ver por qué`}
+      title={T.pistaTarjeta(metric.label, metric.detail)}
     >
       <div className={styles.top}>
         <span className={styles.label}>{metric.label}</span>
         {delta !== 0 && (
-          <span className={`${styles.delta} ${delta > 0 ? styles.up : styles.down}`} title="Cambio respecto al último análisis">
+          <span className={`${styles.delta} ${delta > 0 ? styles.up : styles.down}`} title={T.pistaCambio}>
             {delta > 0 ? '▲' : '▼'} {Math.abs(delta)}
           </span>
         )}
@@ -104,7 +107,7 @@ function Tile({ metric, previous, stale, current }: { metric: Metric; previous: 
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={metric.score}
-        aria-label={`${metric.label}: ${metric.score} de 100, ${text}`}
+        aria-label={T.medidor(metric.label, metric.score, text)}
       >
         <span className={styles.fill} style={{ '--value': `${metric.score}%` } as CSSProperties} />
       </div>
@@ -125,7 +128,7 @@ function MiniTile({ metric, stale }: { metric: Metric; stale: boolean }) {
         setCollapsed(false);
         goMetric(metric.id);
       }}
-      title={`${metric.label}: ${metric.score} de 100, ${text}. Pulsa para ver por qué`}
+      title={T.pistaMini(metric.label, metric.score, text)}
     >
       <span className={styles.label}>{metric.short}</span>
       <span className={styles.miniValue}>{metric.score}</span>
@@ -146,14 +149,14 @@ export function Scoreboard() {
 
   if (collapsed) {
     return (
-      <section className={styles.rail} aria-label="Puntuaciones del esquema" aria-live="polite">
-        <button className={styles.foldButton} onClick={() => setCollapsed(false)} aria-label="Desplegar el panel" title="Desplegar el panel">
+      <section className={styles.rail} aria-label={T.nombre} aria-live="polite">
+        <button className={styles.foldButton} onClick={() => setCollapsed(false)} aria-label={T.desplegar} title={T.desplegar}>
           <ChevronsRight size={16} />
         </button>
         {analysis ? (
           metrics(analysis).map((m) => <MiniTile key={m.id} metric={m} stale={stale} />)
         ) : (
-          <Loader2 size={14} className={styles.spin} aria-label="Analizando" />
+          <Loader2 size={14} className={styles.spin} aria-label={T.analizando} />
         )}
       </section>
     );
@@ -163,9 +166,9 @@ export function Scoreboard() {
     return (
       <section className={styles.board} aria-live="polite">
         <p className={styles.placeholder}>
-          {status === 'invalid' ? 'Corrige los errores del modelo para analizarlo' : (
+          {status === 'invalid' ? T.corrigeErrores : (
             <>
-              <Loader2 size={14} className={styles.spin} aria-hidden /> Analizando…
+              <Loader2 size={14} className={styles.spin} aria-hidden /> {T.analizandoPuntos}
             </>
           )}
         </p>
@@ -177,7 +180,7 @@ export function Scoreboard() {
   const prev = previous ? Object.fromEntries(metrics(previous).map((m) => [m.id, m.score])) : null;
 
   return (
-    <section className={styles.board} aria-label="Puntuaciones del esquema" aria-live="polite">
+    <section className={styles.board} aria-label={T.nombre} aria-live="polite">
       <div className={styles.tiles}>
         {metrics(analysis).map((m) => (
           <Tile key={m.id} metric={m} previous={prev?.[m.id] ?? null} stale={stale} current={m.id === current} />
@@ -187,12 +190,12 @@ export function Scoreboard() {
         <p className={styles.footerText}>
           {status === 'running' && (
             <>
-              <Loader2 size={11} className={styles.spin} aria-hidden /> recalculando…
+              <Loader2 size={11} className={styles.spin} aria-hidden /> {T.recalculando}
             </>
           )}
-          {status === 'invalid' && <span className={styles.invalid}>Modelo con errores: análisis pausado</span>}
-          {status === 'error' && <span className={styles.invalid}>El análisis ha fallado</span>}
-          {status === 'ready' && ms !== null && <>análisis exhaustivo en {ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms</>}
+          {status === 'invalid' && <span className={styles.invalid}>{T.pausado}</span>}
+          {status === 'error' && <span className={styles.invalid}>{T.fallido}</span>}
+          {status === 'ready' && ms !== null && <>{T.tiempo(ms < 10 ? ms.toFixed(1) : String(Math.round(ms)))}</>}
         </p>
       </div>
     </section>

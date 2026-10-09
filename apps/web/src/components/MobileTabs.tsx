@@ -1,10 +1,13 @@
 import { LayoutList, Map as MapIcon, type LucideIcon } from 'lucide-react';
+import { UI } from '../lib/text.ts';
 import { useMobile, type MobileView } from '../store/mobile.ts';
 import styles from './MobileTabs.module.css';
 
+const T = UI.marco.pestanas;
+
 const TABS: { id: MobileView; label: string; icon: LucideIcon }[] = [
-  { id: 'panel', label: 'Panel', icon: LayoutList },
-  { id: 'map', label: 'Mapa', icon: MapIcon },
+  { id: 'panel', label: T.panel, icon: LayoutList },
+  { id: 'map', label: T.mapa, icon: MapIcon },
 ];
 
 /**
@@ -16,14 +19,14 @@ export function MobileTabs() {
   const mapChanged = useMobile((s) => s.mapChanged);
   const show = useMobile((s) => s.show);
   return (
-    <nav className={styles.bar} aria-label="Panel o mapa">
+    <nav className={styles.bar} aria-label={T.nombre}>
       {TABS.map(({ id, label, icon: Icon }) => (
         <button key={id} className={`${styles.tab} ${view === id ? styles.current : ''}`} aria-current={view === id ? 'page' : undefined} onClick={() => show(id)}>
           <Icon size={18} aria-hidden />
           {label}
           {id === 'map' && mapChanged && (
-            <span className={styles.badge} title="El mapa ha cambiado desde la última vez que lo viste">
-              <span className={styles.dot} aria-hidden /> nuevo
+            <span className={styles.badge} title={T.pistaNuevo}>
+              <span className={styles.dot} aria-hidden /> {T.nuevo}
             </span>
           )}
         </button>

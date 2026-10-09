@@ -1,9 +1,11 @@
 import { looksLikeSeedWords, normalizePath, parseXpub } from '@llave-inglesa/bitcoin';
 import { XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SEED_WORDS_TEXT, xpubProblemText } from '../../lib/text.ts';
+import { SEED_WORDS_TEXT, UI, xpubProblemText } from '../../lib/text.ts';
 import { Field } from './fields.tsx';
 import styles from './fields.module.css';
+
+const T = UI.cartera;
 
 type Message = { tone: 'error' | 'hint'; text: string } | null;
 
@@ -33,20 +35,20 @@ const showPath = (p: string) => `m/${p}`;
 export function PathField({ value, onChange }: { value: string | undefined; onChange(v: string | undefined): void }) {
   const { text, setText, message, setMessage, emit } = useValidatedText(value, showPath);
   return (
-    <Field label="Derivación">
+    <Field label={T.derivacion}>
       {(fid) => (
         <>
           <input
             id={fid}
             className={`${styles.input} ${message ? styles.invalid : ''}`}
             value={text}
-            placeholder="m/48'/0'/0'/2'"
+            placeholder={T.pistaDerivacion}
             spellCheck={false}
             onChange={(e) => {
               const t = e.target.value;
               setText(t);
               const path = normalizePath(t);
-              setMessage(path === null ? { tone: 'error', text: "Una ruta como m/48'/0'/0'/2' (con ' o h para las endurecidas)." } : null);
+              setMessage(path === null ? { tone: 'error', text: T.errorDerivacion } : null);
               emit(path ? path : undefined, onChange);
             }}
           />
@@ -82,11 +84,11 @@ export function XpubField({ value, onChange }: { value: string | undefined; onCh
     }
     setText(t);
     const converted = r.value.writtenAs !== 'xpub' && r.value.writtenAs !== 'tpub';
-    setMessage(converted ? { tone: 'hint', text: `Escrita como ${r.value.writtenAs}: se guarda como ${r.value.network === 'mainnet' ? 'xpub' : 'tpub'}, que es la misma clave.` } : null);
+    setMessage(converted ? { tone: 'hint', text: T.convertida(r.value.writtenAs, r.value.network === 'mainnet' ? 'xpub' : 'tpub') } : null);
     emit(r.value.xpub, onChange);
   };
   return (
-    <Field label="Xpub">
+    <Field label={T.xpub}>
       {(fid) => (
         <>
           <textarea
@@ -94,7 +96,7 @@ export function XpubField({ value, onChange }: { value: string | undefined; onCh
             className={`${styles.textarea} ${styles.mono} ${message?.tone === 'error' ? styles.invalid : ''}`}
             value={text}
             rows={3}
-            placeholder="xpub6…  (también zpub, Zpub, tpub…)"
+            placeholder={T.pistaXpub}
             spellCheck={false}
             autoComplete="off"
             onChange={(e) => change(e.target.value)}

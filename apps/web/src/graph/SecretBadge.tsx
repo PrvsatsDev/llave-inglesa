@@ -1,15 +1,12 @@
 import { Asterisk, FileCode2, Lock } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { UI } from '../lib/text.ts';
 import type { SecretBadge as Badge } from './build.ts';
 import styles from './nodes.module.css';
 
-const KIND_TEXT = { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ' } as const;
-const KIND_TITLE = {
-  holds: 'Key guardada en el dispositivo',
-  seed: 'Frase semilla',
-  passphrase: 'Passphrase',
-  xpub: 'Clave pública extendida',
-} as const;
+const T = UI.mapa.insignias;
+const KIND_TEXT = T.prefijo;
+const KIND_TITLE = T.pistas;
 
 /**
  * Insignia de un secreto. El relleno del punto dice qué es:
@@ -19,20 +16,22 @@ export function SecretBadge({ badge, withDevice = false }: { badge: Badge; withD
   switch (badge.kind) {
     case 'pin':
       return (
-        <span className={styles.badge} title={`PIN de ${badge.label}`}>
-          <Lock size={10} aria-hidden /> PIN{withDevice && ` ${badge.label}`}
+        <span className={styles.badge} title={T.pistaPin(badge.label)}>
+          <Lock size={10} aria-hidden /> {T.pin}
+          {withDevice && ` ${badge.label}`}
         </span>
       );
     case 'password':
       return (
-        <span className={styles.badge} title={`Contraseña de ${badge.label}`}>
-          <Asterisk size={10} aria-hidden /> contraseña{withDevice && ` ${badge.label}`}
+        <span className={styles.badge} title={T.pistaContrasena(badge.label)}>
+          <Asterisk size={10} aria-hidden /> {T.contrasena}
+          {withDevice && ` ${badge.label}`}
         </span>
       );
     case 'descriptor':
       return (
-        <span className={styles.badge} title="Descriptor del wallet: política y todas las xpubs">
-          <FileCode2 size={10} aria-hidden /> descriptor
+        <span className={styles.badge} title={T.pistaDescriptor}>
+          <FileCode2 size={10} aria-hidden /> {T.descriptor}
         </span>
       );
     default:
@@ -40,7 +39,7 @@ export function SecretBadge({ badge, withDevice = false }: { badge: Badge; withD
         <span
           className={`${styles.badge} ${styles.keyBadge} ${styles[badge.kind]}`}
           style={{ '--key-color': badge.color } as CSSProperties}
-          title={`${KIND_TITLE[badge.kind]} de ${badge.label}`}
+          title={T.pistaKey(KIND_TITLE[badge.kind], badge.label)}
         >
           <span className={styles.keyDot} aria-hidden />
           {KIND_TEXT[badge.kind]}

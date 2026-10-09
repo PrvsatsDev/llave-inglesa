@@ -1,0 +1,36 @@
+/** El marco de la aplicación: panel, mapa, leyenda, pestañas del móvil y pantalla de fallo. */
+export const marco = {
+  panel: 'Panel',
+  anchoPanel: 'Ancho del panel',
+  pistaAncho: 'Arrastra para cambiar el ancho (doble clic: ancho por defecto)',
+  avisoMovil: 'Pensada para pantalla grande. Aquí puedes ver los ejemplos y simular, pero para montar tu esquema es mejor un ordenador.',
+  mapa: 'Mapa de custodia',
+  pestanas: {
+    nombre: 'Panel o mapa',
+    panel: 'Panel',
+    mapa: 'Mapa',
+    nuevo: 'nuevo',
+    pistaNuevo: 'El mapa ha cambiado desde la última vez que lo viste',
+  },
+  leyenda: {
+    titulo: 'Leyenda',
+    key: 'la key en sí (frase semilla o en memoria)',
+    passphrase: 'passphrase',
+    xpub: 'solo xpub',
+    pin: 'protegido por PIN',
+    memoria: 'lo sabe de memoria',
+    siempre: 'accede siempre',
+    trasFallecer: 'accede tras un fallecimiento',
+  },
+  fallo: {
+    titulo: 'Algo ha fallado en la interfaz',
+    noEsTuEsquema: 'Es un fallo de la aplicación, no de tu esquema.',
+    conCambios: 'Tienes cambios sin guardar: descárgalos antes de recargar.',
+    sinCambios: 'Tu esquema no tiene cambios sin guardar.',
+    descargar: 'Descargar el esquema (.json)',
+    recargar: 'Recargar',
+    nota: 'El fichero va sin cifrar: guárdalo en un sitio seguro, ábrelo con «Abrir fichero…» y bórralo después.',
+    detalle: 'Detalle técnico',
+  },
+  falloAnalisis: 'El worker de análisis ha fallado',
+};

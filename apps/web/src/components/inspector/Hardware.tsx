@@ -1,5 +1,5 @@
 import { CATALOG_DATE, HARDWARE_MODELS, type AdvisoryMatch, type CatalogModel, type Device, type Id } from '@llave-inglesa/domain';
-import { advisoryText } from '@llave-inglesa/text';
+import { advisoryText, UI } from '../../lib/text.ts';
 import { AlertTriangle, ChevronDown, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 import { TextInput } from './fields.tsx';
@@ -7,6 +7,8 @@ import styles from './fields.module.css';
 
 /** Valor del selector para un modelo fuera del catálogo (se escribe a mano). */
 export const OTHER_MODEL = '';
+
+const T = UI.hardware;
 
 const VENDORS = [...new Set(HARDWARE_MODELS.map((m) => m.vendor))];
 
@@ -42,7 +44,7 @@ export function HardwareModelSelect({
         }}
       >
         {onPickDevice && devices.length > 0 && (
-          <optgroup label="Dispositivos de este esquema">
+          <optgroup label={T.dispositivosDelEsquema}>
             {devices.map((d) => (
               <option key={d.id} value={`${DEVICE_PREFIX}${d.id}`}>
                 {d.label}
@@ -56,19 +58,20 @@ export function HardwareModelSelect({
             {HARDWARE_MODELS.filter((m) => m.vendor === vendor).map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
-                {m.discontinued ? ' (descatalogado)' : ''}
+                {m.discontinued ? T.descatalogado : ''}
               </option>
             ))}
           </optgroup>
         ))}
-        <option value={OTHER_MODEL}>Otro (escribir a mano)</option>
+        <option value={OTHER_MODEL}>{T.otro}</option>
       </select>
       <ChevronDown size={14} className={styles.selectChevron} aria-hidden />
     </span>
   );
 }
 
-const UNKNOWN_VENDOR = 'Desconocido';
+/** Fabricante desconocido tal como se guarda en el modelo (un dato, no una etiqueta). */
+export const UNKNOWN_VENDOR = 'Desconocido'; // texto-ok: valor del modelo
 const OTHER_VENDOR = '';
 const sameVendor = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
@@ -85,7 +88,7 @@ export function VendorSelect({ value, onChange }: { value: string; onChange(vend
       <span className={styles.selectWrap}>
         <select
           className={styles.select}
-          aria-label="Fabricante"
+          aria-label={T.fabricante}
           value={selected}
           onChange={(e) => {
             const v = e.target.value;
@@ -93,31 +96,30 @@ export function VendorSelect({ value, onChange }: { value: string; onChange(vend
             if (v !== OTHER_VENDOR) onChange(v);
           }}
         >
-          <option value={UNKNOWN_VENDOR}>Fabricante desconocido</option>
+          <option value={UNKNOWN_VENDOR}>{T.fabricanteDesconocido}</option>
           {VENDORS.map((v) => (
             <option key={v} value={v}>
               {v}
             </option>
           ))}
-          <option value={OTHER_VENDOR}>Otro (escribir a mano)</option>
+          <option value={OTHER_VENDOR}>{T.otro}</option>
         </select>
         <ChevronDown size={14} className={styles.selectChevron} aria-hidden />
       </span>
-      {other && <TextInput value={sameVendor(value, UNKNOWN_VENDOR) ? '' : value} placeholder="Fabricante" onChange={onChange} />}
+      {other && <TextInput value={sameVendor(value, UNKNOWN_VENDOR) ? '' : value} placeholder={T.fabricante} onChange={onChange} />}
     </>
   );
 }
 
-const DURESS_TEXT = { decoy: 'señuelo', wipe: 'borrado' } as const;
 
 /** Resumen de lo que el catálogo sabe del modelo. */
 export function catalogFeatures(m: CatalogModel): string {
   const features = [
-    m.antiExfil ? 'anti-exfil' : null,
-    m.duress.length > 0 ? `PIN de coacción (${m.duress.map((d) => DURESS_TEXT[d]).join(' y ')})` : 'sin PIN de coacción',
-    m.registersMultisig ? 'registra multisig' : 'no registra multisig',
-  ].filter(Boolean);
-  return `Según el catálogo (${CATALOG_DATE}): ${features.join(' · ')}.`;
+    m.antiExfil ? T.antiExfil : null,
+    m.duress.length > 0 ? T.conCoaccion(m.duress.map((d) => T.coaccion[d])) : T.sinCoaccion,
+    m.registersMultisig ? T.registraMultisig : T.noRegistraMultisig,
+  ].filter((f) => f !== null);
+  return T.segunCatalogo(CATALOG_DATE, features);
 }
 
 export function AdvisoryList({ matches }: { matches: readonly AdvisoryMatch[] }) {
@@ -136,7 +138,7 @@ export function AdvisoryList({ matches }: { matches: readonly AdvisoryMatch[] })
               <p className={styles.advisoryText}>{t.detail}</p>
               {t.mitigations && <p className={styles.advisoryText}>{t.mitigations}</p>}
               <a className={styles.link} href={match.advisory.sources[0]} target="_blank" rel="noopener noreferrer">
-                Fuente
+                {T.fuente}
               </a>
             </div>
           </li>

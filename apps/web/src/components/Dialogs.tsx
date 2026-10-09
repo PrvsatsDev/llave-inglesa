@@ -2,19 +2,22 @@ import { AlertTriangle, Bitcoin, BookOpen, Check, Copy, FilePlus2, FolderOpen, K
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDialog, type DialogRequest } from '../store/dialog.ts';
 import { AUTOR } from '../lib/autor.ts';
+import { UI } from '../lib/text.ts';
 import { examples } from '../lib/examples.ts';
 import { APP_VERSION } from '../version.ts';
 import styles from './Dialogs.module.css';
 
 const MIN_LENGTH = 10;
+const T = UI.dialogos;
+const C = UI.comun;
 
 /** Estimación simple y honesta: longitud + variedad. No sustituye a una frase larga aleatoria. */
 function strength(p: string): { score: 0 | 1 | 2 | 3; text: string } {
   const variety = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((r) => r.test(p)).length;
-  if (p.length < MIN_LENGTH) return { score: 0, text: `Demasiado corta (mínimo ${MIN_LENGTH})` };
-  if (p.length >= 20 || (p.length >= 14 && variety >= 3)) return { score: 3, text: 'Fuerte' };
-  if (p.length >= 12 && variety >= 2) return { score: 2, text: 'Aceptable' };
-  return { score: 1, text: 'Débil: alárgala' };
+  if (p.length < MIN_LENGTH) return { score: 0, text: T.contrasena.fuerza.corta(MIN_LENGTH) };
+  if (p.length >= 20 || (p.length >= 14 && variety >= 3)) return { score: 3, text: T.contrasena.fuerza.fuerte };
+  if (p.length >= 12 && variety >= 2) return { score: 2, text: T.contrasena.fuerza.aceptable };
+  return { score: 1, text: T.contrasena.fuerza.debil };
 }
 
 function PasswordForm({ req }: { req: Extract<DialogRequest, { kind: 'password' }> }) {
@@ -38,32 +41,32 @@ function PasswordForm({ req }: { req: Extract<DialogRequest, { kind: 'password' 
       </header>
       <p className={styles.message}>{req.message}</p>
       <label className={styles.field}>
-        <span>Contraseña</span>
+        <span>{T.contrasena.etiqueta}</span>
         <input type="password" autoFocus autoComplete={creating ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       {creating && (
         <>
           <div className={styles.meter} data-score={s.score} aria-live="polite">
             <span className={styles.bar} />
-            <span className={styles.meterText}>{password ? s.text : `Mínimo ${MIN_LENGTH} caracteres. Mejor una frase larga.`}</span>
+            <span className={styles.meterText}>{password ? s.text : T.contrasena.minimo(MIN_LENGTH)}</span>
           </div>
           <label className={styles.field}>
-            <span>Repítela</span>
+            <span>{T.contrasena.repetir}</span>
             <input type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-invalid={mismatch} />
           </label>
-          {mismatch && <p className={styles.error}>No coinciden.</p>}
+          {mismatch && <p className={styles.error}>{T.contrasena.noCoinciden}</p>}
           <p className={styles.warning}>
-            <AlertTriangle size={14} aria-hidden /> Si la olvidas, no hay forma de recuperar el documento.
+            <AlertTriangle size={14} aria-hidden /> {T.contrasena.siLaOlvidas}
           </p>
         </>
       )}
       {req.error && <p className={styles.error}>{req.error}</p>}
       <footer className={styles.actions}>
         <button type="button" className={styles.secondary} onClick={() => req.resolve(null)}>
-          Cancelar
+          {C.cancelar}
         </button>
         <button type="submit" className={styles.primary} disabled={!valid}>
-          {creating ? 'Cifrar' : 'Abrir'}
+          {creating ? T.contrasena.cifrar : T.contrasena.abrir}
         </button>
       </footer>
     </form>
@@ -96,9 +99,9 @@ function SupportAddress({ icon: Icon, label, value, href }: { icon: LucideIcon; 
           {shown}
         </span>
       )}
-      <button type="button" className={styles.copy} onClick={copy} aria-label={`Copiar la dirección ${label}`}>
+      <button type="button" className={styles.copy} onClick={copy} aria-label={T.copiarDireccion(label)}>
         {copied ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
-        {copied ? 'Copiada' : 'Copiar'}
+        {copied ? C.copiada : C.copiar}
       </button>
     </span>
   );
@@ -110,7 +113,7 @@ function Author({ support }: { support: boolean }) {
     <div className={styles.author}>
       <p className={styles.authorLine}>
         <span>
-          Hecha por <strong>{AUTOR.nombre}</strong>
+          {T.hechaPor} <strong>{AUTOR.nombre}</strong>
         </span>
         <span aria-hidden>·</span>
         <a href={AUTOR.x} target="_blank" rel="noopener noreferrer">
@@ -118,13 +121,13 @@ function Author({ support }: { support: boolean }) {
         </a>
         <span aria-hidden>·</span>
         <a href={AUTOR.nostr} target="_blank" rel="noopener noreferrer">
-          Nostr
+          {T.nostr}
         </a>
       </p>
       {support && (
         <p className={styles.authorLine}>
-          <SupportAddress icon={Zap} label="Lightning" value={AUTOR.lightning} href={`lightning:${AUTOR.lightning}`} />
-          <SupportAddress icon={Bitcoin} label="Silent payments" value={AUTOR.silentPayment} />
+          <SupportAddress icon={Zap} label={T.lightning} value={AUTOR.lightning} href={`lightning:${AUTOR.lightning}`} />
+          <SupportAddress icon={Bitcoin} label={T.silentPayments} value={AUTOR.silentPayment} />
         </p>
       )}
     </div>
@@ -139,25 +142,18 @@ function Intro({ onClose }: { onClose(): void }) {
         <img src="/logo.svg" alt="" width={40} height={40} />
         <h2 className={styles.title}>llave-inglesa</h2>
         <span className={styles.version}>v{APP_VERSION}</span>
-        <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar">
+        <button type="button" className={styles.close} onClick={onClose} aria-label={C.cerrar}>
           <X size={16} aria-hidden />
         </button>
       </header>
-      <p className={styles.lead}>Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.</p>
+      <p className={styles.lead}>{T.lema}</p>
       <ul className={styles.points}>
-        <li>Describe qué keys, dispositivos y backups tienes, dónde están y quién sabe qué.</li>
-        <li>
-          La herramienta calcula cómo podrían robarte, qué desgracias te dejarían sin fondos, lo cómodo que es firmar y si tus
-          herederos llegarían a ellos. Y siempre explica por qué.
-        </li>
-        <li>Todo ocurre en tu navegador: sin cuentas, sin red. Puedes guardar tu esquema cifrado.</li>
-        <li>
-          ¿Prefieres no poner tu plan real? Úsala para entrenar, con un esquema parecido o inventado y sin guardar nada: también te
-          descubrirá huecos que no habías previsto.
-        </li>
+        {T.puntos.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
       </ul>
       <p className={styles.warning}>
-        <AlertTriangle size={14} aria-hidden /> Nunca escribas frases semilla, claves privadas ni passphrases reales: no hacen falta.
+        <AlertTriangle size={14} aria-hidden /> {T.nuncaSecretos}
       </p>
     </>
   );
@@ -171,21 +167,20 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
       <Intro onClose={() => req.resolve(null)} />
       <footer className={styles.welcomeActions}>
         <button className={styles.primary} onClick={() => req.resolve({ kind: 'example' })} data-autofocus>
-          <MapIcon size={14} aria-hidden /> Ver un ejemplo
+          <MapIcon size={14} aria-hidden /> {T.verEjemplo}
         </button>
         <button className={styles.secondary} onClick={() => req.resolve({ kind: 'new' })}>
-          <FilePlus2 size={14} aria-hidden /> Empezar de cero
+          <FilePlus2 size={14} aria-hidden /> {T.empezarDeCero}
         </button>
         <button className={styles.secondary} onClick={() => fileRef.current?.click()}>
-          <FolderOpen size={14} aria-hidden /> Abrir fichero
+          <FolderOpen size={14} aria-hidden /> {T.abrirFichero}
         </button>
       </footer>
       <button type="button" className={styles.guideLink} onClick={() => req.resolve({ kind: 'guide' })}>
-        <BookOpen size={14} aria-hidden /> ¿Primera vez? Guía de 5 minutos
+        <BookOpen size={14} aria-hidden /> {T.guiaRapida}
       </button>
       <p className={styles.hint}>
-        En el selector de arriba hay {examples.length} ejemplos, de lo más habitual a lo más cuidado. Esto se puede volver a leer en «Acerca de»,
-        pulsando el logo.
+        {T.pistaEjemplos(examples.length)}
       </p>
       <Author support={false} />
       <input
@@ -209,13 +204,13 @@ function About({ req }: { req: Extract<DialogRequest, { kind: 'about' }> }) {
     <div className={styles.form}>
       <Intro onClose={() => req.resolve(false)} />
       <p className={styles.hint}>
-        Código abierto (MIT) y verificable: cada versión se puede recompilar y comparar con la publicada.{' '}
+        {T.codigoAbierto}{' '}
         <a className={styles.inlineLink} href={AUTOR.repo} target="_blank" rel="noopener noreferrer">
-          Código en GitHub
+          {T.codigoEnGithub}
         </a>
       </p>
       <button type="button" className={styles.guideLink} onClick={() => req.resolve(true)}>
-        <BookOpen size={14} aria-hidden /> Guía de uso
+        <BookOpen size={14} aria-hidden /> {T.guia}
       </button>
       <Author support />
     </div>
@@ -262,7 +257,7 @@ export function Dialogs() {
           <p className={styles.message}>{current.message}</p>
           <footer className={styles.actions}>
             <button className={styles.secondary} onClick={() => current.resolve(false)}>
-              Cancelar
+              {C.cancelar}
             </button>
             <button className={current.danger ? styles.danger : styles.primary} onClick={() => current.resolve(true)} autoFocus>
               {current.confirmLabel}
@@ -282,7 +277,7 @@ export function Dialogs() {
           ))}
           <footer className={styles.actions}>
             <button className={styles.primary} onClick={() => current.resolve()} autoFocus>
-              Entendido
+              {C.entendido}
             </button>
           </footer>
         </div>

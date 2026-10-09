@@ -1,31 +1,30 @@
 import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
 import { AlertTriangle, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
+import { UI } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
-import { AdvisoryList, HardwareModelSelect, VendorSelect } from './Hardware.tsx';
+import { AdvisoryList, HardwareModelSelect, UNKNOWN_VENDOR, VendorSelect } from './Hardware.tsx';
 import { PathField, XpubField } from './WalletFields.tsx';
 import styles from './fields.module.css';
 
 type SourceKind = EntropySource['kind'];
 
+const T = UI.key;
+
 /** Proyecto de Estudio Bitcoin para generar la semilla a mano con una moneda. */
 const SEMILLA_MONEDA_URL = 'https://estudiobitcoin.com/semilla-moneda-crea-tu-semilla-a-mano/';
 
-const SOURCE_OPTIONS: readonly { value: SourceKind; label: string }[] = [
-  { value: 'device-rng', label: 'RNG de dispositivo' },
-  { value: 'software-rng', label: 'RNG de software' },
-  { value: 'dice', label: 'Dados' },
-  { value: 'coin', label: 'Moneda' },
-  { value: 'cards', label: 'Cartas' },
-  { value: 'unknown', label: 'Desconocido' },
-];
+const SOURCE_OPTIONS: readonly { value: SourceKind; label: string }[] = (['device-rng', 'software-rng', 'dice', 'coin', 'cards', 'unknown'] as const).map((value) => ({
+  value,
+  label: T.fuentes[value],
+}));
 
 function emptySource(kind: SourceKind): EntropySource {
   switch (kind) {
     case 'device-rng':
     case 'software-rng':
-      return { kind, vendor: 'Desconocido' };
+      return { kind, vendor: UNKNOWN_VENDOR };
     case 'dice':
     case 'coin':
     case 'cards':
@@ -48,7 +47,7 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
       )}
       {source.kind === 'software-rng' && (
         <span className={styles.rowGrow}>
-          <TextInput value={source.vendor} placeholder="Software" onChange={(vendor) => onChange({ ...source, vendor })} />
+          <TextInput value={source.vendor} placeholder={T.software} onChange={(vendor) => onChange({ ...source, vendor })} />
         </span>
       )}
       {(source.kind === 'dice' || source.kind === 'coin' || source.kind === 'cards') && (
@@ -57,7 +56,7 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
             className={styles.input}
             type="number"
             min={1}
-            placeholder="nº tiradas"
+            placeholder={T.tiradas}
             value={source.count ?? ''}
             onChange={(e) => {
               const count = Number.parseInt(e.target.value, 10);
@@ -66,7 +65,7 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
           />
         </span>
       )}
-      <button className={styles.iconButton} onClick={onRemove} disabled={!canRemove} aria-label="Quitar fuente">
+      <button className={styles.iconButton} onClick={onRemove} disabled={!canRemove} aria-label={T.quitarFuente}>
         <X size={14} />
       </button>
     </li>
@@ -74,18 +73,9 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
 }
 
 /** Solo cómo es, nunca cuál es. */
-const STRENGTH_OPTIONS = [
-  { value: 'weak', label: 'Débil' },
-  { value: 'phrase', label: 'Frase' },
-  { value: 'random', label: 'Aleatoria larga' },
-] as const;
+const STRENGTH_OPTIONS = (['weak', 'phrase', 'random'] as const).map((value) => ({ value, label: T.fuerzas[value] }));
 
-const STRENGTH_HINT = {
-  unset: 'Sin indicar: se trata como débil. Elige cómo es para que el análisis sea realista.',
-  weak: 'Una palabra, un nombre o una fecha. Con la semilla en la mano, se adivina casi gratis.',
-  phrase: 'Varias palabras elegidas por ti. Con la semilla, adivinarla exige mucho cómputo y algo de suerte.',
-  random: 'Generada al azar y larga (p. ej. 6 o más palabras con dados). No se puede adivinar.',
-} as const;
+const STRENGTH_HINT = T.pistasFuerza;
 
 export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; keyEntity: Key }) {
   const apply = useDocument((s) => s.apply);
@@ -108,24 +98,24 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
 
   const index = indexModel(model);
   const places = [
-    ...model.devices.filter((d) => activeHolds(d).includes(id)).map((d) => ({ item: d.label, location: d.location, how: 'en memoria' })),
+    ...model.devices.filter((d) => activeHolds(d).includes(id)).map((d) => ({ item: d.label, location: d.location, how: T.enMemoria })),
     ...model.artifacts
       .filter((a) => a.contents.some((c) => c.type === 'seed' && c.key === id))
-      .map((a) => ({ item: a.label, location: a.location, how: 'frase semilla' })),
+      .map((a) => ({ item: a.label, location: a.location, how: T.fraseSemilla })),
   ];
 
   return (
     <>
-      <PanelHeader icon={KeyRound} kind="Key" title={key.label} />
+      <PanelHeader icon={KeyRound} kind={T.tipo} title={key.label} />
 
       <Section>
-        <Field label="Nombre">{(fid) => <TextInput id={fid} value={key.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
-        <Switch checked={key.passphrase} onChange={(passphrase) => patch({ passphrase })} label="Requiere passphrase" hint="Sin la passphrase, la semilla sola no sirve." />
+        <Field label={UI.campos.nombre}>{(fid) => <TextInput id={fid} value={key.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
+        <Switch checked={key.passphrase} onChange={(passphrase) => patch({ passphrase })} label={T.requierePassphrase} hint={T.pistaPassphrase} />
         {key.passphrase && (
           <>
-            <p className={styles.fieldTitle}>Cómo es la passphrase</p>
+            <p className={styles.fieldTitle}>{T.comoEsPassphrase}</p>
             <Segmented
-              label="Cómo es la passphrase"
+              label={T.comoEsPassphrase}
               value={key.passphraseStrength ?? 'unset'}
               options={STRENGTH_OPTIONS}
               onChange={(v) => v !== 'unset' && patch({ passphraseStrength: v })}
@@ -137,24 +127,21 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
         )}
       </Section>
 
-      <Section title="En la cartera">
+      <Section title={T.enLaCartera}>
         <div className={styles.twoCols}>
-          <Field label="Fingerprint">
+          <Field label={T.fingerprint}>
             {(fid) => (
-              <TextInput id={fid} value={key.fingerprint ?? ''} placeholder="opcional" optional onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
+              <TextInput id={fid} value={key.fingerprint ?? ''} placeholder={T.opcional} optional onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
             )}
           </Field>
           <PathField key={`path:${id}`} value={key.derivation} onChange={(derivation) => patch({ derivation }, 'derivation')} />
         </div>
         <XpubField key={`xpub:${id}`} value={key.xpub} onChange={(xpub) => patch({ xpub }, 'xpub')} />
-        <p className={styles.hint}>
-          Opcional: con las xpubs de todas las keys, Esquema muestra el descriptor y la primera dirección. Más cómodo: importar el descriptor desde
-          Esquema.
-        </p>
+        <p className={styles.hint}>{T.pistaCartera}</p>
       </Section>
 
-      <Section title="Dónde está">
-        {places.length === 0 && <p className={styles.hint}>En ningún sitio: si nadie la sabe de memoria, esta key está perdida.</p>}
+      <Section title={T.dondeEsta}>
+        {places.length === 0 && <p className={styles.hint}>{T.enNingunSitio}</p>}
         <ul className={styles.list}>
           {places.map((p, i) => (
             <li key={i}>
@@ -171,10 +158,10 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
       </Section>
 
       <Section
-        title="Entropía"
+        title={T.entropia}
         action={
           <Button icon={Plus} onClick={() => setProvenance({ sources: [...sources, { kind: 'dice' }] })}>
-            Fuente
+            {T.fuente}
           </Button>
         }
       >
@@ -189,43 +176,43 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             />
           ))}
         </ul>
-        <p className={styles.hint}>Si mezclas varias fuentes, basta con que una sea buena… salvo que el dispositivo que las mezcla esté comprometido.</p>
+        <p className={styles.hint}>{T.pistaMezcla}</p>
         {sources.some((s) => s.kind === 'coin') && (
           <p className={styles.hint}>
-            Hay varias formas de crear la semilla a mano con una moneda; una guía paso a paso es{' '}
+            {T.moneda.antes}{' '}
             <a className={styles.link} href={SEMILLA_MONEDA_URL} target="_blank" rel="noopener noreferrer">
-              semilla-moneda
+              {T.moneda.enlace}
             </a>
-            , de Estudio Bitcoin.
+            {T.moneda.despues}
           </p>
         )}
       </Section>
 
-      <Section title="Generación">
+      <Section title={T.generacion}>
         {isBlankProvenance(key) && carriers.length > 0 && (
           <div className={styles.suggestion}>
             <p>
-              {carriers.length === 1 ? `Esta key está en ${carriers[0]!.label}. ¿Se generó ahí?` : 'Esta key está en varios dispositivos. ¿Se generó en alguno?'}
+              {carriers.length === 1 ? T.estaEn(carriers[0]!.label) : T.estaEnVarios}
             </p>
             <div className={styles.buttonRow}>
               {carriers.map((d) => (
                 <Button key={d.id} icon={Cpu} onClick={() => generateOn(d.id)}>
-                  {carriers.length === 1 ? 'Sí, rellenar' : d.label}
+                  {carriers.length === 1 ? T.siRellenar : d.label}
                 </Button>
               ))}
             </div>
-            <p className={styles.hint}>Rellena la entropía (RNG del dispositivo) y el fabricante, modelo y firmware con que se generó.</p>
+            <p className={styles.hint}>{T.pistaRellenar}</p>
           </div>
         )}
         <Switch
           checked={!generatedBy}
-          onChange={(manual) => setProvenance({ generatedBy: manual ? undefined : { vendor: 'Desconocido' } })}
-          label="Calculada a mano"
-          hint="Sin dispositivo ni software que haya derivado la semilla."
+          onChange={(manual) => setProvenance({ generatedBy: manual ? undefined : { vendor: UNKNOWN_VENDOR } })}
+          label={T.aMano}
+          hint={T.pistaAMano}
         />
         {generatedBy && (
           <>
-            <Field label="Generada en">
+            <Field label={T.generadaEn}>
               {(fid) => (
                 <HardwareModelSelect
                   id={fid}
@@ -240,61 +227,57 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             </Field>
             {!generatorModel && (
               <div className={styles.twoCols}>
-                <Field label="Fabricante o software">
+                <Field label={T.fabricanteOSoftware}>
                   {(fid) => <TextInput id={fid} value={generatedBy.vendor} onChange={(vendor) => setProvenance({ generatedBy: { ...generatedBy, vendor } }, 'vendor')} />}
                 </Field>
-                <Field label="Nombre del modelo">
+                <Field label={T.nombreModelo}>
                   {(fid) => (
-                    <TextInput id={fid} value={generatedBy.model ?? ''} placeholder="opcional" optional onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, model: v || undefined } }, 'model')} />
+                    <TextInput id={fid} value={generatedBy.model ?? ''} placeholder={T.opcional} optional onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, model: v || undefined } }, 'model')} />
                   )}
                 </Field>
               </div>
             )}
-            <Field label="Firmware con el que se generó">
+            <Field label={T.firmware}>
               {(fid) => (
                 <TextInput
                   optional
                   id={fid}
                   value={generatedBy.firmware ?? ''}
-                  placeholder="p. ej. 5.6.0"
+                  placeholder={T.pistaFirmware}
                   onChange={(v) => setProvenance({ generatedBy: { ...generatedBy, firmware: v || undefined } }, 'firmware')}
                 />
               )}
             </Field>
-            <p className={styles.hint}>Cuenta el firmware de cuando se generó la semilla, no el que tenga ahora el dispositivo.</p>
+            <p className={styles.hint}>{T.firmwareDeEntonces}</p>
             <AdvisoryList matches={generatorAdvisories} />
           </>
         )}
         <Switch
           checked={independentlyVerified}
           onChange={(v) => setProvenance({ independentlyVerified: v })}
-          label="Verificada de forma independiente"
-          hint="Comprobaste con otra herramienta que la semilla sale de tu entropía (p. ej. tus tiradas de dados)."
+          label={T.verificada}
+          hint={T.pistaVerificada}
         />
         {!hasOwnEntropy && (
           <p className={independentlyVerified ? styles.warningHint : styles.hint}>
-            {independentlyVerified && <AlertTriangle size={12} aria-hidden />} Verificar solo protege si hay una fuente tuya (dados, moneda o cartas): demuestra que la
-            semilla sale de esa entropía, no que la entropía sea buena. Si solo hay RNG (de un dispositivo, de un software o desconocido), un fallo en él la
-            compromete igual.
+            {independentlyVerified && <AlertTriangle size={12} aria-hidden />} {T.verificarSinEntropiaPropia}
           </p>
         )}
         {mixesRng && (
           <p className={independentlyVerified ? styles.warningHint : styles.hint}>
-            {independentlyVerified && <AlertTriangle size={12} aria-hidden />} Mezclando un RNG con tus tiradas, normalmente no se puede verificar: la
-            parte del RNG es secreta y otra herramienta no puede recalcularla. Para poder verificar, genera la frase semilla solo con tu entropía
-            (dados o moneda) y recalcúlala en otra herramienta.
+            {independentlyVerified && <AlertTriangle size={12} aria-hidden />} {T.verificarConRng}
           </p>
         )}
       </Section>
 
       <DeleteButton
-        label="Eliminar key"
+        label={T.eliminar}
         onClick={() => {
           apply((m) => removeKey(m, id));
           back();
         }}
         disabled={model.keys.length <= 1}
-        reason="Tiene que haber al menos una key."
+        reason={T.haceFaltaKey}
       />
     </>
   );

@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { UI } from '../lib/text.ts';
 import { useScenario } from '../store/scenario.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
 import { showPanel } from '../store/mobile.ts';
@@ -29,6 +30,8 @@ import type { ItemIcon, ItemView, LocationNode as LocationNodeType } from './bui
 import { LOCATION_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
 import styles from './nodes.module.css';
+
+const T = UI.mapa;
 
 export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
   stateful: Cpu,
@@ -42,13 +45,13 @@ export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
 };
 
 /** Etiqueta del desastre simulado en la ubicación ('total' según el tipo de ubicación). */
-const DISASTER_TAG = { fire: 'Incendio', flood: 'Inundación', physical: 'Sin acceso', device: 'Averiado', cloud: 'Cuenta perdida' } as const;
+const DISASTER_TAG = T.desastres;
 
 /** Ubicación que hace falta en la simulación (texto además del color). */
-const USED_TAG = { attack: 'La usa el atacante', recovery: 'Necesaria' } as const;
+const USED_TAG = T.usada;
 
 /** Cómo cae el dispositivo en el ataque simulado (texto además del color). */
-const COMPROMISE = { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' } as const;
+const COMPROMISE = T.comprometido;
 
 /** Añade la pérdida de un objeto a la desgracia que se está simulando. */
 function addLoss(item: string) {
@@ -79,14 +82,14 @@ function ItemRow({ item }: { item: ItemView }) {
       <span className={styles.itemText}>
         <span className={styles.itemLabel}>
           {item.label}
-          {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label="con PIN" />}
-          {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label="cifrado" />}
+          {item.pinProtected && <Lock size={11} className={styles.inlineIcon} aria-label={T.conPin} />}
+          {item.encrypted && <LockKeyhole size={11} className={styles.inlineIcon} aria-label={T.cifradoAccesible} />}
         </span>
         {(item.survived || item.canLose) && (
           <span className={styles.itemTags}>
             {item.survived && (
               <span className={styles.survivedTag}>
-                <ShieldCheck size={11} aria-hidden /> Resiste
+                <ShieldCheck size={11} aria-hidden /> {T.resiste}
               </span>
             )}
             {item.canLose && (
@@ -96,9 +99,9 @@ function ItemRow({ item }: { item: ItemView }) {
                   e.stopPropagation();
                   addLoss(item.id);
                 }}
-                title="Añade su pérdida a las desgracias combinadas"
+                title={T.pistaPerdida}
               >
-                <CircleSlash size={11} aria-hidden /> {item.survived ? '¿Y si no resiste?' : '¿Y si se pierde?'}
+                <CircleSlash size={11} aria-hidden /> {item.survived ? T.ySiNoResiste : T.ySiSePierde}
               </button>
             )}
           </span>
@@ -113,7 +116,7 @@ function ItemRow({ item }: { item: ItemView }) {
           {item.registeredWallet && (
             <>
               {' · '}
-              <Network size={10} className={styles.inlineIcon} aria-hidden /> multisig
+              <Network size={10} className={styles.inlineIcon} aria-hidden /> {T.multisig}
             </>
           )}
         </span>
@@ -129,7 +132,7 @@ function ItemRow({ item }: { item: ItemView }) {
 
 export const LOCATION_ICONS: Record<LocationNodeType['data']['kind'], LucideIcon> = { physical: MapPin, device: Laptop, cloud: Cloud };
 const PROTECTION_ICONS: Record<NonNullable<LocationNodeType['data']['protection']>, LucideIcon> = { 'home-safe': Vault, 'bank-box': Landmark };
-export const PROTECTION_TEXT = { 'home-safe': 'Caja fuerte', 'bank-box': 'Caja del banco' } as const;
+export const PROTECTION_TEXT = UI.ubicacion.protecciones;
 
 /** Icono de una ubicación: el de su protección o, si no tiene, el de su tipo. */
 export function locationIcon(data: Pick<LocationNodeType['data'], 'kind' | 'protection'>): LucideIcon {
@@ -138,7 +141,7 @@ export function locationIcon(data: Pick<LocationNodeType['data'], 'kind' | 'prot
 
 /** "Caja fuerte · dentro de Casa", o null si no tiene protección ni está dentro de otra. */
 export function locationMeta(data: Pick<LocationNodeType['data'], 'protection' | 'insideName'>): string | null {
-  const parts = [data.protection && PROTECTION_TEXT[data.protection], data.insideName !== undefined && `dentro de ${data.insideName}`].filter(Boolean);
+  const parts = [data.protection && PROTECTION_TEXT[data.protection], data.insideName !== undefined && T.dentroDe(data.insideName)].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
 }
 
@@ -162,13 +165,13 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
             <span className={styles.locationTags}>
               {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
               {data.state === 'used' && <span className={styles.stateTag}>{USED_TAG[data.tone ?? 'recovery']}</span>}
-              {data.state === 'reached' && <span className={`${styles.stateTag} ${styles.reachedTag}`}>Al alcance</span>}
+              {data.state === 'reached' && <span className={`${styles.stateTag} ${styles.reachedTag}`}>{T.alAlcance}</span>}
             </span>
           )}
         </span>
-        <span className={styles.keyTags} aria-label="Keys materializadas aquí">
+        <span className={styles.keyTags} aria-label={T.keysAqui}>
           {data.keys.map((k) => (
-            <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={`${k.label} está aquí`}>
+            <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={T.keyAqui(k.label)}>
               {k.label}
             </span>
           ))}
@@ -181,7 +184,7 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
           ))}
         </ul>
       ) : (
-        <p className={styles.emptyLocation}>Vacía</p>
+        <p className={styles.emptyLocation}>{UI.esquema.vacia}</p>
       )}
       <Handle type="target" position={Position.Bottom} id="bottom" className={styles.handle} isConnectable={false} />
       {/* En vertical, lo contenido va debajo de su continente: la flecha sale de arriba. */}

@@ -8,8 +8,9 @@ const files = import.meta.glob<unknown>(['../../../../fixtures/*.json', '../../.
 
 const ORDER = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
 
-export type ExampleGroup = 'Para empezar' | 'Galería: single-sig' | 'Galería: multisig 2 de 3';
-export const EXAMPLE_GROUPS: readonly ExampleGroup[] = ['Para empezar', 'Galería: single-sig', 'Galería: multisig 2 de 3'];
+/** Sus nombres, en `UI.cabecera.gruposEjemplos`. */
+export type ExampleGroup = 'inicio' | 'single' | 'multi';
+export const EXAMPLE_GROUPS: readonly ExampleGroup[] = ['inicio', 'single', 'multi'];
 
 export interface Example {
   id: string;
@@ -21,9 +22,9 @@ export const examples: readonly Example[] = Object.entries(files)
   .map(([path, json]) => {
     const id = path.split('/').pop()!.replace(/\.json$/, '');
     const result = parseModel(json);
-    if (!result.ok) throw new Error(`El ejemplo "${id}" no es válido`);
+    if (!result.ok) throw new Error(`El ejemplo "${id}" no es válido`); // texto-ok: error de desarrollo
     const gallery = path.includes('/referencia/');
-    const group: ExampleGroup = !gallery ? 'Para empezar' : policyKeys(result.model.policy).length > 1 ? 'Galería: multisig 2 de 3' : 'Galería: single-sig';
+    const group: ExampleGroup = !gallery ? 'inicio' : policyKeys(result.model.policy).length > 1 ? 'multi' : 'single';
     return { id, group, model: result.model };
   })
   .sort((a, b) => EXAMPLE_GROUPS.indexOf(a.group) - EXAMPLE_GROUPS.indexOf(b.group) || rank(a.id) - rank(b.id) || a.id.localeCompare(b.id));

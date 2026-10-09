@@ -1,7 +1,7 @@
 import { ChevronDown, Redo2, Undo2 } from 'lucide-react';
 import { EXAMPLE_GROUPS, examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
-import { policyText } from '../lib/text.ts';
+import { policyText, UI } from '../lib/text.ts';
 import { loadExample } from '../storage/actions.ts';
 import { aboutDialog } from '../store/dialog.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
@@ -10,13 +10,14 @@ import { KeyChip } from './KeyChip.tsx';
 import styles from './Header.module.css';
 
 const CURRENT = '__actual';
+const T = UI.cabecera;
 
 function originText(origin: DocumentOrigin): string {
   switch (origin.kind) {
-    case 'example': return 'ejemplo';
-    case 'new': return 'nuevo';
+    case 'example': return T.origen.ejemplo;
+    case 'new': return T.origen.nuevo;
     case 'file': return origin.name;
-    case 'local': return 'guardado en el navegador';
+    case 'local': return T.origen.local;
   }
 }
 
@@ -27,9 +28,9 @@ function SaveStatus() {
   if (origin.kind === 'example' && !dirty) return null;
   const state = dirty ? 'dirty' : 'saved';
   return (
-    <span className={`${styles.status} ${styles[state]}`} title={dirty ? 'Guarda con Ctrl+S (cifrado, en este navegador)' : undefined}>
+    <span className={`${styles.status} ${styles[state]}`} title={dirty ? T.pistaGuardar : undefined}>
       <span className={styles.statusDot} aria-hidden />
-      {dirty ? 'Sin guardar' : 'Guardado'}
+      {dirty ? T.sinGuardar : T.guardado}
     </span>
   );
 }
@@ -46,7 +47,7 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <button className={styles.brand} onClick={() => void aboutDialog()} title="Acerca de llave-inglesa" aria-label="Acerca de llave-inglesa">
+      <button className={styles.brand} onClick={() => void aboutDialog()} title={T.acercaDe} aria-label={T.acercaDe}>
         <img className={styles.logo} src="/logo.svg" alt="" width={28} height={28} />
         <span className={styles.wordmark}>llave-inglesa</span>
       </button>
@@ -56,14 +57,14 @@ export function Header() {
       <FileMenu />
 
       <label className={styles.select}>
-        <select value={value} onChange={(e) => void loadExample(e.target.value)} aria-label="Documento abierto o ejemplo">
+        <select value={value} onChange={(e) => void loadExample(e.target.value)} aria-label={T.documentoAbierto}>
           {origin.kind !== 'example' && (
             <option value={CURRENT}>
               {model.name} ({originText(origin)})
             </option>
           )}
           {EXAMPLE_GROUPS.map((group) => (
-            <optgroup key={group} label={group}>
+            <optgroup key={group} label={T.gruposEjemplos[group]}>
               {examples
                 .filter((e) => e.group === group)
                 .map((e) => (
@@ -80,7 +81,7 @@ export function Header() {
       <SaveStatus />
 
       <div className={styles.policy}>
-        <span className={styles.policyLabel}>Política</span>
+        <span className={styles.policyLabel}>{T.politica}</span>
         <span className={styles.policyValue}>{policyText(model.policy, label)}</span>
         <span className={styles.keys}>
           {model.keys.map((k) => (
@@ -90,17 +91,17 @@ export function Header() {
       </div>
 
       <div className={styles.history}>
-        <button className={styles.historyButton} onClick={undo} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
+        <button className={styles.historyButton} onClick={undo} disabled={!canUndo} aria-label={T.deshacer} title={T.pistaDeshacer}>
           <Undo2 size={16} />
         </button>
-        <button className={styles.historyButton} onClick={redo} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Shift+Z)">
+        <button className={styles.historyButton} onClick={redo} disabled={!canRedo} aria-label={T.rehacer} title={T.pistaRehacer}>
           <Redo2 size={16} />
         </button>
       </div>
 
-      <span className={styles.offline} title="La aplicación no puede hacer peticiones de red" aria-label="100% local: la aplicación no puede hacer peticiones de red">
+      <span className={styles.offline} title={T.pistaLocal} aria-label={T.localAccesible}>
         <span className={styles.offlineDot} aria-hidden />
-        <span className={styles.offlineText}>100% local</span>
+        <span className={styles.offlineText}>{T.local}</span>
       </span>
     </header>
   );

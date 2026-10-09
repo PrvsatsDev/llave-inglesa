@@ -1,8 +1,11 @@
 import { AlertOctagon, Download, RotateCcw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { UI } from '../lib/text.ts';
 import { rescueDownload } from '../storage/actions.ts';
 import { hasUnsavedChanges, useDocument } from '../store/document.ts';
 import styles from './Crash.module.css';
+
+const T = UI.marco.fallo;
 
 interface State {
   error: Error | null;
@@ -21,7 +24,7 @@ export class CrashBoundary extends Component<{ children: ReactNode }, State> {
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
     // Solo en la consola de este navegador: la app no envía nada a ningún sitio.
-    console.error('llave-inglesa: fallo de la interfaz', error, info.componentStack);
+    console.error('llave-inglesa: fallo de la interfaz', error, info.componentStack); // texto-ok: solo en la consola
   }
 
   override render() {
@@ -31,23 +34,23 @@ export class CrashBoundary extends Component<{ children: ReactNode }, State> {
       <main className={styles.crash} role="alert">
         <div className={styles.card}>
           <AlertOctagon size={28} className={styles.icon} aria-hidden />
-          <h1 className={styles.title}>Algo ha fallado en la interfaz</h1>
+          <h1 className={styles.title}>{T.titulo}</h1>
           <p className={styles.text}>
-            Es un fallo de la aplicación, no de tu esquema. {unsaved ? 'Tienes cambios sin guardar: descárgalos antes de recargar.' : 'Tu esquema no tiene cambios sin guardar.'}
+            {T.noEsTuEsquema} {unsaved ? T.conCambios : T.sinCambios}
           </p>
           <div className={styles.actions}>
             <button className={unsaved ? styles.primary : styles.secondary} onClick={rescueDownload}>
-              <Download size={14} aria-hidden /> Descargar el esquema (.json)
+              <Download size={14} aria-hidden /> {T.descargar}
             </button>
             <button className={unsaved ? styles.secondary : styles.primary} onClick={() => window.location.reload()}>
-              <RotateCcw size={14} aria-hidden /> Recargar
+              <RotateCcw size={14} aria-hidden /> {T.recargar}
             </button>
           </div>
           <p className={styles.note}>
-            El fichero va sin cifrar: guárdalo en un sitio seguro, ábrelo con «Abrir fichero…» y bórralo después.
+            {T.nota}
           </p>
           <details className={styles.details}>
-            <summary>Detalle técnico</summary>
+            <summary>{T.detalle}</summary>
             <pre>{this.state.error.message}</pre>
           </details>
         </div>

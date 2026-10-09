@@ -43,6 +43,9 @@ docs/CAPACIDADES.md  Inventario de todo lo que la herramienta soporta (base de l
   fingerprints/xpubs. El modelo en sí es sensible (un mapa del tesoro): se guarda cifrado.
 - **Sin red**: CSP con `connect-src 'none'`, fuentes locales, sin telemetría ni CDNs.
 - **El motor no produce texto**: devuelve estructuras; los textos van en `packages/text`.
+- **La interfaz tampoco escribe texto**: sus textos van en `packages/text/src/interfaz/` (objeto `UI`, una zona por
+  fichero), para poder traducirla. `apps/web/src/textos.test.ts` falla si aparece texto en un componente; las
+  excepciones (valores del modelo, mensajes de consola) llevan el comentario `texto-ok` con el motivo.
 - **La UI nunca modifica el modelo por su cuenta**: usa las operaciones de `domain/edit.ts`
   (puras, con cascada). Principio: **desactivar conserva, eliminar limpia** (quitar un PIN o
   una passphrase deja las referencias latentes; eliminar algo limpia en cascada).

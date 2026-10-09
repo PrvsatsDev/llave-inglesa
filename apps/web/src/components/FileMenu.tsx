@@ -1,10 +1,13 @@
 import { BookOpen, ChevronDown, Download, FilePlus2, FolderOpen, HardDriveDownload, Info, Lock, Save, Trash2, Unlock, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { UI } from '../lib/text.ts';
 import { exportEncrypted, exportPlain, forgetLocal, hasLocalDocument, importFile, newDocument, openLocal, saveLocal } from '../storage/actions.ts';
 import { aboutDialog } from '../store/dialog.ts';
 import { useNavigation } from '../store/navigation.ts';
 import { APP_VERSION } from '../version.ts';
 import styles from './FileMenu.module.css';
+
+const T = UI.archivo;
 
 interface Item {
   icon: LucideIcon;
@@ -60,19 +63,19 @@ export function FileMenu() {
   const stored = hasLocalDocument();
   const groups: Item[][] = [
     [
-      { icon: FilePlus2, label: 'Nuevo esquema', run: newDocument },
-      { icon: FolderOpen, label: 'Abrir fichero…', hint: '.llave o .json', run: () => fileRef.current?.click() },
-      ...(stored ? [{ icon: Unlock, label: 'Abrir guardado del navegador', run: openLocal }] : []),
+      { icon: FilePlus2, label: T.nuevo, run: newDocument },
+      { icon: FolderOpen, label: T.abrir, hint: T.pistaAbrir, run: () => fileRef.current?.click() },
+      ...(stored ? [{ icon: Unlock, label: T.abrirLocal, run: openLocal }] : []),
     ],
     [
-      { icon: Save, label: 'Guardar en este navegador', hint: 'cifrado', shortcut: 'Ctrl+S', run: saveLocal },
-      { icon: Lock, label: 'Exportar cifrado…', hint: '.llave', run: exportEncrypted },
-      { icon: HardDriveDownload, label: 'Exportar sin cifrar…', hint: '.json', run: exportPlain },
+      { icon: Save, label: T.guardarLocal, hint: T.pistaGuardarLocal, shortcut: 'Ctrl+S', run: saveLocal },
+      { icon: Lock, label: T.exportarCifrado, hint: '.llave', run: exportEncrypted },
+      { icon: HardDriveDownload, label: T.exportarPlano, hint: '.json', run: exportPlain },
     ],
-    ...(stored ? [[{ icon: Trash2, label: 'Borrar guardado del navegador', danger: true, run: forgetLocal }]] : []),
+    ...(stored ? [[{ icon: Trash2, label: T.borrarLocal, danger: true, run: forgetLocal }]] : []),
     [
-      { icon: BookOpen, label: 'Guía de uso', run: () => useNavigation.getState().openGuide() },
-      { icon: Info, label: 'Acerca de llave-inglesa', run: () => void aboutDialog() },
+      { icon: BookOpen, label: T.guia, run: () => useNavigation.getState().openGuide() },
+      { icon: Info, label: T.acercaDe, run: () => void aboutDialog() },
     ],
   ];
 
@@ -90,12 +93,12 @@ export function FileMenu() {
         }}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label="Archivo"
+        aria-label={T.menu}
       >
-        <Download size={14} aria-hidden /> <span className={styles.triggerText}>Archivo</span> <ChevronDown size={13} aria-hidden />
+        <Download size={14} aria-hidden /> <span className={styles.triggerText}>{T.menu}</span> <ChevronDown size={13} aria-hidden />
       </button>
       {open && (
-        <div className={styles.menu} role="menu" aria-label="Archivo" ref={listRef} onKeyDown={onMenuKey}>
+        <div className={styles.menu} role="menu" aria-label={T.menu} ref={listRef} onKeyDown={onMenuKey}>
           {groups.map((group, g) => (
             <div key={g} className={styles.group}>
               {group.map((item) => (
@@ -117,7 +120,7 @@ export function FileMenu() {
             </div>
           ))}
           <p className={styles.footer}>
-            Todo ocurre en tu equipo: nada se envía a ningún servidor. <span className={styles.version}>v{APP_VERSION}</span>
+            {T.pie} <span className={styles.version}>v{APP_VERSION}</span>
           </p>
         </div>
       )}

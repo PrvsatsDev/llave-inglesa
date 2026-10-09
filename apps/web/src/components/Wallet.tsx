@@ -8,6 +8,7 @@ import {
   matchText,
   SCRIPT_TEXT,
   SEED_WORDS_TEXT,
+  UI,
   walletProblemText,
   walletWarningText,
 } from '../lib/text.ts';
@@ -15,6 +16,8 @@ import { useDocument } from '../store/document.ts';
 import { DescriptorPrint } from './DescriptorPrint.tsx';
 import { Button, Section, Segmented } from './inspector/fields.tsx';
 import styles from './Wallet.module.css';
+
+const T = UI.descriptor;
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -29,7 +32,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   };
   return (
     <Button icon={copied ? Check : Copy} onClick={copy} title={label}>
-      {copied ? 'Copiado' : 'Copiar'}
+      {copied ? T.copiado : UI.comun.copiar}
     </Button>
   );
 }
@@ -53,11 +56,11 @@ export function WalletSection({ model }: { model: CustodyModel }) {
 
   return (
     <Section
-      title="Descriptor de la cartera"
+      title={T.titulo}
       action={
         flat && (
           <Button icon={FileInput} onClick={() => setImporting((v) => !v)}>
-            Importar
+            {T.importar}
           </Button>
         )
       }
@@ -76,17 +79,14 @@ export function WalletSection({ model }: { model: CustodyModel }) {
       {imported && <ImportReport matches={imported} label={label} onClose={() => setImported(null)} />}
 
       {!hasXpubs && !importing && (
-        <p className={styles.hint}>
-          Importa el descriptor que ya tienes (Sparrow, Nunchuk, Coldcard…) o pega la xpub en la ficha de cada key: se obtiene el descriptor
-          y la primera dirección, para comprobar que coincide con tu cartera. No permite gastar, pero sí ver tu saldo.
-        </p>
+        <p className={styles.hint}>{T.pistaSinXpubs}</p>
       )}
 
       {result.ok ? (
         <>
           <Descriptor descriptor={formatDescriptor(result.descriptor)} address={deriveAddress(result.descriptor, result.network)} testnet={result.network === 'testnet'} />
           <Button icon={Printer} onClick={() => setPrinting(true)}>
-            Imprimir o guardar en PDF
+            {T.imprimir}
           </Button>
           {printing && <DescriptorPrint model={model} descriptor={result.descriptor} network={result.network} onClose={() => setPrinting(false)} />}
         </>
@@ -112,24 +112,24 @@ export function WalletSection({ model }: { model: CustodyModel }) {
 
       {flat && (
         <>
-          <p className={styles.fieldTitle}>Tipo de dirección</p>
+          <p className={styles.fieldTitle}>{T.tipoDireccion}</p>
           <Segmented
-            label="Tipo de dirección"
+            label={T.tipoDireccion}
             value={wallet.script}
             options={scripts.map((s) => ({ value: s, label: SCRIPT_TEXT[s] }))}
             onChange={(script) => apply((m) => setWallet(m, { ...walletOf(m), script }))}
           />
           {isMultisigScript(wallet.script) && !wallet.sorted && (
-            <p className={styles.hint}>Con multi (no sortedmulti) el orden de las keys importa: es el de la política.</p>
+            <p className={styles.hint}>{T.ordenImporta}</p>
           )}
         </>
       )}
-      {!flat && <p className={styles.hint}>La política tiene umbrales anidados: necesita Miniscript, que todavía no se escribe.</p>}
+      {!flat && <p className={styles.hint}>{T.anidados}</p>}
 
       {hasXpubs && (
         <p className={styles.privacy}>
           <Eye size={14} aria-hidden />
-          Con las xpubs, este documento deja ver tu saldo y todos tus movimientos. Guárdalo cifrado.
+          {T.privacidad}
         </p>
       )}
     </Section>
@@ -141,8 +141,11 @@ function Descriptor({ descriptor, address, testnet }: { descriptor: string; addr
     <div className={styles.result}>
       <div className={styles.block}>
         <div className={styles.blockHeader}>
-          <span className={styles.fieldTitle}>Descriptor{testnet && <span className={styles.badge}>testnet</span>}</span>
-          <CopyButton value={descriptor} label="Copiar el descriptor" />
+          <span className={styles.fieldTitle}>
+            {T.descriptor}
+            {testnet && <span className={styles.badge}>{T.testnet}</span>}
+          </span>
+          <CopyButton value={descriptor} label={T.copiarDescriptor} />
         </div>
         <p className={styles.mono} data-testid="descriptor">
           {descriptor}
@@ -150,16 +153,13 @@ function Descriptor({ descriptor, address, testnet }: { descriptor: string; addr
       </div>
       <div className={styles.block}>
         <div className={styles.blockHeader}>
-          <span className={styles.fieldTitle}>Primera dirección de recepción</span>
-          <CopyButton value={address} label="Copiar la dirección" />
+          <span className={styles.fieldTitle}>{T.primeraDireccion}</span>
+          <CopyButton value={address} label={T.copiarDireccion} />
         </div>
         <p className={`${styles.mono} ${styles.address}`} data-testid="primera-direccion">
           {address}
         </p>
-        <p className={styles.hint}>
-          Compárala con la primera dirección de recepción de tu cartera (o la que muestra tu dispositivo). Si coincide, el descriptor es el
-          bueno.
-        </p>
+        <p className={styles.hint}>{T.pistaDireccion}</p>
       </div>
     </div>
   );
@@ -197,8 +197,8 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
         className={styles.textarea}
         value={text}
         rows={5}
-        aria-label="Descriptor a importar"
-        placeholder="wsh(sortedmulti(2,[a1b2c3d4/48h/0h/0h/2h]xpub…/<0;1>/*,…))#…"
+        aria-label={T.aImportar}
+        placeholder={T.ejemplo}
         spellCheck={false}
         autoComplete="off"
         onChange={(e) => {
@@ -212,13 +212,13 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
           {error}
         </p>
       )}
-      <p className={styles.hint}>Solo la parte pública: xpubs, fingerprints y derivaciones. Nunca palabras ni claves privadas.</p>
+      <p className={styles.hint}>{T.soloPublico}</p>
       <div className={styles.buttons}>
         <Button variant="primary" icon={FileInput} onClick={submit} disabled={text.trim() === ''}>
-          Importar descriptor
+          {T.importarDescriptor}
         </Button>
         <Button icon={X} onClick={onCancel}>
-          Cancelar
+          {UI.comun.cancelar}
         </Button>
       </div>
     </div>
@@ -231,17 +231,14 @@ function ImportReport({ matches, label, onClose }: { matches: Match[]; label: (i
     <div className={byOrder ? styles.warningBox : styles.okBox} role="status">
       <div className={styles.blockHeader}>
         <span>
-          {byOrder ? <AlertTriangle size={14} aria-hidden /> : <Check size={14} aria-hidden />} Importado: {matches.map((m) => matchText(m, label)).join('; ')}.
+          {byOrder ? <AlertTriangle size={14} aria-hidden /> : <Check size={14} aria-hidden />} {T.importado(matches.map((m) => matchText(m, label)))}
         </span>
-        <button className={styles.close} onClick={onClose} aria-label="Cerrar">
+        <button className={styles.close} onClick={onClose} aria-label={UI.comun.cerrar}>
           <X size={14} />
         </button>
       </div>
       {byOrder && (
-        <p>
-          Las emparejadas por orden pueden no ser la key que crees: comprueba en la ficha de cada una que el fingerprint es el de su dispositivo
-          o su backup, o corrige los nombres.
-        </p>
+        <p>{T.porOrden}</p>
       )}
     </div>
   );

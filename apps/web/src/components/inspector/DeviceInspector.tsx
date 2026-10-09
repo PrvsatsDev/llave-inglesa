@@ -1,5 +1,6 @@
 import { advisoriesFor, catalogModelByName, removeDevice, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
 import { Camera, Cpu } from 'lucide-react';
+import { UI } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, SecretToggles, Segmented, Select, Switch, TextInput } from './fields.tsx';
@@ -7,17 +8,15 @@ import { DuressNotes } from '../Findings.tsx';
 import { AdvisoryList, catalogFeatures, HardwareModelSelect } from './Hardware.tsx';
 import styles from './fields.module.css';
 
-const KIND_OPTIONS = [
-  { value: 'stateful', label: 'Guarda keys' },
-  { value: 'stateless', label: 'Stateless' },
-] as const;
+const T = UI.dispositivo;
+const KIND_OPTIONS = (['stateful', 'stateless'] as const).map((value) => ({ value, label: T.tipos[value] }));
 
 function duressHint(catalog: CatalogModel | undefined): string {
   const kinds = catalog?.duress ?? [];
-  if (kinds.includes('decoy') && kinds.includes('wipe')) return 'Bajo amenaza das otro PIN que abre un wallet señuelo o borra el dispositivo.';
-  if (kinds.includes('decoy')) return 'Bajo amenaza das otro PIN que abre un wallet señuelo.';
-  if (kinds.includes('wipe')) return 'Bajo amenaza das otro PIN que borra el dispositivo.';
-  return 'Bajo amenaza das otro PIN (señuelo o borrado).';
+  if (kinds.includes('decoy') && kinds.includes('wipe')) return T.coaccion.ambas;
+  if (kinds.includes('decoy')) return T.coaccion.senuelo;
+  if (kinds.includes('wipe')) return T.coaccion.borrado;
+  return T.coaccion.generico;
 }
 
 export function DeviceInspector({ model, device }: { model: CustodyModel; device: Device }) {
@@ -49,42 +48,42 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
 
   return (
     <>
-      <PanelHeader icon={device.kind === 'stateful' ? Cpu : Camera} kind="Dispositivo" title={device.label} />
+      <PanelHeader icon={device.kind === 'stateful' ? Cpu : Camera} kind={T.tipo} title={device.label} />
 
       <Section>
-        <Field label="Nombre">{(fid) => <TextInput id={fid} value={device.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
-        <Field label="Modelo">{(fid) => <HardwareModelSelect id={fid} value={catalog} onChange={pickModel} />}</Field>
+        <Field label={UI.campos.nombre}>{(fid) => <TextInput id={fid} value={device.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
+        <Field label={T.modelo}>{(fid) => <HardwareModelSelect id={fid} value={catalog} onChange={pickModel} />}</Field>
         {!catalog && (
           <div className={styles.twoCols}>
-            <Field label="Fabricante">{(fid) => <TextInput id={fid} value={device.vendor} onChange={(vendor) => patch({ vendor }, 'vendor')} />}</Field>
-            <Field label="Nombre del modelo">
-              {(fid) => <TextInput id={fid} value={device.model ?? ''} placeholder="opcional" optional onChange={(v) => patch({ model: v || undefined }, 'model')} />}
+            <Field label={T.fabricante}>{(fid) => <TextInput id={fid} value={device.vendor} onChange={(vendor) => patch({ vendor }, 'vendor')} />}</Field>
+            <Field label={T.nombreModelo}>
+              {(fid) => <TextInput id={fid} value={device.model ?? ''} placeholder={T.opcional} optional onChange={(v) => patch({ model: v || undefined }, 'model')} />}
             </Field>
           </div>
         )}
-        <Field label="Firmware instalado">
-          {(fid) => <TextInput id={fid} value={device.firmware ?? ''} placeholder="p. ej. 5.6.0" optional onChange={(v) => patch({ firmware: v || undefined }, 'firmware')} />}
+        <Field label={T.firmware}>
+          {(fid) => <TextInput id={fid} value={device.firmware ?? ''} placeholder={T.pistaFirmware} optional onChange={(v) => patch({ firmware: v || undefined }, 'firmware')} />}
         </Field>
         {catalog && <p className={styles.hint}>{catalogFeatures(catalog)}</p>}
         <AdvisoryList matches={advisories} />
-        <Field label="Ubicación">
+        <Field label={UI.campos.ubicacion}>
           {(fid) => (
             <Select id={fid} value={device.location} options={model.locations.map((l) => ({ value: l.id, label: l.name }))} onChange={(location) => patch({ location })} />
           )}
         </Field>
       </Section>
 
-      <Section title="Tipo">
-        <Segmented label="Tipo de dispositivo" value={device.kind} options={KIND_OPTIONS} onChange={(kind) => patch({ kind })} />
+      <Section title={T.tipoTitulo}>
+        <Segmented label={T.tipoDispositivo} value={device.kind} options={KIND_OPTIONS} onChange={(kind) => patch({ kind })} />
         <p className={styles.hint}>
           {device.kind === 'stateful'
-            ? 'Guarda las keys en su memoria (Coldcard, Jade, Passport…). Quien lo tenga y sepa el PIN puede firmar.'
-            : 'No guarda nada: hay que cargarle la semilla cada vez (SeedSigner, Krux…).'}
+            ? T.pistaStateful
+            : T.pistaStateless}
         </p>
       </Section>
 
       {device.kind === 'stateful' && (
-        <Section title="Keys que guarda">
+        <Section title={T.keysQueGuarda}>
           <SecretToggles
             model={model}
             options={keyOptions}
@@ -100,12 +99,12 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
 
       {(device.kind === 'stateless' || device.acceptsExternalSeed) && (
         <Section
-          title="Keys que firmas con él"
+          title={T.keysQueFirmas}
           action={
             device.kind === 'stateless' &&
             device.loads && (
-              <Button onClick={() => patch({ loads: undefined })} title="Volver a asumir que cualquier semilla puede pasar por él">
-                Sin indicar
+              <Button onClick={() => patch({ loads: undefined })} title={T.pistaSinIndicar}>
+                {T.sinIndicar}
               </Button>
             )
           }
@@ -122,23 +121,23 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
           />
           <p className={styles.hint}>
             {device.loads === undefined && device.kind === 'stateless'
-              ? 'Sin indicar: asumimos que cualquier frase semilla que tengas escrita puede pasar por él.'
-              : 'Semillas que cargas en él para firmar.'}{' '}
+              ? T.cargasSinIndicar
+              : T.cargas}{' '}
             {catalog?.antiExfil
-              ? 'Tiene anti-exfil: un firmware malicioso no podría filtrarlas en las firmas (si el software con el que firmas lo usa).'
-              : 'Un firmware malicioso podría filtrarlas en las firmas.'}
+              ? T.antiExfil
+              : T.sinAntiExfil}
           </p>
         </Section>
       )}
 
-      <Section title="Seguridad y funciones">
-        <Switch checked={device.pinProtected} onChange={(pinProtected) => patch({ pinProtected })} label="Protegido por PIN" hint="Quien sepa el PIN se indica en la ficha de cada persona." />
+      <Section title={T.seguridad}>
+        <Switch checked={device.pinProtected} onChange={(pinProtected) => patch({ pinProtected })} label={T.pin} hint={T.pistaPin} />
         {device.pinProtected && (!catalog || catalog.duress.length > 0) && (
           <Switch
             checked={device.duressPin}
             onChange={(duressPin) => patch({ duressPin })}
-            label="PIN de coacción configurado"
-            hint={`${duressHint(catalog)} Encarece la llave inglesa, pero no la evita: un atacante informado puede saber que existe.`}
+            label={T.pinCoaccion}
+            hint={`${duressHint(catalog)} ${T.coaccion.noLaEvita}`}
           />
         )}
         {device.pinProtected && device.duressPin && <DuressNotes model={model} device={device.id} />}
@@ -147,15 +146,15 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
             <Switch
               checked={device.acceptsExternalSeed}
               onChange={(acceptsExternalSeed) => patch({ acceptsExternalSeed })}
-              label="Firma con semillas externas"
-              hint="Puede cargar temporalmente otra semilla para firmar con ella."
+              label={T.semillasExternas}
+              hint={T.pistaSemillasExternas}
             />
             {(!catalog || catalog.registersMultisig) && (
               <Switch
                 checked={device.registeredWallet}
                 onChange={(registeredWallet) => patch({ registeredWallet })}
-                label="Multisig registrado"
-                hint="Guarda la configuración del wallet, y por tanto todas las xpubs."
+                label={T.multisigRegistrado}
+                hint={T.pistaMultisig}
               />
             )}
           </>
@@ -163,7 +162,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
       </Section>
 
       <DeleteButton
-        label="Eliminar dispositivo"
+        label={T.eliminar}
         onClick={() => {
           apply((m) => removeDevice(m, id));
           back();

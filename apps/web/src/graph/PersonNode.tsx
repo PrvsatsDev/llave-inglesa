@@ -1,26 +1,16 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Brain, Crown, User } from 'lucide-react';
+import { UI } from '../lib/text.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
 import type { PersonNode as PersonNodeType } from './build.ts';
 import { PERSON_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
 import styles from './nodes.module.css';
 
-export const ROLE = {
-  owner: 'Titular',
-  heir: 'Heredero/a',
-  custodian: 'Custodio/a',
-  other: 'Otra persona',
-} as const;
+export const ROLE = UI.persona.roles;
 
 /** Etiqueta del papel de la persona en el escenario activo. */
-const STATE: Partial<Record<NonNullable<PersonNodeType['data']['state']>, string>> = {
-  coerced: 'Coacción',
-  attacker: 'Traición',
-  dead: 'Fallecimiento',
-  incapacitated: 'Incapacidad',
-  forgot: 'Olvido',
-};
+const STATE: Partial<Record<NonNullable<PersonNodeType['data']['state']>, string>> = UI.mapa.estados;
 
 export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
   const selected = useSelection((s) => isSelected(s.selected, 'person', id));
@@ -48,7 +38,7 @@ export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
       </div>
       {data.knows.length > 0 && (
         <div className={styles.knows}>
-          <Brain size={12} className={styles.knowsIcon} aria-label="Sabe de memoria" />
+          <Brain size={12} className={styles.knowsIcon} aria-label={UI.mapa.sabeDeMemoria} />
           {data.knows.map((b, i) => (
             <SecretBadge key={i} badge={b} withDevice />
           ))}

@@ -2,6 +2,7 @@ import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyMod
 import type { DeviceCompromise, Disaster } from '@llave-inglesa/engine';
 import type { Edge, MarkerType, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
+import { UI } from '../lib/text.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
 import { layoutGraph, type Orientation } from './layout.ts';
 
@@ -63,13 +64,8 @@ export interface Graph {
   edges: AccessEdge[];
 }
 
-const MEDIUM: Record<Artifact['medium'], string> = {
-  paper: 'papel',
-  metal: 'metal',
-  washers: 'arandelas',
-  digital: 'digital',
-  other: 'otro soporte',
-};
+const T = UI.mapa;
+const MEDIUM: Record<Artifact['medium'], string> = T.soportes;
 
 export function secretBadge(model: CustodyModel, s: SecretRef, label = indexModel(model).label): SecretBadge {
   switch (s.type) {
@@ -102,7 +98,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     kind: 'device',
     id: d.id,
     label: d.label,
-    subtitle: [d.vendor !== d.label ? d.vendor : null, d.kind === 'stateful' ? 'guarda keys' : 'sin estado'].filter(Boolean).join(' · '),
+    subtitle: [d.vendor !== d.label ? d.vendor : null, d.kind === 'stateful' ? T.guardaKeys : T.sinEstado].filter(Boolean).join(' · '),
     icon: d.kind,
     badges: activeHolds(d).map((key) => ({ kind: 'holds', key, label: label(key), color: keyColor(model, key) })),
     pinProtected: d.pinProtected,
@@ -114,7 +110,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     kind: 'artifact',
     id: a.id,
     label: a.label,
-    subtitle: a.lockedBy.length > 0 ? `${MEDIUM[a.medium]} · cifrado` : MEDIUM[a.medium],
+    subtitle: a.lockedBy.length > 0 ? `${MEDIUM[a.medium]} · ${T.cifrado}` : MEDIUM[a.medium],
     icon: a.contents.every((c) => c.type === 'descriptor') ? 'descriptor' : a.medium,
     badges: a.contents.filter(active).map(badge),
     pinProtected: false,
@@ -138,7 +134,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     l.access.map((a): AccessEdge => {
       const base = { id: `access:${a.person}:${l.id}`, source: a.person, target: l.id, ...(vertical ? { sourceHandle: 'left', targetHandle: 'right' } : { sourceHandle: 'top', targetHandle: 'bottom' }) };
       if (a.when.type === 'always') return { ...base, data: { conditional: false }, className: 'access-always' };
-      const text = a.when.type === 'after-death' ? `tras fallecer ${label(a.when.person)}` : `si ${label(a.when.person)} no puede actuar`;
+      const text = a.when.type === 'after-death' ? T.trasFallecer(label(a.when.person)) : T.siNoPuede(label(a.when.person));
       return { ...base, data: { conditional: true }, label: text, className: 'access-conditional' };
     }),
   );

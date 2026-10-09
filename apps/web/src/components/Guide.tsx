@@ -1,4 +1,4 @@
-import { CIFRAS, GUIA, type Bloque, type Capitulo, type Escenario, type Trozo } from '@llave-inglesa/text';
+import { CIFRAS, GUIA, UI, type Bloque, type Capitulo, type Escenario, type Trozo } from '../lib/text.ts';
 import { BookOpen, ChevronLeft, ChevronRight, Lightbulb, Map as MapIcon, Play } from 'lucide-react';
 import { loadExample } from '../storage/actions.ts';
 import { useDocument } from '../store/document.ts';
@@ -53,7 +53,7 @@ function Chapter({ chapter }: { chapter: Capitulo }) {
           <Block key={i} block={b} />
         ))}
       </article>
-      <nav className={styles.pager} aria-label="Capítulos">
+      <nav className={styles.pager} aria-label={UI.navegacion.capitulos}>
         {prev ? (
           <button className={styles.pagerButton} onClick={() => openGuide(prev.id)}>
             <ChevronLeft size={14} aria-hidden /> {prev.titulo}
@@ -156,7 +156,7 @@ function ExampleButton({ example, label }: { example: string; label: string }) {
   return (
     <button className={`${styles.action} ${open ? styles.done : ''}`} onClick={() => void ensureExample(example)}>
       <MapIcon size={14} aria-hidden /> {label}
-      {open && <span className={styles.actionState}>abierto</span>}
+      {open && <span className={styles.actionState}>{UI.navegacion.abierto}</span>}
     </button>
   );
 }
@@ -174,7 +174,7 @@ function SimulateButton({ example, scenario, label }: { example: string; scenari
   return (
     <button className={`${styles.action} ${styles.simulate} ${on ? styles.done : ''}`} onClick={() => void run()} aria-pressed={on}>
       <Play size={14} aria-hidden /> {label}
-      {on && <span className={styles.actionState}>en el mapa</span>}
+      {on && <span className={styles.actionState}>{UI.navegacion.enElMapa}</span>}
     </button>
   );
 }
