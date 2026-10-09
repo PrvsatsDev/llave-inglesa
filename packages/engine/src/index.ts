@@ -10,3 +10,4 @@ export * from './losses.ts';
 export * from './policy.ts';
 export * from './score.ts';
 export * from './world.ts';
+export * from './letter.ts';

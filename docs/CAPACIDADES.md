@@ -49,6 +49,8 @@ Reglas que protegen: PIN del dispositivo, **passphrase** (sin ella la semilla so
 
 **Privacidad**: si un atacante consigue todas las xpubs, ve el saldo y los movimientos aunque no pueda gastar.
 
+**Carta para los herederos** (estructura, `inheritanceLetter`): sale de la simulación de herencia, así que solo lleva lo que necesitan y a lo que llegan: las ubicaciones mínimas y, en cada una, solo las piezas que se usan, con lo que aporta cada una (frase semilla, passphrase, PIN apuntado, descriptor; un dispositivo, qué keys firma y si necesita su PIN), lo que alguien sabe de memoria (quién, nunca cuál), si se usa el descriptor, si no se recupera solo por faltar una copia del descriptor al alcance de los herederos, y dónde guardarla: las ubicaciones físicas a las que llega algún heredero tras el fallecimiento, primero las que solo se abren entonces. No cambia ninguna puntuación: el motor ya supone que el ladrón conoce el mapa.
+
 ## 4. Desgracias (resiliencia)
 
 Desastres por ubicación, pérdida de un objeto, fallecimiento, incapacidad y olvido. Se buscan las combinaciones mínimas que dejan los fondos inaccesibles para siempre.
