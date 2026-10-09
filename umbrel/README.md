@@ -37,3 +37,15 @@ En Umbrel se instala fijada por su digest (`imagen:X.Y.Z@sha256:…`), que da `d
 El cifrado del documento usa WebCrypto, que el navegador solo da en un contexto seguro (HTTPS o `localhost`). Por eso
 la app pide HTTPS a Umbrel (`requiresHttps: true`, umbrelOS 2.0 o posterior), que la abre en
 `https://<tu-umbrel>:<puerto>` con su propio certificado.
+
+## La tienda comunitaria
+
+La app se instala desde la tienda comunitaria [psats-umbrel-app-store](https://github.com/PrvsatsDev/psats-umbrel-app-store)
+(id `psats`, app `psats-llave-inglesa`, puerto 4580). Su `docker-compose.yml` fija la imagen por su digest, así que
+**con cada versión** hay que actualizarla: cuando el workflow publique `X.Y.Z`, poner en la tienda la nueva imagen
+(`ghcr.io/prvsatsdev/llave-inglesa:X.Y.Z@sha256:…`, el digest de `docker buildx imagetools inspect`), y la versión y
+las notas en su `umbrel-app.yml`.
+
+Probado en umbrelOS 2.0: se abre en `https://umbrel.local:4580` con el certificado de Umbrel, que el navegador no
+conoce (avisa de que no es seguro; la conexión sí va cifrada). Aceptado el aviso, es un contexto seguro: el guardado
+cifrado funciona y se vuelve a abrir tras cerrar el navegador.

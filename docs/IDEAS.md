@@ -5,9 +5,12 @@ pensarse antes de implementarla.
 
 ## Interfaz y distribución
 
-- **App para Umbrel** (2026-10-03): Docker + `umbrel-app.yml`. Umbrel sirve por http en la red local,
-  donde el navegador no da WebCrypto (`crypto.subtle`), así que el cifrado necesitaría una alternativa
-  en JavaScript puro (p. ej. @noble/ciphers + @noble/hashes).
+- **Tienda oficial de Umbrel** (2026-10-09): ya funciona en la tienda comunitaria
+  (`PrvsatsDev/psats-umbrel-app-store`). Para la oficial (`getumbrel/umbrel-apps`), un PR con la carpeta de la app,
+  capturas y logo en la descripción; dudas: la interfaz solo en español y que exige umbrelOS 2.0 (HTTPS).
+- **Traducción al inglés** (2026-10-09): ampliaría el público y facilitaría la tienda oficial de Umbrel. Los textos
+  del motor, la guía y los avisos están en `packages/text`, pero muchos de la interfaz siguen en los componentes:
+  habría que llevarlos allí antes de traducir.
 
 ## Simplificaciones conscientes del motor (para iterar)
 
@@ -19,8 +22,3 @@ pensarse antes de implementarla.
   (+0,5), como ya pasa en la caja del banco (+1). Requiere modelar quién vive dónde.
 - **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol,
   preparado para nodos `after`/`older`.
-
-## Otros proyectos
-
-- **Mapa de UTXOs / coin control** con análisis de privacidad, como proyecto aparte
-  que reutilice el código Bitcoin compartido.

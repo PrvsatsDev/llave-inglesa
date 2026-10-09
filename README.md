@@ -44,6 +44,10 @@ guardarla como backup y una **carta para tus herederos** con solo lo que necesit
 - **Sin conexión**: descarga el zip de la última [Release](https://github.com/PrvsatsDev/llave-inglesa/releases),
   descomprímelo y sirve la carpeta en tu equipo (`python3 -m http.server 8000 --bind 127.0.0.1`); lo
   explica el `LEEME.txt` que va dentro.
+- **En tu Umbrel** (umbrelOS 2.0 o posterior): añade la tienda comunitaria
+  [psats-umbrel-app-store](https://github.com/PrvsatsDev/psats-umbrel-app-store) e instala llave-inglesa. Se abre por
+  HTTPS con el certificado de tu Umbrel (el navegador avisa la primera vez); cómo se construye y se verifica la imagen,
+  en [umbrel/README.md](umbrel/README.md).
 - **Desde el código** (Node 22 o posterior): `npm install && npm run dev` y abre http://127.0.0.1:5173.
 
 **No hace falta fiarse**: el build es reproducible y cada Release trae los hashes de todos sus
