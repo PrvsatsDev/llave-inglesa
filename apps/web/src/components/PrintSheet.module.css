@@ -1,4 +1,4 @@
-/* Hoja a pantalla completa encima de la aplicación; al imprimir solo sale la hoja (ver global.css). */
+/* Hoja para imprimir a pantalla completa (descriptor, carta para los herederos); al imprimir solo sale la hoja (ver global.css). */
 .overlay {
   position: fixed;
   inset: 0;
@@ -210,4 +210,87 @@
     width: auto;
     padding: 0;
   }
+}
+
+/* ---------- Formulario al vuelo de la carta (no se imprime ni se guarda) ---------- */
+.advice {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--warn);
+}
+
+.advice svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.asideTitle {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.names {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 6px 10px;
+  align-items: center;
+}
+
+.names span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asideList {
+  margin: 0;
+  padding-left: 18px;
+}
+
+/* ---------- La carta ---------- */
+.letter h3 {
+  margin: 10px 0 4px;
+  font-size: 10.5pt;
+}
+
+.letter ul,
+.letter ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.letter li + li {
+  margin-top: 3px;
+}
+
+.message {
+  white-space: pre-wrap;
+}
+
+.namesRow {
+  display: contents;
+}
+
+.input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+textarea.input {
+  resize: vertical;
+  line-height: 1.5;
 }

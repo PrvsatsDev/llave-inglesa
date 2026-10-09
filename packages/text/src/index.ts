@@ -303,6 +303,7 @@ export function advisoryText(match: AdvisoryMatch): { title: string; detail: str
 // ---------- Descriptor de la cartera ----------
 
 export * from './cartera.ts';
+export * from './carta-herencia.ts';
 
 // ---------- Guía de uso ----------
 

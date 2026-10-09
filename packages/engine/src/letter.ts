@@ -1,4 +1,4 @@
-import { uniqueId, type CustodyModel, type Id, type SecretRef } from '@llave-inglesa/domain';
+import { flatPolicy, isActiveSecret, uniqueId, type CustodyModel, type Id, type SecretRef } from '@llave-inglesa/domain';
 import { ownerDeaths, simulateInheritance, type InheritanceReport } from './analyze.ts';
 import { explain, type ExplanationNode } from './explain.ts';
 import { factId, type DerivedFact, type FactId } from './facts.ts';
@@ -9,6 +9,11 @@ import { accessibleLocations, createWorld, type World } from './world.ts';
 export interface LetterPiece {
   item: Id;
   kind: 'device' | 'artifact';
+  /**
+   * La usa la recuperación más sencilla. Si no, es un backup de reserva al que también llegan: no hace falta, pero
+   * conviene que sepan que existe por si no llegan a alguna otra pieza.
+   */
+  needed: boolean;
   /** Lo que se lee de ella (frase semilla, passphrase, PIN apuntado, descriptor…). */
   provides: SecretRef[];
   /** Keys que se firman con este dispositivo. */
@@ -19,7 +24,7 @@ export interface LetterPiece {
   hasWallet: boolean;
 }
 
-/** Una ubicación a la que hay que ir, con las piezas que se usan de ella (no todo lo que hay). */
+/** Una ubicación con las piezas que se usan de ella y los backups de reserva (no los dispositivos que sobran). */
 export interface LetterStop {
   location: Id;
   pieces: LetterPiece[];
@@ -48,6 +53,11 @@ export interface InheritanceLetter {
   usesDescriptor: boolean;
   /** No se recupera, pero se recuperaría con una copia del descriptor al alcance de los herederos. */
   missingDescriptor: boolean;
+  /**
+   * Multisig sin ninguna copia del descriptor al alcance de los herederos: si recuperan, es reconstruyendo la cartera
+   * con las semillas de todas las keys, que es más difícil y obliga a reunirlas todas.
+   */
+  noDescriptorCopy: boolean;
   storage: LetterStorage[];
 }
 
@@ -68,13 +78,17 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
   const { heirs, helpers, status } = inheritance;
 
   const storage = storageFor(model, world, heirs);
-  const base = { status, owners, heirs, helpers, storage };
+  const people = [...heirs, ...helpers];
+  const reachable = new Set(people.flatMap((p) => accessibleLocations(world, p)));
+  const noDescriptorCopy =
+    flatPolicy(model)?.kind !== 'single' &&
+    !model.artifacts.some((a) => reachable.has(a.location) && a.contents.some((c) => c.type === 'descriptor'));
+  const base = { status, owners, heirs, helpers, storage, noDescriptorCopy };
 
   if (status !== 'ok' || !inheritance.locations) {
     return { ...base, stops: [], memory: [], usesDescriptor: false, missingDescriptor: wouldRecoverWithDescriptor(model, storage) };
   }
 
-  const people = [...heirs, ...helpers];
   const derivation = simulateInheritance(model, inheritance.locations, people);
   const used = usedFacts(explain(derivation, factId({ kind: 'spend' })));
   const facts = [...used.values()];
@@ -88,13 +102,26 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
     const signs = facts.flatMap((f) => (f.fact.kind === 'sign' && f.justification.via?.device === item ? [f.fact.key] : []));
     const hasWallet = facts.some((f) => f.justification.rule === 'device-wallet' && f.justification.via?.device === item);
     const unlocked = facts.some((f) => f.fact.kind === 'unlocked' && f.fact.device === item && f.justification.premises.includes(itemFact));
-    return { item, kind: device ? 'device' : 'artifact', provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet };
+    return { item, kind: device ? 'device' : 'artifact', needed: true, provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet };
+  };
+  /** Un backup que no se usa pero al que llegan: lo que contiene, tal cual. */
+  const spare = (item: Id): LetterPiece => {
+    const contents = model.artifacts.find((a) => a.id === item)?.contents ?? [];
+    return { item, kind: 'artifact', needed: false, provides: contents.filter((c) => isActiveSecret(model, c)), signs: [], needsPin: false, hasWallet: false };
   };
 
   const usedItems = new Set(facts.flatMap((f) => (f.fact.kind === 'item' ? [f.fact.item] : [])));
   const locationOf = (item: Id) => model.devices.find((d) => d.id === item)?.location ?? model.artifacts.find((a) => a.id === item)?.location;
-  const stops = inheritance.locations
-    .map((location) => ({ location, pieces: [...usedItems].filter((i) => locationOf(i) === location).map(pieceOf) }))
+  // Primero las ubicaciones de la recuperación; después, las demás a las que llegan y tienen algún backup de reserva.
+  const order = [...inheritance.locations, ...model.locations.map((l) => l.id).filter((l) => reachable.has(l) && !inheritance.locations!.includes(l))];
+  const stops = order
+    .map((location) => ({
+      location,
+      pieces: [
+        ...[...usedItems].filter((i) => locationOf(i) === location).map(pieceOf),
+        ...model.artifacts.filter((a) => a.location === location && !usedItems.has(a.id)).map((a) => spare(a.id)),
+      ],
+    }))
     .filter((s) => s.pieces.length > 0);
 
   const memory = facts.flatMap((f) =>

@@ -6,21 +6,26 @@ import { base, loadFixture, parse } from './helpers.ts';
 const letterOf = (model: CustodyModel) => inheritanceLetter(model, analyze(model).inheritance);
 
 describe('carta para los herederos', () => {
-  it('solo lleva las piezas que se usan, en las ubicaciones mínimas, con lo que aporta cada una', () => {
+  it('lleva las piezas que se usan, con lo que aporta cada una, y los backups de reserva a los que también llegan', () => {
     const letter = letterOf(loadFixture('todo-en-casa'));
-    expect(letter).toMatchObject({ status: 'ok', owners: ['yo'], heirs: ['pareja'], helpers: [], usesDescriptor: true, missingDescriptor: false });
+    expect(letter).toMatchObject({ status: 'ok', owners: ['yo'], heirs: ['pareja'], helpers: [], usesDescriptor: true, missingDescriptor: false, noDescriptorCopy: false });
+    const piece = (item: string, needed: boolean, provides: unknown[]) => ({ item, kind: 'artifact', needed, provides, signs: [], needsPin: false, hasWallet: false });
     expect(letter.stops).toEqual([
-      {
-        location: 'casa',
-        pieces: [
-          { item: 'metal-k2', kind: 'artifact', provides: [{ type: 'seed', key: 'k2' }], signs: [], needsPin: false, hasWallet: false },
-          { item: 'desc-casa', kind: 'artifact', provides: [{ type: 'descriptor' }], signs: [], needsPin: false, hasWallet: false },
-        ],
-      },
-      { location: 'banco', pieces: [{ item: 'metal-k1', kind: 'artifact', provides: [{ type: 'seed', key: 'k1' }], signs: [], needsPin: false, hasWallet: false }] },
+      { location: 'casa', pieces: [piece('metal-k2', true, [{ type: 'seed', key: 'k2' }]), piece('desc-casa', true, [{ type: 'descriptor' }])] },
+      { location: 'banco', pieces: [piece('metal-k1', true, [{ type: 'seed', key: 'k1' }]), piece('desc-banco', false, [{ type: 'descriptor' }])] },
+      // Casa de mis padres no hace falta, pero llegan: sus backups van de reserva.
+      { location: 'padres', pieces: [piece('arandelas-k3', false, [{ type: 'seed', key: 'k3' }]), piece('desc-padres', false, [{ type: 'descriptor' }])] },
     ]);
-    // Lo que hay en Casa de mis padres no hace falta: no sale.
-    expect(letter.stops.some((s) => s.location === 'padres')).toBe(false);
+    // Los dispositivos que no se usan (el Coldcard, cuyo PIN solo sabe Yo) no salen.
+    expect(letter.stops.flatMap((s) => s.pieces.map((p) => p.item))).not.toContain('ccq');
+  });
+
+  it('sin ninguna copia del descriptor recuperan reuniendo todas las semillas, y se avisa', () => {
+    const model = loadFixture('todo-en-casa');
+    const letter = letterOf({ ...model, artifacts: model.artifacts.filter((a) => !a.contents.some((c) => c.type === 'descriptor')) });
+    expect(letter).toMatchObject({ status: 'ok', usesDescriptor: false, noDescriptorCopy: true });
+    expect(letter.stops.map((s) => s.location)).toEqual(['casa', 'banco', 'padres']);
+    expect(letter.stops.every((s) => s.pieces.every((p) => p.needed))).toBe(true);
   });
 
   it('sugiere guardarla primero donde los herederos solo entran tras el fallecimiento', () => {
@@ -40,7 +45,7 @@ describe('carta para los herederos', () => {
     };
     const letter = letterOf(known);
     expect(letter.memory).toEqual([{ person: 'pareja', secret: { type: 'passphrase', key: 'k1' } }]);
-    expect(letter.stops.flatMap((s) => s.pieces.map((p) => p.item))).toEqual(['metal-k1']);
+    expect(letter.stops.flatMap((s) => s.pieces.filter((p) => p.needed).map((p) => p.item))).toEqual(['metal-k1']);
   });
 
   it('un dispositivo con PIN que se usa para firmar lo dice', () => {
@@ -57,7 +62,7 @@ describe('carta para los herederos', () => {
       }),
     );
     const letter = letterOf(model);
-    expect(letter.stops).toEqual([{ location: 'casa', pieces: [{ item: 'trezor', kind: 'device', provides: [], signs: ['k1'], needsPin: true, hasWallet: false }] }]);
+    expect(letter.stops).toEqual([{ location: 'casa', pieces: [{ item: 'trezor', kind: 'device', needed: true, provides: [], signs: ['k1'], needsPin: true, hasWallet: false }] }]);
     expect(letter.memory).toEqual([{ person: 'hijo', secret: { type: 'pin', device: 'trezor' } }]);
   });
 

@@ -25,6 +25,9 @@ pensarse antes de implementarla.
 - **Dónde vive cada persona** (de la calibración): la llave inglesa en una ubicación donde la
   víctima no vive exige llevarla allí o retener a quien vive allí; podría costar algo más
   (+0,5), como ya pasa en la caja del banco (+1). Requiere modelar quién vive dónde.
+- **Reconstruir un multisig sin descriptor** (2026-10-09): el motor da la herencia por posible reuniendo
+  las semillas de todas las keys y solo cuenta las visitas de más (todo a mano en casa sin descriptores: 77 → 62).
+  Reconstruir sin saber tipo de script, derivación ni k de n es bastante más difícil; podría penalizarse.
 - **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol,
   preparado para nodos `after`/`older`.
 

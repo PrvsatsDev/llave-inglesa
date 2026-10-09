@@ -11,6 +11,7 @@ import {
   explain,
   EXPOSURE,
   inheritanceBreakdown,
+  inheritanceLetter,
   HEIR_FRAGILITY_WEIGHT,
   inheritanceScore,
   LOCKOUT_PENALTY,
@@ -24,13 +25,14 @@ import {
   type Analysis as EngineAnalysis,
   type Derivation,
 } from '@llave-inglesa/engine';
-import { ChevronRight, Flame, Loader2, MapPin } from 'lucide-react';
-import { useMemo } from 'react';
+import { ChevronRight, Flame, Loader2, Mail, MapPin } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { ATTACK_KIND_TEXT, inheritanceText, plural } from '../lib/text.ts';
 import { useAnalysis } from '../store/analysis.ts';
 import { useNavigation, type MetricId } from '../store/navigation.ts';
 import { useSelection } from '../store/selection.ts';
 import { DuressNotes, HeirLossRoutes, LossRoutes, TheftRoutes } from './Findings.tsx';
+import { InheritanceLetterSheet } from './InheritanceLetterSheet.tsx';
 import { Button, Section } from './inspector/fields.tsx';
 import { Tree } from './ScenarioPanel.tsx';
 import { level } from './Scoreboard.tsx';
@@ -335,6 +337,35 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
         <Why model={model} derivation={derivation} who={inh.status === 'ok' ? 'Los herederos' : 'Con todo lo que tienen a su alcance, quienes quedan'} />
       </Section>
       {inh.status === 'ok' && <HeirLossRoutes model={model} />}
+      <LetterSection model={model} analysis={analysis} />
     </>
+  );
+}
+
+/** La carta para los herederos: sale de esta misma simulación, con solo lo que necesitan y a lo que llegan. */
+function LetterSection({ model, analysis }: { model: CustodyModel; analysis: EngineAnalysis }) {
+  const letter = useMemo(() => inheritanceLetter(model, analysis.inheritance), [model, analysis.inheritance]);
+  const [open, setOpen] = useState(false);
+  if (letter.status !== 'ok') {
+    return letter.missingDescriptor ? (
+      <Section title="Carta para los herederos">
+        <p className={styles.muted}>
+          Los herederos no recuperan los fondos porque no llegan a ninguna copia del descriptor. Guarda una donde puedan llegar (por ejemplo el
+          «PDF con descriptor», desde Esquema › Descriptor de la cartera) y la carta estará disponible.
+        </p>
+      </Section>
+    ) : null;
+  }
+  return (
+    <Section title="Carta para los herederos">
+      <p className={styles.muted}>
+        Una carta para imprimir con lo que necesitan los herederos: qué reunir y dónde (solo lo que usan), a quién acudir y los pasos, en
+        palabras sencillas. Nunca lleva secretos. Los nombres reales y un mensaje personal se escriben al vuelo y no se guardan.
+      </p>
+      <Button icon={Mail} onClick={() => setOpen(true)}>
+        Preparar la carta
+      </Button>
+      {open && <InheritanceLetterSheet model={model} letter={letter} onClose={() => setOpen(false)} />}
+    </Section>
   );
 }

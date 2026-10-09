@@ -8,7 +8,7 @@ import { useDocument } from '../store/document.ts';
 import { Button, Select } from './inspector/fields.tsx';
 import { qrMatrix } from '../lib/qr.ts';
 import { Qr } from './Qr.tsx';
-import styles from './DescriptorPrint.module.css';
+import styles from './PrintSheet.module.css';
 
 /** Caracteres por línea del descriptor en papel: líneas numeradas para no perderse al copiarlo a mano. */
 const LINE = 44;

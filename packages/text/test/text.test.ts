@@ -1,8 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { ADVISORIES, advisoriesFor, indexModel, parseModel, removeArtifact, updateDevice, type CustodyModel } from '@llave-inglesa/domain';
-import { analyze } from '@llave-inglesa/engine';
+import { analyze, inheritanceLetter } from '@llave-inglesa/engine';
 import { describe, expect, it } from 'vitest';
-import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, lossText, secretText } from '../src/index.ts';
+import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, LETTER_CALM, letterSteps, lossText, secretText } from '../src/index.ts';
+
+/** Un ejemplo, quizá modificado, con su carta para los herederos. */
+const loadCarta = (name: string) => (change: (m: CustodyModel) => CustodyModel = (m) => m) => {
+  const r = parseModel(JSON.parse(readFileSync(new URL(`../../../fixtures/${name}.json`, import.meta.url), 'utf8')));
+  if (!r.ok) throw new Error(name);
+  const model = change(r.model);
+  return { model, letter: inheritanceLetter(model, analyze(model).inheritance) };
+};
 
 const result = parseModel({
   format: 'llave-inglesa',
@@ -114,5 +122,23 @@ describe('texto del PIN de coacción', () => {
     expect(say(removeArtifact(withDuress, 'nuevo-backup'))).toBe(
       'El PIN de coacción de Trezor encarece el robo más barato: esfuerzo 3,5 → 4,5 (seguridad 73 → 85).',
     );
+  });
+});
+
+describe('carta para los herederos', () => {
+  const casa = loadCarta('todo-en-casa');
+
+  it('con descriptor, se importa; sin ninguna copia, se explica cómo reconstruirla con los datos públicos', () => {
+    const withCopy = casa();
+    expect(letterSteps(withCopy.model, withCopy.letter).join(' ')).toContain('importa el descriptor');
+    const without = casa((m) => ({ ...m, artifacts: m.artifacts.filter((a) => !a.contents.some((c) => c.type === 'descriptor')) }));
+    const steps = letterSteps(without.model, without.letter).join(' ');
+    expect(steps).not.toContain('importa el descriptor');
+    expect(steps).toContain('No hay copia del descriptor');
+    expect(steps).toContain('multisig 2 de 3, SegWit nativo (P2WSH, direcciones bc1q…)');
+  });
+
+  it('no mete prisa', () => {
+    expect(LETTER_CALM[0]).toContain('meses o años');
   });
 });
