@@ -50,7 +50,11 @@ function LanguageSwitch() {
           aria-pressed={i === idioma}
           aria-label={NOMBRE_IDIOMA[i]}
           title={NOMBRE_IDIOMA[i]}
-          onClick={() => i !== idioma && cambiar(i)}
+          onClick={() => {
+            if (i === idioma) return;
+            cambiar(i);
+            useDocument.getState().relocalize();
+          }}
         >
           {i.toUpperCase()}
         </button>
@@ -89,7 +93,7 @@ export function Header() {
           )}
           {EXAMPLE_GROUPS.map((group) => (
             <optgroup key={group} label={T.gruposEjemplos[group]}>
-              {examples
+              {examples()
                 .filter((e) => e.group === group)
                 .map((e) => (
                   <option key={e.id} value={e.id}>

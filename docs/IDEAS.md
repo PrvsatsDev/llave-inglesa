@@ -11,7 +11,7 @@ pensarse antes de implementarla.
 - **Traducción al inglés** (2026-10-09): ampliaría el público y facilitaría la tienda oficial de Umbrel. En marcha
   (rama `ingles`), por lotes: 1 infraestructura (hecho: textos por idioma, fachada viva, idioma detectado y
   recordado, nombres de lo nuevo desde la interfaz), 2 interfaz en inglés y selector ES/EN en la cabecera (hecho), 3 textos
-  del motor, carta y descriptor (hecho), 4 ejemplos, 5 guía, 6 `index.html`. Detectado del navegador, con selector, sin rutas
+  del motor, carta y descriptor (hecho), 4 ejemplos (hecho), 5 guía, 6 `index.html`. Detectado del navegador, con selector, sin rutas
   `/en`. Borrador de Claude, revisión del usuario.
 
 ## Simplificaciones conscientes del motor (para iterar)

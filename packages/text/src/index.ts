@@ -49,6 +49,7 @@ export const {
   vendorText,
   walletWarningText,
   xpubProblemText,
+  EJEMPLOS,
   GUIA,
   guiaMarkdown,
   UI,
@@ -56,5 +57,6 @@ export const {
 
 export { detectarIdioma, idioma, IDIOMAS, NOMBRE_IDIOMA, setIdioma, type Idioma, type Textos } from './idioma.ts';
 export { CIFRAS } from './guia-cifras.ts';
+export { traducirEjemplo } from './ejemplos.ts';
 export * from './tipos.ts';
 export type TextosInterfaz = Textos['UI'];

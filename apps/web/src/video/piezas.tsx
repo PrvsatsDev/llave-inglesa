@@ -17,7 +17,7 @@ import styles from './video.module.css';
 
 const nodeTypes: NodeTypes = { location: LocationNode, person: PersonNode };
 
-export const ejemplo = (id: string) => examples.find((e) => e.id === id)!.model;
+export const ejemplo = (id: string) => examples().find((e) => e.id === id)!.model;
 
 /** Cómo se ve el mapa en un fotograma: qué se muestra (0 = oculto, 1 = del todo) y dónde. */
 export interface EstadoMapa {

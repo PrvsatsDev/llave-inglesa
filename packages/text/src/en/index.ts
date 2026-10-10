@@ -2,6 +2,7 @@
 export * from './textos.ts';
 export * from './cartera.ts';
 export * from './carta-herencia.ts';
+export { EJEMPLOS } from './ejemplos.ts';
 // Provisional hasta el lote 5 (guía): en español.
 export { GUIA } from '../es/guia.ts';
 export { guiaMarkdown } from '../es/guia-markdown.ts';

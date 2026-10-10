@@ -28,8 +28,8 @@ test.describe('con el navegador en inglés', () => {
     // Un cambio sin guardar y una ficha abierta: el cambio de idioma no los pierde.
     await page.getByText('Setup name and description').click();
     await page.getByLabel('Setup name').fill('Prueba de idioma');
-    // La ubicación se llama «Casa»: los nombres del ejemplo son datos, no interfaz.
-    await page.getByRole('button', { name: /^Casa/ }).first().click();
+    // El ejemplo sale en inglés («Home»); al editarlo, sus nombres ya son datos del usuario y no se traducen.
+    await page.getByRole('button', { name: /^Home/ }).first().click();
     await expect(page.getByText('Who has access')).toBeVisible();
 
     await page.getByRole('button', { name: 'Español' }).click();
@@ -51,4 +51,8 @@ test('con el navegador en español arranca en español; EN cambia la interfaz', 
   await page.getByRole('button', { name: 'English' }).click();
   await expect(page.getByText('Security').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Simulate' })).toBeVisible();
+  // El ejemplo sin tocar se vuelve a cargar traducido.
+  await expect(page.getByLabel('Open document or example').locator('option:checked')).toHaveText('Everything at hand at home');
+  await page.getByRole('button', { name: 'Español' }).click();
+  await expect(page.getByLabel('Documento abierto o ejemplo').locator('option:checked')).toHaveText('Todo a mano en casa');
 });

@@ -1,5 +1,6 @@
 import { blankModel, updateMeta } from '@llave-inglesa/domain';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setIdioma } from '../lib/text.ts';
 import { hasUnsavedChanges, useDocument } from './document.ts';
 
 const state = () => useDocument.getState();
@@ -39,5 +40,25 @@ describe('documento: historial y cambios sin guardar', () => {
     state().open(blankModel(), { kind: 'new' });
     expect(state().past).toEqual([]);
     expect(state().generation).toBe(before + 1);
+  });
+});
+
+describe('documento: cambio de idioma', () => {
+  afterEach(() => setIdioma('es'));
+
+  it('un ejemplo sin tocar se vuelve a cargar traducido; uno editado se conserva', () => {
+    state().loadExample('todo-en-casa');
+    setIdioma('en');
+    state().relocalize();
+    expect(state().model.name).toBe('Everything at hand at home');
+    expect(dirty()).toBe(false);
+
+    setIdioma('es');
+    state().relocalize();
+    state().apply((m) => updateMeta(m, { name: 'mío' }));
+    setIdioma('en');
+    state().relocalize();
+    expect(state().model.name).toBe('mío');
+    expect(state().model.people[0]!.name).toBe('Yo');
   });
 });

@@ -32,10 +32,13 @@ interface DocumentState {
   /** Abre un documento: reinicia historial y estado de guardado. */
   open(model: CustodyModel, origin: DocumentOrigin, saved?: boolean): void;
   loadExample(id: string): void;
+  /** Tras cambiar de idioma: un ejemplo sin tocar se vuelve a cargar en el idioma nuevo (con lo editado, nada). */
+  relocalize(): void;
   markSaved(): void;
 }
 
-const first = examples[0]!;
+// En el idioma detectado: main.tsx lo fija antes de importar nada más.
+const first = examples()[0]!;
 
 /** El documento que se está editando. Única fuente de verdad del modelo en la UI. */
 export const useDocument = create<DocumentState>()((set, get) => ({
@@ -86,8 +89,16 @@ export const useDocument = create<DocumentState>()((set, get) => ({
     })),
 
   loadExample: (id) => {
-    const example = examples.find((e) => e.id === id);
+    const example = examples().find((e) => e.id === id);
     if (example) get().open(example.model, { kind: 'example', id });
+  },
+
+  relocalize: () => {
+    const { origin, past } = get();
+    if (origin.kind !== 'example' || past.length > 0) return;
+    const example = examples().find((e) => e.id === origin.id);
+    // Mismos ids: la selección, la simulación y el mapa siguen valiendo.
+    if (example) set({ model: example.model, future: [], lastMergeKey: null });
   },
 
   markSaved: () => set((s) => ({ saved: s.model, origin: { kind: 'local' } })),
