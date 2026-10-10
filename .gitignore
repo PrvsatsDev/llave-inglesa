@@ -9,3 +9,4 @@ release/
 deploy/servidor.env
 deploy/sitio.caddy
 video/salida/
+video/*.mp3

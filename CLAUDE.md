@@ -17,7 +17,7 @@ npm run e2e:publicada -w @llave-inglesa/web   # las mismas pruebas contra https:
 npm run analyze -- fixtures/todo-en-casa.json   # CLI
 npx tsx scripts/guia.ts   # recalcula las cifras de la guía (tras cambiar score.ts o un ejemplo)
 npx tsx scripts/portada.ts  # imagen de vista previa del enlace (og:image): rehacerla si cambian las cifras de R09
-npx tsx scripts/video.ts  # vídeo de presentación a MP4 (Playwright + ffmpeg); escenas en apps/web/src/video/
+npx tsx scripts/video.ts  # vídeo de presentación a MP4 (Playwright + ffmpeg; --idioma en); escenas en apps/web/src/video/
 npm run build
 ```
 

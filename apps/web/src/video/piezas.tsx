@@ -167,7 +167,7 @@ export function Aviso({ modelo, escenario, visible }: { modelo: CustodyModel; es
       <div className={`${aviso.banner} ${aviso[level]}`}>
         <Icon size={18} className={aviso.icon} aria-hidden />
         <div className={aviso.text}>
-          <span className={aviso.kicker}>{escenario.kind === 'attack' ? 'Simulando ataque' : 'Simulando desgracia'}</span>
+          <span className={aviso.kicker}>{escenario.kind === 'attack' ? UI.banner.simulandoAtaque : UI.banner.simulandoDesgracia}</span>
           <span className={aviso.steps}>{pasos.join(' + ')}</span>
           <span className={aviso.outcome}>{text}</span>
         </div>
