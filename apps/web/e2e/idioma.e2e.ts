@@ -56,3 +56,18 @@ test('con el navegador en español arranca en español; EN cambia la interfaz', 
   await page.getByRole('button', { name: 'Español' }).click();
   await expect(page.getByLabel('Documento abierto o ejemplo').locator('option:checked')).toHaveText('Todo a mano en casa');
 });
+
+test.describe('la guía en inglés', () => {
+  test.use({ locale: 'en-US' });
+
+  test('se abre desde File y sus botones simulan sobre el ejemplo traducido', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'File' }).click();
+    await page.getByRole('menuitem', { name: 'User guide' }).click();
+    await page.getByRole('button', { name: /Getting started/ }).click();
+    await expect(page.getByRole('heading', { name: 'Getting started' })).toBeVisible();
+    await page.getByRole('button', { name: /Simulate a wrench attack on Me at Home/ }).click();
+    await expect(page.getByRole('button', { name: /Simulate a wrench attack/ })).toHaveAttribute('aria-pressed', 'true');
+    await page.screenshot({ path: 'e2e/.capturas/guia-ingles.png' });
+  });
+});

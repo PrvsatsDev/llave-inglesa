@@ -41,11 +41,11 @@ export function guiaMarkdown(nombres: Readonly<Record<string, string>>): string 
   const capitulos = GUIA.map((c, i) => [`<a id="${c.id}"></a>`, `## ${i + 1}. ${c.titulo}`, ...c.bloques.map(bloque)].join('\n\n'));
   return `# Guía de uso
 
-<!-- Generado por scripts/guia.ts desde packages/text/src/guia.ts: no editar a mano. -->
+<!-- Generado por scripts/guia.ts desde packages/text/src/es/guia.ts: no editar a mano. -->
 
 Esta guía también está dentro de la aplicación (${URL_APP}, menú *Archivo → Guía de uso*), donde es
 interactiva: sus botones abren los ejemplos y simulan en el mapa. Las cifras son las que calcula el motor
-en esta versión.
+en esta versión. [English version](GUIDE.md).
 
 ${indice}
 

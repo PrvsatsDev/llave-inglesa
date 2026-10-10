@@ -1,10 +1,10 @@
 # Guía de uso
 
-<!-- Generado por scripts/guia.ts desde packages/text/src/guia.ts: no editar a mano. -->
+<!-- Generado por scripts/guia.ts desde packages/text/src/es/guia.ts: no editar a mano. -->
 
 Esta guía también está dentro de la aplicación (https://llave-inglesa.vualt.net, menú *Archivo → Guía de uso*), donde es
 interactiva: sus botones abren los ejemplos y simulan en el mapa. Las cifras son las que calcula el motor
-en esta versión.
+en esta versión. [English version](GUIDE.md).
 
 1. [Qué es y qué no es](#que-es): Un simulador de tu custodia: qué hace, qué no hace y por qué nunca necesita tus secretos.
 2. [Primeros pasos](#primeros-pasos): Cinco minutos con un ejemplo: las cuatro notas, el mapa y tu primera simulación.

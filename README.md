@@ -55,7 +55,7 @@ ficheros. Cómo recompilarla y compararla, también con la web publicada, en
 [docs/VERIFICAR.md](docs/VERIFICAR.md). Al abrirla por primera vez verás una bienvenida y 15 ejemplos, desde
 "papel en el cajón" hasta un multisig 2 de 3 distribuido, cada uno con lo que enseña.
 
-**Guía de uso**: dentro de la app (*Archivo → Guía de uso*, interactiva) y en [docs/GUIA.md](docs/GUIA.md).
+**Guía de uso**: dentro de la app (*Archivo → Guía de uso*, interactiva) y en [docs/GUIA.md](docs/GUIA.md) (en inglés, [docs/GUIDE.md](docs/GUIDE.md)).
 
 Todo lo que la herramienta modela, y sus límites conocidos, está en
 [docs/CAPACIDADES.md](docs/CAPACIDADES.md). Cómo se calibraron las puntuaciones, con la galería
