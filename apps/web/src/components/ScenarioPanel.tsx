@@ -1,7 +1,7 @@
 import { indexModel, type CustodyModel, type ModelIndex } from '@llave-inglesa/domain';
 import { atomEffort, attackAtoms, attackEffort, attackSites, createWorld, DURESS_SURCHARGE, extraSitesSurcharge, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
 import { Bug, Eye, EyeOff, Flame, ShieldQuestion, Skull, X } from 'lucide-react';
-import { attackText, factText, lossText, ruleText, UI } from '../lib/text.ts';
+import { attackText, factText, lossText, ruleText, UI, vendorText } from '../lib/text.ts';
 import type { ScenarioView } from '../scenario/view.ts';
 import { useScenario } from '../store/scenario.ts';
 import { PanelHeader, Section, Select } from './inspector/fields.tsx';
@@ -58,6 +58,10 @@ function Steps<A>({ steps, all, text, onChange }: { steps: A[]; all: A[]; text(a
 }
 
 const num = UI.comun.numero;
+const vendorName = (model: CustodyModel, device: string) => {
+  const vendor = model.devices.find((d) => d.id === device)?.vendor;
+  return vendor === undefined ? null : vendorText(vendor);
+};
 
 /**
  * Lo que le cuesta al atacante: el esfuerzo de cada ataque, el recargo por asaltar varios sitios, el de vencer un PIN de
@@ -117,7 +121,7 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
           <Bug size={14} aria-hidden />
           <span>
             <strong>{name(device)}</strong>{' '}
-            {how === 'firmware' ? T.comprometido.firmware(model.devices.find((d) => d.id === device)?.vendor ?? null) : T.comprometido.extraccion}
+            {how === 'firmware' ? T.comprometido.firmware(vendorName(model, device)) : T.comprometido.extraccion}
           </span>
         </p>
       ))}

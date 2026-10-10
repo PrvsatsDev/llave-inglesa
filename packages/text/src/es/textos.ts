@@ -39,7 +39,10 @@ export function provenanceText(key: Key): string {
 
 // ---------- Ataques y pérdidas ----------
 
-export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen desconocido' : o.vendor);
+/** Un fabricante tal como se muestra: el «Desconocido» del modelo (`UNKNOWN_VENDOR`) se traduce en otros idiomas. */
+export const vendorText = (vendor: string) => vendor;
+
+export const originText = (o: EntropyOrigin) => (o.kind === 'unknown' ? 'origen desconocido' : vendorText(o.vendor));
 
 const locationKind = (index: ModelIndex, id: string) => index.locations.get(id)?.kind ?? 'physical';
 

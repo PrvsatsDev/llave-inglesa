@@ -1,6 +1,6 @@
 import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
 import { AlertTriangle, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
-import { UI } from '../../lib/text.ts';
+import { UI, vendorText } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
@@ -230,7 +230,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             {!generatorModel && (
               <div className={styles.twoCols}>
                 <Field label={T.fabricanteOSoftware}>
-                  {(fid) => <TextInput id={fid} value={generatedBy.vendor} onChange={(vendor) => setProvenance({ generatedBy: { ...generatedBy, vendor } }, 'vendor')} />}
+                  {(fid) => <TextInput id={fid} value={vendorText(generatedBy.vendor)} onChange={(vendor) => setProvenance({ generatedBy: { ...generatedBy, vendor } }, 'vendor')} />}
                 </Field>
                 <Field label={T.nombreModelo}>
                   {(fid) => (

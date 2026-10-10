@@ -46,6 +46,7 @@ export const {
   secretText,
   walletKindText,
   walletProblemText,
+  vendorText,
   walletWarningText,
   xpubProblemText,
   GUIA,
