@@ -18,6 +18,7 @@ test.describe('con el navegador en inglés', () => {
     await expect(page.getByText('Security').first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
     expect(await page.locator('html').getAttribute('lang')).toBe('en');
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /^Simulate your Bitcoin custody/);
     await page.screenshot({ path: 'e2e/.capturas/ingles.png' });
     expect(errors).toEqual([]);
   });

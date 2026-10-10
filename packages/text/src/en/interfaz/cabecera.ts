@@ -18,6 +18,7 @@ export const cabecera: typeof es = {
   local: '100% local',
   pistaLocal: 'The app cannot make network requests',
   localAccesible: '100% local: the app cannot make network requests',
+  descripcionPagina: 'Simulate your Bitcoin custody: which theft leaves you without funds, which loss event makes you lose them, can your heirs reach them?',
 };
 
 export const archivo: typeof esArchivo = {

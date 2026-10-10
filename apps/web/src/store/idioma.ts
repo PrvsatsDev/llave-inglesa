@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { detectarIdioma, IDIOMAS, setIdioma, type Idioma } from '../lib/text.ts';
+import { detectarIdioma, IDIOMAS, setIdioma, UI, type Idioma } from '../lib/text.ts';
 
 const STORAGE_KEY = 'llave-inglesa:idioma';
 
@@ -17,6 +17,8 @@ function inicial(): Idioma {
 function aplicar(idioma: Idioma) {
   setIdioma(idioma);
   document.documentElement.lang = idioma;
+  // La vista previa del enlace (og:…) se queda en español: la leen robots sin JavaScript.
+  document.querySelector('meta[name="description"]')?.setAttribute('content', UI.cabecera.descripcionPagina);
 }
 
 interface IdiomaState {
