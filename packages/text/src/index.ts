@@ -53,7 +53,7 @@ export const {
   UI,
 } = T;
 
-export { detectarIdioma, idioma, IDIOMAS, setIdioma, type Idioma, type Textos } from './idioma.ts';
+export { detectarIdioma, idioma, IDIOMAS, NOMBRE_IDIOMA, setIdioma, type Idioma, type Textos } from './idioma.ts';
 export { CIFRAS } from './guia-cifras.ts';
 export * from './tipos.ts';
 export type TextosInterfaz = Textos['UI'];

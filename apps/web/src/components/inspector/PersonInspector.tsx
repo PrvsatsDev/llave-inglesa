@@ -59,7 +59,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
                 <span className={`${styles.rowMeta} ${styles.hint}`}>
                   {when.type === 'always'
                     ? T.siempre
-                    : `${when.type === 'after-death' ? T.trasFallecer : T.siNoPuede} ${model.people.find((p) => p.id === when.person)?.name ?? T.desconocida}`}
+                    : (when.type === 'after-death' ? T.trasFallecer : T.siNoPuede)(model.people.find((p) => p.id === when.person)?.name ?? T.desconocida)}
                 </span>
               </button>
             </li>

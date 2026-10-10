@@ -12,6 +12,7 @@ export const cabecera = {
   pistaDeshacer: 'Deshacer (Ctrl+Z)',
   rehacer: 'Rehacer',
   pistaRehacer: 'Rehacer (Ctrl+Shift+Z)',
+  idioma: 'Idioma',
   local: '100% local',
   pistaLocal: 'La aplicación no puede hacer peticiones de red',
   localAccesible: '100% local: la aplicación no puede hacer peticiones de red',

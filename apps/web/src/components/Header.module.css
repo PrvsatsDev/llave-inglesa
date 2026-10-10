@@ -189,6 +189,37 @@
   box-shadow: 0 0 8px var(--safe);
 }
 
+/* Selector de idioma: dos botones en una píldora, como el indicador "100% local". */
+.lang {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.langButton {
+  padding: 2px 8px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+
+.langButton:hover:not(.langCurrent) {
+  color: var(--text);
+}
+
+.langCurrent {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  cursor: default;
+}
+
 /* Pantallas estrechas: lo que ya se ve en el panel (keys, política) deja sitio al selector. */
 @media (max-width: 1000px) {
   .keys,
