@@ -86,3 +86,13 @@ describe('textos de la interfaz', () => {
     expect(found).toEqual([]);
   });
 });
+
+describe('index.html', () => {
+  it('su descripción (y la de la vista previa del enlace) es la de UI.cabecera.descripcionPagina en español', async () => {
+    const { cabecera } = await import('../../../packages/text/src/es/interfaz/cabecera.ts');
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const meta = (attr: string) => html.match(new RegExp(`<meta ${attr} content="([^"]*)"`))?.[1];
+    expect(meta('name="description"')).toBe(cabecera.descripcionPagina);
+    expect(meta('property="og:description"')).toBe(cabecera.descripcionPagina);
+  });
+});

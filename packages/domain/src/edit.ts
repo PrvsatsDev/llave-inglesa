@@ -38,9 +38,18 @@ function uniqueSlug(taken: ReadonlySet<Id>, name: string): Id {
   return id;
 }
 
+/**
+ * Fabricante desconocido tal como se guarda en el modelo. Es un valor interno (los ficheros ya lo llevan así), no
+ * una etiqueta: la interfaz lo muestra traducido.
+ */
+export const UNKNOWN_VENDOR = 'Desconocido';
+
 // ---------- Ids ----------
 
-/** Ids que ponen las operaciones `add*` antes de que el usuario elija un nombre. */
+/**
+ * Ids que ponen las operaciones `add*` antes de que el usuario elija un nombre. No dependen del nombre que se le dé
+ * (que viene en el idioma de la interfaz): son internos y `tidyIds` los cambia al exportar.
+ */
 const DEFAULT_ID = /^(nueva-ubicacion|nueva-persona|nuevo-dispositivo|nuevo-firmante-stateless|nuevo-backup)(-\d+)?$/;
 
 /**
@@ -106,18 +115,25 @@ export function stripSecrets(model: CustodyModel, remove: (s: SecretRef) => bool
 
 // ---------- Documento nuevo ----------
 
+/** Nombres de lo que crea un documento nuevo; los pone quien llama, en su idioma (la web, desde packages/text). */
+export interface BlankNames {
+  scheme: string;
+  owner: string;
+  home: string;
+}
+
 /** Punto de partida para un esquema propio: una key, un titular y una ubicación. */
-export function blankModel(): CustodyModel {
+export function blankModel(names: BlankNames = { scheme: 'Mi esquema', owner: 'Yo', home: 'Casa' }): CustodyModel {
   return {
     format: 'llave-inglesa',
     version: 1,
-    name: 'Mi esquema',
+    name: names.scheme,
     keys: [{ id: 'k1', label: 'K1', passphrase: false, provenance: { sources: [{ kind: 'unknown' }], independentlyVerified: false } }],
     policy: { type: 'key', key: 'k1' },
     devices: [],
     artifacts: [],
-    people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [] }],
-    locations: [{ id: 'casa', name: 'Casa', kind: 'physical', access: [{ person: 'yo', when: { type: 'always' } }] }],
+    people: [{ id: 'yo', name: names.owner, role: 'owner', knows: [] }],
+    locations: [{ id: 'casa', name: names.home, kind: 'physical', access: [{ person: 'yo', when: { type: 'always' } }] }],
   };
 }
 
@@ -218,7 +234,7 @@ export function removeKey(model: CustodyModel, id: Id): CustodyModel {
 // ---------- Ubicaciones ----------
 
 export function addLocation(model: CustodyModel, name = 'Nueva ubicación', kind: Location['kind'] = 'physical'): Created {
-  const id = uniqueId(model, name);
+  const id = uniqueId(model, 'nueva-ubicacion');
   const owners = model.people.filter((p) => p.role === 'owner');
   const location: Location = { id, name, kind, access: owners.map((p) => ({ person: p.id, when: { type: 'always' } })) };
   return { model: { ...model, locations: [...model.locations, location] }, id };
@@ -286,7 +302,7 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
 // ---------- Personas ----------
 
 export function addPerson(model: CustodyModel, name = 'Nueva persona', role: Person['role'] = 'heir'): Created {
-  const id = uniqueId(model, name);
+  const id = uniqueId(model, 'nueva-persona');
   return { model: { ...model, people: [...model.people, { id, name, role, knows: [] }] }, id };
 }
 
@@ -310,13 +326,17 @@ export function removePerson(model: CustodyModel, id: Id): CustodyModel {
 
 // ---------- Dispositivos ----------
 
-export function addDevice(model: CustodyModel, location: Id, kind: Device['kind'] = 'stateful'): Created {
-  const name = kind === 'stateful' ? 'Nuevo dispositivo' : 'Nuevo firmante stateless';
-  const id = uniqueId(model, name);
+export function addDevice(
+  model: CustodyModel,
+  location: Id,
+  kind: Device['kind'] = 'stateful',
+  name = kind === 'stateful' ? 'Nuevo dispositivo' : 'Nuevo firmante stateless',
+): Created {
+  const id = uniqueId(model, kind === 'stateful' ? 'nuevo-dispositivo' : 'nuevo-firmante-stateless');
   const device: Device = {
     id,
     label: name,
-    vendor: 'Desconocido',
+    vendor: UNKNOWN_VENDOR,
     kind,
     holds: [],
     pinProtected: kind === 'stateful',
@@ -345,12 +365,13 @@ export function removeDevice(model: CustodyModel, id: Id): CustodyModel {
 
 // ---------- Backups ----------
 
-export function addArtifact(model: CustodyModel, location: Id): Created {
-  const id = uniqueId(model, 'Nuevo backup');
+/** `label` recibe el nombre de la key que contiene (la primera) y da el del backup. */
+export function addArtifact(model: CustodyModel, location: Id, label = (key: string) => `Backup ${key}`): Created {
+  const id = uniqueId(model, 'nuevo-backup');
   const first = model.keys[0]!;
   const artifact: Artifact = {
     id,
-    label: `Backup ${first.label}`,
+    label: label(first.label),
     medium: 'metal',
     contents: [{ type: 'seed', key: first.id }],
     lockedBy: [],

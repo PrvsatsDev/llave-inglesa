@@ -1,7 +1,7 @@
 /** Las cuatro tarjetas de puntuación de cabeza de la columna. */
 export const puntuaciones = {
   abreviaturas: { security: 'Seg', resilience: 'Res', usability: 'Usa', inheritance: 'Her' },
-  ubicaciones: ['ubicación', 'ubicaciones'] as const,
+  ubicaciones: ['ubicación', 'ubicaciones'] as [string, string],
   seguridad: {
     sinRobo: (hasta: number) => `ningún robo con ≤${hasta} ataques`,
     roboMasBarato: (esfuerzo: string) => `robo más barato: esfuerzo ${esfuerzo}`,

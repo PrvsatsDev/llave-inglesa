@@ -2,7 +2,7 @@ import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyMod
 import type { DeviceCompromise, Disaster } from '@llave-inglesa/engine';
 import type { Edge, MarkerType, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
-import { UI } from '../lib/text.ts';
+import { UI, vendorText } from '../lib/text.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
 import { layoutGraph, type Orientation } from './layout.ts';
 
@@ -98,7 +98,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     kind: 'device',
     id: d.id,
     label: d.label,
-    subtitle: [d.vendor !== d.label ? d.vendor : null, d.kind === 'stateful' ? T.guardaKeys : T.sinEstado].filter(Boolean).join(' · '),
+    subtitle: [d.vendor !== d.label ? vendorText(d.vendor) : null, d.kind === 'stateful' ? T.guardaKeys : T.sinEstado].filter(Boolean).join(' · '),
     icon: d.kind,
     badges: activeHolds(d).map((key) => ({ kind: 'holds', key, label: label(key), color: keyColor(model, key) })),
     pinProtected: d.pinProtected,

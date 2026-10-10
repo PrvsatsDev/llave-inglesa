@@ -8,11 +8,11 @@ pensarse antes de implementarla.
 - **Tienda oficial de Umbrel** (2026-10-09): ya funciona en la tienda comunitaria
   (`PrvsatsDev/psats-umbrel-app-store`). Para la oficial (`getumbrel/umbrel-apps`), un PR con la carpeta de la app,
   capturas y logo en la descripción; dudas: la interfaz solo en español y que exige umbrelOS 2.0 (HTTPS).
-- **Traducción al inglés** (2026-10-09): ampliaría el público y facilitaría la tienda oficial de Umbrel. Hecho el
-  paso previo: todos los textos de la interfaz están en `packages/text` (objeto `UI`, vigilado por un test). Falta
-  decidir cómo se elige el idioma (detección, selector, ¿se recuerda?), convertir las funciones de texto del motor y
-  la guía (hoy en español a fuego) y resolver los datos en español del modelo: nombres por defecto del dominio, el
-  fabricante «Desconocido» guardado tal cual, ejemplos y `index.html` (ver el inventario, «Límites conocidos»).
+- **Traducción al inglés** (2026-10-09): ampliaría el público y facilitaría la tienda oficial de Umbrel. En marcha
+  (rama `ingles`), por lotes: 1 infraestructura (hecho: textos por idioma, fachada viva, idioma detectado y
+  recordado, nombres de lo nuevo desde la interfaz), 2 interfaz en inglés y selector ES/EN en la cabecera (hecho), 3 textos
+  del motor, carta y descriptor (hecho), 4 ejemplos (hecho), 5 guía (hecho), 6 `index.html` (hecho: la vista previa del enlace se queda en español). Detectado del navegador, con selector, sin rutas
+  `/en`. Borrador de Claude, revisión del usuario.
 
 ## Simplificaciones conscientes del motor (para iterar)
 

@@ -1,10 +1,11 @@
 import { ChevronDown, Redo2, Undo2 } from 'lucide-react';
 import { EXAMPLE_GROUPS, examples } from '../lib/examples.ts';
 import { keyColor } from '../lib/key-colors.ts';
-import { policyText, UI } from '../lib/text.ts';
+import { IDIOMAS, NOMBRE_IDIOMA, policyText, UI } from '../lib/text.ts';
 import { loadExample } from '../storage/actions.ts';
 import { aboutDialog } from '../store/dialog.ts';
 import { hasUnsavedChanges, useDocument, type DocumentOrigin } from '../store/document.ts';
+import { useIdioma } from '../store/idioma.ts';
 import { FileMenu } from './FileMenu.tsx';
 import { KeyChip } from './KeyChip.tsx';
 import styles from './Header.module.css';
@@ -32,6 +33,33 @@ function SaveStatus() {
       <span className={styles.statusDot} aria-hidden />
       {dirty ? T.sinGuardar : T.guardado}
     </span>
+  );
+}
+
+/** ES | EN: cada idioma con su nombre en ese idioma (en el título), para que se reconozca sin entender el activo. */
+function LanguageSwitch() {
+  const idioma = useIdioma((s) => s.idioma);
+  const cambiar = useIdioma((s) => s.cambiar);
+  return (
+    <div className={styles.lang} role="group" aria-label={T.idioma}>
+      {IDIOMAS.map((i) => (
+        <button
+          key={i}
+          lang={i}
+          className={`${styles.langButton} ${i === idioma ? styles.langCurrent : ''}`}
+          aria-pressed={i === idioma}
+          aria-label={NOMBRE_IDIOMA[i]}
+          title={NOMBRE_IDIOMA[i]}
+          onClick={() => {
+            if (i === idioma) return;
+            cambiar(i);
+            useDocument.getState().relocalize();
+          }}
+        >
+          {i.toUpperCase()}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -65,7 +93,7 @@ export function Header() {
           )}
           {EXAMPLE_GROUPS.map((group) => (
             <optgroup key={group} label={T.gruposEjemplos[group]}>
-              {examples
+              {examples()
                 .filter((e) => e.group === group)
                 .map((e) => (
                   <option key={e.id} value={e.id}>
@@ -98,6 +126,8 @@ export function Header() {
           <Redo2 size={16} />
         </button>
       </div>
+
+      <LanguageSwitch />
 
       <span className={styles.offline} title={T.pistaLocal} aria-label={T.localAccesible}>
         <span className={styles.offlineDot} aria-hidden />

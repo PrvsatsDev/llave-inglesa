@@ -1,3 +1,5 @@
+// Lo primero: el idioma activo, antes de que ningún módulo lea los textos.
+import './store/idioma.ts';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/inter';

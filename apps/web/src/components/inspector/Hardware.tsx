@@ -1,4 +1,4 @@
-import { CATALOG_DATE, HARDWARE_MODELS, type AdvisoryMatch, type CatalogModel, type Device, type Id } from '@llave-inglesa/domain';
+import { CATALOG_DATE, HARDWARE_MODELS, UNKNOWN_VENDOR, type AdvisoryMatch, type CatalogModel, type Device, type Id } from '@llave-inglesa/domain';
 import { advisoryText, UI } from '../../lib/text.ts';
 import { AlertTriangle, ChevronDown, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -70,8 +70,6 @@ export function HardwareModelSelect({
   );
 }
 
-/** Fabricante desconocido tal como se guarda en el modelo (un dato, no una etiqueta). */
-export const UNKNOWN_VENDOR = 'Desconocido'; // texto-ok: valor del modelo
 const OTHER_VENDOR = '';
 const sameVendor = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 

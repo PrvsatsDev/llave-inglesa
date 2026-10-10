@@ -4,11 +4,7 @@ import { AlertTriangle, Printer, X } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  LETTER_CALM,
-  LETTER_FOOTER,
-  LETTER_NO_DESCRIPTOR,
-  LETTER_PRINT_ADVICE,
-  LETTER_SPARE_NOTE,
+  LETTER_TEXT,
   letterGreeting,
   letterHelpers,
   letterMemoryText,
@@ -80,12 +76,12 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
       <aside className={styles.aside}>
         <p className={styles.advice}>
           <AlertTriangle size={14} aria-hidden />
-          {LETTER_PRINT_ADVICE}
+          {LETTER_TEXT.printAdvice}
         </p>
         {letter.noDescriptorCopy && (
           <p className={styles.advice}>
             <AlertTriangle size={14} aria-hidden />
-            {LETTER_NO_DESCRIPTOR}
+            {LETTER_TEXT.noDescriptor}
           </p>
         )}
         <p className={styles.asideTitle}>{T.nombresReales}</p>
@@ -131,14 +127,14 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
 
         <h2>{T.antesDeNada}</h2>
         <ul>
-          {LETTER_CALM.map((t) => (
+          {LETTER_TEXT.calm.map((t) => (
             <li key={t}>{t}</li>
           ))}
         </ul>
 
         <h2>{T.queReunir}</h2>
         {helpers && <p>{helpers}</p>}
-        {letter.stops.some((s) => s.pieces.some((p) => !p.needed)) && <p>{LETTER_SPARE_NOTE}</p>}
+        {letter.stops.some((s) => s.pieces.some((p) => !p.needed)) && <p>{LETTER_TEXT.spareNote}</p>}
         {letter.stops.map((s) => (
           <section key={s.location}>
             <h3>{label(s.location)}</h3>
@@ -177,7 +173,7 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
           </>
         )}
 
-        <footer className={styles.footer}>{LETTER_FOOTER}</footer>
+        <footer className={styles.footer}>{LETTER_TEXT.footer}</footer>
       </article>
     </div>,
     document.body,

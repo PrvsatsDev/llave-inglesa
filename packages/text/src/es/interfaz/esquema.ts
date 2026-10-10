@@ -33,8 +33,20 @@ export const esquema = {
   vacia: 'Vacía',
   personas: (n: number) => `Personas (${n})`,
   persona: 'Persona',
-  ubicacionesPlural: ['ubicación', 'ubicaciones'] as const,
+  ubicacionesPlural: ['ubicación', 'ubicaciones'] as [string, string],
   entraEn: (ubicaciones: string) => `Entra en ${ubicaciones}`,
   noEntra: 'No entra en ninguna ubicación',
   sabeDeMemoria: 'Sabe de memoria',
+};
+
+/** Nombres de lo que se crea (el usuario los cambia después). */
+export const nuevos = {
+  esquema: 'Mi esquema',
+  titular: 'Yo',
+  casa: 'Casa',
+  ubicacion: 'Nueva ubicación',
+  persona: 'Nueva persona',
+  dispositivo: 'Nuevo dispositivo',
+  stateless: 'Nuevo firmante stateless',
+  backup: (key: string) => `Backup ${key}`,
 };

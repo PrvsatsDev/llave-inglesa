@@ -7,6 +7,7 @@
  *   npx tsx scripts/video.ts --escena 3            solo una escena (para probar)
  *   npx tsx scripts/video.ts --musica pista.mp3    con música de fondo (baja, con fundidos largos)
  *   … --musica pista.mp3 --musica-desde 35         empezando la pista en su segundo 35
+ *   … --idioma en                                  en inglés (llave-inglesa-en.mp4)
  *
  * La música va a volumen fijo: los efectos se suman encima sin hacerla bajar ni subir. Al final, todo
  * se normaliza al volumen estándar de las redes (-14 LUFS) con una ganancia uniforme.
@@ -27,7 +28,8 @@ const argumento = (nombre: string) => {
 const escena = argumento('--escena');
 const musica = argumento('--musica');
 const musicaDesde = Number(argumento('--musica-desde') ?? 0);
-const nombre = escena ? `escena-${escena}` : 'llave-inglesa';
+const idioma = argumento('--idioma') ?? 'es';
+const nombre = (escena ? `escena-${escena}` : 'llave-inglesa') + (idioma === 'es' ? '' : `-${idioma}`);
 
 rmSync(FOTOGRAMAS, { recursive: true, force: true });
 mkdirSync(FOTOGRAMAS, { recursive: true });
@@ -39,7 +41,7 @@ const servidor = spawn('npx', ['vite', '--port', String(PUERTO), '--strictPort']
   detached: true,
 });
 try {
-  const url = `http://127.0.0.1:${PUERTO}/video.html?render`;
+  const url = `http://127.0.0.1:${PUERTO}/video.html?render&idioma=${idioma}`;
   const navegador = await chromium.launch();
   const pagina = await navegador.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   // Esperar al servidor con el propio navegador (la primera vez Vite optimiza las dependencias y tarda).

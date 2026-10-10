@@ -16,7 +16,6 @@ import { WalletSection } from './Wallet.tsx';
 import styles from './Schema.module.css';
 
 const T = UI.esquema;
-const SIN_NOMBRE = UI.comun.sinNombre;
 
 /** Sección Esquema: problemas (si los hay), política, keys y el índice de todo lo que hay y dónde. */
 export function Schema({ model }: { model: CustodyModel }) {
@@ -92,12 +91,12 @@ export function Schema({ model }: { model: CustodyModel }) {
 
       <Places
         model={model}
-        onAdd={() => create((m) => addLocation(m), 'location')}
+        onAdd={() => create((m) => addLocation(m, UI.nuevos.ubicacion), 'location')}
         onAddItem={(kind, location) =>
-          kind === 'artifact' ? create((m) => addArtifact(m, location), 'artifact') : create((m) => addDevice(m, location, kind), 'device')
+          kind === 'artifact' ? create((m) => addArtifact(m, location, UI.nuevos.backup), 'artifact') : create((m) => addDevice(m, location, kind, kind === 'stateful' ? UI.nuevos.dispositivo : UI.nuevos.stateless), 'device')
         }
       />
-      <People model={model} onAdd={() => create((m) => addPerson(m), 'person')} />
+      <People model={model} onAdd={() => create((m) => addPerson(m, UI.nuevos.persona), 'person')} />
 
       <details className={styles.meta}>
         <summary>{T.nombreYDescripcion}</summary>
@@ -145,7 +144,8 @@ const useGraph = (model: CustodyModel) => useMemo(() => buildGraph(model), [mode
 
 type ItemKind = 'stateful' | 'stateless' | 'artifact';
 
-const ITEM_KINDS = (['stateful', 'stateless', 'artifact'] as const).map((value) => ({ value, label: T.tiposElemento[value] }));
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const itemKinds = () => (['stateful', 'stateless', 'artifact'] as const).map((value) => ({ value, label: T.tiposElemento[value] }));
 
 /** Formulario para añadir un dispositivo o backup: qué y dónde. */
 interface Adding {
@@ -167,7 +167,7 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
 
   const form = current && (
     <div className={styles.addForm}>
-      <Segmented label={T.queAnadir} value={current.kind} options={ITEM_KINDS} onChange={(kind) => setAdding({ ...current, kind })} />
+      <Segmented label={T.queAnadir} value={current.kind} options={itemKinds()} onChange={(kind) => setAdding({ ...current, kind })} />
       {!current.fromRow && (
         <Field label={T.donde}>
           {(id) => (
@@ -228,7 +228,7 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
               <button className={`${styles.row} ${styles.placeRow}`} onClick={() => select({ kind: 'location', id })}>
                 <span className={styles.rowMain}>
                   <Icon size={14} className={styles.icon} aria-hidden />
-                  <span className={styles.name}>{data.name || SIN_NOMBRE}</span>
+                  <span className={styles.name}>{data.name || UI.comun.sinNombre}</span>
                   <span className={styles.keys}>
                     {data.keys.map((k) => (
                       <KeyChip key={k.id} label={k.label} color={k.color} size="sm" />
@@ -248,7 +248,7 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
                         <button className={`${styles.row} ${styles.item}`} onClick={() => select({ kind: item.kind, id: item.id })}>
                           <span className={styles.rowMain}>
                             <ItemIcon size={13} className={styles.icon} aria-hidden />
-                            <span className={styles.name}>{item.label || SIN_NOMBRE}</span>
+                            <span className={styles.name}>{item.label || UI.comun.sinNombre}</span>
                             <span className={styles.secrets}>
                               {item.badges.map((b, i) => (
                                 <SecretBadge key={i} badge={b} />
@@ -285,7 +285,7 @@ function People({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
               <button className={styles.row} onClick={() => select({ kind: 'person', id })}>
                 <span className={styles.rowMain}>
                   <Avatar size={14} className={styles.icon} aria-hidden />
-                  <span className={styles.name}>{data.name || SIN_NOMBRE}</span>
+                  <span className={styles.name}>{data.name || UI.comun.sinNombre}</span>
                   <span className={styles.role}>{ROLE[data.role]}</span>
                 </span>
                 <span className={styles.rowSub}>

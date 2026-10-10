@@ -55,7 +55,7 @@ ficheros. Cómo recompilarla y compararla, también con la web publicada, en
 [docs/VERIFICAR.md](docs/VERIFICAR.md). Al abrirla por primera vez verás una bienvenida y 15 ejemplos, desde
 "papel en el cajón" hasta un multisig 2 de 3 distribuido, cada uno con lo que enseña.
 
-**Guía de uso**: dentro de la app (*Archivo → Guía de uso*, interactiva) y en [docs/GUIA.md](docs/GUIA.md).
+**Guía de uso**: dentro de la app (*Archivo → Guía de uso*, interactiva) y en [docs/GUIA.md](docs/GUIA.md) (en inglés, [docs/GUIDE.md](docs/GUIDE.md)).
 
 Todo lo que la herramienta modela, y sus límites conocidos, está en
 [docs/CAPACIDADES.md](docs/CAPACIDADES.md). Cómo se calibraron las puntuaciones, con la galería
@@ -85,7 +85,7 @@ npm run e2e          # pruebas en Chromium contra el build de producción
 npm run build        # web estática en apps/web/dist
 npm run empaquetar   # build + zip reproducible y SHA256SUMS en release/
 python3 scripts/logo.py   # regenera los SVG del logo (app, favicon y README)
-npx tsx scripts/video.ts  # renderiza el vídeo de presentación (video/salida/, no se sube); revisarlo: npm run dev → /video.html
+npx tsx scripts/video.ts  # renderiza el vídeo de presentación (video/salida/, no se sube; --idioma en para el inglés); revisarlo: npm run dev → /video.html (?idioma=en)
                           # con música de fondo: --musica pista.mp3 --musica-desde 35 (la pista no se sube al repo)
 npx tsx scripts/portada.ts  # imagen de vista previa del enlace (apps/web/public/portada.png)
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal

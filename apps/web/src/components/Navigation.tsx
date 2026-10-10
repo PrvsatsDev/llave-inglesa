@@ -10,7 +10,6 @@ import { GUIA, UI } from '../lib/text.ts';
 import styles from './Navigation.module.css';
 
 const T = UI.navegacion;
-const GUIDE_INTRO = T.introGuia;
 
 const SECTIONS: { id: Section; icon: LucideIcon }[] = [
   { id: 'schema', icon: LayoutList },
@@ -113,7 +112,7 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
     })),
   ];
   const canGoBack = fichas.length > 0 || guide !== null || (section === 'simulate' && simulatedFrom !== null);
-  const intro = fichas.length > 0 || chapter ? null : guide ? GUIDE_INTRO : section === 'analysis' ? METRIC_INTRO[metric] : section === 'simulate' && simulatedFrom ? null : SECTION_INTRO[section];
+  const intro = fichas.length > 0 || chapter ? null : guide ? T.introGuia : section === 'analysis' ? METRIC_INTRO[metric] : section === 'simulate' && simulatedFrom ? null : SECTION_INTRO[section];
 
   return (
     <div className={styles.crumbsBar}>

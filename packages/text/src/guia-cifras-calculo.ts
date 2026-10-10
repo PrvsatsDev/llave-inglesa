@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { parseModel } from '@llave-inglesa/domain';
 import { analyze } from '@llave-inglesa/engine';
-import type { Metrica } from './guia.ts';
+import type { Metrica } from './tipos.ts';
 
 /** Los ejemplos (fixtures/ y fixtures/referencia/), por id (el nombre del fichero). */
 function ejemplos() {

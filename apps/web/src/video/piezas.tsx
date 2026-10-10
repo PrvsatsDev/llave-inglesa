@@ -10,14 +10,14 @@ import { scenarioView, type Scenario } from '../scenario/view.ts';
 import { level } from '../components/Scoreboard.tsx';
 import { OUTCOME } from '../components/ScenarioBanner.tsx';
 import aviso from '../components/ScenarioBanner.module.css';
-import { attackText, lossText } from '../lib/text.ts';
+import { attackText, lossText, UI } from '../lib/text.ts';
 import tarjeta from '../components/Scoreboard.module.css';
 import { interpolar } from './tiempo.ts';
 import styles from './video.module.css';
 
 const nodeTypes: NodeTypes = { location: LocationNode, person: PersonNode };
 
-export const ejemplo = (id: string) => examples.find((e) => e.id === id)!.model;
+export const ejemplo = (id: string) => examples().find((e) => e.id === id)!.model;
 
 /** Cómo se ve el mapa en un fotograma: qué se muestra (0 = oculto, 1 = del todo) y dónde. */
 export interface EstadoMapa {
@@ -159,14 +159,15 @@ export function Aviso({ modelo, escenario, visible }: { modelo: CustodyModel; es
   const view = scenarioView(modelo, escenario);
   if (!view) return null;
   const index = indexModel(modelo);
-  const { icon: Icon, text, level } = OUTCOME[view.outcome];
+  const { icon: Icon, level } = OUTCOME[view.outcome];
+  const text = UI.banner.resultado[view.outcome];
   const pasos = escenario.kind === 'attack' ? escenario.atoms.map((a) => attackText(a, index)) : escenario.events.map((e) => lossText(e, index));
   return (
     <div className={styles.aviso} style={{ opacity: visible, transform: `translateX(-50%) translateY(${(1 - visible) * 20}px) scale(1.7)` }}>
       <div className={`${aviso.banner} ${aviso[level]}`}>
         <Icon size={18} className={aviso.icon} aria-hidden />
         <div className={aviso.text}>
-          <span className={aviso.kicker}>{escenario.kind === 'attack' ? 'Simulando ataque' : 'Simulando desgracia'}</span>
+          <span className={aviso.kicker}>{escenario.kind === 'attack' ? UI.banner.simulandoAtaque : UI.banner.simulandoDesgracia}</span>
           <span className={aviso.steps}>{pasos.join(' + ')}</span>
           <span className={aviso.outcome}>{text}</span>
         </div>

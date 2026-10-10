@@ -7,7 +7,7 @@ import {
   importProblemText,
   matchText,
   SCRIPT_TEXT,
-  SEED_WORDS_TEXT,
+  WALLET_TEXT,
   UI,
   walletProblemText,
   walletWarningText,
@@ -173,7 +173,7 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
   const submit = () => {
     if (looksLikeSeedWords(text)) {
       setText('');
-      setError(SEED_WORDS_TEXT);
+      setError(WALLET_TEXT.seedWords);
       return;
     }
     const parsed = parseDescriptor(text);

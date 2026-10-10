@@ -112,7 +112,7 @@ async function unlock(envelope: Envelope, title: string, message: string): Promi
 // ---------- acciones ----------
 
 export async function newDocument() {
-  if (await confirmDiscard()) openDocument(blankModel(), { kind: 'new' });
+  if (await confirmDiscard()) openDocument(blankModel({ scheme: UI.nuevos.esquema, owner: UI.nuevos.titular, home: UI.nuevos.casa }), { kind: 'new' });
 }
 
 export async function loadExample(id: string) {

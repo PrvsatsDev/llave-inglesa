@@ -9,6 +9,7 @@ import { useLiveAnalysis } from './store/analysis.ts';
 import { hasLocalDocument, openLocal, saveLocal, showWelcome } from './storage/actions.ts';
 import { useDialog } from './store/dialog.ts';
 import { hasUnsavedChanges, useDocument } from './store/document.ts';
+import { useIdioma } from './store/idioma.ts';
 import { useLayout } from './store/layout.ts';
 import { useMobile, useNarrow } from './store/mobile.ts';
 import { goBack } from './store/navigation.ts';
@@ -86,8 +87,10 @@ export function App() {
   const narrow = useNarrow();
   const collapsed = foldPreference && !narrow;
   const view = useMobile((s) => s.view);
+  // Cambiar de idioma vuelve a montar la interfaz: así se pinta todo con los textos nuevos (el documento se conserva).
+  const idioma = useIdioma((s) => s.idioma);
   return (
-    <ReactFlowProvider>
+    <ReactFlowProvider key={idioma}>
       {/* Plegada, el ancho lo pone la clase: el estilo en línea tendría prioridad sobre ella. */}
       <div
         className={`${styles.shell} ${collapsed ? styles.collapsed : ''}`}

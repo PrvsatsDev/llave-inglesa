@@ -1,43 +1,10 @@
-import type { AttackAtom, LossEvent } from '@llave-inglesa/engine';
+import type { Capitulo, Metrica, Trozo } from '../tipos.ts';
 
 /**
  * La guía de uso, como datos: la web la muestra al lado del mapa (con botones que abren ejemplos y
  * simulan) y scripts/guia.ts la convierte en docs/GUIA.md. Las cifras no se escriben: se citan
  * (`{ cifra }`) y salen de guia-cifras.ts, que genera el motor; un test comprueba que está al día.
  */
-
-export type Metrica = 'security' | 'resilience' | 'usability' | 'inheritance';
-
-/**
- * Un trozo de texto: texto normal, en negrita, la puntuación de un ejemplo en una métrica, un enlace
- * externo (se abre aparte) o un enlace a otro capítulo de la guía.
- */
-export type Trozo =
-  | string
-  | { negrita: string }
-  | { cifra: { ejemplo: string; metrica: Metrica } }
-  | { enlace: string; texto: string }
-  | { capitulo: string; texto: string };
-
-export type Escenario = { kind: 'attack'; atoms: AttackAtom[] } | { kind: 'loss'; events: LossEvent[] };
-
-export type Bloque =
-  | { tipo: 'parrafo'; texto: Trozo[] }
-  | { tipo: 'lista'; items: Trozo[][] }
-  /** Recuadro destacado (una idea clave o un aviso). */
-  | { tipo: 'nota'; texto: Trozo[] }
-  /** Botón que abre un ejemplo. */
-  | { tipo: 'ejemplo'; ejemplo: string; texto: string }
-  /** Botón que abre un ejemplo (si no está abierto) y simula un escenario en el mapa. */
-  | { tipo: 'simular'; ejemplo: string; escenario: Escenario; texto: string };
-
-export interface Capitulo {
-  id: string;
-  titulo: string;
-  /** Una línea para el índice. */
-  resumen: string;
-  bloques: Bloque[];
-}
 
 const cifra = (ejemplo: string, metrica: Metrica): Trozo => ({ cifra: { ejemplo, metrica } });
 const n = (negrita: string): Trozo => ({ negrita });

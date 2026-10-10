@@ -8,7 +8,8 @@ import { DeleteButton, Field, PanelHeader, Section, SecretToggles, Select, TextI
 import styles from './fields.module.css';
 
 const T = UI.persona;
-const ROLE_OPTIONS = (['owner', 'heir', 'custodian', 'other'] as const).map((value) => ({ value, label: T.roles[value] }));
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const roleOptions = () => (['owner', 'heir', 'custodian', 'other'] as const).map((value) => ({ value, label: T.roles[value] }));
 
 export function PersonInspector({ model, person }: { model: CustodyModel; person: Person }) {
   const apply = useDocument((s) => s.apply);
@@ -29,9 +30,9 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
         <Field label={T.rol} hint={isLastOwner ? T.unicoTitular : undefined}>
           {(fid) =>
             isLastOwner ? (
-              <Select id={fid} value={person.role} options={ROLE_OPTIONS.filter((o) => o.value === 'owner')} onChange={() => {}} />
+              <Select id={fid} value={person.role} options={roleOptions().filter((o) => o.value === 'owner')} onChange={() => {}} />
             ) : (
-              <Select id={fid} value={person.role} options={ROLE_OPTIONS} onChange={(role) => apply((m) => updatePerson(m, id, { role }))} />
+              <Select id={fid} value={person.role} options={roleOptions()} onChange={(role) => apply((m) => updatePerson(m, id, { role }))} />
             )
           }
         </Field>
@@ -58,7 +59,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
                 <span className={`${styles.rowMeta} ${styles.hint}`}>
                   {when.type === 'always'
                     ? T.siempre
-                    : `${when.type === 'after-death' ? T.trasFallecer : T.siNoPuede} ${model.people.find((p) => p.id === when.person)?.name ?? T.desconocida}`}
+                    : (when.type === 'after-death' ? T.trasFallecer : T.siNoPuede)(model.people.find((p) => p.id === when.person)?.name ?? T.desconocida)}
                 </span>
               </button>
             </li>

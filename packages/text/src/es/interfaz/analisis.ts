@@ -16,12 +16,12 @@ import {
   securityBreakdown,
   usabilityScore,
 } from '@llave-inglesa/engine';
-// Import circular con index.ts (que reexporta UI): es seguro mientras solo se usen dentro de funciones.
-import { ATTACK_KIND_TEXT, plural } from '../index.ts';
+import { plural } from '../../tipos.ts';
+import { ATTACK_KIND_TEXT } from '../textos.ts';
 import { comun } from './comun.ts';
 
 const num = comun.numero;
-const UBICACIONES = ['ubicación', 'ubicaciones'] as const;
+const UBICACIONES: [string, string] = ['ubicación', 'ubicaciones'];
 
 /** "1 ubicación → 100 · 2 ubicaciones → 85 · … · 4 o más → …" */
 const scale = (f: (n: number) => number, unit: readonly [string, string], from: number, to: number) =>

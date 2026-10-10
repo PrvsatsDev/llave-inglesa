@@ -2,10 +2,11 @@ import { indexModel } from '@llave-inglesa/domain';
 import { analyze } from '@llave-inglesa/engine';
 import { CIFRAS } from '@llave-inglesa/text';
 import type { ComponentType } from 'react';
-import { attackText, inheritanceText, lossText } from '../lib/text.ts';
+import { attackText, idioma, inheritanceText, lossText, UI } from '../lib/text.ts';
 import type { Scenario } from '../scenario/view.ts';
 import { Aviso, ejemplo, Llamas, Mapa, Tarjeta, Titulo, type EstadoMapa } from './piezas.tsx';
 import type { Sonido } from './sonido.ts';
+import { T } from './textos.ts';
 import { interpolar, suave } from './tiempo.ts';
 import styles from './video.module.css';
 
@@ -42,18 +43,13 @@ function mapaPapel(e: Partial<EstadoMapa> = {}): EstadoMapa {
 const VISTA_DISTRIBUIDO = { x: (1920 - 1416 * 1.1) / 2, y: 220, zoom: 1.1 };
 
 // Las cuatro notas de cada uno, tal como las calcula el motor (las mismas que cita la guía).
-const METRICAS = [
-  ['security', 'Seguridad'],
-  ['resilience', 'Resiliencia'],
-  ['usability', 'Usabilidad'],
-  ['inheritance', 'Herencia'],
-] as const;
+const METRICAS = (['security', 'resilience', 'usability', 'inheritance'] as const).map((m) => [m, UI.navegacion.metricas[m]] as const);
 
 // ---------- Escenas ----------
 
-const TEXTO_1 = 'Tu frase semilla, en un papel en casa.';
-const TEXTO_2 = 'Basta con que alguien entre.';
-const TEXTO_3 = 'O con un incendio.';
+const TEXTO_1 = T.papelEnCasa;
+const TEXTO_2 = T.bastaConEntrar;
+const TEXTO_3 = T.oUnIncendio;
 const INTRUSION: Scenario = { kind: 'attack', atoms: [{ type: 'burglary', location: 'casa' }] };
 const INCENDIO: Scenario = { kind: 'loss', events: [{ type: 'destroy-location', location: 'casa', disaster: 'fire' }] };
 
@@ -82,7 +78,7 @@ function Escena2({ f }: { f: number }) {
       <Titulo f={f} texto={TEXTO_1} inicio={-200} salida={0} />
       <Titulo f={f} texto={TEXTO_2} inicio={70} />
       <Tarjeta
-        etiqueta="Seguridad"
+        etiqueta={UI.navegacion.metricas.security}
         valor={interpolar(f, 55, 105, 100, CIFRAS[PAPEL]!.security, suave.entradaSalida)}
         visible={interpolar(f, 25, 45)}
         style={{ left: 330, top: 470 }}
@@ -106,9 +102,9 @@ function Escena3({ f }: { f: number }) {
       <Aviso modelo={papel} escenario={INCENDIO} visible={interpolar(f, 45, 65)} />
       <Titulo f={f} texto={TEXTO_2} inicio={-200} salida={0} />
       <Titulo f={f} texto={TEXTO_3} inicio={70} />
-      <Tarjeta etiqueta="Seguridad" valor={CIFRAS[PAPEL]!.security} visible={1} style={{ left: 330, top: 470 }} />
+      <Tarjeta etiqueta={UI.navegacion.metricas.security} valor={CIFRAS[PAPEL]!.security} visible={1} style={{ left: 330, top: 470 }} />
       <Tarjeta
-        etiqueta="Resiliencia"
+        etiqueta={UI.navegacion.metricas.resilience}
         valor={interpolar(f, 55, 105, 100, CIFRAS[PAPEL]!.resilience, suave.entradaSalida)}
         visible={interpolar(f, 25, 45)}
         style={{ left: 330, top: 680 }}
@@ -147,9 +143,9 @@ function Escena4({ f }: { f: number }) {
         />
       )}
       <Titulo f={f} texto={TEXTO_3} inicio={-200} salida={0} />
-      <Titulo f={f} texto="Reparte. Combina. Prueba." inicio={40} paso={14} />
-      <Tarjeta etiqueta="Seguridad" valor={CIFRAS[PAPEL]!.security} visible={fuera} style={{ left: 330, top: 470 }} />
-      <Tarjeta etiqueta="Resiliencia" valor={CIFRAS[PAPEL]!.resilience} visible={fuera} style={{ left: 330, top: 680 }} />
+      <Titulo f={f} texto={T.reparte} inicio={40} paso={14} />
+      <Tarjeta etiqueta={UI.navegacion.metricas.security} valor={CIFRAS[PAPEL]!.security} visible={fuera} style={{ left: 330, top: 470 }} />
+      <Tarjeta etiqueta={UI.navegacion.metricas.resilience} valor={CIFRAS[PAPEL]!.resilience} visible={fuera} style={{ left: 330, top: 680 }} />
       {METRICAS.map(([m, etiqueta], k) => (
         <Tarjeta
           key={m}
@@ -175,9 +171,9 @@ function EscenaHerencia({ f }: { f: number }) {
     <div className={styles.escena}>
       <Mapa estado={{ modelo: distribuido, nodos: NODOS_DISTRIBUIDO, lineas: 1, vista: VISTA_DISTRIBUIDO, ...(f >= 45 && { escenario: FALLECIMIENTO }) }} />
       <div className={styles.destello} style={{ opacity: (interpolar(f, 45, 51) - interpolar(f, 51, 75)) * 0.6 }} />
-      <Titulo f={f} texto="Reparte. Combina. Prueba." inicio={-200} salida={0} />
-      <Titulo f={f} texto="¿Y si faltas tú?" inicio={20} salida={110} />
-      <Titulo f={f} texto="Tu familia sabría llegar." inicio={130} />
+      <Titulo f={f} texto={T.reparte} inicio={-200} salida={0} />
+      <Titulo f={f} texto={T.siFaltas} inicio={20} salida={110} />
+      <Titulo f={f} texto={T.familia} inicio={130} />
       {METRICAS.map(([m, etiqueta], k) =>
         m === 'inheritance' ? (
           <Tarjeta
@@ -200,25 +196,25 @@ function EscenaHerencia({ f }: { f: number }) {
 // El análisis real del 2 de 3 distribuido: lo que enseña la escena 5.
 const analisis = analyze(distribuido);
 const indice = indexModel(distribuido);
-const numero = (n: number) => n.toLocaleString('es');
+const numero = (n: number) => n.toLocaleString(idioma() === 'en' ? 'en-US' : 'es');
 const COLUMNAS = [
   {
-    titulo: 'Cómo podrían robarte',
+    titulo: T.comoRobarte,
     filas: analisis.security.cuts
       .slice(0, 3)
-      .map((cut, i) => [cut.map((a) => attackText(a, indice)).join(' + '), `esfuerzo ${numero(analisis.security.efforts[i]!)}`]),
+      .map((cut, i) => [cut.map((a) => attackText(a, indice)).join(' + '), T.esfuerzo(numero(analisis.security.efforts[i]!))]),
   },
   {
-    titulo: 'Qué te lo haría perder',
+    titulo: T.quePerder,
     filas: analisis.resilience.cuts
       .slice(0, 3)
-      .map((cut, i) => [cut.map((e) => lossText(e, indice)).join(' + '), `rareza ${numero(analisis.resilience.rarities[i]!)}`]),
+      .map((cut, i) => [cut.map((e) => lossText(e, indice)).join(' + '), T.rareza(numero(analisis.resilience.rarities[i]!))]),
   },
   {
-    titulo: 'Si tus herederos llegarían',
+    titulo: T.herederos,
     filas: [
       [inheritanceText(analisis.inheritance, distribuido.people), ''],
-      ...analisis.inheritance.losses.slice(0, 2).map((cut) => [`Salvo: ${cut.map((e) => lossText(e, indice)).join(' + ')}`, '']),
+      ...analisis.inheritance.losses.slice(0, 2).map((cut) => [T.salvo(cut.map((e) => lossText(e, indice)).join(' + ')), '']),
     ],
   },
 ] as const;
@@ -237,8 +233,8 @@ function Escena5({ f }: { f: number }) {
           opacidad: interpolar(f, 0, 30, 1, 0.12),
         }}
       />
-      <Titulo f={f} texto="Tu familia sabría llegar." inicio={-200} salida={0} />
-      <Tarjeta etiqueta="Herencia" valor={CIFRAS[DISTRIBUIDO]!.inheritance} visible={interpolar(f, 0, 20, 1, 0)} escala={1.5} style={{ left: 120, top: 850 }} />
+      <Titulo f={f} texto={T.familia} inicio={-200} salida={0} />
+      <Tarjeta etiqueta={UI.navegacion.metricas.inheritance} valor={CIFRAS[DISTRIBUIDO]!.inheritance} visible={interpolar(f, 0, 20, 1, 0)} escala={1.5} style={{ left: 120, top: 850 }} />
       <Aviso modelo={distribuido} escenario={FALLECIMIENTO} visible={interpolar(f, 0, 20, 1, 0)} />
       <div className={styles.columnas}>
         {COLUMNAS.map((c, k) => (
@@ -255,7 +251,7 @@ function Escena5({ f }: { f: number }) {
           </section>
         ))}
       </div>
-      <Titulo f={f} texto="Y siempre te dice por qué." inicio={120} />
+      <Titulo f={f} texto={T.porque} inicio={120} />
     </div>
   );
 }
@@ -270,13 +266,13 @@ function Escena6({ f }: { f: number }) {
         llave-inglesa
       </p>
       <p className={styles.lema} style={{ opacity: interpolar(f, 55, 80) }}>
-        Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.
+        {T.lema}
       </p>
       <p className={styles.url} style={{ opacity: interpolar(f, 95, 115) }}>
         llave-inglesa.vualt.net
       </p>
       <p className={styles.promesa} style={{ opacity: interpolar(f, 125, 145) }}>
-        Sin red · sin cuentas · código abierto
+        {T.promesa}
       </p>
     </div>
   );

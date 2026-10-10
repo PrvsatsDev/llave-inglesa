@@ -1,8 +1,10 @@
 import { parseModel, policyKeys, type CustodyModel } from '@llave-inglesa/domain';
+import { EJEMPLOS, idioma, traducirEjemplo, type Idioma } from './text.ts';
 
 /**
  * Esquemas de ejemplo: los mismos fixtures que usan los tests del motor. Los de `fixtures/referencia/`
- * son la galería de la calibración (docs/CALIBRACION.md), de peor a mejor dentro de cada grupo.
+ * son la galería de la calibración (docs/CALIBRACION.md), de peor a mejor dentro de cada grupo. Están en español;
+ * `examples()` los da en el idioma activo (packages/text: `EJEMPLOS`).
  */
 const files = import.meta.glob<unknown>(['../../../../fixtures/*.json', '../../../../fixtures/referencia/*.json'], { eager: true, import: 'default' });
 
@@ -18,7 +20,7 @@ export interface Example {
   model: CustodyModel;
 }
 
-export const examples: readonly Example[] = Object.entries(files)
+const originales: readonly Example[] = Object.entries(files)
   .map(([path, json]) => {
     const id = path.split('/').pop()!.replace(/\.json$/, '');
     const result = parseModel(json);
@@ -32,4 +34,17 @@ export const examples: readonly Example[] = Object.entries(files)
 function rank(id: string) {
   const i = ORDER.indexOf(id);
   return i < 0 ? ORDER.length : i;
+}
+
+const traducidos = new Map<Idioma, readonly Example[]>();
+
+/** Los ejemplos en el idioma activo (mismos ids y mismo análisis; cambian nombres y descripciones). */
+export function examples(): readonly Example[] {
+  const i = idioma();
+  let lista = traducidos.get(i);
+  if (!lista) {
+    lista = originales.map((e) => ({ ...e, model: traducirEjemplo(e.model, EJEMPLOS) }));
+    traducidos.set(i, lista);
+  }
+  return lista;
 }

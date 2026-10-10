@@ -1,0 +1,38 @@
+import type { mapa as es } from '../../es/interfaz/mapa.ts';
+
+/** The custody map: location and person nodes, secret badges and simulation tags. */
+export const mapa: typeof es = {
+  soportes: { paper: 'paper', metal: 'metal', washers: 'washers', digital: 'digital', other: 'other medium' },
+  cifrado: 'encrypted',
+  guardaKeys: 'stores keys',
+  sinEstado: 'stateless',
+  trasFallecer: (persona: string) => `after the death of ${persona}`,
+  siNoPuede: (persona: string) => `if ${persona} cannot act`,
+  dentroDe: (lugar: string) => `inside ${lugar}`,
+  estados: { coerced: 'Coerced', attacker: 'Betrayal', dead: 'Death', incapacitated: 'Incapacity', forgot: 'Forgot' },
+  desastres: { fire: 'Fire', flood: 'Flood', physical: 'No access', device: 'Broken', cloud: 'Account lost' },
+  usada: { attack: 'Used by the attacker', recovery: 'Needed' },
+  alAlcance: 'Within reach',
+  comprometido: { firmware: 'Malicious firmware', extraction: 'Seed extracted' },
+  conPin: 'with PIN',
+  cifradoAccesible: 'encrypted',
+  resiste: 'Survives',
+  pistaPerdida: 'Adds losing it to the combined loss events',
+  ySiNoResiste: 'What if it does not survive?',
+  ySiSePierde: 'What if it is lost?',
+  multisig: 'multisig',
+  keysAqui: 'Keys present here',
+  keyAqui: (key: string) => `${key} is here`,
+  sabeDeMemoria: 'Knows by heart',
+  insignias: {
+    pin: 'PIN',
+    pistaPin: (dispositivo: string) => `PIN of ${dispositivo}`,
+    contrasena: 'password',
+    pistaContrasena: (backup: string) => `Password of ${backup}`,
+    descriptor: 'descriptor',
+    pistaDescriptor: 'Wallet descriptor: policy and all the xpubs',
+    prefijo: { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ' },
+    pistas: { holds: 'Key stored on the device', seed: 'Seed phrase', passphrase: 'Passphrase', xpub: 'Extended public key' },
+    pistaKey: (que: string, key: string) => `${que}: ${key}`,
+  },
+};

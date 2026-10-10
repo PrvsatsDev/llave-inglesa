@@ -12,9 +12,12 @@ export const cabecera = {
   pistaDeshacer: 'Deshacer (Ctrl+Z)',
   rehacer: 'Rehacer',
   pistaRehacer: 'Rehacer (Ctrl+Shift+Z)',
+  idioma: 'Idioma',
   local: '100% local',
   pistaLocal: 'La aplicación no puede hacer peticiones de red',
   localAccesible: '100% local: la aplicación no puede hacer peticiones de red',
+  /** La descripción de la página (`<meta name="description">`); la de apps/web/index.html es esta, en español. */
+  descripcionPagina: 'Simula tu custodia de Bitcoin: qué robo te deja sin fondos, con qué desgracia los pierdes, ¿tus herederos llegan?',
 };
 
 export const archivo = {

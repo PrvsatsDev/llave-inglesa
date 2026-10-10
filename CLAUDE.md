@@ -17,7 +17,7 @@ npm run e2e:publicada -w @llave-inglesa/web   # las mismas pruebas contra https:
 npm run analyze -- fixtures/todo-en-casa.json   # CLI
 npx tsx scripts/guia.ts   # recalcula las cifras de la guía (tras cambiar score.ts o un ejemplo)
 npx tsx scripts/portada.ts  # imagen de vista previa del enlace (og:image): rehacerla si cambian las cifras de R09
-npx tsx scripts/video.ts  # vídeo de presentación a MP4 (Playwright + ffmpeg); escenas en apps/web/src/video/
+npx tsx scripts/video.ts  # vídeo de presentación a MP4 (Playwright + ffmpeg; --idioma en); escenas en apps/web/src/video/
 npm run build
 ```
 
@@ -27,7 +27,7 @@ npm run build
 packages/domain   Esquema (zod = tipos + validación), integridad, índice, operaciones de edición puras
 packages/engine   Motor puro y determinista: inferencia con justificaciones, ataques, pérdidas,
                   cortes mínimos, puntuaciones (parámetros en score.ts)
-packages/text     Todos los textos en español (compartidos por web y CLI)
+packages/text     Todos los textos, por idioma (src/es/…), tras una fachada que sigue al idioma activo
 packages/bitcoin  Bitcoin puro: xpubs (SLIP-132), descriptores con checksum (BIP-380), direcciones
 packages/vault    Cifrado de documentos (AES-256-GCM + PBKDF2) y lectura de ficheros
 apps/web          React + React Flow + zustand; el motor corre en un Web Worker
@@ -43,8 +43,11 @@ docs/CAPACIDADES.md  Inventario de todo lo que la herramienta soporta (base de l
   fingerprints/xpubs. El modelo en sí es sensible (un mapa del tesoro): se guarda cifrado.
 - **Sin red**: CSP con `connect-src 'none'`, fuentes locales, sin telemetría ni CDNs.
 - **El motor no produce texto**: devuelve estructuras; los textos van en `packages/text`.
-- **La interfaz tampoco escribe texto**: sus textos van en `packages/text/src/interfaz/` (objeto `UI`, una zona por
-  fichero), para poder traducirla. `apps/web/src/textos.test.ts` falla si aparece texto en un componente; las
+- **La interfaz tampoco escribe texto**: sus textos van en `packages/text/src/es/interfaz/` (objeto `UI`, una zona por
+  fichero), para poder traducirla. Cada idioma es una carpeta con la misma forma; `packages/text/src/index.ts` exporta
+  objetos «vivos» (Proxy, `vivo.ts`) que leen siempre del idioma activo, así que `const T = UI.esquema` al cargar un
+  módulo sigue valiendo tras cambiarlo. Lo que no sigue al idioma es una cadena (o una lista de etiquetas) guardada en
+  una constante de módulo: eso se calcula al pintar. `apps/web/src/textos.test.ts` falla si aparece texto en un componente; las
   excepciones (valores del modelo, mensajes de consola) llevan el comentario `texto-ok` con el motivo.
 - **La UI nunca modifica el modelo por su cuenta**: usa las operaciones de `domain/edit.ts`
   (puras, con cascada). Principio: **desactivar conserva, eliminar limpia** (quitar un PIN o

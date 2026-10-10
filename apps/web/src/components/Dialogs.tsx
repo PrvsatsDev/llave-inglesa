@@ -180,7 +180,7 @@ function Welcome({ req }: { req: Extract<DialogRequest, { kind: 'welcome' }> }) 
         <BookOpen size={14} aria-hidden /> {T.guiaRapida}
       </button>
       <p className={styles.hint}>
-        {T.pistaEjemplos(examples.length)}
+        {T.pistaEjemplos(examples().length)}
       </p>
       <Author support={false} />
       <input
