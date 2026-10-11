@@ -29,6 +29,10 @@ export const navegacion = {
   capitulos: 'Capítulos',
   abierto: 'abierto',
   enElMapa: 'en el mapa',
+  video: 'Vídeo de presentación',
+  duracionVideo: '50 s',
+  videoNoIncluido: 'El vídeo no está incluido en esta copia de la aplicación.',
+  verVideoEnLaWeb: 'Verlo en llave-inglesa.vualt.net',
 
   volver: 'Volver',
   pistaVolver: 'Volver (Esc)',

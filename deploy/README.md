@@ -10,6 +10,7 @@ En el servidor, dentro de la carpeta `RAIZ`:
 versiones/v0.1.0/          cada versión desplegada, completa
 actual  → versiones/v0.1.0  lo que se sirve (se cambia de golpe al desplegar)
 anterior → versiones/…      para volver atrás con --volver
+medios/                     el vídeo de presentación, en /medios/ (no cambia al desplegar)
 ```
 
 ## Configuración local
@@ -84,3 +85,16 @@ scripts/desplegar.sh            # comprueba, prueba, construye, sube, cambia `ac
 scripts/desplegar.sh --prueba   # el commit actual sin etiqueta, para probar
 scripts/desplegar.sh --volver   # vuelve a la versión anterior
 ```
+
+## Vídeo de presentación
+
+El vídeo no está en el repo ni en el build (ni, por tanto, en `SHA256SUMS`): se sube a mano a `RAIZ/medios/`,
+que el bloque de Caddy sirve en `/medios/`. La guía lo busca allí, en el idioma activo; sin él, enlaza la web publicada.
+
+```sh
+npx tsx scripts/video.ts && npx tsx scripts/video.ts --idioma en   # video/salida/llave-inglesa-{es,en}.mp4
+ssh llave-inglesa 'mkdir -p /srv/llave-inglesa/medios'             # la primera vez
+scp video/salida/llave-inglesa-es.mp4 video/salida/llave-inglesa-en.mp4 llave-inglesa:/srv/llave-inglesa/medios/
+```
+
+Si el bloque de Caddy es anterior a `/medios/`, vuelve a generarlo y copiarlo (paso 3).

@@ -1,5 +1,6 @@
-import { CIFRAS, GUIA, UI, type Bloque, type Capitulo, type Escenario, type Trozo } from '../lib/text.ts';
-import { BookOpen, ChevronLeft, ChevronRight, Lightbulb, Map as MapIcon, Play } from 'lucide-react';
+import { useState } from 'react';
+import { CIFRAS, GUIA, idioma, UI, type Bloque, type Capitulo, type Escenario, type Trozo } from '../lib/text.ts';
+import { BookOpen, ChevronLeft, ChevronRight, Clapperboard, Lightbulb, Map as MapIcon, Play } from 'lucide-react';
 import { loadExample } from '../storage/actions.ts';
 import { useDocument } from '../store/document.ts';
 import { useNavigation } from '../store/navigation.ts';
@@ -20,6 +21,7 @@ function Index() {
   const openGuide = useNavigation((s) => s.openGuide);
   return (
     <Section>
+      <Video />
       <ol className={styles.index}>
         {GUIA.map((c, i) => (
           <li key={c.id}>
@@ -35,6 +37,46 @@ function Index() {
         ))}
       </ol>
     </Section>
+  );
+}
+
+/** La web publicada, que sí tiene el vídeo. */
+const PUBLISHED = 'https://llave-inglesa.vualt.net';
+
+/**
+ * El vídeo de presentación, en el idioma activo. No está en el repo ni en el build: el servidor lo sirve
+ * aparte en /medios/ (deploy/README.md). Si no está (un fork, el zip, Umbrel), se dice y se enlaza la web publicada.
+ * `preload="metadata"` pide solo el principio del fichero: lo justo para saber si existe sin tener que pulsar.
+ */
+function Video() {
+  const [missing, setMissing] = useState(false);
+  const T = UI.navegacion;
+  return (
+    <figure className={styles.video}>
+      <figcaption className={styles.videoCaption}>
+        <Clapperboard size={14} aria-hidden /> {T.video} · {T.duracionVideo}
+      </figcaption>
+      {missing ? (
+        <p className={styles.note}>
+          <Lightbulb size={14} aria-hidden />
+          <span>
+            {T.videoNoIncluido}{' '}
+            <a className={styles.link} href={PUBLISHED} target="_blank" rel="noopener noreferrer">
+              {T.verVideoEnLaWeb}
+            </a>
+          </span>
+        </p>
+      ) : (
+        <video
+          className={styles.player}
+          src={`/medios/llave-inglesa-${idioma()}.mp4`}
+          controls
+          preload="metadata"
+          aria-label={T.video}
+          onError={() => setMissing(true)}
+        />
+      )}
+    </figure>
   );
 }
 

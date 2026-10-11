@@ -85,7 +85,7 @@ npm run e2e          # pruebas en Chromium contra el build de producción
 npm run build        # web estática en apps/web/dist
 npm run empaquetar   # build + zip reproducible y SHA256SUMS en release/
 python3 scripts/logo.py   # regenera los SVG del logo (app, favicon y README)
-npx tsx scripts/video.ts  # renderiza el vídeo de presentación (video/salida/, no se sube; --idioma en para el inglés); revisarlo: npm run dev → /video.html (?idioma=en)
+npx tsx scripts/video.ts  # renderiza el vídeo de presentación (video/salida/llave-inglesa-es.mp4, no se sube; --idioma en para el inglés; en la web se sirve aparte, ver deploy/README.md); revisarlo: npm run dev → /video.html (?idioma=en)
                           # con música de fondo: --musica pista.mp3 --musica-desde 35 (la pista no se sube al repo)
 npx tsx scripts/portada.ts  # imagen de vista previa del enlace (apps/web/public/portada.png)
 npm run analyze -- fixtures/todo-en-casa.json   # informe en terminal
