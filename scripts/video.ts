@@ -7,7 +7,7 @@
  *   npx tsx scripts/video.ts --escena 3            solo una escena (para probar)
  *   npx tsx scripts/video.ts --musica pista.mp3    con música de fondo (baja, con fundidos largos)
  *   … --musica pista.mp3 --musica-desde 35         empezando la pista en su segundo 35
- *   … --idioma en                                  en inglés (llave-inglesa-en.mp4)
+ *   … --idioma en                                  en inglés (llave-inglesa-en.mp4; si no, llave-inglesa-es.mp4)
  *
  * La música va a volumen fijo: los efectos se suman encima sin hacerla bajar ni subir. Al final, todo
  * se normaliza al volumen estándar de las redes (-14 LUFS) con una ganancia uniforme.
@@ -29,7 +29,7 @@ const escena = argumento('--escena');
 const musica = argumento('--musica');
 const musicaDesde = Number(argumento('--musica-desde') ?? 0);
 const idioma = argumento('--idioma') ?? 'es';
-const nombre = (escena ? `escena-${escena}` : 'llave-inglesa') + (idioma === 'es' ? '' : `-${idioma}`);
+const nombre = `${escena ? `escena-${escena}` : 'llave-inglesa'}-${idioma}`;
 
 rmSync(FOTOGRAMAS, { recursive: true, force: true });
 mkdirSync(FOTOGRAMAS, { recursive: true });
@@ -107,7 +107,7 @@ try {
   const mp4 = `${SALIDA}${nombre}.mp4`;
   ffmpeg([
     '-loglevel', 'error', '-framerate', '30', '-i', `${FOTOGRAMAS}%04d.png`, '-i', normalizada,
-    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-shortest', mp4,
+    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', mp4,
   ]);
   // Solo queda el vídeo: los audios intermedios sobran.
   for (const f of [audio, mezcla, normalizada]) rmSync(f, { force: true });

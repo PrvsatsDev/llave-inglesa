@@ -39,7 +39,8 @@ export const ASSETS_CACHE = 'public, max-age=31536000, immutable';
 /**
  * Bloque de sitio para Caddy. Sirve la versión enlazada en `<root>/actual` tal cual (sin inyectar
  * nada: la web publicada es idéntica al build), con HTTPS automático y HSTS.
- * Sin registro de visitas.
+ * Aparte, en /medios/, lo que no va en el build ni en el repo (el vídeo de presentación): `<root>/medios`
+ * no cambia al desplegar otra versión. Sin registro de visitas.
  */
 export function caddySite(domain: string, root: string): string {
   const headers = { ...SECURITY_HEADERS, 'Strict-Transport-Security': 'max-age=31536000' };
@@ -47,9 +48,15 @@ export function caddySite(domain: string, root: string): string {
   return `# Generado por scripts/caddy.ts desde apps/web/security-headers.ts: no editar a mano.
 # En el servidor: copiarlo a /etc/caddy/ y añadir al Caddyfile una línea import con su ruta.
 ${domain} {
-\troot * ${root}/actual
 \tencode zstd gzip
-\tfile_server
+\thandle_path /medios/* {
+\t\troot * ${root}/medios
+\t\tfile_server
+\t}
+\thandle {
+\t\troot * ${root}/actual
+\t\tfile_server
+\t}
 
 \theader {
 ${lines.join('\n')}

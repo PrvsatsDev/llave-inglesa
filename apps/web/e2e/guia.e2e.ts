@@ -87,3 +87,22 @@ test('los enlaces entre capítulos llevan al capítulo, y los externos se abren 
   await expect(external).toHaveAttribute('rel', 'noopener noreferrer');
 });
 
+test('el vídeo de presentación, en el idioma activo; sin el fichero (un fork, el zip, Umbrel), se dice y se enlaza la web publicada', async ({ page }) => {
+  // El build local no lleva el vídeo; se fuerza también contra la web publicada, que sí lo tiene.
+  const asked: string[] = [];
+  await page.route('**/medios/**', (route) => {
+    asked.push(new URL(route.request().url()).pathname);
+    return route.fulfill({ status: 404 });
+  });
+  await page.addInitScript(() => localStorage.setItem('llave-inglesa:panel', JSON.stringify({ welcomeSeen: true })));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Archivo' }).click();
+  await page.getByRole('menuitem', { name: 'Guía de uso' }).click();
+  await expect(guide(page).getByText('Vídeo de presentación')).toBeVisible();
+  await expect(guide(page).getByText('El vídeo no está incluido en esta copia de la aplicación.')).toBeVisible();
+  const link = guide(page).getByRole('link', { name: 'Verlo en llave-inglesa.vualt.net' });
+  await expect(link).toHaveAttribute('href', 'https://llave-inglesa.vualt.net');
+  await expect(link).toHaveAttribute('target', '_blank');
+  expect(asked).toContain('/medios/llave-inglesa-es.mp4');
+  await capture(page, 'guia-video-ausente');
+});

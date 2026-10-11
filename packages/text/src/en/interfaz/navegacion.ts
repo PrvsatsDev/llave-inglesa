@@ -30,6 +30,10 @@ export const navegacion: typeof es = {
   capitulos: 'Chapters',
   abierto: 'open',
   enElMapa: 'on the map',
+  video: 'Introduction video',
+  duracionVideo: '50 s',
+  videoNoIncluido: 'The video is not included in this copy of the app.',
+  verVideoEnLaWeb: 'Watch it at llave-inglesa.vualt.net',
 
   volver: 'Back',
   pistaVolver: 'Back (Esc)',

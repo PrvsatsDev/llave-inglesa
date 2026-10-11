@@ -14,10 +14,11 @@ describe('cabeceras de seguridad', () => {
     }
   });
 
-  it('el bloque de Caddy sirve la versión enlazada en `actual` del dominio indicado', () => {
+  it('el bloque de Caddy sirve la versión enlazada en `actual` del dominio indicado, y /medios/ aparte', () => {
     const site = caddySite('web.ejemplo.net', '/srv/web');
     expect(site).toMatch(/^web\.ejemplo\.net \{$/m);
     expect(site).toContain('root * /srv/web/actual');
+    expect(site).toMatch(/handle_path \/medios\/\* \{\s+root \* \/srv\/web\/medios\s+file_server/);
     expect(site).toContain('Strict-Transport-Security');
   });
 
