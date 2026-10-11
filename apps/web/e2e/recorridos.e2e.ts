@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 /** Recorridos de uso en el build de producción. Las capturas quedan en e2e/.capturas para revisarlas. */
@@ -123,6 +123,39 @@ test('guardar cifrado en el navegador y reabrirlo tras recargar', async ({ page 
   await page.getByLabel('Contraseña').fill(password);
   await page.getByRole('button', { name: 'Abrir' }).click();
   await expect(page.getByLabel('Documento abierto o ejemplo')).toContainText('navegador');
+  expect(errors).toEqual([]);
+});
+
+test('abierta por http:// (sin contexto seguro) avisa de que el cifrado necesita HTTPS, y lo demás funciona', async ({ page }, info) => {
+  const errors = watchErrors(page);
+  // Por http:// el navegador no da WebCrypto: se simula quitándolo antes de cargar la app.
+  await page.addInitScript(() => Object.defineProperty(Crypto.prototype, 'subtle', { get: () => undefined }));
+  await page.goto('/');
+  await expect(scoreCard(page, 'Seguridad')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Archivo' }).click();
+  await page.getByRole('menuitem', { name: /Guardar en este navegador/ }).click();
+  await expect(page.getByText('El cifrado necesita HTTPS')).toBeVisible();
+  await expect(page.getByLabel('Contraseña')).toHaveCount(0);
+  await capture(page, 'sin-https');
+  await page.getByRole('button', { name: 'Entendido' }).click();
+
+  // Un fichero cifrado tampoco se intenta abrir: el mismo aviso, sin pedir la contraseña.
+  const file = info.outputPath('cifrado.llave');
+  const envelope = { format: 'llave-inglesa-cifrado', version: 1, kdf: { name: 'PBKDF2', hash: 'SHA-256', iterations: 600000, salt: 'AA==' }, cipher: { name: 'AES-GCM', iv: 'AA==' }, data: 'AA==' };
+  writeFileSync(file, JSON.stringify(envelope));
+  await page.getByRole('button', { name: 'Archivo' }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('menuitem', { name: /Abrir fichero/ }).click();
+  await (await chooser).setFiles(file);
+  await expect(page.getByText('El cifrado necesita HTTPS')).toBeVisible();
+  await expect(page.getByLabel('Contraseña')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Entendido' }).click();
+
+  // El resto sigue: simular un robo desde el análisis.
+  await scoreCard(page, 'Seguridad').click();
+  await page.getByTitle('Simular en el mapa').first().click();
+  await expect(page.getByText('La usa el atacante').first()).toBeVisible();
   expect(errors).toEqual([]);
 });
 

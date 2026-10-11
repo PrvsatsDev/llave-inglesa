@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { parseModel, type CustodyModel } from '@llave-inglesa/domain';
-import { describe, expect, it } from 'vitest';
-import { createKey, readDocument, seal, sealModel, serializeModel, unseal, unsealModel, WrongPasswordError, type Envelope } from '../src/index.ts';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createKey, encryptionAvailable, readDocument, seal, sealModel, serializeModel, unseal, unsealModel, WrongPasswordError, type Envelope } from '../src/index.ts';
 
 // Pocas iteraciones en los tests para que sean rápidos; en la app se usa DEFAULT_ITERATIONS.
 const FAST = 1_000;
@@ -72,5 +72,18 @@ describe('documentos', () => {
     const env = await sealModel(model, await createKey('secreto', FAST));
     const { result } = await unsealModel(env, 'secreto');
     expect(result.ok && result.model).toEqual(model);
+  });
+});
+
+describe('contexto seguro', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('hay cifrado con WebCrypto (HTTPS, localhost o Node)', () => {
+    expect(encryptionAvailable()).toBe(true);
+  });
+
+  it('sin crypto.subtle (página abierta por http://) no lo hay', () => {
+    vi.stubGlobal('crypto', { getRandomValues: globalThis.crypto.getRandomValues.bind(globalThis.crypto) });
+    expect(encryptionAvailable()).toBe(false);
   });
 });

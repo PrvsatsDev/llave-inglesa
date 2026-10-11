@@ -1,6 +1,7 @@
 import { blankModel, tidyIds, type CustodyModel, type ParseResult } from '@llave-inglesa/domain';
 import {
   createKey,
+  encryptionAvailable,
   isEnvelope,
   readDocument,
   sealModel,
@@ -94,6 +95,13 @@ function reportInvalid(result: Extract<ParseResult, { ok: false }>) {
   ]);
 }
 
+/** Sin contexto seguro no hay cifrado: se avisa antes de pedir ninguna contraseña. */
+async function encryptionOrWarn(): Promise<boolean> {
+  if (encryptionAvailable()) return true;
+  await alertDialog(T.sinCifrado.titulo, [...T.sinCifrado.lineas]);
+  return false;
+}
+
 /** Pide la contraseña hasta acertar o cancelar. */
 async function unlock(envelope: Envelope, title: string, message: string): Promise<{ result: ParseResult; vault: VaultKey } | null> {
   let error: string | undefined;
@@ -125,6 +133,7 @@ export async function loadExample(id: string) {
 
 /** Guarda cifrado en este navegador. La primera vez en la sesión pide la contraseña. */
 export async function saveLocal(): Promise<boolean> {
+  if (!(await encryptionOrWarn())) return false;
   // Hay un solo hueco de guardado: no sustituir en silencio otro esquema guardado.
   if (sessionKey && useDocument.getState().origin.kind !== 'local' && hasLocalDocument()) {
     const ok = await confirmDialog(T.sustituir.titulo, T.sustituir.mensaje, T.sustituir.confirmar, true);
@@ -149,6 +158,7 @@ export async function saveLocal(): Promise<boolean> {
 export async function openLocal(): Promise<boolean> {
   const envelope = readStored();
   if (!envelope) return false;
+  if (!(await encryptionOrWarn())) return false;
   if (!(await confirmDiscard())) return false;
   const opened = await unlock(envelope, T.abrirLocal.titulo, T.abrirLocal.mensaje);
   if (!opened) return false;
@@ -178,6 +188,7 @@ export async function forgetLocal() {
 const exportable = () => tidyIds(useDocument.getState().model);
 
 export async function exportEncrypted() {
+  if (!(await encryptionOrWarn())) return;
   const password = await askPassword('create', T.exportarCifrado.titulo, T.exportarCifrado.mensaje);
   if (password === null) return;
   const model = exportable();
@@ -211,6 +222,7 @@ export async function importFile(file: File) {
   }
   let result: ParseResult;
   if (read.kind === 'encrypted') {
+    if (!(await encryptionOrWarn())) return;
     const opened = await unlock(read.envelope, T.abrirCifrado.titulo(file.name), T.abrirCifrado.mensaje);
     if (!opened) return;
     result = opened.result;

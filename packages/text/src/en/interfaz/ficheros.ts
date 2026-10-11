@@ -29,6 +29,13 @@ export const ficheros: typeof es = {
     titulo: 'Could not save',
     lineas: ['This browser does not allow saving data (private mode or blocked storage).', 'Use "Export encrypted" to save it as a file.'],
   },
+  sinCifrado: {
+    titulo: 'Encryption needs HTTPS',
+    lineas: [
+      'Browsers only allow encryption over a secure connection, and this page is open over http://.',
+      'Open it over https:// (on Umbrel, with the same address and port) to save or open encrypted setups. Everything else works the same.',
+    ],
+  },
   abrirLocal: {
     titulo: 'Open your setup',
     mensaje: 'There is an encrypted setup saved in this browser. Enter its password.',

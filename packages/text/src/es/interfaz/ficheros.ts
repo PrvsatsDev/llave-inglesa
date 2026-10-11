@@ -28,6 +28,13 @@ export const ficheros = {
     titulo: 'No se ha podido guardar',
     lineas: ['Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado).', 'Usa "Exportar cifrado" para guardarlo como fichero.'],
   },
+  sinCifrado: {
+    titulo: 'El cifrado necesita HTTPS',
+    lineas: [
+      'El navegador solo permite cifrar en una conexión segura, y esta página está abierta por http://.',
+      'Ábrela por https:// (en Umbrel, con la misma dirección y puerto) para guardar o abrir esquemas cifrados. Todo lo demás funciona igual.',
+    ],
+  },
   abrirLocal: {
     titulo: 'Abrir tu esquema',
     mensaje: 'Hay un esquema guardado y cifrado en este navegador. Introduce su contraseña.',

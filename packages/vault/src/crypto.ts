@@ -38,6 +38,12 @@ export class WrongPasswordError extends Error {
 }
 
 const subtle = () => globalThis.crypto.subtle;
+
+/**
+ * El navegador solo da WebCrypto en un contexto seguro (HTTPS o localhost): abierta por http://
+ * (p. ej. en Umbrel sin HTTPS), cifrar y descifrar no es posible y hay que decirlo antes de intentarlo.
+ */
+export const encryptionAvailable = () => globalThis.crypto?.subtle !== undefined;
 const encode = (s: string) => new TextEncoder().encode(s);
 const random = (n: number) => globalThis.crypto.getRandomValues(new Uint8Array(n));
 
