@@ -63,6 +63,12 @@ export const COERCION_SURCHARGE: Readonly<Record<Protection, number>> = {
 };
 
 /**
+ * Recargo de la llave inglesa en un sitio donde la víctima no vive: hay que llevarla allí (o esperarla). No se suma
+ * al de la caja del banco, que ya incluye llevarla: cuenta el mayor. Sin indicar dónde vive, no se aplica.
+ */
+export const COERCION_AWAY_SURCHARGE = 0.5;
+
+/**
  * Hackeo de una cuenta en la nube: en remoto, sin riesgo físico y contra millones de cuentas a la
  * vez (phishing, contraseñas reutilizadas, filtraciones, malware que busca semillas en las fotos).
  * Más barato que entrar en una casa.
@@ -72,7 +78,24 @@ export const CLOUD_BREACH_EFFORT = 1;
 const protectionOf = (index: ModelIndex, location: Id | null): Protection =>
   (location !== null && index.locations.get(location)?.protection) || 'none';
 
-/** Esfuerzo de un ataque concreto (la ubicación decide el de intrusiones y coacciones). */
+/** Sitio físico de una ubicación: la casa, para lo que está dentro de ella. */
+const siteOf = (index: ModelIndex, location: Id) => index.locations.get(location)?.inside ?? location;
+
+/** ¿Se coacciona a la persona en un sitio donde consta que no vive? */
+export function coercedAway(a: Extract<AttackAtom, { type: 'coercion' }>, index: ModelIndex): boolean {
+  const home = index.people.get(a.person)?.livesAt;
+  return home !== undefined && a.location !== null && siteOf(index, a.location) !== home;
+}
+
+/** Recargo de logística de una coacción: llevar a la víctima a la caja del banco o a donde no vive (el mayor). */
+export function coercionSurcharge(a: Extract<AttackAtom, { type: 'coercion' }>, index: ModelIndex): number {
+  return Math.max(COERCION_SURCHARGE[protectionOf(index, a.location)], coercedAway(a, index) ? COERCION_AWAY_SURCHARGE : 0);
+}
+
+/**
+ * Esfuerzo de un ataque concreto por sí solo (la ubicación decide el de intrusiones y coacciones). En un robo con
+ * varias coacciones, la llave inglesa se paga por asalto, no por coacción: ver `atomEfforts`.
+ */
 export function atomEffort(a: AttackAtom, index: ModelIndex): number {
   switch (a.type) {
     case 'passphrase-bruteforce':
@@ -86,7 +109,7 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
       return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT[protectionOf(index, location.inside)]);
     }
     case 'coercion':
-      return ATTACK_EFFORT.coercion + COERCION_SURCHARGE[protectionOf(index, a.location)];
+      return ATTACK_EFFORT.coercion + coercionSurcharge(a, index);
     default:
       return ATTACK_EFFORT[a.type];
   }
@@ -105,10 +128,18 @@ export const DURESS_SURCHARGE = 1;
  */
 export const EXTRA_SITE_SURCHARGE = 1;
 
-/** Sitios físicos distintos que exige un robo (las ubicaciones anidadas cuentan como su contenedor). */
+/**
+ * Sitios físicos distintos que exige un robo (las ubicaciones anidadas cuentan como su contenedor). Coaccionar a
+ * quien solo sabe algo es ir a su casa, si consta dónde vive.
+ */
 export function attackSites(cut: readonly AttackAtom[], index: ModelIndex): Id[] {
   const sites = new Set<Id>();
   for (const a of cut) {
+    if (a.type === 'coercion' && a.location === null) {
+      const home = index.people.get(a.person)?.livesAt;
+      if (home !== undefined) sites.add(home);
+      continue;
+    }
     if ((a.type !== 'burglary' && a.type !== 'coercion') || a.location === null) continue;
     const location = index.locations.get(a.location);
     if (location?.kind === 'physical') sites.add(location.inside ?? location.id);
@@ -119,8 +150,58 @@ export function attackSites(cut: readonly AttackAtom[], index: ModelIndex): Id[]
 export const extraSitesSurcharge = (cut: readonly AttackAtom[], index: ModelIndex) =>
   Math.max(0, attackSites(cut, index).length - 1) * EXTRA_SITE_SURCHARGE;
 
+/**
+ * Asaltos de llave inglesa que exige un robo: grupos de personas que se capturan juntas. Quienes se coaccionan en el
+ * mismo sitio caen en el mismo asalto (más gente no lo encarece: se puede presionar a una con la otra), y a una misma
+ * persona se la lleva de un sitio a otro sin otro asalto. Quien solo sabe algo (no abre ningún sitio) cae en su casa
+ * o, si no consta, donde esté otra víctima. Devuelve, para cada ataque del robo, el número de su asalto (o null).
+ */
+export function coercionAssaults(cut: readonly AttackAtom[], index: ModelIndex): (number | null)[] {
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    const p = parent.get(x) ?? x;
+    if (p === x) return x;
+    const root = find(p);
+    parent.set(x, root);
+    return root;
+  };
+  const union = (a: string, b: string) => parent.set(find(a), find(b));
+  const coercions = cut.flatMap((a) => (a.type === 'coercion' ? [a] : []));
+  const loose: Id[] = [];
+  for (const a of coercions) {
+    const person = `p:${a.person}`;
+    find(person);
+    const where = a.location !== null ? siteOf(index, a.location) : index.people.get(a.person)?.livesAt;
+    if (where === undefined) loose.push(a.person);
+    else union(person, `s:${where}`);
+  }
+  const anchor = coercions.find((a) => !loose.includes(a.person))?.person ?? loose[0];
+  if (anchor !== undefined) loose.forEach((person) => union(`p:${person}`, `p:${anchor}`));
+  const numbers = new Map<string, number>();
+  return cut.map((a) => {
+    if (a.type !== 'coercion') return null;
+    const root = find(`p:${a.person}`);
+    if (!numbers.has(root)) numbers.set(root, numbers.size);
+    return numbers.get(root)!;
+  });
+}
+
+/** Esfuerzo de cada ataque dentro del robo: la llave inglesa solo la paga la primera coacción de cada asalto. */
+export function atomEfforts(cut: readonly AttackAtom[], index: ModelIndex): { effort: number; sameAssault: boolean }[] {
+  const assaults = coercionAssaults(cut, index);
+  const paid = new Set<number>();
+  return cut.map((a, i) => {
+    const assault = assaults[i];
+    if (a.type !== 'coercion' || assault == null || !paid.has(assault)) {
+      if (assault != null) paid.add(assault);
+      return { effort: atomEffort(a, index), sameAssault: false };
+    }
+    return { effort: coercionSurcharge(a, index), sameAssault: true };
+  });
+}
+
 export function attackEffort(cut: readonly AttackAtom[], index: ModelIndex, beatsDuress = false): number {
-  return cut.reduce((sum, a) => sum + atomEffort(a, index), 0) + extraSitesSurcharge(cut, index) + (beatsDuress ? DURESS_SURCHARGE : 0);
+  return atomEfforts(cut, index).reduce((sum, a) => sum + a.effort, 0) + extraSitesSurcharge(cut, index) + (beatsDuress ? DURESS_SURCHARGE : 0);
 }
 
 /** Curva esfuerzo mínimo → puntuación base (interpolación lineal). */

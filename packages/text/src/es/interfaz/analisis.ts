@@ -2,6 +2,7 @@ import {
   ATTACK_EFFORT,
   BURGLARY_EFFORT,
   CLOUD_BREACH_EFFORT,
+  COERCION_AWAY_SURCHARGE,
   COERCION_SURCHARGE,
   DURESS_SURCHARGE,
   EXPOSURE,
@@ -50,7 +51,7 @@ export const analisis = {
         .join(' · ');
       const curve = [1, 1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' o más' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
       return [
-        `Se buscan todas las combinaciones de hasta ${hasta} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Hackear una cuenta en la nube cuesta ${num(CLOUD_BREACH_EFFORT)}. Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma la diferencia. Cada sitio físico distinto que haya que asaltar, después del primero, +${num(EXTRA_SITE_SURCHARGE)} (una ubicación dentro de otra es el mismo sitio). La llave inglesa en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])}. Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
+        `Se buscan todas las combinaciones de hasta ${hasta} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Hackear una cuenta en la nube cuesta ${num(CLOUD_BREACH_EFFORT)}. Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma la diferencia. Cada sitio físico distinto que haya que asaltar, después del primero, +${num(EXTRA_SITE_SURCHARGE)} (una ubicación dentro de otra es el mismo sitio). La llave inglesa se paga una vez por asalto: coaccionar a varias personas en el mismo sitio, o llevar a la misma persona a otro sitio, es un solo asalto. Coaccionar a alguien donde no vive (si consta dónde vive), +${num(COERCION_AWAY_SURCHARGE)}; en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])} (no se suman: cuenta el mayor). Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
         `Cuanto más esfuerzo exige el robo más barato, más puntuación: ${curve}.`,
         `Tener varias vías casi igual de baratas (hasta ${num(EXPOSURE.margin)} más de esfuerzo) resta ${EXPOSURE.penaltyPerExtraRoute} por cada vía extra, como mucho ${EXPOSURE.maxPenalty}.`,
       ];

@@ -2,6 +2,7 @@ import {
   ATTACK_EFFORT,
   BURGLARY_EFFORT,
   CLOUD_BREACH_EFFORT,
+  COERCION_AWAY_SURCHARGE,
   COERCION_SURCHARGE,
   DURESS_SURCHARGE,
   EXPOSURE,
@@ -51,7 +52,7 @@ export const analisis: typeof es = {
         .join(' · ');
       const curve = [1, 1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' or more' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
       return [
-        `Every combination of up to ${hasta} attacks that allows spending is searched for. Each attack adds its effort: ${efforts}. Hacking a cloud account costs ${num(CLOUD_BREACH_EFFORT)}. Breaking into a home safe costs ${num(BURGLARY_EFFORT['home-safe'])} and into a bank safe deposit box ${num(BURGLARY_EFFORT['bank-box'])}; if it is inside another location, both have to be broken into and only the difference is added. Each additional physical place that has to be raided, after the first, +${num(EXTRA_SITE_SURCHARGE)} (a location inside another is the same place). A wrench attack at a bank box, +${num(COERCION_SURCHARGE['bank-box'])}. Guessing a passphrase once you have the seed: weak ${num(PASSPHRASE_EFFORT.weak)} · phrase ${num(PASSPHRASE_EFFORT.phrase)} · long random, impossible. If a duress PIN has to be defeated, +${num(DURESS_SURCHARGE)}.`,
+        `Every combination of up to ${hasta} attacks that allows spending is searched for. Each attack adds its effort: ${efforts}. Hacking a cloud account costs ${num(CLOUD_BREACH_EFFORT)}. Breaking into a home safe costs ${num(BURGLARY_EFFORT['home-safe'])} and into a bank safe deposit box ${num(BURGLARY_EFFORT['bank-box'])}; if it is inside another location, both have to be broken into and only the difference is added. Each additional physical place that has to be raided, after the first, +${num(EXTRA_SITE_SURCHARGE)} (a location inside another is the same place). The wrench attack is paid once per raid: coercing several people at the same place, or taking the same person to another place, is a single raid. Coercing someone where they do not live (if it is known where they live), +${num(COERCION_AWAY_SURCHARGE)}; at a bank box, +${num(COERCION_SURCHARGE['bank-box'])} (they do not add up: the larger one counts). Guessing a passphrase once you have the seed: weak ${num(PASSPHRASE_EFFORT.weak)} · phrase ${num(PASSPHRASE_EFFORT.phrase)} · long random, impossible. If a duress PIN has to be defeated, +${num(DURESS_SURCHARGE)}.`,
         `The more effort the cheapest theft requires, the higher the score: ${curve}.`,
         `Having several almost equally cheap routes (up to ${num(EXPOSURE.margin)} more effort) subtracts ${EXPOSURE.penaltyPerExtraRoute} for each extra route, at most ${EXPOSURE.maxPenalty}.`,
       ];
