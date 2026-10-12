@@ -76,7 +76,7 @@ describe('operaciones de edición', () => {
     const m = removeKey(casa, 'k1');
     expect(m.keys.map((k) => k.id)).toEqual(['k2', 'k3']);
     expect(m.policy).toEqual({ type: 'thresh', k: 2, of: [{ type: 'key', key: 'k2' }, { type: 'key', key: 'k3' }] });
-    expect(m.devices.find((d) => d.id === 'ccq')!.holds).toEqual([]);
+    expect(m.devices.find((d) => d.id === 'keystone')!.holds).toEqual([]);
     expect(m.artifacts.find((a) => a.id === 'metal-k1')).toBeUndefined();
     expect(errors(m)).toEqual([]);
   });
@@ -111,11 +111,11 @@ describe('operaciones de edición', () => {
   });
 
   it('desactivar el PIN deja latente quién lo sabe, y reactivarlo lo recupera', () => {
-    const off = updateDevice(casa, 'ccq', { pinProtected: false });
-    const pin = { type: 'pin', device: 'ccq' } as const;
+    const off = updateDevice(casa, 'keystone', { pinProtected: false });
+    const pin = { type: 'pin', device: 'keystone' } as const;
     expect(off.people[0]!.knows).toEqual([pin]);
     expect(isActiveSecret(off, pin)).toBe(false);
-    expect(isActiveSecret(updateDevice(off, 'ccq', { pinProtected: true }), pin)).toBe(true);
+    expect(isActiveSecret(updateDevice(off, 'keystone', { pinProtected: true }), pin)).toBe(true);
   });
 
   it('desactivar la passphrase conserva sus backups como latentes', () => {
@@ -125,7 +125,7 @@ describe('operaciones de edición', () => {
   });
 
   it('un dispositivo que pasa a stateless conserva sus keys como latentes', () => {
-    const d = updateDevice(casa, 'ccq', { kind: 'stateless' }).devices.find((x) => x.id === 'ccq')!;
+    const d = updateDevice(casa, 'keystone', { kind: 'stateless' }).devices.find((x) => x.id === 'keystone')!;
     expect(activeHolds(d)).toEqual([]);
     expect(activeHolds({ ...d, kind: 'stateful' })).toEqual(['k1']);
   });
@@ -142,7 +142,7 @@ describe('operaciones de edición', () => {
   });
 
   it('eliminar sí limpia: borrar el dispositivo quita su PIN de la memoria', () => {
-    expect(removeDevice(casa, 'ccq').people[0]!.knows).toEqual([]);
+    expect(removeDevice(casa, 'keystone').people[0]!.knows).toEqual([]);
   });
 
   it('el umbral se limita a 1..N', () => {
@@ -273,10 +273,10 @@ describe('procedencia generada en un dispositivo', () => {
   it('una key nueva rellena su procedencia desde el dispositivo: RNG y generación', () => {
     const { model, id } = addKey(casa);
     expect(isBlankProvenance(model.keys.find((k) => k.id === id)!)).toBe(true);
-    const key = setKeyGeneratedOn(model, id, 'ccq').keys.find((k) => k.id === id)!;
+    const key = setKeyGeneratedOn(model, id, 'keystone').keys.find((k) => k.id === id)!;
     expect(key.provenance).toEqual({
-      sources: [{ kind: 'device-rng', vendor: 'Coinkite', model: 'Coldcard Q' }],
-      generatedBy: { vendor: 'Coinkite', model: 'Coldcard Q' },
+      sources: [{ kind: 'device-rng', vendor: 'Keystone', model: 'Keystone 3 Pro' }],
+      generatedBy: { vendor: 'Keystone', model: 'Keystone 3 Pro' },
       independentlyVerified: false,
     });
     expect(isBlankProvenance(key)).toBe(false);
@@ -293,11 +293,11 @@ describe('procedencia generada en un dispositivo', () => {
   });
 
   it('copia el firmware actual del dispositivo', () => {
-    const m = updateDevice(casa, 'ccq', { firmware: '1.3.1Q' });
-    expect(setKeyGeneratedOn(m, 'k3', 'ccq').keys.find((k) => k.id === 'k3')!.provenance.generatedBy).toEqual({
-      vendor: 'Coinkite',
-      model: 'Coldcard Q',
-      firmware: '1.3.1Q',
+    const m = updateDevice(casa, 'keystone', { firmware: '2.0.4' });
+    expect(setKeyGeneratedOn(m, 'k3', 'keystone').keys.find((k) => k.id === 'k3')!.provenance.generatedBy).toEqual({
+      vendor: 'Keystone',
+      model: 'Keystone 3 Pro',
+      firmware: '2.0.4',
     });
   });
 
@@ -336,7 +336,7 @@ describe('ordenar los ids al exportar', () => {
     expect(tidyIds(a.model)).toBe(a.model);
     const b = addDevice(updateDevice(a.model, a.id, { label: 'Coldcard Q' }), 'casa');
     const m = tidyIds(updateDevice(b.model, b.id, { label: 'Casa' }));
-    expect(m.devices.map((d) => d.id)).toEqual(['ccq', 'seedsigner', 'coldcard-q', 'casa-2']);
+    expect(m.devices.map((d) => d.id)).toEqual(['keystone', 'seedsigner', 'coldcard-q', 'casa-2']);
     expect(errors(m)).toEqual([]);
   });
 

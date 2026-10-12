@@ -84,7 +84,7 @@ export const dispositivo = {
   pistaFirmware: 'p. ej. 5.6.0',
   tipoTitulo: 'Tipo',
   tipoDispositivo: 'Tipo de dispositivo',
-  pistaStateful: 'Guarda las keys en su memoria (Coldcard, Jade, Passport…). Quien lo tenga y sepa el PIN puede firmar.',
+  pistaStateful: 'Guarda las keys en su memoria (Trezor, Jade, Passport…). Quien lo tenga y sepa el PIN puede firmar.',
   pistaStateless: 'No guarda nada: hay que cargarle la semilla cada vez (SeedSigner, Krux…).',
   keysQueGuarda: 'Keys que guarda',
   keysQueFirmas: 'Keys que firmas con él',
@@ -218,7 +218,7 @@ export const descriptor = {
   titulo: 'Descriptor de la cartera',
   importar: 'Importar',
   pistaSinXpubs:
-    'Importa el descriptor que ya tienes (Sparrow, Nunchuk, Coldcard…) o pega la xpub en la ficha de cada key: se obtiene el descriptor y la primera dirección, para comprobar que coincide con tu cartera. No permite gastar, pero sí ver tu saldo.',
+    'Importa el descriptor que ya tienes (Sparrow, Nunchuk, Specter…) o pega la xpub en la ficha de cada key: se obtiene el descriptor y la primera dirección, para comprobar que coincide con tu cartera. No permite gastar, pero sí ver tu saldo.',
   imprimir: 'Imprimir o guardar en PDF',
   tipoDireccion: 'Tipo de dirección',
   ordenImporta: 'Con multi (no sortedmulti) el orden de las keys importa: es el de la política.',

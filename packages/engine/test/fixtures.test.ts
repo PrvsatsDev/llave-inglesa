@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { analyze, ATTACK_EFFORT, EXTRA_SITE_SURCHARGE, simulateAttack, type AttackAtom } from '../src/index.ts';
 import { loadFixture } from './helpers.ts';
 
-describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () => {
+describe('todo en casa (Keystone 3 Pro con K1 + metal K2 + SeedSigner en casa)', () => {
   const model = loadFixture('todo-en-casa');
   const a = analyze(model);
 
@@ -24,12 +24,13 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
     expect(simulateAttack(model, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(false);
   });
 
-  it('comprometer el RNG de Coinkite expone K1 y K3, pero sin descriptor no se puede gastar', () => {
-    const coinkite: AttackAtom = { type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'Coinkite' } };
-    const d = simulateAttack(model, [coinkite]);
+  it('comprometer los RNG de Keystone y BitBox expone K1 y K3, pero sin descriptor no se puede gastar', () => {
+    const rng = (vendor: string): AttackAtom => ({ type: 'entropy-compromise', origin: { kind: 'vendor', vendor } });
+    expect([...simulateAttack(model, [rng('Keystone')]).signable]).toEqual(['k1']);
+    const d = simulateAttack(model, [rng('Keystone'), rng('BitBox')]);
     expect([...d.signable].sort()).toEqual(['k1', 'k3']);
     expect(d.canSpend).toBe(false);
-    expect(simulateAttack(model, [coinkite, { type: 'burglary', location: 'padres' }]).canSpend).toBe(true);
+    expect(simulateAttack(model, [rng('Keystone'), rng('BitBox'), { type: 'burglary', location: 'padres' }]).canSpend).toBe(true);
   });
 
   it('K2 (dados verificados) resiste un RNG comprometido de SeedSigner', () => {
@@ -53,12 +54,12 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
   });
 
   it('desactivar y reactivar el PIN deja el análisis igual (nada se pierde)', () => {
-    const roundTrip = updateDevice(updateDevice(model, 'ccq', { pinProtected: false }), 'ccq', { pinProtected: true });
+    const roundTrip = updateDevice(updateDevice(model, 'keystone', { pinProtected: false }), 'keystone', { pinProtected: true });
     expect(analyze(roundTrip)).toEqual(a);
   });
 
   it('sin PIN, un ladrón en casa ya puede robar', () => {
-    const noPin = updateDevice(model, 'ccq', { pinProtected: false });
+    const noPin = updateDevice(model, 'keystone', { pinProtected: false });
     expect(simulateAttack(noPin, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(true);
   });
 
@@ -70,7 +71,7 @@ describe('todo en casa (Coldcard Q con K1 + metal K2 + SeedSigner en casa)', () 
   });
 
   it('sin PIN basta con entrar en casa: la seguridad cae a flojo', () => {
-    const noPin = analyze(updateDevice(model, 'ccq', { pinProtected: false }));
+    const noPin = analyze(updateDevice(model, 'keystone', { pinProtected: false }));
     expect(noPin.security.minEffort).toBe(ATTACK_EFFORT.burglary);
     expect(noPin.security.score).toBeLessThan(50);
     expect(noPin.security.score).toBeLessThan(a.security.score);
@@ -115,7 +116,7 @@ describe('single-sig + passphrase', () => {
   const model = loadFixture('singlesig-passphrase');
 
   it('el RNG comprometido no basta: falta la passphrase', () => {
-    const d = simulateAttack(model, [{ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'coinkite' } }]);
+    const d = simulateAttack(model, [{ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'trezor' } }]);
     expect(d.has({ kind: 'secret', secret: { type: 'seed', key: 'k1' } })).toBe(true);
     expect(d.canSpend).toBe(false);
   });

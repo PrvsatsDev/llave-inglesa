@@ -18,7 +18,7 @@ describe('scenarioView: ataques', () => {
   it('llave inglesa en casa: robo, con lo usado iluminado y el resto atenuado', () => {
     expect(wrench.outcome).toBe('stolen');
     expect(wrench.tone).toBe('attack');
-    expect(wrench.items.get('ccq')).toBe('used');
+    expect(wrench.items.get('keystone')).toBe('used');
     expect(wrench.items.get('metal-k2')).toBe('used');
     expect(wrench.items.get('metal-k1')).toBe('dim');
     expect(wrench.locations.get('casa')).toBe('used');
@@ -30,10 +30,10 @@ describe('scenarioView: ataques', () => {
     expect(wrench.explanation?.fact.kind).toBe('spend');
   });
 
-  it('intrusión en casa: no roba; la Coldcard se alcanza pero no sirve (PIN)', () => {
+  it('intrusión en casa: no roba; el Keystone se alcanza pero no sirve (PIN)', () => {
     const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'burglary', location: 'casa' }] })!;
     expect(v.outcome).toBe('safe');
-    expect(v.items.get('ccq')).toBe('reached');
+    expect(v.items.get('keystone')).toBe('reached');
     expect(v.items.get('metal-k2')).toBe('used');
     expect(v.explanation).toBeNull();
   });
@@ -63,7 +63,7 @@ describe('scenarioView: privacidad', () => {
   });
 
   it('un RNG comprometido da dos semillas pero no la tercera xpub: ni roba ni ve', () => {
-    const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'Coinkite' } }] })!;
+    const v = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'entropy-compromise', origin: { kind: 'vendor', vendor: 'Keystone' } }] })!;
     expect(v.outcome).toBe('safe');
     expect(v.exposure.exposed).toBe(false);
   });
@@ -82,7 +82,7 @@ describe('scenarioView: desgracias', () => {
     expect(v.outcome).toBe('recoverable');
     expect(v.tone).toBe('recovery');
     expect(v.locations.get('casa')).toBe('destroyed');
-    expect(v.items.get('ccq')).toBe('destroyed');
+    expect(v.items.get('keystone')).toBe('destroyed');
     expect(v.items.get('metal-k1')).toBe('used');
   });
 
@@ -125,7 +125,7 @@ describe('applyScenario', () => {
     const g = applyScenario(buildGraph(casa), view);
     const node = g.nodes.find((n): n is LocationNode => n.id === 'casa' && n.type === 'location')!;
     expect(node.data.state).toBe('used');
-    expect(node.data.items.find((i) => i.id === 'ccq')?.state).toBe('used');
+    expect(node.data.items.find((i) => i.id === 'keystone')?.state).toBe('used');
     const hot = g.edges.filter((e) => e.className?.includes('edge-attack')).map((e) => e.id);
     expect(hot).toEqual(['access:yo:casa']);
     expect(g.edges.find((e) => e.id === 'access:yo:casa')?.animated).toBe(true);
@@ -144,7 +144,7 @@ describe('applyScenario', () => {
       applyScenario(buildGraph(casa), scenarioView(casa, scenario)).nodes.flatMap((n) => (n.type === 'location' ? n.data.items : []));
     const fire = items({ kind: 'loss', events: [{ type: 'destroy-location', location: 'casa', disaster: 'fire' }] });
     expect(fire.find((i) => i.id === 'metal-k2')).toMatchObject({ survived: true, canLose: true });
-    expect(fire.find((i) => i.id === 'ccq')?.canLose).toBe(false);
+    expect(fire.find((i) => i.id === 'keystone')?.canLose).toBe(false);
     const wrench = items({ kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] });
     expect(wrench.some((i) => i.canLose)).toBe(false);
   });
@@ -158,17 +158,17 @@ describe('applyScenario', () => {
 describe('scenarioView: PIN de coacción y dispositivos comprometidos', () => {
   const wrench: Scenario = { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] };
 
-  it('la llave inglesa con PIN de coacción en la Coldcard Q tiene que vencerlo', () => {
+  it('la llave inglesa con PIN de coacción en la Keystone 3 Pro tiene que vencerlo', () => {
     expect(scenarioView(casa, wrench)!.duress).toEqual([]);
-    const duress = updateDevice(casa, 'ccq', { duressPin: true });
-    expect(scenarioView(duress, wrench)!.duress).toEqual([{ person: 'yo', device: 'ccq' }]);
+    const duress = updateDevice(casa, 'keystone', { duressPin: true });
+    expect(scenarioView(duress, wrench)!.duress).toEqual([{ person: 'yo', device: 'keystone' }]);
   });
 
   it('el firmware malicioso señala en el mapa el dispositivo comprometido', () => {
-    const view = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'malicious-firmware', vendor: 'Coinkite' }] })!;
-    expect(view.compromised).toEqual(new Map([['ccq', 'firmware']]));
+    const view = scenarioView(casa, { kind: 'attack', atoms: [{ type: 'malicious-firmware', vendor: 'Keystone' }] })!;
+    expect(view.compromised).toEqual(new Map([['keystone', 'firmware']]));
     const graph = applyScenario(buildGraph(casa), view);
-    const item = graph.nodes.flatMap((n) => (n.type === 'location' ? (n as LocationNode).data.items : [])).find((i) => i.id === 'ccq');
+    const item = graph.nodes.flatMap((n) => (n.type === 'location' ? (n as LocationNode).data.items : [])).find((i) => i.id === 'keystone');
     expect(item?.compromise).toBe('firmware');
   });
 });
@@ -179,7 +179,7 @@ describe('scenarioView: incendio', () => {
     expect(v.outcome).toBe('recoverable');
     expect(v.disasters).toEqual(new Map([['casa', 'fire']]));
     expect(v.survived).toEqual(new Set(['metal-k2']));
-    expect(v.items.get('ccq')).toBe('destroyed');
+    expect(v.items.get('keystone')).toBe('destroyed');
     expect(v.items.get('metal-k2')).not.toBe('destroyed');
   });
 });

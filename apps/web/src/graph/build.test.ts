@@ -16,7 +16,7 @@ describe('buildGraph', () => {
   const person = (id: string) => graph.nodes.find((n): n is PersonNode => n.id === id && n.type === 'person')!;
 
   it('una ubicación por nodo, con sus objetos dentro', () => {
-    expect(location('casa').data.items.map((i) => i.id)).toEqual(['ccq', 'seedsigner', 'metal-k2', 'desc-casa']);
+    expect(location('casa').data.items.map((i) => i.id)).toEqual(['keystone', 'seedsigner', 'metal-k2', 'desc-casa']);
   });
 
   it('marca las keys materializadas en cada ubicación (dispositivos + semillas, no descriptor)', () => {
@@ -25,7 +25,7 @@ describe('buildGraph', () => {
   });
 
   it('las personas llevan lo que saben de memoria', () => {
-    expect(person('yo').data.knows).toEqual([{ kind: 'pin', device: 'ccq', label: 'Coldcard Q' }]);
+    expect(person('yo').data.knows).toEqual([{ kind: 'pin', device: 'keystone', label: 'Keystone 3 Pro' }]);
   });
 
   it('accesos condicionales como aristas discontinuas con etiqueta', () => {

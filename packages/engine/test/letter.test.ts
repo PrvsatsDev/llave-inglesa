@@ -17,7 +17,7 @@ describe('carta para los herederos', () => {
       { location: 'padres', pieces: [piece('arandelas-k3', false, [{ type: 'seed', key: 'k3' }]), piece('desc-padres', false, [{ type: 'descriptor' }])] },
     ]);
     // Los dispositivos que no se usan (el Coldcard, cuyo PIN solo sabe Yo) no salen.
-    expect(letter.stops.flatMap((s) => s.pieces.map((p) => p.item))).not.toContain('ccq');
+    expect(letter.stops.flatMap((s) => s.pieces.map((p) => p.item))).not.toContain('keystone');
   });
 
   it('sin ninguna copia del descriptor recuperan reuniendo todas las semillas (reconstruyendo), y se avisa', () => {

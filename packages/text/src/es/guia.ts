@@ -131,7 +131,7 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'parrafo',
         texto: [
-          'En rojo, lo que usa el atacante: obligado a dar el PIN, Yo desbloquea la Coldcard (K1), y la placa de K2 está en el mismo sitio. Dos de tres: puede gastar. Es una sola acción, y por eso la seguridad se queda en ',
+          'En rojo, lo que usa el atacante: obligado a dar el PIN, Yo desbloquea el Keystone (K1), y la placa de K2 está en el mismo sitio. Dos de tres: puede gastar. Es una sola acción, y por eso la seguridad se queda en ',
           cifra(CASA, 'security'),
           '.',
         ],
@@ -619,7 +619,7 @@ export const GUIA: readonly Capitulo[] = [
             n('Descriptor de la cartera'),
             ' (Esquema, bajo las keys): ',
             n('Importar'),
-            ' y pega el descriptor que ya tienes (Sparrow, Nunchuk, Coldcard…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.',
+            ' y pega el descriptor que ya tienes (Sparrow, Nunchuk, Specter…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.',
           ],
           [
             n('Imprimir o guardar en PDF'),
@@ -667,7 +667,7 @@ export const GUIA: readonly Capitulo[] = [
           [n('Key'), ': cada una de las claves que pueden firmar (K1, K2…). Su ', n('frase semilla'), ' son las palabras que la recuperan.'],
           [n('Passphrase'), ': una palabra o frase extra que, junto a la frase semilla, da otra key. Sin ella, la frase semilla sola no firma.'],
           [n('Umbral k de n'), ': hacen falta k firmas de n keys (un multisig 2 de 3, por ejemplo; en 1 de 1, single-sig, basta una). Para gastar también hacen falta las ', n('xpubs'), ' de todas las keys, que suelen ir juntas en el ', n('descriptor'), '.'],
-          [n('Dispositivo stateful'), ': guarda la key dentro (Coldcard, Trezor…). ', n('Stateless'), ': no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).'],
+          [n('Dispositivo stateful'), ': guarda la key dentro (Trezor, BitBox…). ', n('Stateless'), ': no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).'],
           [n('PIN de coacción'), ': un segundo PIN que, bajo amenaza, abre una cartera señuelo o borra el dispositivo. Encarece la llave inglesa, pero no la evita.'],
           [n('Anti-exfil'), ': protección de algunos dispositivos que impide que un firmware malicioso filtre la semilla dentro de las firmas.'],
           [n('Llave inglesa'), ': obligar a alguien por la fuerza a firmar o a revelar lo que sabe. Da nombre a la herramienta.'],

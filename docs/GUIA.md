@@ -56,7 +56,7 @@ Más adelante, fuera de la guía, puedes pulsar cualquier nota para ver de dónd
 
 > ▶ En la app, con el ejemplo «Todo a mano en casa»: *Simular una llave inglesa a Yo en Casa*.
 
-En rojo, lo que usa el atacante: obligado a dar el PIN, Yo desbloquea la Coldcard (K1), y la placa de K2 está en el mismo sitio. Dos de tres: puede gastar. Es una sola acción, y por eso la seguridad se queda en **69** (aceptable).
+En rojo, lo que usa el atacante: obligado a dar el PIN, Yo desbloquea el Keystone (K1), y la placa de K2 está en el mismo sitio. Dos de tres: puede gastar. Es una sola acción, y por eso la seguridad se queda en **69** (aceptable).
 
 > 💡 La pestaña **Simular** explica siempre **por qué**: cada firma, cada secreto y de dónde lo saca el atacante.
 
@@ -193,7 +193,7 @@ Empieza con **Archivo → Nuevo esquema** o, mejor, abre el ejemplo que más se 
 
 Cuando el esquema esté como quieres, puedes ponerlo por escrito. Nada de esto lleva secretos, y es opcional:
 
-- **Descriptor de la cartera** (Esquema, bajo las keys): **Importar** y pega el descriptor que ya tienes (Sparrow, Nunchuk, Coldcard…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.
+- **Descriptor de la cartera** (Esquema, bajo las keys): **Importar** y pega el descriptor que ya tienes (Sparrow, Nunchuk, Specter…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.
 - **Imprimir o guardar en PDF**: una hoja con el descriptor, su QR, las keys y las primeras direcciones. Al imprimirla, añádela al esquema donde la vayas a guardar: es un backup más. En un multisig, que no haya ninguna copia del descriptor resta resiliencia, y que los herederos no lleguen a ninguna resta mucha herencia.
 - **Carta para los herederos** (Análisis › Herencia): qué reunir y dónde, a quién acudir y los pasos, en palabras sencillas y con solo lo que necesitan. Los nombres reales y un mensaje personal se escriben al vuelo y no se guardan. Imprímela en una impresora tuya sin red, nunca en una copistería.
 
@@ -210,7 +210,7 @@ No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y
 - **Key**: cada una de las claves que pueden firmar (K1, K2…). Su **frase semilla** son las palabras que la recuperan.
 - **Passphrase**: una palabra o frase extra que, junto a la frase semilla, da otra key. Sin ella, la frase semilla sola no firma.
 - **Umbral k de n**: hacen falta k firmas de n keys (un multisig 2 de 3, por ejemplo; en 1 de 1, single-sig, basta una). Para gastar también hacen falta las **xpubs** de todas las keys, que suelen ir juntas en el **descriptor**.
-- **Dispositivo stateful**: guarda la key dentro (Coldcard, Trezor…). **Stateless**: no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).
+- **Dispositivo stateful**: guarda la key dentro (Trezor, BitBox…). **Stateless**: no guarda nada; se le carga la frase semilla para cada firma (SeedSigner…).
 - **PIN de coacción**: un segundo PIN que, bajo amenaza, abre una cartera señuelo o borra el dispositivo. Encarece la llave inglesa, pero no la evita.
 - **Anti-exfil**: protección de algunos dispositivos que impide que un firmware malicioso filtre la semilla dentro de las firmas.
 - **Llave inglesa**: obligar a alguien por la fuerza a firmar o a revelar lo que sabe. Da nombre a la herramienta.

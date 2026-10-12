@@ -7,14 +7,14 @@ import type { EJEMPLOS as es } from '../es/ejemplos.ts';
 export const EJEMPLOS: typeof es = {
   // ---------- Setups ----------
   'Todo a mano en casa': 'Everything at hand at home',
-  'Multisig 2 de 3. En casa: Coldcard Q con K1 en memoria + placa de metal con K2 + SeedSigner. Muy cómodo para firmar desde un solo sitio… y para un atacante con una llave inglesa.':
-    'Multisig 2 of 3. At home: a Coldcard Q holding K1 + a metal plate with K2 + a SeedSigner. Very convenient for signing from a single place… and for an attacker with a wrench.',
+  'Multisig 2 de 3. En casa: Keystone 3 Pro con K1 en memoria + placa de metal con K2 + SeedSigner. Muy cómodo para firmar desde un solo sitio… y para un atacante con una llave inglesa.':
+    'Multisig 2 of 3. At home: a Keystone 3 Pro holding K1 + a metal plate with K2 + a SeedSigner. Very convenient for signing from a single place… and for an attacker with a wrench.',
   'Distribuido 2 de 3': 'Distributed 2 of 3',
   'Multisig 2 de 3 con cada semilla en un sitio distinto y firma con SeedSigner. Menos cómodo, pero ninguna ubicación ni persona aislada basta para robar.':
     'Multisig 2 of 3 with each seed in a different place, signing with a SeedSigner. Less convenient, but no single location or person is enough to steal.',
   'Single-sig + passphrase': 'Single-sig + passphrase',
-  'Una Coldcard en casa, semilla en metal en el banco y passphrase memorizada con copia en papel en casa de los padres.':
-    'A Coldcard at home, the seed on metal at the bank, and a memorized passphrase with a paper copy at the parents’ house.',
+  'Un Trezor en casa, semilla en metal en el banco y passphrase memorizada con copia en papel en casa de los padres.':
+    'A Trezor at home, the seed on metal at the bank, and a memorized passphrase with a paper copy at the parents’ house.',
 
   'Papel en el cajón': 'Paper in the drawer',
   'Trezor en casa y la frase semilla en papel en un cajón. Lo más habitual al empezar: quien entre en casa se la lleva, y un incendio la destruye.':

@@ -86,7 +86,7 @@ export const dispositivo: typeof es.dispositivo = {
   pistaFirmware: 'e.g. 5.6.0',
   tipoTitulo: 'Type',
   tipoDispositivo: 'Device type',
-  pistaStateful: 'Stores the keys in its memory (Coldcard, Jade, Passport…). Whoever has it and knows the PIN can sign.',
+  pistaStateful: 'Stores the keys in its memory (Trezor, Jade, Passport…). Whoever has it and knows the PIN can sign.',
   pistaStateless: 'Stores nothing: the seed has to be loaded every time (SeedSigner, Krux…).',
   keysQueGuarda: 'Keys it stores',
   keysQueFirmas: 'Keys you sign with on it',
@@ -219,7 +219,7 @@ export const descriptor: typeof es.descriptor = {
   titulo: 'Wallet descriptor',
   importar: 'Import',
   pistaSinXpubs:
-    'Import the descriptor you already have (Sparrow, Nunchuk, Coldcard…) or paste the xpub into each key’s panel: you get the descriptor and the first address, to check it matches your wallet. It does not allow spending, but it does reveal your balance.',
+    'Import the descriptor you already have (Sparrow, Nunchuk, Specter…) or paste the xpub into each key’s panel: you get the descriptor and the first address, to check it matches your wallet. It does not allow spending, but it does reveal your balance.',
   imprimir: 'Print or save as PDF',
   tipoDireccion: 'Address type',
   ordenImporta: 'With multi (not sortedmulti) the order of the keys matters: it is the policy’s order.',

@@ -7,11 +7,11 @@ const firmware = (vendor: string): AttackAtom => ({ type: 'malicious-firmware', 
 const exposed = (m: Parameters<typeof firmwareExposure>[0]) => Object.fromEntries([...firmwareExposure(m).values()].map((e) => [e.vendor, e.keys.sort()]));
 
 describe('firmware malicioso', () => {
-  const casa = loadFixture('todo-en-casa'); // Coldcard Q con K1; SeedSigner con K2
+  const casa = loadFixture('todo-en-casa'); // Keystone 3 Pro con K1; SeedSigner con K2
   const distribuido = loadFixture('distribuido-2de3'); // un SeedSigner para las tres keys
 
   it('alcanza a lo que guarda un stateful y a lo que se carga en un stateless', () => {
-    expect(exposed(casa)).toEqual({ Coinkite: ['k1'], SeedSigner: ['k2'] });
+    expect(exposed(casa)).toEqual({ Keystone: ['k1'], SeedSigner: ['k2'] });
   });
 
   it('stateless sin indicar: ante la duda, cualquier semilla escrita puede pasar por él', () => {
@@ -20,9 +20,9 @@ describe('firmware malicioso', () => {
   });
 
   it('semilla externa en un stateful: solo si se indica', () => {
-    const q = updateDevice(casa, 'ccq', { acceptsExternalSeed: true });
-    expect(exposed(q).Coinkite).toEqual(['k1']);
-    expect(exposed(updateDevice(q, 'ccq', { loads: ['k3'] })).Coinkite).toEqual(['k1', 'k3']);
+    const q = updateDevice(casa, 'keystone', { acceptsExternalSeed: true });
+    expect(exposed(q).Keystone).toEqual(['k1']);
+    expect(exposed(updateDevice(q, 'keystone', { loads: ['k3'] })).Keystone).toEqual(['k1', 'k3']);
   });
 
   it('el anti-exfil lo mitiga (Jade, BitBox02)', () => {
@@ -38,7 +38,7 @@ describe('firmware malicioso', () => {
 
   it('un fabricante solo no basta si las keys están repartidas entre marcas', () => {
     expect(simulateAttack(casa, [firmware('SeedSigner')]).signable).toEqual(new Set(['k2']));
-    const both = simulateAttack(casa, [firmware('Coinkite'), firmware('SeedSigner')]);
+    const both = simulateAttack(casa, [firmware('Keystone'), firmware('SeedSigner')]);
     expect([...both.signable].sort()).toEqual(['k1', 'k2']);
     expect(both.canSpend).toBe(false); // falta la xpub de K3: el descriptor sigue protegiendo
   });

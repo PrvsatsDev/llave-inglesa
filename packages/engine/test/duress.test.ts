@@ -4,7 +4,7 @@ import { analyze, ATTACK_EFFORT, attackEffort, DURESS_SURCHARGE, type AttackAtom
 import { loadFixture } from './helpers.ts';
 
 const casa = loadFixture('todo-en-casa'); // la llave inglesa en casa es la vía más barata (esfuerzo 3)
-const duress = updateDevice(casa, 'ccq', { duressPin: true });
+const duress = updateDevice(casa, 'keystone', { duressPin: true });
 const index = indexModel(duress);
 const wrench: AttackAtom[] = [{ type: 'coercion', person: 'yo', location: 'casa' }];
 
@@ -25,15 +25,15 @@ describe('PIN de coacción', () => {
   });
 
   it('sin PIN activado no cuenta (desactivar conserva: vuelve al reactivarlo)', () => {
-    const noPin = updateDevice(duress, 'ccq', { pinProtected: false });
+    const noPin = updateDevice(duress, 'keystone', { pinProtected: false });
     expect(analyze(noPin).security.beatsDuress.every((b) => !b)).toBe(true);
-    expect(analyze(updateDevice(noPin, 'ccq', { pinProtected: true }))).toEqual(analyze(duress));
+    expect(analyze(updateDevice(noPin, 'keystone', { pinProtected: true }))).toEqual(analyze(duress));
   });
 
   it('si el PIN está además apuntado a mano en casa, el falso no sirve de nada', () => {
     const withPaper = {
       ...duress,
-      artifacts: [...duress.artifacts, { id: 'pin-papel', label: 'PIN apuntado', medium: 'paper' as const, contents: [{ type: 'pin' as const, device: 'ccq' }], lockedBy: [], location: 'casa' }],
+      artifacts: [...duress.artifacts, { id: 'pin-papel', label: 'PIN apuntado', medium: 'paper' as const, contents: [{ type: 'pin' as const, device: 'keystone' }], lockedBy: [], location: 'casa' }],
     };
     expect(routeOf(withPaper, wrench)?.beatsDuress).toBe(false);
   });
@@ -79,7 +79,7 @@ describe('informe del PIN de coacción: ¿ayuda?', () => {
     expect(report!.scoreWithout).toBeLessThan(a.security.score);
   });
 
-  it('en Todo en casa ayuda: la llave inglesa necesita el Coldcard', () => {
-    expect(analyze(duress).duress).toMatchObject([{ device: 'ccq', helps: true }]);
+  it('en Todo en casa ayuda: la llave inglesa necesita el Keystone', () => {
+    expect(analyze(duress).duress).toMatchObject([{ device: 'keystone', helps: true }]);
   });
 });

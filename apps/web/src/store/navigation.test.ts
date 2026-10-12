@@ -6,7 +6,7 @@ import { useSelection } from './selection.ts';
 
 const theft: Scenario = { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] };
 const casa = { kind: 'location', id: 'casa' } as const;
-const ccq = { kind: 'device', id: 'ccq' } as const;
+const keystone = { kind: 'device', id: 'keystone' } as const;
 const k1 = { kind: 'key', id: 'k1' } as const;
 
 beforeEach(() => {
@@ -19,11 +19,11 @@ describe('migas de pan de las fichas', () => {
   it('abrir desde una ficha apila; volver desapila', () => {
     const s = useSelection.getState();
     s.select(casa);
-    s.open(ccq);
+    s.open(keystone);
     s.open(k1);
-    expect(useSelection.getState().trail).toEqual([casa, ccq, k1]);
+    expect(useSelection.getState().trail).toEqual([casa, keystone, k1]);
     s.back();
-    expect(useSelection.getState().selected).toEqual(ccq);
+    expect(useSelection.getState().selected).toEqual(keystone);
     s.backTo(0);
     expect(useSelection.getState().trail).toEqual([casa]);
   });
@@ -31,7 +31,7 @@ describe('migas de pan de las fichas', () => {
   it('volver a abrir una ficha que ya está en el camino regresa a ella, sin repetirla', () => {
     const s = useSelection.getState();
     s.select(casa);
-    s.open(ccq);
+    s.open(keystone);
     s.open(casa);
     expect(useSelection.getState().trail).toEqual([casa]);
   });
@@ -39,7 +39,7 @@ describe('migas de pan de las fichas', () => {
   it('abrir desde el mapa empieza un camino nuevo', () => {
     const s = useSelection.getState();
     s.select(casa);
-    s.open(ccq);
+    s.open(keystone);
     s.select(k1);
     expect(useSelection.getState().trail).toEqual([k1]);
   });
@@ -56,7 +56,7 @@ describe('secciones y volver', () => {
   it('volver va de lo más profundo a lo más general: ficha, lista de origen, salir de la simulación', () => {
     useNavigation.getState().simulate(theft, 'security');
     useSelection.getState().select(casa);
-    useSelection.getState().open(ccq);
+    useSelection.getState().open(keystone);
 
     expect(goBack()).toBe(true);
     expect(useSelection.getState().selected).toEqual(casa);

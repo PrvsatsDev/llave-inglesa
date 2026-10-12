@@ -51,7 +51,7 @@ y K1 se generó con ella **sin dados**. *El fallo de entropía de 2026.*
 
 ### Multisig 2 de 3
 
-**R08 · 2 de 3 todo en casa.** Coldcard Q (K1), BitBox02 (K2) y Jade (K3) en Casa. Las tres placas
+**R08 · 2 de 3 todo en casa.** Passport Prime (K1; hasta 2026-10-12 era una Coldcard Q, con las mismas capacidades y las mismas notas), BitBox02 (K2) y Jade (K3) en Casa. Las tres placas
 de acero en la Caja fuerte; un descriptor en papel en Casa. *Multisig sin distribuir.*
 
 **R09 · 2 de 3 distribuido.** Los tres dispositivos en Casa. Placa K1 en la Caja fuerte, placa K2 en

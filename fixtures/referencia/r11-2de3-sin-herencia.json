@@ -12,7 +12,7 @@
         "sources": [
           {
             "kind": "device-rng",
-            "vendor": "Coinkite"
+            "vendor": "Foundation"
           },
           {
             "kind": "dice",
@@ -20,9 +20,9 @@
           }
         ],
         "generatedBy": {
-          "vendor": "Coinkite",
-          "model": "Coldcard Q",
-          "firmware": "1.5.0"
+          "vendor": "Foundation",
+          "model": "Passport Prime",
+          "firmware": "1.1.0"
         },
         "independentlyVerified": false
       }
@@ -95,10 +95,10 @@
   "devices": [
     {
       "id": "nuevo-dispositivo",
-      "label": "Coldcard Q",
-      "vendor": "Coinkite",
-      "model": "Coldcard Q",
-      "firmware": "1.5.0",
+      "label": "Passport Prime",
+      "vendor": "Foundation",
+      "model": "Passport Prime",
+      "firmware": "1.1.0",
       "kind": "stateful",
       "holds": [
         "k1"

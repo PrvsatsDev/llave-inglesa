@@ -131,7 +131,7 @@ export const GUIA: typeof es = [
       {
         tipo: 'parrafo',
         texto: [
-          'In red, what the attacker uses: forced to give the PIN, Me unlocks the Coldcard (K1), and the K2 plate is in the same place. Two of three: they can spend. It is a single action, which is why security stays at ',
+          'In red, what the attacker uses: forced to give the PIN, Me unlocks the Keystone (K1), and the K2 plate is in the same place. Two of three: they can spend. It is a single action, which is why security stays at ',
           cifra(CASA, 'security'),
           '.',
         ],
@@ -617,7 +617,7 @@ export const GUIA: typeof es = [
             n('Wallet descriptor'),
             ' (Setup, below the keys): ',
             n('Import'),
-            ' and paste the descriptor you already have (Sparrow, Nunchuk, Coldcard…), or paste the xpub on the panel of each key. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right. With the xpubs, the document reveals your balance: keep it encrypted.',
+            ' and paste the descriptor you already have (Sparrow, Nunchuk, Specter…), or paste the xpub on the panel of each key. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right. With the xpubs, the document reveals your balance: keep it encrypted.',
           ],
           [
             n('Print or save as PDF'),
@@ -665,7 +665,7 @@ export const GUIA: typeof es = [
           [n('Key'), ': each of the keys that can sign (K1, K2…). Its ', n('seed phrase'), ' is the words that recover it.'],
           [n('Passphrase'), ': an extra word or phrase that, together with the seed phrase, gives a different key. Without it, the seed phrase alone does not sign.'],
           [n('k-of-n threshold'), ': it takes k signatures from n keys (a 2-of-3 multisig, for example; in 1 of 1, single-sig, one is enough). Spending also needs the ', n('xpubs'), ' of all the keys, which usually go together in the ', n('descriptor'), '.'],
-          [n('Stateful device'), ': it stores the key inside (Coldcard, Trezor…). ', n('Stateless'), ': it stores nothing; the seed phrase is loaded onto it for each signature (SeedSigner…).'],
+          [n('Stateful device'), ': it stores the key inside (Trezor, BitBox…). ', n('Stateless'), ': it stores nothing; the seed phrase is loaded onto it for each signature (SeedSigner…).'],
           [n('Duress PIN'), ': a second PIN that, under threat, opens a decoy wallet or wipes the device. It makes the wrench attack more expensive, but does not prevent it.'],
           [n('Anti-exfil'), ': a protection on some devices that stops malicious firmware from leaking the seed inside the signatures.'],
           [n('Wrench attack'), ': forcing someone to sign or to reveal what they know. The tool is named after it (llave inglesa is Spanish for wrench).'],

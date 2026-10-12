@@ -56,7 +56,7 @@ Later, outside the guide, you can click any score to see where it comes from: th
 
 > ▶ In the app, with the example “Everything at hand at home”: *Simulate a wrench attack on Me at Home*.
 
-In red, what the attacker uses: forced to give the PIN, Me unlocks the Coldcard (K1), and the K2 plate is in the same place. Two of three: they can spend. It is a single action, which is why security stays at **69** (fair).
+In red, what the attacker uses: forced to give the PIN, Me unlocks the Keystone (K1), and the K2 plate is in the same place. Two of three: they can spend. It is a single action, which is why security stays at **69** (fair).
 
 > 💡 The **Simulate** tab always explains **why**: each signature, each secret, and where the attacker gets it from.
 
@@ -193,7 +193,7 @@ Start with **File → New setup** or, better, open the example that looks most l
 
 Once the setup is the way you want it, you can put it in writing. None of this contains secrets, and it is optional:
 
-- **Wallet descriptor** (Setup, below the keys): **Import** and paste the descriptor you already have (Sparrow, Nunchuk, Coldcard…), or paste the xpub on the panel of each key. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right. With the xpubs, the document reveals your balance: keep it encrypted.
+- **Wallet descriptor** (Setup, below the keys): **Import** and paste the descriptor you already have (Sparrow, Nunchuk, Specter…), or paste the xpub on the panel of each key. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right. With the xpubs, the document reveals your balance: keep it encrypted.
 - **Print or save as PDF**: a sheet with the descriptor, its QR code, the keys, and the first addresses. When you print it, add it to the setup where you are going to keep it: it is one more backup. In a multisig, having no copy of the descriptor subtracts resilience, and the heirs not reaching any copy subtracts a lot of inheritance.
 - **Letter for the heirs** (Analysis › Inheritance): what to gather and where, whom to turn to, and the steps, in plain words and with only what they need. Real names and a personal message are typed in on the fly and not saved. Print it on a printer of your own that is offline, never at a print shop.
 
@@ -210,7 +210,7 @@ It does not have to be perfect the first time: build the essentials, look at the
 - **Key**: each of the keys that can sign (K1, K2…). Its **seed phrase** is the words that recover it.
 - **Passphrase**: an extra word or phrase that, together with the seed phrase, gives a different key. Without it, the seed phrase alone does not sign.
 - **k-of-n threshold**: it takes k signatures from n keys (a 2-of-3 multisig, for example; in 1 of 1, single-sig, one is enough). Spending also needs the **xpubs** of all the keys, which usually go together in the **descriptor**.
-- **Stateful device**: it stores the key inside (Coldcard, Trezor…). **Stateless**: it stores nothing; the seed phrase is loaded onto it for each signature (SeedSigner…).
+- **Stateful device**: it stores the key inside (Trezor, BitBox…). **Stateless**: it stores nothing; the seed phrase is loaded onto it for each signature (SeedSigner…).
 - **Duress PIN**: a second PIN that, under threat, opens a decoy wallet or wipes the device. It makes the wrench attack more expensive, but does not prevent it.
 - **Anti-exfil**: a protection on some devices that stops malicious firmware from leaking the seed inside the signatures.
 - **Wrench attack**: forcing someone to sign or to reveal what they know. The tool is named after it (llave inglesa is Spanish for wrench).
