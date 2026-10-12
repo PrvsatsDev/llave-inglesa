@@ -18,7 +18,7 @@ export const mapa: typeof es = {
   alAlcance: 'Within reach',
   soltarAqui: 'Drop here',
   pistaArrastrar: 'Drag to move it to another location',
-  comprometido: { firmware: 'Malicious firmware', extraction: 'Seed extracted', host: 'Attacked from the computer', malware: 'Has malware' },
+  comprometido: { firmware: 'Malicious firmware', extraction: 'Seed extracted', host: 'Attacked from the computer', malware: 'Has malware', tampered: 'Tampered with' },
   conPin: 'with PIN',
   cifradoAccesible: 'encrypted',
   resiste: 'Survives',

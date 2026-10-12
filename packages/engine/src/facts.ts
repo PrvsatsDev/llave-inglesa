@@ -1,5 +1,6 @@
 import type { Id, SecretRef } from '@llave-inglesa/domain';
 import type { EntropyOrigin } from './entropy.ts';
+import type { TamperReason } from './score.ts';
 
 /** Hechos que el motor puede derivar para un actor. */
 export type Fact =
@@ -45,6 +46,8 @@ export type RuleId =
   | 'computer-wallet'
   /** Descriptor leído de la cartera por un malware del ordenador. */
   | 'computer-malware'
+  /** Semilla regalada por un dispositivo manipulado antes de llegar (segunda mano, precinto roto…). */
+  | 'tampered-device'
   /** Semilla sacada de un dispositivo con un fallo publicado, desde el ordenador con malware al que se conecta. */
   | 'host-exploit'
   /** Secreto memorizado por una persona que colabora (o es coaccionada). */
@@ -78,7 +81,7 @@ export interface Justification {
   rule: RuleId;
   /** Hechos de los que depende (siempre derivados antes: el grafo es acíclico). */
   premises: FactId[];
-  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string; strength?: 'weak' | 'phrase'; bits?: number };
+  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string; strength?: 'weak' | 'phrase'; bits?: number; tamper?: TamperReason };
 }
 
 export interface DerivedFact {

@@ -2,7 +2,8 @@ import { advisoriesFor, catalogModelByName, type Device, type Id, type Key } fro
 import { hostExploits, malwareTargets } from './computer.ts';
 import type { CompromisedSeed, Holdings } from './derive.ts';
 import { entropyOrigins, keyCompromise, originKey, ownEntropyBits, weakEntropyKeys, weakOwnEntropyKeys, type EntropyOrigin } from './entropy.ts';
-import { firmwareDevices, firmwareExposure } from './firmware.ts';
+import { firmwareDevices, firmwareExposure, keysUsedOn, seedKeys } from './firmware.ts';
+import { tamperRisk } from './score.ts';
 import { accessibleLocations, itemsAvailableAt, type World } from './world.ts';
 
 /** Aviso de extracción física que afecta al dispositivo (con su firmware actual), o null. */
@@ -28,6 +29,8 @@ export type AttackAtom =
   | { type: 'weak-own-entropy'; key: Id }
   /** Firmware malicioso de un fabricante: filtra en las firmas las semillas que pasan por sus dispositivos. */
   | { type: 'malicious-firmware'; vendor: string }
+  /** Dispositivo manipulado antes de llegarte (segunda mano, precinto roto…): regala las semillas que pasan por él. */
+  | { type: 'tampered-device'; device: Id }
   /** Malware en un ordenador de firma: lee su cartera y ataca los dispositivos con un fallo que se le conectan. */
   | { type: 'computer-malware'; computer: Id }
   /** Adivinar por fuerza bruta una passphrase no aleatoria; solo sirve teniendo ya la semilla. */
@@ -41,6 +44,12 @@ export function guessablePassphrase(key: Key): PassphraseGuess | null {
   if (!key.passphrase) return null;
   const strength = key.passphraseStrength ?? 'weak';
   return strength === 'random' ? null : strength;
+}
+
+/** Dispositivos que pudieron llegar manipulados y por los que pasa alguna semilla. */
+export function tamperedDevices(model: World['model']) {
+  const seeds = seedKeys(model);
+  return model.devices.filter((d) => tamperRisk(d) !== null && keysUsedOn(d, seeds).length > 0);
 }
 
 export function attackAtoms(world: World): AttackAtom[] {
@@ -60,6 +69,7 @@ export function attackAtoms(world: World): AttackAtom[] {
   for (const key of weakOwnEntropyKeys(model)) atoms.push({ type: 'weak-own-entropy', key: key.id });
   for (const { vendor } of firmwareExposure(model).values()) atoms.push({ type: 'malicious-firmware', vendor });
   for (const c of malwareTargets(model)) atoms.push({ type: 'computer-malware', computer: c.id });
+  for (const d of tamperedDevices(model)) atoms.push({ type: 'tampered-device', device: d.id });
   for (const key of model.keys) {
     const strength = guessablePassphrase(key);
     if (strength) atoms.push({ type: 'passphrase-bruteforce', key: key.id, strength });
@@ -86,6 +96,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   const firmware = new Set<string>();
   const weakOwn = new Set<Id>();
   const malware = new Set<Id>();
+  const tampered = new Set<Id>();
   const bruteforce: { key: Id; strength: PassphraseGuess }[] = [];
   for (const a of atoms) {
     switch (a.type) {
@@ -120,6 +131,9 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'computer-malware':
         malware.add(a.computer);
         break;
+      case 'tampered-device':
+        tampered.add(a.device);
+        break;
       case 'passphrase-bruteforce':
         bruteforce.push({ key: a.key, strength: a.strength });
         break;
@@ -137,6 +151,13 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   }
   for (const [k, { vendor, keys }] of firmwareExposure(world.model)) {
     if (firmware.has(k)) keys.forEach((key) => compromisedSeeds.push({ key, firmware: vendor }));
+  }
+  // Dispositivo manipulado: ante la duda, todas las semillas que pasan por él (ni el anti-exfil ni la entropía propia
+  // lo frenan: el aparato entero es del atacante).
+  const seeds = seedKeys(world.model);
+  for (const d of world.model.devices) {
+    const risk = tampered.has(d.id) ? tamperRisk(d) : null;
+    if (risk) keysUsedOn(d, seeds).forEach((key) => compromisedSeeds.push({ key, tampered: d.id, reason: risk.reason }));
   }
   // Malware en el ordenador: explota los fallos de los dispositivos que se le conectan.
   for (const c of world.model.computers) {
@@ -159,7 +180,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
  * Cómo cae un dispositivo en un ataque: firmware malicioso del fabricante, extracción física de la semilla, atacado
  * desde un ordenador con malware ('host'), o el propio ordenador con malware ('malware').
  */
-export type DeviceCompromise = 'firmware' | 'extraction' | 'host' | 'malware';
+export type DeviceCompromise = 'firmware' | 'extraction' | 'host' | 'malware' | 'tampered';
 
 /** Dispositivos que el ataque compromete directamente (para señalarlos en el mapa). */
 export function compromisedDevices(world: World, atoms: readonly AttackAtom[]): Map<Id, DeviceCompromise> {
@@ -167,6 +188,7 @@ export function compromisedDevices(world: World, atoms: readonly AttackAtom[]): 
   for (const a of atoms) {
     if (a.type === 'malicious-firmware') firmwareDevices(world.model, a.vendor).forEach((d) => found.set(d, 'firmware'));
     if (a.type === 'computer-malware') found.set(a.computer, 'malware');
+    if (a.type === 'tampered-device') found.set(a.device, 'tampered');
   }
   for (const seed of attackHoldings(world, atoms).compromisedSeeds ?? []) {
     if ('device' in seed && seed.device) found.set(seed.device, 'computer' in seed ? 'host' : 'extraction');

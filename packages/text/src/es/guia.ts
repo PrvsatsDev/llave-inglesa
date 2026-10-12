@@ -598,7 +598,7 @@ export const GUIA: readonly Capitulo[] = [
           ],
           [
             n('Dispositivos y backups'),
-            ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
+            ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN, si tiene PIN de coacción y su procedencia: dónde lo compraste, si el precinto estaba intacto o si lo montaste tú (segunda mano o precinto roto restan mucho). En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
           ],
           [
             n('Ordenador de firma'),

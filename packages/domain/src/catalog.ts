@@ -26,6 +26,8 @@ export interface CatalogModel {
   registersMultisig: boolean;
   /** Implementa anti-exfil / anti-klepto: un firmware malicioso no puede filtrar la semilla en las firmas. */
   antiExfil: boolean;
+  /** Se puede montar en casa con piezas compradas por separado (sin que el fabricante toque el aparato). */
+  diy: boolean;
   duress: readonly DuressKind[];
   /**
    * Series de firmware conocidas (`from` incluido, `before` excluido). Si se definen,
@@ -48,6 +50,7 @@ const model = (
   acceptsExternalSeed: false,
   registersMultisig: false,
   antiExfil: false,
+  diy: false,
   duress: [],
   ...opts,
 });
@@ -97,9 +100,9 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
 
   model('bitkey', 'Block', 'Bitkey'),
 
-  model('seedsigner', 'SeedSigner', 'SeedSigner', STATELESS),
-  model('krux', 'Krux', 'Krux', STATELESS),
-  model('specter-diy', 'Specter', 'Specter DIY', { ...STATELESS, registersMultisig: true }),
+  model('seedsigner', 'SeedSigner', 'SeedSigner', { ...STATELESS, diy: true }),
+  model('krux', 'Krux', 'Krux', { ...STATELESS, diy: true }),
+  model('specter-diy', 'Specter', 'Specter DIY', { ...STATELESS, registersMultisig: true, diy: true }),
 
   model('keystone-essential', 'Keystone', 'Keystone Essential', { registersMultisig: true, discontinued: true }),
   model('keystone-pro', 'Keystone', 'Keystone Pro', { registersMultisig: true, discontinued: true }),

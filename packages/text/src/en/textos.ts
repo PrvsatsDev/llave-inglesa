@@ -94,7 +94,16 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'weak-own-entropy': 'seed with too little own entropy',
   'malicious-firmware': 'malicious firmware',
   'computer-malware': 'malware on the signing computer',
+  'tampered-device': 'tampered device',
   'passphrase-bruteforce': 'passphrase brute force',
+};
+
+/** Why a device may have arrived tampered with. */
+export const TAMPER_REASON_TEXT: typeof es.TAMPER_REASON_TEXT = {
+  seal: 'broken seal, no seal or not checked',
+  'official-reseller': 'bought from an official reseller',
+  'unofficial-shop': 'bought from an unofficial shop',
+  'second-hand': 'second-hand or refurbished',
 };
 
 export const PASSPHRASE_STRENGTH_TEXT: Record<'weak' | 'phrase' | 'random', string> = { weak: 'weak', phrase: 'phrase', random: 'long random' };
@@ -115,6 +124,7 @@ export const attackText: typeof es.attackText = (a: AttackAtom, index: ModelInde
     case 'weak-own-entropy': return `Brute force on the seed of ${label(a.key)} (too little own entropy)`;
     case 'malicious-firmware': return `Malicious firmware: ${vendorText(a.vendor)}`;
     case 'computer-malware': return `Malware on ${label(a.computer)}`;
+    case 'tampered-device': return `Tampered device: ${label(a.device)}`;
     case 'passphrase-bruteforce': return `Brute force on the passphrase of ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
 };
@@ -210,6 +220,7 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'carried': return `${name(v.person)} carries it`;
     case 'computer-wallet': return `in the wallet on ${name(v.item)}`;
     case 'computer-malware': return `read from its wallet by the malware on ${name(v.item)}`;
+    case 'tampered-device': return `given away by ${name(v.device)}, tampered with before it reached you (${TAMPER_REASON_TEXT[v.tamper ?? 'second-hand']})`;
     case 'host-exploit': return `extracted from ${name(v.device)} through ${name(v.item)}, which it connects to, by a published flaw (${advisoryShortName(v.advisory ?? '')})`;
     case 'memory': return `${name(v.person)} knows it`;
     case 'entropy-compromise': return `predictable if the RNG of ${(v.origins ?? []).map(originText).join(' + ')} has a still-unknown flaw`;

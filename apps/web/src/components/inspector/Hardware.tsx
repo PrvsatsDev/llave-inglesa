@@ -116,6 +116,7 @@ export function catalogFeatures(m: CatalogModel): string {
     m.antiExfil ? T.antiExfil : null,
     m.duress.length > 0 ? T.conCoaccion(m.duress.map((d) => T.coaccion[d])) : T.sinCoaccion,
     m.registersMultisig ? T.registraMultisig : T.noRegistraMultisig,
+    m.diy ? T.montable : null,
   ].filter((f) => f !== null);
   return T.segunCatalogo(CATALOG_DATE, features);
 }

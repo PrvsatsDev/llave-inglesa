@@ -118,6 +118,18 @@ export const DeviceSchema = z.object({
   acceptsExternalSeed: z.boolean().default(false),
   /** Tiene registrada la configuración multisig (y por tanto todas las xpubs). */
   registeredWallet: z.boolean().default(false),
+  /**
+   * De dónde salió el aparato. Cada campo sin indicar no resta. assembly: montado en casa con piezas compradas (solo
+   * en los modelos que lo permiten) o comprado montado. seal: si llegó con el precinto de seguridad intacto. source:
+   * dónde se compró.
+   */
+  origin: z
+    .object({
+      assembly: z.enum(['self', 'bought']).optional(),
+      seal: z.enum(['intact', 'broken']).optional(),
+      source: z.enum(['manufacturer', 'official-reseller', 'unofficial-shop', 'second-hand']).optional(),
+    })
+    .optional(),
   location: IdSchema,
 });
 export type Device = z.infer<typeof DeviceSchema>;

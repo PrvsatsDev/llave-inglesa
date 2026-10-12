@@ -279,7 +279,8 @@ const ops: Op[] = [
   (m, pick) => {
     if (!m.devices.length) return m;
     const d = m.devices[pick(m.devices.length)]!;
-    return updateDevice(m, d.id, { pinProtected: pick(2) === 0, kind: pick(2) ? 'stateful' : 'stateless', holds: [m.keys[pick(m.keys.length)]!.id] });
+    const origin = pick(2) ? undefined : { source: (['manufacturer', 'second-hand'] as const)[pick(2)], seal: (['intact', 'broken'] as const)[pick(2)] };
+    return updateDevice(m, d.id, { pinProtected: pick(2) === 0, kind: pick(2) ? 'stateful' : 'stateless', holds: [m.keys[pick(m.keys.length)]!.id], origin });
   },
   (m, pick) => addArtifact(m, m.locations[pick(m.locations.length)]!.id).model,
   (m, pick) => (m.artifacts.length ? removeArtifact(m, m.artifacts[pick(m.artifacts.length)]!.id) : m),
@@ -377,8 +378,8 @@ describe('procedencia generada en un dispositivo', () => {
       provenance: { sources: [{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'Desconocido' }], independentlyVerified: true },
     });
     const key = setKeyGeneratedOn(m, 'k2', 'seedsigner').keys.find((k) => k.id === 'k2')!;
-    expect(key.provenance.sources).toEqual([{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'SeedSigner' }]);
-    expect(key.provenance.generatedBy).toEqual({ vendor: 'SeedSigner' });
+    expect(key.provenance.sources).toEqual([{ kind: 'dice', count: 99 }, { kind: 'device-rng', vendor: 'SeedSigner', model: 'SeedSigner' }]);
+    expect(key.provenance.generatedBy).toEqual({ vendor: 'SeedSigner', model: 'SeedSigner' });
     expect(key.provenance.independentlyVerified).toBe(true);
   });
 

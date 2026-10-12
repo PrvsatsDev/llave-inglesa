@@ -31,11 +31,9 @@ ningún backup del descriptor como problema grave.
 7. ~~**Ordenador de firma**~~ (2026-10-12): ordenador o móvil, en una ubicación o encima de una persona, de uso
    general (−2 de seguridad, malware de esfuerzo 1) o dedicado (malware 3); su cartera da el descriptor y su malware
    explota los avisos `host-exploit` de los dispositivos que se le conectan por cable o Bluetooth.
-8. **Procedencia del dispositivo**, cerca del firmware: (a) DIY, comprando las piezas y montado en casa, mejor que
-   comprado montado (solo en los que de verdad tienen esa opción); (b) si se compró montado, si llegó con el precinto
-   de seguridad (tamper-evident) intacto; (c) si no es DIY, dónde se compró: al fabricante (lo mejor), revendedor
-   oficial (medio), tienda no oficial, reacondicionado o de segunda mano (lo peor). Por madurar: si afecta a la
-   puntuación (sería lo ideal) o solo da avisos.
+8. ~~**Procedencia del dispositivo**~~ (2026-10-12): montado en casa (solo DIY), precinto y dónde se compró; lo dudoso
+   es el ataque «Dispositivo manipulado» (segunda mano o precinto roto 1,5, tienda no oficial 2,5, revendedor oficial
+   4), que regala las semillas que pasan por él. Sin indicar no resta.
 9. **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol, preparado para nodos `after`/`older`.
 
 ## Aparcado
