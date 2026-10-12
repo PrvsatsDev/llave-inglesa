@@ -15,9 +15,7 @@ pensarse antes de implementarla.
 En este orden; cada punto se diseña y se discute antes de implementarlo.
 
 1. ~~**Dónde vive cada persona**~~: hecho (2026-10-12).
-2. **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras. Hoy el número
-   de tiradas solo cuenta para mitigar un fallo de RNG publicado; una semilla de solo 20 tiradas no
-   se marca como débil.
+2. ~~**Calidad de la entropía**~~: hecho (2026-10-12), con un solo corte en 128 bits.
 3. **Multisig sin descriptor como error grave**: aviso de error bien visible y quizá más resta (hoy
    −35 herencia, −15 resiliencia). Sin distinguir derivaciones habituales de raras: no tenerlo es
    un error, sin matices.
