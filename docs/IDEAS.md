@@ -14,9 +14,7 @@ pensarse antes de implementarla.
 
 En este orden; cada punto se diseña y se discute antes de implementarlo.
 
-1. **Dónde vive cada persona**: coaccionar a alguien lejos de donde vive exige llevarlo allí (+0,5,
-   como ya pasa en la caja del banco); y coaccionar a dos personas en la misma ubicación es un
-   único asalto, no dos llaves inglesas (hoy 3,5 + 3,5).
+1. ~~**Dónde vive cada persona**~~: hecho (2026-10-12).
 2. **Calidad de la entropía**: pocas tiradas de dados o de moneda para 12/24 palabras. Hoy el número
    de tiradas solo cuenta para mitigar un fallo de RNG publicado; una semilla de solo 20 tiradas no
    se marca como débil.
@@ -36,6 +34,8 @@ En este orden; cada punto se diseña y se discute antes de implementarlo.
   estático o varias partes impresas. Solo si alguien lo pide o se encuentra una cartera que lo exija
   (Sparrow, Nunchuk, Specter o Coldcard leen el texto plano); hay dos formatos UR (`crypto-output` y
   `output-descriptor`) con compatibilidad desigual.
+- **PIN de coacción frente a un ser querido**: si amenazan a tu pareja delante de ti, el PIN de coacción pierde
+  fuerza. Hoy vale lo mismo.
 - **«Analizando…» colgado** al volver a elegir por script el mismo ejemplo: no se puede provocar
   desde la interfaz.
 
