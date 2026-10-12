@@ -228,7 +228,7 @@ export const ordenador = {
   pistasUso: {
     daily:
       'El de todos los días: navegador, correo, programas. Su malware puede cambiar la dirección de destino o la de cambio: comprueba siempre en el dispositivo y compara el destino por otro canal. Resta algo de seguridad.',
-    dedicated: 'Solo para firmar: sin red e instalado a conciencia. No resta seguridad.',
+    dedicated: 'Solo para firmar, e instalado a conciencia. No resta seguridad.',
   },
   cartera: 'Guarda la cartera',
   pistaCartera:

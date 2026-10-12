@@ -140,7 +140,7 @@ export type Artifact = z.infer<typeof ArtifactSchema>;
 export const ComputerSchema = z.object({
   id: IdSchema,
   label: z.string().min(1),
-  /** daily: de uso general (navegador, correo…). dedicated: solo para firmar, sin red e instalado a conciencia. */
+  /** daily: de uso general (navegador, correo…). dedicated: solo para firmar e instalado a conciencia. */
   use: z.enum(['daily', 'dedicated']),
   /** Guarda la cartera y, con ella, el descriptor (lo normal). */
   wallet: z.boolean().default(true),

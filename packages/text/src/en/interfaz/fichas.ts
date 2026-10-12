@@ -229,7 +229,7 @@ export const ordenador: typeof es.ordenador = {
   pistasUso: {
     daily:
       'The one you use every day: browser, email, apps. Its malware can swap the destination or change address: always check on the device and compare the destination through another channel. It takes some security off.',
-    dedicated: 'Only for signing: offline and carefully set up. It takes no security off.',
+    dedicated: 'Only for signing, and carefully set up. It takes no security off.',
   },
   cartera: 'Holds the wallet',
   pistaCartera:

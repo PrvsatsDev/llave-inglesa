@@ -256,7 +256,7 @@ export interface ScoreBreakdown {
 /**
  * Firmar con un ordenador o móvil de uso general: el malware puede cambiar la dirección de destino o de cambio, o llevar
  * a firmar a ciegas. Los dispositivos verifican direcciones y la cartera registrada, así que resta poco; con uno
- * dedicado (sin red, instalado a conciencia), nada.
+ * dedicado (solo para firmar, instalado a conciencia), nada.
  */
 export const DAILY_COMPUTER_PENALTY = 2;
 

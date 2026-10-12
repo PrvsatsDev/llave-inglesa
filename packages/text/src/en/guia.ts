@@ -602,7 +602,7 @@ export const GUIA: typeof es = [
           ],
           [
             n('Signing computer'),
-            ': the computer or phone with the wallet (Sparrow, Nunchuk…), with the + of its location or, if it is a phone, from the person who carries it. It holds the descriptor: whoever gets to it has it, and for recovery it is an unreliable copy. A general-purpose one takes some security off (its malware can swap addresses); a dedicated, offline one does not.',
+            ': the computer or phone with the wallet (Sparrow, Nunchuk…), with the + of its location or, if it is a phone, from the person who carries it. It holds the descriptor: whoever gets to it has it, and for recovery it is an unreliable copy. A general-purpose one takes some security off (its malware can swap addresses); a dedicated one does not.',
           ],
           [
             n('People'),

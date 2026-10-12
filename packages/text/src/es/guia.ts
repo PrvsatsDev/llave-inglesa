@@ -602,7 +602,7 @@ export const GUIA: readonly Capitulo[] = [
           ],
           [
             n('Ordenador de firma'),
-            ': el ordenador o móvil con la cartera (Sparrow, Nunchuk…), con el + de su ubicación o, si es un móvil, desde la persona que lo lleva encima. Guarda el descriptor: quien llegue a él lo tiene, y para la recuperación es una copia poco fiable. Si es de uso general resta algo de seguridad (su malware puede cambiar direcciones); uno dedicado, sin red, no.',
+            ': el ordenador o móvil con la cartera (Sparrow, Nunchuk…), con el + de su ubicación o, si es un móvil, desde la persona que lo lleva encima. Guarda el descriptor: quien llegue a él lo tiene, y para la recuperación es una copia poco fiable. Si es de uso general resta algo de seguridad (su malware puede cambiar direcciones); uno dedicado, no.',
           ],
           [
             n('Personas'),
