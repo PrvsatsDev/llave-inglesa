@@ -1,4 +1,4 @@
-import type { Computer, Id, Location, ModelIndex } from '@llave-inglesa/domain';
+import { catalogModelByName, type Computer, type Device, type Id, type Location, type ModelIndex } from '@llave-inglesa/domain';
 import type { AttackAtom } from './attacks.ts';
 import type { LossEvent } from './world.ts';
 
@@ -12,7 +12,7 @@ import type { LossEvent } from './world.ts';
  * Esfuerzo y riesgo que supone cada tipo de ataque para el atacante.
  * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
  */
-export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce' | 'computer-malware'>, number>> = {
+export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce' | 'computer-malware' | 'tampered-device'>, number>> = {
   /** Entrar sin nadie presente: sigiloso, sin confrontación. En sitios protegidos, ver BURGLARY_EFFORT. */
   burglary: 1.5,
   /** Alguien de confianza: ya tiene acceso y conocimiento, pero traicionar a la pareja es mucho más raro que un robo. */
@@ -40,6 +40,36 @@ export const COMPUTER_MALWARE_EFFORT: Readonly<Record<Computer['use'], number>> 
   daily: 1,
   dedicated: 3,
 };
+
+/** Por qué un aparato pudo llegar manipulado: precinto roto (o sin precinto, o sin comprobar) o dónde se compró. */
+export type TamperReason = 'seal' | 'official-reseller' | 'unofficial-shop' | 'second-hand';
+
+/**
+ * Dispositivo manipulado antes de llegarte (cadena de suministro): regala las semillas de las keys que pasan por él.
+ * Montado en casa, o comprado al fabricante con el precinto intacto, no hay ataque. Comprarlo de segunda mano o con
+ * el precinto roto es tan barato como entrar en una casa: basta con vender aparatos manipulados y esperar.
+ */
+export const TAMPERED_DEVICE_EFFORT: Readonly<Record<TamperReason, number>> = {
+  'official-reseller': 4,
+  'unofficial-shop': 2.5,
+  seal: 1.5,
+  'second-hand': 1.5,
+};
+
+/** El peor motivo por el que el aparato pudo llegar manipulado, o null si no hay ninguno (o es sin indicar). */
+export function tamperRisk(device: Device): { reason: TamperReason; effort: number } | null {
+  const origin = device.origin;
+  if (!origin) return null;
+  const catalog = catalogModelByName(device.model);
+  // Montado en casa con piezas compradas por separado: el fabricante no toca el aparato.
+  if (origin.assembly === 'self' && (!catalog || catalog.diy)) return null;
+  const reasons: TamperReason[] = [];
+  if (origin.seal === 'broken') reasons.push('seal');
+  if (origin.source && origin.source !== 'manufacturer') reasons.push(origin.source);
+  if (reasons.length === 0) return null;
+  const reason = reasons.reduce((worst, r) => (TAMPERED_DEVICE_EFFORT[r] < TAMPERED_DEVICE_EFFORT[worst] ? r : worst));
+  return { reason, effort: TAMPERED_DEVICE_EFFORT[reason] };
+}
 
 /**
  * Fuerza bruta a una passphrase, teniendo ya la semilla. Una débil (palabra, fecha) cae casi gratis;
@@ -124,6 +154,10 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
       return PASSPHRASE_EFFORT[a.strength];
     case 'computer-malware':
       return COMPUTER_MALWARE_EFFORT[index.computers.get(a.computer)?.use ?? 'daily'];
+    case 'tampered-device': {
+      const device = index.devices.get(a.device);
+      return (device && tamperRisk(device)?.effort) ?? TAMPERED_DEVICE_EFFORT['second-hand'];
+    }
     case 'burglary': {
       const location = index.locations.get(a.location);
       if (location?.kind === 'cloud') return CLOUD_BREACH_EFFORT;

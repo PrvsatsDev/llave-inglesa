@@ -66,6 +66,7 @@ export const hardware: typeof es.hardware = {
   conCoaccion: (tipos: readonly string[]) => `duress PIN (${tipos.join(' and ')})`,
   sinCoaccion: 'no duress PIN',
   registraMultisig: 'registers multisig',
+  montable: 'can be assembled at home',
   noRegistraMultisig: 'does not register multisig',
   segunCatalogo: (fecha: string, rasgos: readonly string[]) => `According to the catalog (${fecha}): ${rasgos.join(' · ')}.`,
   fuente: 'Source',
@@ -107,6 +108,23 @@ export const dispositivo: typeof es.dispositivo = {
   pistaSemillasExternas: 'Can temporarily load another seed to sign with it.',
   multisigRegistrado: 'Multisig registered',
   pistaMultisig: 'Stores the wallet configuration, and therefore all the xpubs.',
+  procedencia: 'Origin',
+  montaje: 'Assembly',
+  montajes: { unset: 'Not specified', self: 'Assembled at home', bought: 'Bought assembled' },
+  pistaMontadoEnCasa: 'Assembled from parts bought separately: the manufacturer never touches the device, so it cannot have reached you tampered with. Nothing is subtracted.',
+  precinto: 'Security seal',
+  precintos: { unset: 'Not specified', intact: 'Intact', broken: 'Broken, no seal or not checked' },
+  compra: 'Where it was bought',
+  compras: {
+    unset: 'Not specified',
+    manufacturer: 'From the manufacturer',
+    'official-reseller': 'Official reseller',
+    'unofficial-shop': 'Unofficial shop',
+    'second-hand': 'Second-hand or refurbished',
+  },
+  pistaProcedencia: 'Not specified subtracts nothing, just like bought from the manufacturer with the seal intact.',
+  riesgo: (motivo: string, esfuerzo: string) =>
+    `It may have reached you tampered with (${motivo}): it is a theft route of effort ${esfuerzo} that gives away the seeds that go through it.`,
   eliminar: 'Delete device',
 };
 

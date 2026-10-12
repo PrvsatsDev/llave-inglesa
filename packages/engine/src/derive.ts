@@ -1,5 +1,6 @@
 import type { Device, Id, SecretRef } from '@llave-inglesa/domain';
 import type { EntropyOrigin } from './entropy.ts';
+import type { TamperReason } from './score.ts';
 import { factId, type DerivedFact, type Fact, type FactId, type Justification } from './facts.ts';
 import { satisfy } from './policy.ts';
 import { canAct, itemsAvailableAt, knowledgeOf, type World } from './world.ts';
@@ -37,6 +38,8 @@ export type CompromisedSeed =
   | { key: Id; origins: EntropyOrigin[] }
   /** Fallo publicado: de entropía (sin nada más) o de extracción física (teniendo `device`). */
   | { key: Id; advisory: string; device?: Id }
+  /** Dispositivo manipulado antes de llegar (cadena de suministro). */
+  | { key: Id; tampered: Id; reason: TamperReason }
   /** Fallo publicado del dispositivo, explotado desde un ordenador con malware al que se conecta. */
   | { key: Id; advisory: string; device: Id; computer: Id }
   /** Filtrada en las firmas por un firmware malicioso de ese fabricante. */
@@ -99,6 +102,7 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
     if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
     else if ('firmware' in c) add(seed, { rule: 'malicious-firmware', premises: [], via: { vendor: c.firmware } });
     else if ('ownBits' in c) add(seed, { rule: 'weak-own-entropy', premises: [], via: { bits: c.ownBits } });
+    else if ('tampered' in c) add(seed, { rule: 'tampered-device', premises: [], via: { device: c.tampered, tamper: c.reason } });
     else if ('computer' in c) add(seed, { rule: 'host-exploit', premises: [], via: { device: c.device, advisory: c.advisory, item: c.computer } });
     else if (c.device) add(seed, { rule: 'physical-extraction', premises: [factId({ kind: 'item', item: c.device })], via: { device: c.device, advisory: c.advisory } });
     else add(seed, { rule: 'known-weak-entropy', premises: [], via: { advisory: c.advisory } });

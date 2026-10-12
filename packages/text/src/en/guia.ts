@@ -598,7 +598,7 @@ export const GUIA: typeof es = [
           ],
           [
             n('Devices and backups'),
-            ': with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware, which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, and whether it has a duress PIN. For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…',
+            ': with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware, which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, whether it has a duress PIN, and its origin: where you bought it, whether the seal was intact or whether you assembled it yourself (second-hand or a broken seal take a lot off). For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…',
           ],
           [
             n('Signing computer'),

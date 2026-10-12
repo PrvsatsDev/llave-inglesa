@@ -18,6 +18,7 @@ export const {
   ROLE_TEXT,
   SCORE_BAND_TEXT,
   SCRIPT_TEXT,
+  TAMPER_REASON_TEXT,
   WALLET_TEXT,
   advisoryShortName,
   advisoryText,

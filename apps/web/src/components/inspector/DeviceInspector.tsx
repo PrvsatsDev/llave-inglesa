@@ -1,6 +1,7 @@
 import { advisoriesFor, catalogModelByName, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
+import { tamperRisk } from '@llave-inglesa/engine';
 import { Camera, Cpu } from 'lucide-react';
-import { UI } from '../../lib/text.ts';
+import { TAMPER_REASON_TEXT, UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, SecretToggles, Segmented, Select, Switch, TextInput } from './fields.tsx';
@@ -11,6 +12,19 @@ import styles from './fields.module.css';
 const T = UI.dispositivo;
 /** Se calcula al pintar: las etiquetas siguen al idioma activo. */
 const kindOptions = () => (['stateful', 'stateless'] as const).map((value) => ({ value, label: T.tipos[value] }));
+const assemblyOptions = () => (['unset', 'self', 'bought'] as const).map((value) => ({ value, label: T.montajes[value] }));
+const sealOptions = () => (['unset', 'intact', 'broken'] as const).map((value) => ({ value, label: T.precintos[value] }));
+const sourceOptions = () =>
+  (['unset', 'manufacturer', 'official-reseller', 'unofficial-shop', 'second-hand'] as const).map((value) => ({ value, label: T.compras[value] }));
+
+type Origin = NonNullable<Device['origin']>;
+/** Cambia un campo de la procedencia ('unset' lo quita); sin ninguno, la procedencia queda sin indicar. */
+function withOrigin<K extends keyof Origin>(origin: Device['origin'], key: K, value: Origin[K] | 'unset'): Device['origin'] {
+  const next: Origin = { ...origin };
+  if (value === 'unset') delete next[key];
+  else next[key] = value as Origin[K];
+  return Object.keys(next).length > 0 ? next : undefined;
+}
 
 function duressHint(catalog: CatalogModel | undefined): string {
   const kinds = catalog?.duress ?? [];
@@ -31,6 +45,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
   const loaded = (device.loads ?? []).map((key): SecretRef => ({ type: 'seed', key }));
 
   const catalog = catalogModelByName(device.model);
+  const risk = tamperRisk(device);
   // La entropía débil depende del firmware con el que se generó cada key: se avisa en la key.
   const advisories = catalog ? advisoriesFor(catalog.id, device.firmware).filter((m) => m.advisory.kind !== 'weak-entropy') : [];
   const pickModel = (m: CatalogModel | undefined) =>
@@ -157,6 +172,36 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
                 hint={T.pistaMultisig}
               />
             )}
+          </>
+        )}
+      </Section>
+
+      <Section title={T.procedencia}>
+        {catalog?.diy && (
+          <Segmented
+            label={T.montaje}
+            value={device.origin?.assembly ?? 'unset'}
+            options={assemblyOptions()}
+            onChange={(v) => patch({ origin: withOrigin(device.origin, 'assembly', v) })}
+          />
+        )}
+        {catalog?.diy && device.origin?.assembly === 'self' ? (
+          <p className={styles.hint}>{T.pistaMontadoEnCasa}</p>
+        ) : (
+          <>
+            <div className={styles.twoCols}>
+              <Field label={T.precinto}>
+                {(fid) => (
+                  <Select id={fid} value={device.origin?.seal ?? 'unset'} options={sealOptions()} onChange={(v) => patch({ origin: withOrigin(device.origin, 'seal', v) })} />
+                )}
+              </Field>
+              <Field label={T.compra}>
+                {(fid) => (
+                  <Select id={fid} value={device.origin?.source ?? 'unset'} options={sourceOptions()} onChange={(v) => patch({ origin: withOrigin(device.origin, 'source', v) })} />
+                )}
+              </Field>
+            </div>
+            <p className={styles.hint}>{risk ? T.riesgo(TAMPER_REASON_TEXT[risk.reason], UI.comun.numero(risk.effort)) : T.pistaProcedencia}</p>
           </>
         )}
       </Section>

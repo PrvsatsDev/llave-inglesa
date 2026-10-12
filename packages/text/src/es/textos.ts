@@ -1,7 +1,7 @@
 import { ADVISORIES, itemPlace } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import { plural, type Label } from '../tipos.ts';
-import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AttackAtom, TamperReason, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -93,7 +93,16 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'weak-own-entropy': 'semilla con poca entropía propia',
   'malicious-firmware': 'firmware malicioso',
   'computer-malware': 'malware en el ordenador de firma',
+  'tampered-device': 'dispositivo manipulado',
   'passphrase-bruteforce': 'fuerza bruta a la passphrase',
+};
+
+/** Por qué un dispositivo pudo llegar manipulado. */
+export const TAMPER_REASON_TEXT: Record<TamperReason, string> = {
+  seal: 'precinto roto, sin precinto o sin comprobar',
+  'official-reseller': 'comprado a un revendedor oficial',
+  'unofficial-shop': 'comprado en una tienda no oficial',
+  'second-hand': 'de segunda mano o reacondicionado',
 };
 
 export const PASSPHRASE_STRENGTH_TEXT: Record<'weak' | 'phrase' | 'random', string> = { weak: 'débil', phrase: 'frase', random: 'aleatoria larga' };
@@ -114,6 +123,7 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     case 'weak-own-entropy': return `Fuerza bruta a la semilla de ${label(a.key)} (poca entropía propia)`;
     case 'malicious-firmware': return `Firmware malicioso: ${a.vendor}`;
     case 'computer-malware': return `Malware en ${label(a.computer)}`;
+    case 'tampered-device': return `Dispositivo manipulado: ${label(a.device)}`;
     case 'passphrase-bruteforce': return `Fuerza bruta a la passphrase de ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
 }
@@ -208,6 +218,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'carried': return `lo lleva encima ${name(v.person)}`;
     case 'computer-wallet': return `en la cartera de ${name(v.item)}`;
     case 'computer-malware': return `lo lee el malware de ${name(v.item)} en su cartera`;
+    case 'tampered-device': return `la regala ${name(v.device)}, manipulado antes de llegarte (${TAMPER_REASON_TEXT[v.tamper ?? 'second-hand']})`;
     case 'host-exploit': return `extraída de ${name(v.device)} desde ${name(v.item)}, al que se conecta, por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
     case 'memory': return `lo sabe ${name(v.person)}`;
     case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;

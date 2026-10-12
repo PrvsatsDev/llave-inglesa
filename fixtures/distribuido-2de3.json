@@ -14,7 +14,7 @@
     "of": [{ "type": "key", "key": "k1" }, { "type": "key", "key": "k2" }, { "type": "key", "key": "k3" }]
   },
   "devices": [
-    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "kind": "stateless", "location": "casa" }
+    { "id": "seedsigner", "label": "SeedSigner", "vendor": "SeedSigner", "model": "SeedSigner", "kind": "stateless", "location": "casa" }
   ],
   "artifacts": [
     { "id": "metal-k1", "label": "Placa de metal K1", "medium": "metal", "contents": [{ "type": "seed", "key": "k1" }], "location": "casa" },

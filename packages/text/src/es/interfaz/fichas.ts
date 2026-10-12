@@ -64,6 +64,7 @@ export const hardware = {
   conCoaccion: (tipos: readonly string[]) => `PIN de coacción (${tipos.join(' y ')})`,
   sinCoaccion: 'sin PIN de coacción',
   registraMultisig: 'registra multisig',
+  montable: 'se puede montar en casa',
   noRegistraMultisig: 'no registra multisig',
   segunCatalogo: (fecha: string, rasgos: readonly string[]) => `Según el catálogo (${fecha}): ${rasgos.join(' · ')}.`,
   fuente: 'Fuente',
@@ -105,6 +106,23 @@ export const dispositivo = {
   pistaSemillasExternas: 'Puede cargar temporalmente otra semilla para firmar con ella.',
   multisigRegistrado: 'Multisig registrado',
   pistaMultisig: 'Guarda la configuración del wallet, y por tanto todas las xpubs.',
+  procedencia: 'Procedencia',
+  montaje: 'Montaje',
+  montajes: { unset: 'Sin indicar', self: 'Montado en casa', bought: 'Comprado montado' },
+  pistaMontadoEnCasa: 'Montado con piezas compradas por separado: el fabricante no toca el aparato, así que no pudo llegarte manipulado. No resta.',
+  precinto: 'Precinto de seguridad',
+  precintos: { unset: 'Sin indicar', intact: 'Intacto', broken: 'Roto, sin precinto o sin comprobar' },
+  compra: 'Dónde se compró',
+  compras: {
+    unset: 'Sin indicar',
+    manufacturer: 'Al fabricante',
+    'official-reseller': 'Revendedor oficial',
+    'unofficial-shop': 'Tienda no oficial',
+    'second-hand': 'Segunda mano o reacondicionado',
+  },
+  pistaProcedencia: 'Sin indicar no resta, igual que comprado al fabricante con el precinto intacto.',
+  riesgo: (motivo: string, esfuerzo: string) =>
+    `Pudo llegarte manipulado (${motivo}): es una vía de robo de esfuerzo ${esfuerzo} que regala las semillas que pasan por él.`,
   eliminar: 'Eliminar dispositivo',
 };
 
