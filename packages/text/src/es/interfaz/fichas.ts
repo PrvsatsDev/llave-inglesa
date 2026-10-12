@@ -227,8 +227,8 @@ export const ordenador = {
   usos: { daily: 'De uso general', dedicated: 'Dedicado' },
   pistasUso: {
     daily:
-      'El de todos los días: navegador, correo, programas. Su malware puede cambiar la dirección de destino o la de cambio: comprueba siempre en el dispositivo y compara el destino por otro canal. Resta algo de seguridad.',
-    dedicated: 'Solo para firmar, e instalado a conciencia. No resta seguridad.',
+      'El de todos los días: navegador, correo, programas. Su malware puede cambiar la dirección de destino o la de cambio: comprueba siempre en el dispositivo y compara el destino por otro canal. Resta algo de seguridad, y meterle malware es fácil (esfuerzo 1): lee la cartera y ataca los dispositivos con un fallo conocido que se le conectan.',
+    dedicated: 'Solo para firmar, e instalado a conciencia. No resta seguridad, y meterle malware es mucho más difícil (esfuerzo 3).',
   },
   cartera: 'Guarda la cartera',
   pistaCartera:
@@ -239,6 +239,14 @@ export const ordenador = {
   pistaGuardado: 'Quien entre en esta ubicación se lo lleva, y un incendio o una inundación lo destruyen.',
   pistaLleva:
     'Va siempre con su dueño: no se lo lleva quien entra en casa, sino quien le coaccione. Si fallece, cuenta como perdido: sus herederos no sabrán desbloquearlo.',
+  conectados: 'Se le conectan por cable o Bluetooth',
+  sinIndicar: 'Sin indicar',
+  pistaSinIndicar: 'Vuelve a «sin indicar»: se supone que se conectan todos.',
+  sinDispositivos: 'No hay dispositivos en el esquema.',
+  explotable: (aviso: string) => `Tiene un fallo explotable desde un ordenador con malware (${aviso}).`,
+  conectadosSinIndicar:
+    'Sin indicar, se supone que se conectan todos (ante la duda, lo peor). Un malware en este ordenador ataca los que tienen un fallo conocido. Desmarca los que solo usas por QR o microSD.',
+  pistaConectados: 'Un malware en este ordenador ataca los que tienen un fallo conocido. Los que solo usas por QR o microSD no cuentan.',
   eliminar: 'Eliminar ordenador',
 };
 

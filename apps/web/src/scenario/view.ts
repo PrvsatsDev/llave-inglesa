@@ -105,6 +105,7 @@ function referencesExist(model: CustodyModel, s: Scenario): boolean {
           : a.type === 'coercion' ? [a.person, ...(a.location ? [a.location] : [])]
           : a.type === 'insider' ? [a.person]
           : a.type === 'passphrase-bruteforce' ? [a.key]
+          : a.type === 'computer-malware' ? [a.computer]
           : [],
         )
       : s.events.map((e) => (e.type === 'destroy-location' ? e.location : e.type === 'item-loss' ? e.item : e.person));

@@ -29,12 +29,16 @@ export interface Holdings {
   withheldPins?: readonly { person: Id; device: Id }[];
   /** Passphrases que el atacante intenta adivinar por fuerza bruta (necesita la semilla). */
   guessedPassphrases?: readonly { key: Id; strength: 'weak' | 'phrase' }[];
+  /** Ordenadores de firma con malware: el atacante lee su cartera. */
+  infectedComputers?: readonly Id[];
 }
 
 export type CompromisedSeed =
   | { key: Id; origins: EntropyOrigin[] }
   /** Fallo publicado: de entropía (sin nada más) o de extracción física (teniendo `device`). */
   | { key: Id; advisory: string; device?: Id }
+  /** Fallo publicado del dispositivo, explotado desde un ordenador con malware al que se conecta. */
+  | { key: Id; advisory: string; device: Id; computer: Id }
   /** Filtrada en las firmas por un firmware malicioso de ese fabricante. */
   | { key: Id; firmware: string }
   /** Adivinada por fuerza bruta: solo entropía propia, con estos bits (por debajo del estándar). */
@@ -95,6 +99,7 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
     if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
     else if ('firmware' in c) add(seed, { rule: 'malicious-firmware', premises: [], via: { vendor: c.firmware } });
     else if ('ownBits' in c) add(seed, { rule: 'weak-own-entropy', premises: [], via: { bits: c.ownBits } });
+    else if ('computer' in c) add(seed, { rule: 'host-exploit', premises: [], via: { device: c.device, advisory: c.advisory, item: c.computer } });
     else if (c.device) add(seed, { rule: 'physical-extraction', premises: [factId({ kind: 'item', item: c.device })], via: { device: c.device, advisory: c.advisory } });
     else add(seed, { rule: 'known-weak-entropy', premises: [], via: { advisory: c.advisory } });
   }
@@ -126,10 +131,13 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       for (const s of a.contents) add(secret(s), { rule: 'read-artifact', premises: [itemId, ...locks], via: { item: a.id } });
     }
 
-    // La cartera del ordenador de firma tiene el descriptor. Ante la duda, se lee sin contraseña.
+    // La cartera del ordenador de firma tiene el descriptor: lo lee quien lo tiene en la mano (ante la duda, sin
+    // contraseña) o un malware suyo.
     for (const c of model.computers) {
+      if (!c.wallet) continue;
       const itemId = factId({ kind: 'item', item: c.id });
-      if (c.wallet && facts.has(itemId)) add(secret({ type: 'descriptor' }), { rule: 'computer-wallet', premises: [itemId], via: { item: c.id } });
+      if (facts.has(itemId)) add(secret({ type: 'descriptor' }), { rule: 'computer-wallet', premises: [itemId], via: { item: c.id } });
+      else if (holdings.infectedComputers?.includes(c.id)) add(secret({ type: 'descriptor' }), { rule: 'computer-malware', premises: [], via: { item: c.id } });
     }
 
     if (facts.has(descriptorId)) {

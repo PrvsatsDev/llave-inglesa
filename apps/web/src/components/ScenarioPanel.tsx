@@ -130,7 +130,11 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
           <Bug size={14} aria-hidden />
           <span>
             <strong>{name(device)}</strong>{' '}
-            {how === 'firmware' ? T.comprometido.firmware(vendorName(model, device)) : T.comprometido.extraccion}
+            {how === 'firmware'
+              ? T.comprometido.firmware(vendorName(model, device))
+              : how === 'extraction'
+                ? T.comprometido.extraccion
+                : T.comprometido[how]}
           </span>
         </p>
       ))}

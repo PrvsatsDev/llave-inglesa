@@ -1,5 +1,6 @@
 export * from './analyze.ts';
 export * from './attacks.ts';
+export * from './computer.ts';
 export * from './cuts.ts';
 export * from './derive.ts';
 export * from './entropy.ts';

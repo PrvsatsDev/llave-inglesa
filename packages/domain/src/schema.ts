@@ -144,6 +144,11 @@ export const ComputerSchema = z.object({
   use: z.enum(['daily', 'dedicated']),
   /** Guarda la cartera y, con ella, el descriptor (lo normal). */
   wallet: z.boolean().default(true),
+  /**
+   * Dispositivos que se le conectan por cable o Bluetooth: un malware suyo puede atacarlos. Por QR o microSD no cuentan.
+   * Ausente = sin indicar: todos (ante la duda, lo peor).
+   */
+  connects: z.array(IdSchema).optional(),
   /** Ubicación física donde se guarda. */
   location: IdSchema.optional(),
   /** Persona que lo lleva siempre encima (un móvil). */

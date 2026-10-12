@@ -151,6 +151,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     if ((c.location === undefined) === (c.carriedBy === undefined)) report('error', 'invalid-computer-place', ['computers', i], c.id);
     if (c.location !== undefined) ref(locations, c.location, ['computers', i, 'location']);
     if (c.carriedBy !== undefined) ref(people, c.carriedBy, ['computers', i, 'carriedBy']);
+    c.connects?.forEach((d, j) => ref(devices, d, ['computers', i, 'connects', j]));
   });
 
   model.locations.forEach((l, i) =>

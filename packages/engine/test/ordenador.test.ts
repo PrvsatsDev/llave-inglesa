@@ -1,7 +1,7 @@
 import type { Computer, CustodyModel } from '@llave-inglesa/domain';
 import { describe, expect, it } from 'vitest';
-import { analyze, createWorld, DAILY_COMPUTER_PENALTY, inheritanceLetter, lossAtoms, securityBreakdown, securityScore, simulateAttack } from '../src/index.ts';
-import { loadFixture } from './helpers.ts';
+import { analyze, attackAtoms, compromisedDevices, COMPUTER_MALWARE_EFFORT, createWorld, DAILY_COMPUTER_PENALTY, inheritanceLetter, type AttackAtom, lossAtoms, securityBreakdown, securityScore, simulateAttack } from '../src/index.ts';
+import { base, loadFixture, parse } from './helpers.ts';
 
 const descriptor = { kind: 'secret', secret: { type: 'descriptor' } } as const;
 
@@ -89,5 +89,45 @@ describe('ordenador de firma: carta de herencia', () => {
     const pieces = letter.stops.flatMap((s) => s.pieces);
     expect(letter.usesDescriptor).toBe(true);
     expect(pieces).toContainEqual(expect.objectContaining({ item: 'portatil', kind: 'computer', needed: true, provides: [{ type: 'descriptor' }] }));
+  });
+});
+
+/** Single-sig con un BitBox02 de firmware afectado (fallo explotable desde el ordenador) y estos ordenadores. */
+function bitbox(firmware: string, ...computers: Computer[]): CustodyModel {
+  return parse(base({
+    keys: [{ id: 'k1', label: 'K1' }],
+    policy: { type: 'key', key: 'k1' },
+    devices: [{ id: 'bb', label: 'BitBox', vendor: 'BitBox', model: 'BitBox02', firmware, kind: 'stateful', holds: ['k1'], pinProtected: true, location: 'casa' }],
+    people: [{ id: 'yo', name: 'Yo', role: 'owner', knows: [{ type: 'pin', device: 'bb' }] }],
+    computers,
+  }));
+}
+const pc: Computer = { id: 'pc', label: 'Portátil', use: 'daily', wallet: false, location: 'casa' };
+const malware = (computer = 'pc'): AttackAtom => ({ type: 'computer-malware', computer });
+
+describe('ordenador de firma: malware', () => {
+  it('explota el fallo del dispositivo conectado y da su semilla: con uno de uso general, robo de esfuerzo 1', () => {
+    const model = bitbox('9.20.0', pc);
+    const d = simulateAttack(model, [malware()]);
+    expect(d.canSpend).toBe(true);
+    expect(d.facts.get('secret:seed:k1')!.justification).toMatchObject({ rule: 'host-exploit', via: { device: 'bb', item: 'pc', advisory: 'bitbox02-2026-08' } });
+    expect(analyze(model).security.minEffort).toBe(COMPUTER_MALWARE_EFFORT.daily);
+    expect(compromisedDevices(createWorld(model), [malware()])).toEqual(new Map([['pc', 'malware'], ['bb', 'host']]));
+  });
+
+  it('dedicado cuesta 3', () => {
+    expect(analyze(bitbox('9.20.0', { ...pc, use: 'dedicated' })).security.minEffort).toBe(COMPUTER_MALWARE_EFFORT.dedicated);
+  });
+
+  it('con el firmware corregido, o si el dispositivo no se le conecta, no hay nada que explotar', () => {
+    expect(attackAtoms(createWorld(bitbox('9.26.5', pc))).some((a) => a.type === 'computer-malware')).toBe(false);
+    expect(attackAtoms(createWorld(bitbox('9.20.0', { ...pc, connects: [] }))).some((a) => a.type === 'computer-malware')).toBe(false);
+    expect(simulateAttack(bitbox('9.20.0', { ...pc, connects: ['bb'] }), [malware()]).canSpend).toBe(true);
+  });
+
+  it('lee el descriptor de la cartera, sin tener el ordenador en la mano', () => {
+    const d = simulateAttack(r09({ ...laptop, location: undefined, carriedBy: 'yo' }), [malware('portatil')]);
+    expect(d.facts.get('secret:descriptor')!.justification).toMatchObject({ rule: 'computer-malware', via: { item: 'portatil' } });
+    expect(d.has({ kind: 'item', item: 'portatil' })).toBe(false);
   });
 });

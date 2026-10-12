@@ -18,7 +18,7 @@ export const mapa = {
   alAlcance: 'Al alcance',
   soltarAqui: 'Soltar aquí',
   pistaArrastrar: 'Arrastra para llevarlo a otra ubicación',
-  comprometido: { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' },
+  comprometido: { firmware: 'Firmware malicioso', extraction: 'Semilla extraída', host: 'Atacado desde el ordenador', malware: 'Con malware' },
   conPin: 'con PIN',
   cifradoAccesible: 'cifrado',
   resiste: 'Resiste',

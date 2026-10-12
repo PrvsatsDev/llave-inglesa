@@ -1,9 +1,10 @@
-import { setComputerPlace, updateComputer, type Computer, type ComputerPlace, type CustodyModel } from '@llave-inglesa/domain';
+import { setComputerConnects, setComputerPlace, updateComputer, type Computer, type ComputerPlace, type CustodyModel } from '@llave-inglesa/domain';
 import { Monitor, Smartphone } from 'lucide-react';
-import { UI } from '../../lib/text.ts';
+import { hostExploitAdvisory } from '@llave-inglesa/engine';
+import { advisoryShortName, UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
-import { DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
+import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
 import styles from './fields.module.css';
 
 const T = UI.ordenador;
@@ -41,6 +42,34 @@ export function ComputerInspector({ model, computer }: { model: CustodyModel; co
 
       <Section>
         <Switch checked={computer.wallet} onChange={(wallet) => patch({ wallet })} label={T.cartera} hint={T.pistaCartera} />
+      </Section>
+
+      <Section
+        title={T.conectados}
+        action={
+          computer.connects && (
+            <Button onClick={() => apply((m) => setComputerConnects(m, id, undefined))} title={T.pistaSinIndicar}>
+              {T.sinIndicar}
+            </Button>
+          )
+        }
+      >
+        {model.devices.length === 0 && <p className={styles.hint}>{T.sinDispositivos}</p>}
+        {model.devices.map((d) => {
+          const connected = computer.connects?.includes(d.id) ?? true;
+          const advisory = hostExploitAdvisory(d);
+          const current = computer.connects ?? model.devices.map((x) => x.id);
+          return (
+            <Switch
+              key={d.id}
+              checked={connected}
+              onChange={(on) => apply((m) => setComputerConnects(m, id, on ? [...current, d.id] : current.filter((x) => x !== d.id)))}
+              label={d.label}
+              hint={advisory ? T.explotable(advisoryShortName(advisory)) : undefined}
+            />
+          );
+        })}
+        <p className={styles.hint}>{computer.connects === undefined ? T.conectadosSinIndicar : T.pistaConectados}</p>
       </Section>
 
       <DeleteButton label={T.eliminar} onClick={() => void removeElement({ kind: 'computer', id })} />

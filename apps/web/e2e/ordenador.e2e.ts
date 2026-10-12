@@ -64,3 +64,29 @@ test('un móvil va con la persona: se añade desde su ficha y sale en su tarjeta
   await expect(yo.getByText('Móvil de Yo')).toHaveCount(0);
   await expect(location(page, 'Casa').getByText('Móvil de Yo')).toBeVisible();
 });
+
+test('malware en el portátil: ataca el BitBox02 con firmware afectado si se le conecta; por QR, no', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Documento abierto o ejemplo').selectOption('r08-2de3-todo-en-casa');
+  await location(page, 'Casa').getByText('BitBox02').first().click();
+  await page.getByRole('textbox', { name: 'Firmware instalado' }).fill('9.20.0');
+  await location(page, 'Casa').locator('header').click();
+  await page.getByRole('button', { name: 'Ordenador de firma', exact: true }).click();
+  await expect(page.getByText(/Tiene un fallo explotable desde un ordenador con malware \(BitBox02 2026\)/)).toBeVisible();
+  await capture(page, 'ordenador-conectados');
+
+  // En Simular, el malware sale como ataque y marca el portátil y el BitBox02.
+  await page.getByRole('tab', { name: 'Simular' }).or(page.getByRole('button', { name: 'Simular' })).first().click();
+  const attack = page.getByLabel('Un ataque');
+  await attack.selectOption((await attack.locator('option', { hasText: 'Malware en Nuevo ordenador' }).first().getAttribute('value'))!);
+  await expect(location(page, 'Casa').getByText('Con malware')).toBeVisible();
+  await expect(location(page, 'Casa').getByText('Atacado desde el ordenador')).toBeVisible();
+  await capture(page, 'ordenador-malware');
+
+  // Usado solo por QR: se desmarca y el BitBox02 ya no se puede atacar desde ahí.
+  await location(page, 'Casa').getByText('Nuevo ordenador').click();
+  await page.getByRole('checkbox', { name: /BitBox02/ }).uncheck();
+  await expect(page.getByRole('button', { name: 'Sin indicar' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Simular' }).or(page.getByRole('button', { name: 'Simular' })).first().click();
+  await expect(location(page, 'Casa').getByText('Atacado desde el ordenador')).toHaveCount(0);
+});

@@ -28,11 +28,9 @@ ningún backup del descriptor como problema grave.
 
 ### Después
 
-7. **Ordenador de firma**: primera fase hecha (2026-10-12). Ordenador o móvil, guardado en una ubicación o encima de
-   una persona, de uso general (−2 de seguridad) o dedicado; si guarda la cartera, da el descriptor a quien llegue a él
-   y cuenta como copia poco fiable. **Falta**: el malware como ataque (uso general 1, dedicado 3), que da el descriptor y
-   explota los avisos `host-exploit` de los dispositivos que se conectan a él por cable o Bluetooth (campo opcional
-   en el ordenador; sin indicar, todos; por QR o microSD no cuentan).
+7. ~~**Ordenador de firma**~~ (2026-10-12): ordenador o móvil, en una ubicación o encima de una persona, de uso
+   general (−2 de seguridad, malware de esfuerzo 1) o dedicado (malware 3); su cartera da el descriptor y su malware
+   explota los avisos `host-exploit` de los dispositivos que se le conectan por cable o Bluetooth.
 8. **Procedencia del dispositivo**, cerca del firmware: (a) DIY, comprando las piezas y montado en casa, mejor que
    comprado montado (solo en los que de verdad tienen esa opción); (b) si se compró montado, si llegó con el precinto
    de seguridad (tamper-evident) intacto; (c) si no es DIY, dónde se compró: al fabricante (lo mejor), revendedor

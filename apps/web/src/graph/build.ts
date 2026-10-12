@@ -224,7 +224,7 @@ export function applyScenario(graph: Graph, view: ScenarioView | null): Graph {
       });
       return { ...n, data: { ...n.data, items, state: view.locations.get(n.id) ?? 'dim', tone, disaster: view.disasters.get(n.id) } };
     }
-    const carries = n.data.carries.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim' }));
+    const carries = n.data.carries.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim', compromise: view.compromised.get(i.id) }));
     return { ...n, data: { ...n.data, carries, state: view.people.get(n.id) ?? 'dim', tone } };
   });
   const edges = graph.edges.map((e): AccessEdge => {

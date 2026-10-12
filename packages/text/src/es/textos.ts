@@ -92,6 +92,7 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'known-weak-entropy': 'fallo de entropía publicado',
   'weak-own-entropy': 'semilla con poca entropía propia',
   'malicious-firmware': 'firmware malicioso',
+  'computer-malware': 'malware en el ordenador de firma',
   'passphrase-bruteforce': 'fuerza bruta a la passphrase',
 };
 
@@ -112,6 +113,7 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     case 'known-weak-entropy': return `Semilla adivinable por un fallo publicado: ${advisoryShortName(a.advisory)}`;
     case 'weak-own-entropy': return `Fuerza bruta a la semilla de ${label(a.key)} (poca entropía propia)`;
     case 'malicious-firmware': return `Firmware malicioso: ${a.vendor}`;
+    case 'computer-malware': return `Malware en ${label(a.computer)}`;
     case 'passphrase-bruteforce': return `Fuerza bruta a la passphrase de ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
 }
@@ -205,6 +207,8 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'location-access': return `al alcance en ${name(v.location)}`;
     case 'carried': return `lo lleva encima ${name(v.person)}`;
     case 'computer-wallet': return `en la cartera de ${name(v.item)}`;
+    case 'computer-malware': return `lo lee el malware de ${name(v.item)} en su cartera`;
+    case 'host-exploit': return `extraída de ${name(v.device)} desde ${name(v.item)}, al que se conecta, por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
     case 'memory': return `lo sabe ${name(v.person)}`;
     case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;
     case 'known-weak-entropy': return `adivinable por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
@@ -284,7 +288,7 @@ export function advisoryShortName(id: string): string {
 export const ADVISORY_KIND: Record<AdvisoryKind, string> = {
   'weak-entropy': 'La semilla generada con este firmware es predecible: actualizar no la arregla, hay que migrar a una semilla nueva.',
   'physical-extraction': 'Con el dispositivo en la mano se puede sacar la semilla aunque tenga PIN.',
-  'host-exploit': 'Un ordenador o móvil con malware conectado por USB o Bluetooth puede atacar el dispositivo.',
+  'host-exploit': 'Un ordenador o móvil con malware conectado por USB o Bluetooth puede atacar el dispositivo. Si lo conectas así a un ordenador de firma del esquema, su malware es una vía de robo.',
   'supply-chain': 'Podría llegar manipulado sin que su comprobación de autenticidad lo detecte.',
 };
 

@@ -1,4 +1,4 @@
-import type { Id, Location, ModelIndex } from '@llave-inglesa/domain';
+import type { Computer, Id, Location, ModelIndex } from '@llave-inglesa/domain';
 import type { AttackAtom } from './attacks.ts';
 import type { LossEvent } from './world.ts';
 
@@ -12,7 +12,7 @@ import type { LossEvent } from './world.ts';
  * Esfuerzo y riesgo que supone cada tipo de ataque para el atacante.
  * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
  */
-export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce'>, number>> = {
+export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce' | 'computer-malware'>, number>> = {
   /** Entrar sin nadie presente: sigiloso, sin confrontación. En sitios protegidos, ver BURGLARY_EFFORT. */
   burglary: 1.5,
   /** Alguien de confianza: ya tiene acceso y conocimiento, pero traicionar a la pareja es mucho más raro que un robo. */
@@ -30,6 +30,15 @@ export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphr
   'weak-own-entropy': 0.5,
   /** Actualización maliciosa o fabricante comprometido, y que el usuario firme: sofisticado. */
   'malicious-firmware': 3,
+};
+
+/**
+ * Malware en el ordenador de firma. Uno de uso general cae en remoto y a escala, como una cuenta en la nube; uno
+ * dedicado (solo para firmar e instalado a conciencia) exige algo sofisticado, como un firmware malicioso.
+ */
+export const COMPUTER_MALWARE_EFFORT: Readonly<Record<Computer['use'], number>> = {
+  daily: 1,
+  dedicated: 3,
 };
 
 /**
@@ -113,6 +122,8 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
   switch (a.type) {
     case 'passphrase-bruteforce':
       return PASSPHRASE_EFFORT[a.strength];
+    case 'computer-malware':
+      return COMPUTER_MALWARE_EFFORT[index.computers.get(a.computer)?.use ?? 'daily'];
     case 'burglary': {
       const location = index.locations.get(a.location);
       if (location?.kind === 'cloud') return CLOUD_BREACH_EFFORT;

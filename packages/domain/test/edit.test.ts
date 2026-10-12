@@ -5,6 +5,7 @@ import {
   activeHolds,
   addComputer,
   removeComputer,
+  setComputerConnects,
   setComputerPlace,
   updateComputer,
   isActiveSecret,
@@ -303,6 +304,11 @@ const ops: Op[] = [
     const id = m.computers[pick(m.computers.length)]!.id;
     return setComputerPlace(m, id, pick(2) ? { location: m.locations[pick(m.locations.length)]!.id } : { carriedBy: m.people[pick(m.people.length)]!.id });
   },
+  (m, pick) => {
+    if (!m.computers.length) return m;
+    const ids = m.devices.filter(() => pick(2) === 0).map((d) => d.id);
+    return setComputerConnects(m, m.computers[pick(m.computers.length)]!.id, pick(3) ? ids : undefined);
+  },
   (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
 ];
 
@@ -333,6 +339,15 @@ describe('ordenador de firma', () => {
     expect(errors(both)).toEqual(['invalid-computer-place']);
     const none = { ...model, computers: model.computers.map(({ location: _, ...c }) => c) };
     expect(errors(none)).toEqual(['invalid-computer-place']);
+  });
+
+  it('qué dispositivos se le conectan: sin indicar, o una lista que se limpia al eliminar uno', () => {
+    const { model, id } = addComputer(casa, { location: 'casa' });
+    const some = setComputerConnects(model, id, ['keystone', 'no-existe', 'keystone']);
+    expect(some.computers.at(-1)!.connects).toEqual(['keystone']);
+    expect(removeDevice(some, 'keystone').computers.at(-1)!.connects).toEqual([]);
+    expect(setComputerConnects(some, id, undefined).computers.at(-1)!.connects).toBeUndefined();
+    expect(errors(removeDevice(some, 'keystone'))).toEqual([]);
   });
 
   it('al exportar, su id sale del nombre, también en quien lo lleva', () => {

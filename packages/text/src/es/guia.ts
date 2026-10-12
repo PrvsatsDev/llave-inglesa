@@ -703,7 +703,7 @@ export const GUIA: readonly Capitulo[] = [
           ['El metal se supone acero: una placa de aluminio o latón no resistiría un incendio. Tampoco se distinguen una bolsa estanca o una caja fuerte ignífuga.'],
           ['La protección son tres niveles (ninguna, caja fuerte, caja del banco), sin distinguir la calidad de la caja ni alarmas. Las ubicaciones se anidan un solo nivel.'],
           ['Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.'],
-          ['No se modela el ordenador o el móvil con el que se firma: los fallos explotables desde un ordenador con malware solo se avisan.'],
+          ['El ordenador o móvil de firma solo tiene dos extremos (de uso general o dedicado), y su malware se supone capaz de sacar la semilla de un dispositivo conectado con un fallo publicado. No cuenta la contraseña del ordenador ni de la cartera.'],
           ['El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.'],
           ['Todavía no hay timelocks (herencia con espera, claves de recuperación con retraso).'],
           ['Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.'],

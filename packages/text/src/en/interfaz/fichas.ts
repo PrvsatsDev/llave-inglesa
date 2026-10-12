@@ -228,8 +228,8 @@ export const ordenador: typeof es.ordenador = {
   usos: { daily: 'General-purpose', dedicated: 'Dedicated' },
   pistasUso: {
     daily:
-      'The one you use every day: browser, email, apps. Its malware can swap the destination or change address: always check on the device and compare the destination through another channel. It takes some security off.',
-    dedicated: 'Only for signing, and carefully set up. It takes no security off.',
+      'The one you use every day: browser, email, apps. Its malware can swap the destination or change address: always check on the device and compare the destination through another channel. It takes some security off, and getting malware onto it is easy (effort 1): it reads the wallet and attacks the devices with a known flaw that connect to it.',
+    dedicated: 'Only for signing, and carefully set up. It takes no security off, and getting malware onto it is much harder (effort 3).',
   },
   cartera: 'Holds the wallet',
   pistaCartera:
@@ -240,6 +240,14 @@ export const ordenador: typeof es.ordenador = {
   pistaGuardado: 'Whoever gets into this location takes it, and a fire or a flood destroys it.',
   pistaLleva:
     'It always goes with its owner: a burglar does not get it, whoever coerces them does. If they die, it counts as lost: their heirs will not know how to unlock it.',
+  conectados: 'Connected by cable or Bluetooth',
+  sinIndicar: 'Not specified',
+  pistaSinIndicar: 'Back to «not specified»: all of them are assumed to connect.',
+  sinDispositivos: 'There are no devices in the setup.',
+  explotable: (aviso: string) => `It has a flaw exploitable from a computer with malware (${aviso}).`,
+  conectadosSinIndicar:
+    'Not specified, all of them are assumed to connect (when in doubt, the worst). Malware on this computer attacks the ones with a known flaw. Untick the ones you only use by QR or microSD.',
+  pistaConectados: 'Malware on this computer attacks the ones with a known flaw. The ones you only use by QR or microSD do not count.',
   eliminar: 'Delete computer',
 };
 

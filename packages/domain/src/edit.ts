@@ -95,6 +95,7 @@ export function renameIds(model: CustodyModel, renames: ReadonlyMap<Id, Id>): Cu
       id: to(c.id),
       ...(c.location !== undefined && { location: to(c.location) }),
       ...(c.carriedBy !== undefined && { carriedBy: to(c.carriedBy) }),
+      ...(c.connects && { connects: c.connects.map(to) }),
     })),
     people: model.people.map((p) => ({ ...p, id: to(p.id), knows: p.knows.map(secret), ...(p.livesAt !== undefined && { livesAt: to(p.livesAt) }) })),
     locations: model.locations.map((l) => ({
@@ -380,7 +381,11 @@ export function updateDevice(model: CustodyModel, id: Id, patch: Patch<Device>):
 
 export function removeDevice(model: CustodyModel, id: Id): CustodyModel {
   return stripSecrets(
-    { ...model, devices: model.devices.filter((d) => d.id !== id) },
+    {
+      ...model,
+      devices: model.devices.filter((d) => d.id !== id),
+      computers: model.computers.map((c) => (c.connects ? { ...c, connects: c.connects.filter((d) => d !== id) } : c)),
+    },
     (s) => s.type === 'pin' && s.device === id,
   );
 }
@@ -458,8 +463,14 @@ export function addComputer(model: CustodyModel, place: ComputerPlace, name = 'N
 /** Dónde está un ordenador: guardado en una ubicación o encima de una persona. */
 export type ComputerPlace = { location: Id; carriedBy?: never } | { carriedBy: Id; location?: never };
 
-export function updateComputer(model: CustodyModel, id: Id, patch: Patch<Omit<Computer, 'location' | 'carriedBy'>>): CustodyModel {
+export function updateComputer(model: CustodyModel, id: Id, patch: Patch<Omit<Computer, 'location' | 'carriedBy' | 'connects'>>): CustodyModel {
   return { ...model, computers: replace(model.computers, id, (c) => ({ ...c, ...patch })) };
+}
+
+/** Qué dispositivos se le conectan por cable o Bluetooth (undefined = sin indicar: todos). Ignora los que no existen. */
+export function setComputerConnects(model: CustodyModel, id: Id, connects: readonly Id[] | undefined): CustodyModel {
+  const known = connects?.filter((d) => model.devices.some((x) => x.id === d));
+  return { ...model, computers: replace(model.computers, id, (c) => (known ? { ...c, connects: [...new Set(known)] } : withoutKeys(c, 'connects'))) };
 }
 
 /** Lo guarda en una ubicación o se lo da a una persona (deja de estar en el otro sitio). Si no existe, no hace nada. */

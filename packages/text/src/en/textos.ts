@@ -93,6 +93,7 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'known-weak-entropy': 'published entropy flaw',
   'weak-own-entropy': 'seed with too little own entropy',
   'malicious-firmware': 'malicious firmware',
+  'computer-malware': 'malware on the signing computer',
   'passphrase-bruteforce': 'passphrase brute force',
 };
 
@@ -113,6 +114,7 @@ export const attackText: typeof es.attackText = (a: AttackAtom, index: ModelInde
     case 'known-weak-entropy': return `Seed guessable through a published flaw: ${advisoryShortName(a.advisory)}`;
     case 'weak-own-entropy': return `Brute force on the seed of ${label(a.key)} (too little own entropy)`;
     case 'malicious-firmware': return `Malicious firmware: ${vendorText(a.vendor)}`;
+    case 'computer-malware': return `Malware on ${label(a.computer)}`;
     case 'passphrase-bruteforce': return `Brute force on the passphrase of ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
 };
@@ -207,6 +209,8 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'location-access': return `within reach at ${name(v.location)}`;
     case 'carried': return `${name(v.person)} carries it`;
     case 'computer-wallet': return `in the wallet on ${name(v.item)}`;
+    case 'computer-malware': return `read from its wallet by the malware on ${name(v.item)}`;
+    case 'host-exploit': return `extracted from ${name(v.device)} through ${name(v.item)}, which it connects to, by a published flaw (${advisoryShortName(v.advisory ?? '')})`;
     case 'memory': return `${name(v.person)} knows it`;
     case 'entropy-compromise': return `predictable if the RNG of ${(v.origins ?? []).map(originText).join(' + ')} has a still-unknown flaw`;
     case 'known-weak-entropy': return `guessable through a published flaw (${advisoryShortName(v.advisory ?? '')})`;
@@ -286,7 +290,7 @@ export const advisoryShortName: typeof es.advisoryShortName = (id: string) => {
 export const ADVISORY_KIND: Record<AdvisoryKind, string> = {
   'weak-entropy': 'Seeds generated with this firmware are predictable: updating does not fix them, you have to migrate to a new seed.',
   'physical-extraction': 'With the device in hand, the seed can be extracted even with a PIN.',
-  'host-exploit': 'A computer or phone with malware connected over USB or Bluetooth can attack the device.',
+  'host-exploit': 'A computer or phone with malware connected over USB or Bluetooth can attack the device. If you connect it that way to a signing computer in the setup, its malware is a theft route.',
   'supply-chain': 'It could arrive tampered with, without its authenticity check detecting it.',
 };
 

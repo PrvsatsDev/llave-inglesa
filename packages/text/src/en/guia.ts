@@ -701,7 +701,7 @@ export const GUIA: typeof es = [
           ['Metal is assumed to be steel: an aluminum or brass plate would not survive a fire. Nor are a waterproof bag or a fireproof safe told apart.'],
           ['Protection is three levels (none, home safe, bank box), without telling apart the quality of the safe or alarms. Locations nest only one level deep.'],
           ['Each person lives in a single place and is assumed to be there: schedules (being at work) are not taken into account. If you do not set where they live, they can be coerced anywhere at no extra cost.'],
-          ['The computer or phone used to sign is not modeled: flaws exploitable from a computer with malware are only warned about.'],
+          ['The signing computer or phone only has two extremes (general-purpose or dedicated), and its malware is assumed able to get the seed out of a connected device with a published flaw. The password of the computer or the wallet does not count.'],
           ['The catalog of devices and their known flaws does not update itself: each version ships its own, with its date.'],
           ['There are no timelocks yet (inheritance with a waiting period, delayed recovery keys).'],
           ['With many devices and locations the analysis takes a few seconds: it is exhaustive.'],
