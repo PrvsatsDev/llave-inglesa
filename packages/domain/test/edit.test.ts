@@ -18,6 +18,7 @@ import {
   removeKey,
   removeLocation,
   setLocationInside,
+  setPersonHome,
   setLocationProtection,
   updateLocation,
   removePerson,
@@ -194,6 +195,53 @@ describe('ubicaciones protegidas y anidadas', () => {
   });
 });
 
+describe('dónde vive cada persona', () => {
+  const home = (m: CustodyModel, person: string) => m.people.find((p) => p.id === person)?.livesAt;
+
+  it('vive en una ubicación física de primer nivel', () => {
+    const m = setPersonHome(casa, casa.people[0]!.id, 'casa');
+    expect(home(m, casa.people[0]!.id)).toBe('casa');
+    expect(errors(m)).toEqual([]);
+    expect(home(setPersonHome(m, casa.people[0]!.id, undefined), casa.people[0]!.id)).toBeUndefined();
+  });
+
+  it('no se vive en la nube, en una caja del banco ni dentro de otra ubicación', () => {
+    const person = casa.people[0]!.id;
+    const cloud = addLocation(casa, 'Nube', 'cloud');
+    expect(setPersonHome(cloud.model, person, cloud.id)).toBe(cloud.model);
+    expect(setPersonHome(casa, person, 'banco')).toBe(casa);
+    const safe = addLocation(casa, 'Caja fuerte');
+    const nested = setLocationInside(safe.model, safe.id, 'casa');
+    expect(setPersonHome(nested, person, safe.id)).toBe(nested);
+    expect(setPersonHome(casa, person, 'no-existe')).toBe(casa);
+  });
+
+  it('si la ubicación deja de servir para vivir o se elimina, se limpia', () => {
+    const person = casa.people[0]!.id;
+    const m = setPersonHome(casa, person, 'padres');
+    expect(home(m, person)).toBe('padres');
+    expect(home(setLocationProtection(m, 'padres', 'bank-box'), person)).toBeUndefined();
+    expect(home(setLocationProtection(m, 'padres', 'home-safe'), person)).toBe('padres');
+    expect(home(updateLocation(m, 'padres', { kind: 'cloud' }), person)).toBeUndefined();
+    expect(home(setLocationInside(m, 'padres', 'casa'), person)).toBeUndefined();
+    const gone = removeLocation(m, 'padres');
+    expect(home(gone, person)).toBeUndefined();
+    expect(errors(gone)).toEqual([]);
+  });
+
+  it('la integridad rechaza un «vive en» no válido', () => {
+    const bad = { ...casa, people: casa.people.map((p, i) => (i === 0 ? { ...p, livesAt: 'banco' } : p)) };
+    expect(errors(bad)).toContain('invalid-home');
+    expect(errors({ ...bad, people: bad.people.map((p, i) => (i === 0 ? { ...p, livesAt: 'no-existe' } : p)) })).toContain('unknown-reference');
+  });
+
+  it('el documento nuevo: el titular vive en casa', () => {
+    const m = blankModel();
+    expect(m.people[0]!.livesAt).toBe('casa');
+    expect(errors(m)).toEqual([]);
+  });
+});
+
 /** Operación aleatoria sobre ids que existen en el modelo actual. */
 type Op = (m: CustodyModel, pick: (n: number) => number) => CustodyModel;
 const ops: Op[] = [
@@ -217,6 +265,7 @@ const ops: Op[] = [
   (m, pick) => setLocationProtection(m, m.locations[pick(m.locations.length)]!.id, ([undefined, 'home-safe', 'bank-box'] as const)[pick(3)]),
   (m, pick) => setLocationInside(m, m.locations[pick(m.locations.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => updateLocation(m, m.locations[pick(m.locations.length)]!.id, { kind: (['physical', 'device', 'cloud'] as const)[pick(3)] }),
+  (m, pick) => setPersonHome(m, m.people[pick(m.people.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
 ];
 

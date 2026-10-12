@@ -139,6 +139,11 @@ export const PersonSchema = z.object({
   role: z.enum(['owner', 'heir', 'custodian', 'other']),
   /** Lo que sabe de memoria. */
   knows: z.array(SecretRefSchema).default([]),
+  /**
+   * Ubicación física donde vive (una casa, no una caja fuerte ni la del banco). Coaccionarla en otro sitio exige
+   * llevarla allí. Sin indicar: se la puede coaccionar en cualquier sitio sin recargo.
+   */
+  livesAt: IdSchema.optional(),
 });
 export type Person = z.infer<typeof PersonSchema>;
 

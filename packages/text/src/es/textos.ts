@@ -234,6 +234,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'passphrase-strength-unset': 'Hay una passphrase sin fortaleza indicada: se trata como débil',
   'protection-not-physical': 'Solo una ubicación física puede ser caja fuerte o caja del banco',
   'invalid-nesting': 'Una ubicación está dentro de otra de forma no válida (ambas físicas y un solo nivel)',
+  'invalid-home': 'Alguien vive en un sitio donde no se puede vivir (tiene que ser una ubicación física, ni dentro de otra ni una caja del banco)',
 };
 
 export function issueText(issue: Issue, label: Label): string {

@@ -236,6 +236,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'passphrase-strength-unset': 'A passphrase has no strength set: it is treated as weak',
   'protection-not-physical': 'Only a physical location can be a home safe or a bank box',
   'invalid-nesting': 'A location is inside another in an invalid way (both must be physical, one level only)',
+  'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',
 };
 
 export const issueText: typeof es.issueText = (issue: Issue, label: Label) => {

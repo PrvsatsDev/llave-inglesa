@@ -1,5 +1,5 @@
 import type { Artifact, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
-import { canNest } from './validate.ts';
+import { canLiveAt, canNest } from './validate.ts';
 
 /**
  * Operaciones de edición: funciones puras `modelo → modelo` que mantienen la
@@ -89,7 +89,7 @@ export function renameIds(model: CustodyModel, renames: ReadonlyMap<Id, Id>): Cu
       contents: a.contents.map(secret),
       lockedBy: a.lockedBy.map(secret),
     })),
-    people: model.people.map((p) => ({ ...p, id: to(p.id), knows: p.knows.map(secret) })),
+    people: model.people.map((p) => ({ ...p, id: to(p.id), knows: p.knows.map(secret), ...(p.livesAt !== undefined && { livesAt: to(p.livesAt) }) })),
     locations: model.locations.map((l) => ({
       ...l,
       id: to(l.id),
@@ -132,7 +132,7 @@ export function blankModel(names: BlankNames = { scheme: 'Mi esquema', owner: 'Y
     policy: { type: 'key', key: 'k1' },
     devices: [],
     artifacts: [],
-    people: [{ id: 'yo', name: names.owner, role: 'owner', knows: [] }],
+    people: [{ id: 'yo', name: names.owner, role: 'owner', knows: [], livesAt: 'casa' }],
     locations: [{ id: 'casa', name: names.home, kind: 'physical', access: [{ person: 'yo', when: { type: 'always' } }] }],
   };
 }
@@ -244,36 +244,42 @@ export function addLocation(model: CustodyModel, name = 'Nueva ubicación', kind
 export function updateLocation(model: CustodyModel, id: Id, patch: Patch<Omit<Location, 'protection' | 'inside'>>): CustodyModel {
   const m = { ...model, locations: replace(model.locations, id, (l) => ({ ...l, ...patch })) };
   if (!patch.kind || patch.kind === 'physical') return m;
-  return {
+  return withValidHomes({
     ...m,
     locations: m.locations.map((l) => {
       if (l.id === id) return withoutKeys(l, 'protection', 'inside');
       return l.inside === id ? withoutKeys(l, 'inside') : l;
     }),
-  };
+  });
 }
 
 /** Protección de una ubicación física (undefined = ninguna). En las demás no hace nada. */
 export function setLocationProtection(model: CustodyModel, id: Id, protection: Location['protection']): CustodyModel {
-  return {
+  return withValidHomes({
     ...model,
     locations: model.locations.map((l) => {
       if (l.id !== id || l.kind !== 'physical') return l;
       return protection ? { ...l, protection } : withoutKeys(l, 'protection');
     }),
-  };
+  });
 }
 
 /** Mete la ubicación dentro de otra (o la saca con undefined). Si no se puede anidar, no hace nada. */
 export function setLocationInside(model: CustodyModel, id: Id, parent: Id | undefined): CustodyModel {
   if (parent !== undefined && !canNest(model, id, parent)) return model;
-  return {
+  return withValidHomes({
     ...model,
     locations: model.locations.map((l) => {
       if (l.id !== id) return l;
       return parent ? { ...l, inside: parent } : withoutKeys(l, 'inside');
     }),
-  };
+  });
+}
+
+/** Quita «vive en» a quien apunta a una ubicación donde ya no se puede vivir (eliminada, en la nube, una caja…). */
+function withValidHomes(model: CustodyModel): CustodyModel {
+  if (!model.people.some((p) => p.livesAt !== undefined && !canLiveAt(model, p.livesAt))) return model;
+  return { ...model, people: model.people.map((p) => (p.livesAt === undefined || canLiveAt(model, p.livesAt) ? p : withoutKeys(p, 'livesAt'))) };
 }
 
 function withoutKeys<T extends object, K extends keyof T>(value: T, ...keys: K[]): Omit<T, K> {
@@ -288,13 +294,13 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
   const goneDevices = new Set(model.devices.filter((d) => d.location === id).map((d) => d.id));
   const goneArtifacts = new Set(model.artifacts.filter((a) => a.location === id).map((a) => a.id));
   return stripSecrets(
-    {
+    withValidHomes({
       ...model,
       // Lo que estaba dentro sigue existiendo, ahora por su cuenta.
       locations: model.locations.filter((l) => l.id !== id).map((l) => (l.inside === id ? withoutKeys(l, 'inside') : l)),
       devices: model.devices.filter((d) => d.location !== id),
       artifacts: model.artifacts.filter((a) => a.location !== id),
-    },
+    }),
     (s) => (s.type === 'pin' && goneDevices.has(s.device)) || (s.type === 'password' && goneArtifacts.has(s.artifact)),
   );
 }
@@ -306,8 +312,14 @@ export function addPerson(model: CustodyModel, name = 'Nueva persona', role: Per
   return { model: { ...model, people: [...model.people, { id, name, role, knows: [] }] }, id };
 }
 
-export function updatePerson(model: CustodyModel, id: Id, patch: Patch<Person>): CustodyModel {
+export function updatePerson(model: CustodyModel, id: Id, patch: Patch<Omit<Person, 'livesAt'>>): CustodyModel {
   return { ...model, people: replace(model.people, id, (p) => ({ ...p, ...patch })) };
+}
+
+/** Dónde vive (undefined = sin indicar). Si no se puede vivir en esa ubicación, no hace nada. */
+export function setPersonHome(model: CustodyModel, id: Id, location: Id | undefined): CustodyModel {
+  if (location !== undefined && !canLiveAt(model, location)) return model;
+  return { ...model, people: replace(model.people, id, (p) => (location ? { ...p, livesAt: location } : withoutKeys(p, 'livesAt'))) };
 }
 
 /** Elimina a la persona, sus accesos y los accesos condicionados a lo que le ocurra. */

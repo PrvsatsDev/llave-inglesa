@@ -16,7 +16,8 @@ export type IssueCode =
   | 'no-owner'
   | 'passphrase-strength-unset'
   | 'protection-not-physical'
-  | 'invalid-nesting';
+  | 'invalid-nesting'
+  | 'invalid-home';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -152,6 +153,12 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     if (!canNest(model, l.id, l.inside)) report('error', 'invalid-nesting', ['locations', i, 'inside'], l.id);
   });
 
+  model.people.forEach((p, i) => {
+    if (p.livesAt === undefined) return;
+    if (!byId.has(p.livesAt)) return ref(locations, p.livesAt, ['people', i, 'livesAt']);
+    if (!canLiveAt(model, p.livesAt)) report('error', 'invalid-home', ['people', i, 'livesAt'], p.id);
+  });
+
   if (!model.people.some((p) => p.role === 'owner')) report('error', 'no-owner', ['people']);
 
   // Nombres repetidos que no se pueden distinguir (dos objetos iguales en sitios distintos sí: llevan su ubicación).
@@ -180,4 +187,10 @@ export function canNest(model: CustodyModel, child: Id, parent: Id): boolean {
   if (!c || !p || c.id === p.id) return false;
   if (c.kind !== 'physical' || p.kind !== 'physical') return false;
   return p.inside === undefined && !model.locations.some((l) => l.inside === child);
+}
+
+/** ¿Se puede vivir en esta ubicación? Física, de primer nivel (no dentro de otra) y no una caja del banco. */
+export function canLiveAt(model: CustodyModel, location: Id): boolean {
+  const l = model.locations.find((x) => x.id === location);
+  return l !== undefined && l.kind === 'physical' && l.inside === undefined && l.protection !== 'bank-box';
 }
