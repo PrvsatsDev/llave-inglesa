@@ -16,9 +16,7 @@ En este orden; cada punto se diseña y se discute antes de implementarlo.
 
 1. ~~**Dónde vive cada persona**~~: hecho (2026-10-12).
 2. ~~**Calidad de la entropía**~~: hecho (2026-10-12), con un solo corte en 128 bits.
-3. **Multisig sin descriptor como error grave**: aviso de error bien visible y quizá más resta (hoy
-   −35 herencia, −15 resiliencia). Sin distinguir derivaciones habituales de raras: no tenerlo es
-   un error, sin matices.
+3. ~~**Multisig sin descriptor como error grave**~~: hecho (2026-10-12), sin cambiar las restas.
 4. **Ordenador de firma**, solo dos extremos: ordenador de uso diario (muy mala idea, muy
    penalizado) y ordenador dedicado, sin red e instalado a conciencia (penaliza algo, mucho
    menos). Falta decidir en qué consiste la penalización (malware que cambia direcciones de
