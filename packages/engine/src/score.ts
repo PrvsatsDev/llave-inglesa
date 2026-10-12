@@ -46,8 +46,9 @@ type Protection = NonNullable<Location['protection']> | 'none';
 
 /**
  * Esfuerzo de una intrusión hasta llegar al contenido, según la protección. Si la ubicación está
- * dentro de otra, el robo exige entrar en ambas y esta solo suma la diferencia: la caja fuerte de
- * casa cuesta 1.5 (casa) + 1 (abrirla) = 2.5.
+ * dentro de otra, el robo exige entrar en ambas y esta solo suma lo que su protección añade sobre una casa sin
+ * protección: la caja fuerte de casa cuesta 1.5 (casa) + 1 (abrirla) = 2.5. No depende de la protección del
+ * contenedor: una caja fuerte dentro de otra ubicación con caja fuerte también hay que forzarla.
  */
 export const BURGLARY_EFFORT: Readonly<Record<Protection, number>> = {
   none: ATTACK_EFFORT.burglary,
@@ -118,7 +119,7 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
       // Un dispositivo no tiene protección: su intrusión es robarlo o meterle malware.
       if (location?.kind !== 'physical') return ATTACK_EFFORT.burglary;
       const own = BURGLARY_EFFORT[protectionOf(index, a.location)];
-      return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT[protectionOf(index, location.inside)]);
+      return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT.none);
     }
     case 'coercion':
       return ATTACK_EFFORT.coercion + coercionSurcharge(a, index);
