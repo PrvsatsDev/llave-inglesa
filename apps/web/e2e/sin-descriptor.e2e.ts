@@ -23,4 +23,8 @@ test('quitar todos los descriptores de un multisig es un problema grave', async 
   // El análisis sigue: la herencia resta por no tener descriptor.
   await expect(page.getByText(/análisis exhaustivo/)).toBeVisible();
   await capture(page, 'sin-descriptor');
+  // Seguridad explica por qué sube.
+  await page.getByRole('button', { name: /^Seguridad/ }).first().click();
+  await expect(page.getByText(/Sin ningún backup del descriptor, el ladrón lo tiene más difícil/)).toBeVisible();
+  await capture(page, 'sin-descriptor-seguridad');
 });

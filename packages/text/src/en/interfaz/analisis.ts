@@ -44,6 +44,8 @@ export const analisis: typeof es = {
   seguridad: {
     sinRobo: (hasta: number) => `No theft with up to ${hasta} attacks at once`,
     roboMasBarato: (esfuerzo: number) => `Cheapest theft: effort ${num(esfuerzo)}`,
+    sinDescriptor:
+      'With no backup of the descriptor, the thief has a harder time: besides the seeds to sign, they need to gather the xpubs of every key to build the transaction, so there are fewer ways to steal. That is why security may come out a bit higher, but it does not pay off: resilience and inheritance lose much more.',
     viasBaratas: (vias: number, hasta: number) => `${vias} almost equally cheap routes (effort ≤ ${num(hasta)})`,
     como: (hasta: number) => {
       const efforts = (Object.entries(ATTACK_EFFORT) as [keyof typeof ATTACK_EFFORT, number][])

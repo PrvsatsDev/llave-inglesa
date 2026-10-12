@@ -1,5 +1,6 @@
 import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
 import { ownEntropyBits, STANDARD_SEED_BITS } from '@llave-inglesa/engine';
+import { useState } from 'react';
 import { AlertTriangle, CircleCheck, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { UI, vendorText } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
@@ -36,7 +37,8 @@ function emptySource(kind: SourceKind): EntropySource {
   }
 }
 
-function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropySource; onChange(s: EntropySource): void; onRemove(): void; canRemove: boolean }) {
+/** `focusCount`: recién añadida con «+ Fuente», el cursor va a sus tiradas. */
+function SourceRow({ source, onChange, onRemove, canRemove, focusCount }: { source: EntropySource; onChange(s: EntropySource): void; onRemove(): void; canRemove: boolean; focusCount: boolean }) {
   return (
     <li className={styles.row}>
       <span className={styles.rowGrow}>
@@ -58,6 +60,7 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
             className={styles.input}
             type="number"
             min={1}
+            autoFocus={focusCount}
             placeholder={T.tiradas}
             value={source.count ?? ''}
             onChange={(e) => {
@@ -115,6 +118,8 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
   const generatorModel = catalogModelByName(generatedBy?.model);
   const generatorAdvisories = generatorModel ? advisoriesFor(generatorModel.id, generatedBy?.firmware).filter((m) => m.advisory.kind === 'weak-entropy') : [];
 
+  /** Fuente recién añadida con «+ Fuente» (para llevar el cursor a sus tiradas). */
+  const [added, setAdded] = useState<{ key: string; index: number } | null>(null);
   const generateOn = (device: string) => apply((m) => setKeyGeneratedOn(m, id, device));
   /** Dispositivos donde vive o se carga esta key: candidatos a haberla generado. */
   const carriers = model.devices.filter((d) => activeHolds(d).includes(id) || d.loads?.includes(id));
@@ -183,7 +188,13 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
       <Section
         title={T.entropia}
         action={
-          <Button icon={Plus} onClick={() => setProvenance({ sources: [...sources, { kind: 'dice' }] })}>
+          <Button
+            icon={Plus}
+            onClick={() => {
+              setAdded({ key: id, index: sources.length });
+              setProvenance({ sources: [...sources, { kind: 'dice' }] });
+            }}
+          >
             {T.fuente}
           </Button>
         }
@@ -194,6 +205,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
               key={i}
               source={s}
               canRemove={sources.length > 1}
+              focusCount={added?.key === id && added.index === i}
               onChange={(next) => setProvenance({ sources: sources.map((x, j) => (j === i ? next : x)) }, `source:${i}`)}
               onRemove={() => setProvenance({ sources: sources.filter((_, j) => j !== i) })}
             />

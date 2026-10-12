@@ -44,8 +44,8 @@ export const EJEMPLOS: typeof es = {
   'Los dispositivos en casa y cada placa, con su descriptor, en un sitio distinto: caja fuerte, banco y casa de los padres. El esquema «de manual».':
     'The devices at home and each plate, with its descriptor, in a different place: home safe, bank and parents’ house. The “textbook” setup.',
   '2 de 3 con custodio': '2 of 3 with a custodian',
-  'Como el distribuido, pero la tercera placa la guarda un abogado. Un tercero de confianza en lugar de la familia.':
-    'Like the distributed one, but a lawyer keeps the third plate. A trusted third party instead of the family.',
+  'Como el distribuido, pero la tercera placa la guarda un abogado en su despacho. Un tercero de confianza en lugar de la familia. Del abogado no se indica dónde vive (en el despacho no vive, pero trabaja allí): se le puede coaccionar en él sin recargo.':
+    'Like the distributed one, but a lawyer keeps the third plate at their office. A trusted third party instead of the family. Where the lawyer lives is not set (they do not live at the office, but they work there): they can be coerced there at no extra cost.',
   '2 de 3 sin plan de herencia': '2 of 3 without an inheritance plan',
   'Como el distribuido, pero la pareja no puede entrar ni en el banco ni en casa de los padres. Seguro para el titular, inútil para los herederos.':
     'Like the distributed one, but the partner can get into neither the bank nor the parents’ house. Secure for the owner, useless for the heirs.',

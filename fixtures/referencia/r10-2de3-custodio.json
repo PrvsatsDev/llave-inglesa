@@ -2,7 +2,7 @@
   "format": "llave-inglesa",
   "version": 1,
   "name": "2 de 3 con custodio",
-  "description": "Como el distribuido, pero la tercera placa la guarda un abogado. Un tercero de confianza en lugar de la familia.",
+  "description": "Como el distribuido, pero la tercera placa la guarda un abogado en su despacho. Un tercero de confianza en lugar de la familia. Del abogado no se indica dónde vive (en el despacho no vive, pero trabaja allí): se le puede coaccionar en él sin recargo.",
   "keys": [
     {
       "id": "k1",

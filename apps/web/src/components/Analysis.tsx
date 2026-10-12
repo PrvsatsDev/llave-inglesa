@@ -59,6 +59,11 @@ export function MetricAnalysis({ model, metric }: { model: CustodyModel; metric:
       return (
         <>
           <Score {...securityScore(analysis)} />
+          {analysis.resilience.noDescriptorCopy && (
+            <Section>
+              <p className={styles.muted}>{T.seguridad.sinDescriptor}</p>
+            </Section>
+          )}
           <TheftRoutes model={model} />
           {analysis.duress.length > 0 && (
             <Section title={T.coaccion}>

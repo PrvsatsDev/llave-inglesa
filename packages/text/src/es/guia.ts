@@ -602,7 +602,7 @@ export const GUIA: readonly Capitulo[] = [
           ],
           [
             n('Personas'),
-            ': titular, heredero, custodio… y qué saben de memoria (un PIN, una passphrase). Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado.',
+            ': titular, heredero, custodio…, qué saben de memoria (un PIN, una passphrase) y dónde viven. Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado. Coaccionar a alguien lejos de su casa exige llevarle allí y cuesta algo más; si no indicas dónde vive, se supone lo peor.',
           ],
         ],
       },

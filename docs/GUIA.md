@@ -189,7 +189,7 @@ Empieza con **Archivo → Nuevo esquema** o, mejor, abre el ejemplo que más se 
 - **Política**: cuántas keys hacen falta para gastar (1 de 1, 2 de 3…). **+ Key** añade otra. En cada key: si lleva passphrase y cómo es (nunca cuál), y su procedencia: con qué entropía y en qué dispositivo se generó. Ahí se detectan los fallos de entropía publicados.
 - **Ubicaciones**: casa, banco, una nube, un portátil… Las físicas pueden ser caja fuerte o caja del banco, y estar dentro de otra (la caja fuerte dentro de casa). En cada una, quién puede entrar: siempre, solo tras el fallecimiento de alguien, o si queda incapacitado.
 - **Dispositivos y backups**: con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…
-- **Personas**: titular, heredero, custodio… y qué saben de memoria (un PIN, una passphrase). Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado.
+- **Personas**: titular, heredero, custodio…, qué saben de memoria (un PIN, una passphrase) y dónde viven. Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado. Coaccionar a alguien lejos de su casa exige llevarle allí y cuesta algo más; si no indicas dónde vive, se supone lo peor.
 
 Cuando el esquema esté como quieres, puedes ponerlo por escrito. Nada de esto lleva secretos, y es opcional:
 

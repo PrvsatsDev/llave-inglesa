@@ -32,3 +32,12 @@ test('pocas tiradas: la ficha avisa y la seguridad se hunde; sin número, se avi
   await expect(page.getByText(/sin indicar cuántas tiradas: no cuentan como entropía/)).toBeVisible();
   await capture(page, 'entropia-sin-numero');
 });
+
+test('«+ Fuente» lleva el cursor a las tiradas de la fuente nueva', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /^K2/ }).first().click();
+  await page.getByRole('button', { name: 'Fuente', exact: true }).click();
+  await expect(page.locator('input[type="number"]').nth(1)).toBeFocused();
+  await page.keyboard.type('60');
+  await expect(page.getByText(/≈ 411 bits de entropía propia: llega al estándar/)).toBeVisible();
+});

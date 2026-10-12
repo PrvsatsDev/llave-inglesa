@@ -602,7 +602,7 @@ export const GUIA: typeof es = [
           ],
           [
             n('People'),
-            ': owner, heir, custodian… and what they know by heart (a PIN, a passphrase). What someone knows they can reveal under coercion, and it is lost if they forget it, die, or become incapacitated.',
+            ': owner, heir, custodian…, what they know by heart (a PIN, a passphrase) and where they live. What someone knows they can reveal under coercion, and it is lost if they forget it, die, or become incapacitated. Coercing someone away from home means taking them there and costs a bit more; if you do not set where they live, the worst is assumed.',
           ],
         ],
       },

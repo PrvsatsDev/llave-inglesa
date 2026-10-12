@@ -43,6 +43,8 @@ export const analisis = {
   seguridad: {
     sinRobo: (hasta: number) => `Ningún robo con hasta ${hasta} ataques a la vez`,
     roboMasBarato: (esfuerzo: number) => `Robo más barato: esfuerzo ${num(esfuerzo)}`,
+    sinDescriptor:
+      'Sin ningún backup del descriptor, el ladrón lo tiene más difícil: además de las semillas para firmar, necesita reunir las xpubs de todas las keys para construir la transacción, así que hay menos formas de robar. Por eso la seguridad puede salir algo más alta, pero no compensa: la resiliencia y la herencia pierden mucho más.',
     viasBaratas: (vias: number, hasta: number) => `${vias} vías casi igual de baratas (esfuerzo ≤ ${num(hasta)})`,
     como: (hasta: number) => {
       const efforts = (Object.entries(ATTACK_EFFORT) as [keyof typeof ATTACK_EFFORT, number][])
