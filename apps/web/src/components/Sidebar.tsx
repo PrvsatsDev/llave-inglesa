@@ -39,7 +39,7 @@ function MobileNotice() {
 
 function exists(model: CustodyModel, s: Selection | null): boolean {
   if (!s) return false;
-  const lists = { location: model.locations, person: model.people, device: model.devices, artifact: model.artifacts, key: model.keys };
+  const lists = { location: model.locations, person: model.people, device: model.devices, artifact: model.artifacts, computer: model.computers, key: model.keys };
   return lists[s.kind].some((e) => e.id === s.id);
 }
 

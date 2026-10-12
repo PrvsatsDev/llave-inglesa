@@ -35,6 +35,8 @@ export const simular: typeof es = {
     firmware: (fabricante: string | null) =>
       `is compromised: malicious firmware from ${fabricante ?? 'its manufacturer'} leaks the seeds that go through it in the signatures. Only anti-exfil prevents this.`,
     extraccion: 'is compromised: with the device in hand, a published flaw allows extracting its seed even with a PIN. Only a passphrase protects it.',
+    host: 'is compromised: it connects by cable or Bluetooth to a computer with malware and has a published flaw that allows attacking it from there. Updating the firmware or connecting it only by QR or microSD prevents this.',
+    malware: 'has malware: it reads the wallet (and with it the descriptor) and attacks the devices with a known flaw that connect to it.',
   },
   privacidad: {
     titulo: 'Privacy',

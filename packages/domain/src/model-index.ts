@@ -1,18 +1,26 @@
-import type { Artifact, CustodyModel, Device, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
+import type { Artifact, Computer, CustodyModel, Device, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 
-export type Item = { kind: 'device'; value: Device } | { kind: 'artifact'; value: Artifact };
+/** Un ordenador de firma que lleva una persona encima no está en ninguna ubicación. */
+export type Item = { kind: 'device'; value: Device } | { kind: 'artifact'; value: Artifact } | { kind: 'computer'; value: Computer };
+
+/** Dónde está un objeto: su ubicación o, si lo lleva encima, la persona. */
+export const itemPlace = (item: Item): Id => item.value.location ?? (item.kind === 'computer' ? item.value.carriedBy : undefined) ?? '';
 
 /** Accesos rápidos de solo lectura sobre un modelo ya validado. */
 export interface ModelIndex {
   readonly keys: ReadonlyMap<Id, Key>;
   readonly devices: ReadonlyMap<Id, Device>;
   readonly artifacts: ReadonlyMap<Id, Artifact>;
+  readonly computers: ReadonlyMap<Id, Computer>;
   readonly items: ReadonlyMap<Id, Item>;
   readonly people: ReadonlyMap<Id, Person>;
   readonly locations: ReadonlyMap<Id, Location>;
   /** Keys que aparecen en la política, en orden. */
   readonly policyKeys: readonly Id[];
+  /** Objetos en esa ubicación (no los que alguien lleva encima). */
   itemsAt(location: Id): readonly Item[];
+  /** Ordenadores de firma que lleva encima esa persona. */
+  carriedBy(person: Id): readonly Computer[];
   /** Nombre legible de cualquier entidad. */
   label(id: Id): string;
 }
@@ -53,35 +61,40 @@ export function indexModel(model: CustodyModel): ModelIndex {
   const itemsByLocation = new Map<Id, Item[]>();
   const addItem = (item: Item) => {
     items.set(item.value.id, item);
+    if (item.value.location === undefined) return;
     const list = itemsByLocation.get(item.value.location) ?? [];
     list.push(item);
     itemsByLocation.set(item.value.location, list);
   };
   model.devices.forEach((value) => addItem({ kind: 'device', value }));
   model.artifacts.forEach((value) => addItem({ kind: 'artifact', value }));
+  model.computers.forEach((value) => addItem({ kind: 'computer', value }));
 
   const labels = new Map<Id, string>();
-  for (const e of [...model.keys, ...model.devices, ...model.artifacts]) labels.set(e.id, e.label);
+  for (const e of [...model.keys, ...model.devices, ...model.artifacts, ...model.computers]) labels.set(e.id, e.label);
   for (const e of [...model.people, ...model.locations]) labels.set(e.id, e.name);
   // Dos objetos con la misma etiqueta no se distinguirían en las listas: se añade su ubicación
   // ("Backup K1 (Banco)") y, si también coincide, un número.
-  const locationName = (id: Id) => model.locations.find((l) => l.id === id)?.name ?? id;
-  for (const group of repeated([...model.devices, ...model.artifacts], (i) => normalizeLabel(i.label))) {
-    for (const same of repeated(group, (i) => i.location)) {
-      same.forEach((i, n) => labels.set(i.id, `${i.label} (${locationName(i.location)}, ${n + 1})`));
+  const placeName = (id: Id) => model.locations.find((l) => l.id === id)?.name ?? model.people.find((p) => p.id === id)?.name ?? id;
+  const placed = [...items.values()].map((item) => ({ id: item.value.id, label: item.value.label, place: itemPlace(item) }));
+  for (const group of repeated(placed, (i) => normalizeLabel(i.label))) {
+    for (const same of repeated(group, (i) => i.place)) {
+      same.forEach((i, n) => labels.set(i.id, `${i.label} (${placeName(i.place)}, ${n + 1})`));
     }
-    for (const i of group) if (labels.get(i.id) === i.label) labels.set(i.id, `${i.label} (${locationName(i.location)})`);
+    for (const i of group) if (labels.get(i.id) === i.label) labels.set(i.id, `${i.label} (${placeName(i.place)})`);
   }
 
   return {
     keys: byId(model.keys),
     devices: byId(model.devices),
     artifacts: byId(model.artifacts),
+    computers: byId(model.computers),
     items,
     people: byId(model.people),
     locations: byId(model.locations),
     policyKeys: policyKeys(model.policy),
     itemsAt: (location) => itemsByLocation.get(location) ?? [],
+    carriedBy: (person) => model.computers.filter((c) => c.carriedBy === person),
     label: (id) => labels.get(id) ?? id,
   };
 }

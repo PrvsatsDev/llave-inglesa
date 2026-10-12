@@ -24,7 +24,7 @@ export const esquema: typeof es = {
   graves: 'Serious problems and warnings',
   errores: 'Errors to fix',
   analisisEnPausa: 'While there are errors, the analysis is paused.',
-  tiposElemento: { stateful: 'Device', stateless: 'Stateless', artifact: 'Backup' },
+  tiposElemento: { stateful: 'Device', stateless: 'Stateless', artifact: 'Backup', computer: 'Signing computer' },
   queAnadir: 'What to add',
   donde: 'Where',
   ubicaciones: (n: number) => `Locations (${n})`,
@@ -51,4 +51,6 @@ export const nuevos: typeof esNuevos = {
   dispositivo: 'New device',
   stateless: 'New stateless signer',
   backup: (key: string) => `${key} backup`,
+  ordenador: 'New computer',
+  movil: (persona: string) => `${persona}'s phone`,
 };

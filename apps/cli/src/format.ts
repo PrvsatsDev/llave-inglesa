@@ -63,6 +63,7 @@ export function formatIssue(i: Issue): string {
     'protection-not-physical': `protección en una ubicación que no es física${ref}`,
     'invalid-nesting': `ubicación dentro de otra no válida${ref} (ambas físicas y un solo nivel)`,
     'invalid-home': `vive en un sitio donde no se puede vivir${ref} (física, ni dentro de otra ni caja del banco)`,
+    'invalid-computer-place': `ordenador de firma sin sitio o con dos${ref} (en una ubicación o encima de una persona)`,
   };
   const tag = i.severity === 'error' ? red('error') : i.severity === 'grave' ? red('grave') : yellow('aviso');
   return `${tag} ${dim(where)} ${text[i.code]}`;

@@ -1,4 +1,4 @@
-import { activeHolds, indexModel, isActiveSecret, type Artifact, type CustodyModel, type Device, type Id, type Location, type Person, type SecretRef } from '@llave-inglesa/domain';
+import { activeHolds, indexModel, isActiveSecret, type Artifact, type Computer, type CustodyModel, type Device, type Id, type Location, type Person, type SecretRef } from '@llave-inglesa/domain';
 import type { DeviceCompromise, Disaster } from '@llave-inglesa/engine';
 import type { Edge, MarkerType, Node } from '@xyflow/react';
 import { keyColor } from '../lib/key-colors.ts';
@@ -13,10 +13,10 @@ export type SecretBadge =
   | { kind: 'password'; artifact: Id; label: string }
   | { kind: 'descriptor' };
 
-export type ItemIcon = 'stateful' | 'stateless' | 'paper' | 'metal' | 'washers' | 'digital' | 'other' | 'descriptor';
+export type ItemIcon = 'stateful' | 'stateless' | 'paper' | 'metal' | 'washers' | 'digital' | 'other' | 'descriptor' | 'computer' | 'phone';
 
 export type ItemView = {
-  kind: 'device' | 'artifact';
+  kind: 'device' | 'artifact' | 'computer';
   id: Id;
   label: string;
   subtitle: string;
@@ -57,6 +57,8 @@ export type PersonNodeData = {
   /** Nombre de la ubicación donde vive, si consta. */
   home?: string;
   knows: SecretBadge[];
+  /** Lo que lleva encima (un móvil con la cartera). */
+  carries: ItemView[];
   state?: PersonState;
   tone?: Tone;
 };
@@ -73,6 +75,8 @@ export interface Graph {
 }
 
 const T = UI.mapa;
+/** Lo que lleva encima ocupa en la persona como unas cuatro insignias (una fila de objeto). */
+const CARRIED_ROWS = 4;
 const MEDIUM: Record<Artifact['medium'], string> = T.soportes;
 
 export function secretBadge(model: CustodyModel, s: SecretRef, label = indexModel(model).label): SecretBadge {
@@ -126,11 +130,23 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     encrypted: a.lockedBy.length > 0,
   });
 
+  const computerView = (c: Computer): ItemView => ({
+    kind: 'computer',
+    id: c.id,
+    label: c.label,
+    subtitle: [T.usosOrdenador[c.use], c.wallet ? T.conCartera : null].filter(Boolean).join(' · '),
+    icon: c.carriedBy !== undefined ? 'phone' : 'computer',
+    badges: c.wallet ? [{ kind: 'descriptor' }] : [],
+    pinProtected: false,
+    registeredWallet: false,
+    encrypted: false,
+  });
+
   const locationData = model.locations.map((l): { id: Id; data: LocationNodeData } => {
-    const items = index.itemsAt(l.id).map((i) => (i.kind === 'device' ? deviceView(i.value) : artifactView(i.value)));
+    const items = index.itemsAt(l.id).map((i) => (i.kind === 'device' ? deviceView(i.value) : i.kind === 'artifact' ? artifactView(i.value) : computerView(i.value)));
     const keyIds = new Set(
       index.itemsAt(l.id).flatMap((i) =>
-        i.kind === 'device' ? activeHolds(i.value) : i.value.contents.flatMap((c) => (c.type === 'seed' ? [c.key] : [])),
+        i.kind === 'device' ? activeHolds(i.value) : i.kind === 'artifact' ? i.value.contents.flatMap((c) => (c.type === 'seed' ? [c.key] : [])) : [],
       ),
     );
     const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id) }));
@@ -171,7 +187,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
 
   const positions = layoutGraph(
     ordered.map((l) => ({ id: l.id, rows: l.data.items.length })),
-    model.people.map((p) => ({ id: p.id, rows: p.knows.filter(active).length, home: p.livesAt !== undefined, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
+    model.people.map((p) => ({ id: p.id, rows: p.knows.filter(active).length + CARRIED_ROWS * index.carriedBy(p.id).length, home: p.livesAt !== undefined, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
     orientation,
   );
   const at = (id: Id) => positions.get(id) ?? { x: 0, y: 0 };
@@ -182,7 +198,13 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
       id: p.id,
       type: 'person',
       position: at(p.id),
-      data: { name: p.name, role: p.role, ...(p.livesAt !== undefined && { home: label(p.livesAt) }), knows: p.knows.filter(active).map(badge) },
+      data: {
+        name: p.name,
+        role: p.role,
+        ...(p.livesAt !== undefined && { home: label(p.livesAt) }),
+        knows: p.knows.filter(active).map(badge),
+        carries: index.carriedBy(p.id).map(computerView),
+      },
     })),
   ];
 
@@ -202,7 +224,8 @@ export function applyScenario(graph: Graph, view: ScenarioView | null): Graph {
       });
       return { ...n, data: { ...n.data, items, state: view.locations.get(n.id) ?? 'dim', tone, disaster: view.disasters.get(n.id) } };
     }
-    return { ...n, data: { ...n.data, state: view.people.get(n.id) ?? 'dim', tone } };
+    const carries = n.data.carries.map((i) => ({ ...i, state: view.items.get(i.id) ?? 'dim', compromise: view.compromised.get(i.id) }));
+    return { ...n, data: { ...n.data, carries, state: view.people.get(n.id) ?? 'dim', tone } };
   });
   const edges = graph.edges.map((e): AccessEdge => {
     if (e.data?.contains) return view.locations.get(e.source) === 'dim' ? { ...e, className: `${e.className ?? ''} edge-dim` } : e;

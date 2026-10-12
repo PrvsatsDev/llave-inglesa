@@ -1,4 +1,4 @@
-import { removeArtifact, removeDevice, removeKey, removeLocation, removePerson, type CustodyModel } from '@llave-inglesa/domain';
+import { removeArtifact, removeComputer, removeDevice, removeKey, removeLocation, removePerson, type CustodyModel } from '@llave-inglesa/domain';
 import { confirmDialog } from '../store/dialog.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
@@ -6,9 +6,9 @@ import { UI } from './text.ts';
 
 const T = UI.ubicacion;
 
-/** Objetos (dispositivos y backups) que se borran con la ubicación. */
+/** Objetos (dispositivos, backups y ordenadores) que se borran con la ubicación. */
 export const itemsAt = (model: CustodyModel, location: string) =>
-  model.devices.filter((d) => d.location === location).length + model.artifacts.filter((a) => a.location === location).length;
+  [...model.devices, ...model.artifacts, ...model.computers].filter((i) => i.location === location).length;
 
 /** ¿Se puede eliminar? Siempre tiene que quedar una key, un titular y una ubicación. */
 export function canRemove(model: CustodyModel, s: Selection): boolean {
@@ -45,6 +45,7 @@ export async function removeElement(s: Selection): Promise<void> {
     person: removePerson,
     device: removeDevice,
     artifact: removeArtifact,
+    computer: removeComputer,
   }[s.kind];
   apply((m) => edit(m, s.id));
   const selection = useSelection.getState();

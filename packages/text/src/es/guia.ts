@@ -601,6 +601,10 @@ export const GUIA: readonly Capitulo[] = [
             ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
           ],
           [
+            n('Ordenador de firma'),
+            ': el ordenador o móvil con la cartera (Sparrow, Nunchuk…), con el + de su ubicación o, si es un móvil, desde la persona que lo lleva encima. Guarda el descriptor: quien llegue a él lo tiene, y para la recuperación es una copia poco fiable. Si es de uso general resta algo de seguridad (su malware puede cambiar direcciones); uno dedicado, no.',
+          ],
+          [
             n('Personas'),
             ': titular, heredero, custodio…, qué saben de memoria (un PIN, una passphrase) y dónde viven. Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado. Coaccionar a alguien lejos de su casa exige llevarle allí y cuesta algo más; si no indicas dónde vive, se supone lo peor.',
           ],
@@ -699,7 +703,7 @@ export const GUIA: readonly Capitulo[] = [
           ['El metal se supone acero: una placa de aluminio o latón no resistiría un incendio. Tampoco se distinguen una bolsa estanca o una caja fuerte ignífuga.'],
           ['La protección son tres niveles (ninguna, caja fuerte, caja del banco), sin distinguir la calidad de la caja ni alarmas. Las ubicaciones se anidan un solo nivel.'],
           ['Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.'],
-          ['No se modela el ordenador o el móvil con el que se firma: los fallos explotables desde un ordenador con malware solo se avisan.'],
+          ['El ordenador o móvil de firma solo tiene dos extremos (de uso general o dedicado), y su malware se supone capaz de sacar la semilla de un dispositivo conectado con un fallo publicado. No cuenta la contraseña del ordenador ni de la cartera.'],
           ['El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.'],
           ['Todavía no hay timelocks (herencia con espera, claves de recuperación con retraso).'],
           ['Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.'],

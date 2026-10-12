@@ -39,6 +39,14 @@ export function factId(f: Fact): FactId {
 export type RuleId =
   /** Objeto presente en una ubicación a la que el actor accede. */
   | 'location-access'
+  /** Objeto que lleva encima una persona que colabora (o es coaccionada). */
+  | 'carried'
+  /** Descriptor guardado en la cartera de un ordenador de firma. */
+  | 'computer-wallet'
+  /** Descriptor leído de la cartera por un malware del ordenador. */
+  | 'computer-malware'
+  /** Semilla sacada de un dispositivo con un fallo publicado, desde el ordenador con malware al que se conecta. */
+  | 'host-exploit'
   /** Secreto memorizado por una persona que colabora (o es coaccionada). */
   | 'memory'
   /** Secreto obtenido sin acceso físico (p. ej. RNG comprometido). */

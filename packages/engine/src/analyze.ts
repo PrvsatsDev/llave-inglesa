@@ -33,6 +33,8 @@ export interface SecurityReport extends CutReport<AttackAtom> {
   efforts: number[];
   /** Si cada corte exige vencer un PIN de coacción (mismo orden). */
   beatsDuress: boolean[];
+  /** Se firma con algún ordenador o móvil de uso general (resta, ver DAILY_COMPUTER_PENALTY). */
+  dailyComputer: boolean;
 }
 
 /**
@@ -297,8 +299,9 @@ function securityReport(world: World, found: AttackAtom[][], searchedUpTo: numbe
   // La llave inglesa a una misma persona es un solo ataque: el atacante elige dónde hacerla.
   const route = (cut: AttackAtom[]) => cut.map((a) => (a.type === 'coercion' ? `coercion:${a.person}` : JSON.stringify(a))).sort().join('|');
   const cheapRoutes = minEffort === null ? 0 : new Set(cuts.filter((c) => c.effort <= minEffort + EXPOSURE.margin).map((c) => route(c.cut))).size;
+  const dailyComputer = world.model.computers.some((c) => c.use === 'daily');
   return {
-    score: securityScore(minEffort, cheapRoutes),
+    score: securityScore(minEffort, cheapRoutes, dailyComputer),
     minSize: found.length ? Math.min(...found.map((c) => c.length)) : null,
     searchedUpTo,
     cuts: cuts.map((c) => c.cut),
@@ -307,6 +310,7 @@ function securityReport(world: World, found: AttackAtom[][], searchedUpTo: numbe
     cheapRoutes,
     efforts: cuts.map((c) => c.effort),
     beatsDuress: cuts.map((c) => c.beatsDuress),
+    dailyComputer,
   };
 }
 

@@ -14,10 +14,12 @@ import {
   Lock,
   LockKeyhole,
   MapPin,
+  Monitor,
   Network,
   Package,
   RectangleHorizontal,
   ShieldCheck,
+  Smartphone,
   Vault,
   type LucideIcon,
 } from 'lucide-react';
@@ -44,6 +46,8 @@ export const ITEM_ICONS: Record<ItemIcon, LucideIcon> = {
   digital: HardDrive,
   other: Package,
   descriptor: FileCode2,
+  computer: Monitor,
+  phone: Smartphone,
 };
 
 /** Etiqueta del desastre simulado en la ubicación ('total' según el tipo de ubicación). */
@@ -69,12 +73,13 @@ function addLoss(item: string) {
 let dragging: { item: Pick<ItemView, 'kind' | 'id'>; from: string } | null = null;
 const DRAG_TYPE = 'application/x-llave-inglesa-item';
 
-function ItemRow({ item, location }: { item: ItemView; location: string }) {
+export function ItemRow({ item, location }: { item: ItemView; location: string | null }) {
   const Icon = ITEM_ICONS[item.icon];
   const isDevice = item.icon === 'stateful' || item.icon === 'stateless';
   const selected = useSelection((s) => isSelected(s.selected, item.kind, item.id));
   const select = useSelection((s) => s.select);
-  const draggable = !useNarrow();
+  // Lo que lleva encima una persona no se arrastra: se cambia de sitio desde su ficha.
+  const draggable = !useNarrow() && location !== null;
   return (
     <li
       data-state={item.state}
@@ -84,6 +89,7 @@ function ItemRow({ item, location }: { item: ItemView; location: string }) {
       draggable={draggable}
       title={draggable ? T.pistaArrastrar : undefined}
       onDragStart={(e) => {
+        if (location === null) return;
         dragging = { item: { kind: item.kind, id: item.id }, from: location };
         e.dataTransfer.setData(DRAG_TYPE, item.id);
         e.dataTransfer.effectAllowed = 'move';

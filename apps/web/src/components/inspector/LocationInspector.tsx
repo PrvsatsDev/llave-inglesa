@@ -1,5 +1,5 @@
-import { addArtifact, addDevice, canNest, setLocationInside, setLocationProtection, updateLocation, type CustodyModel, type Location } from '@llave-inglesa/domain';
-import { Camera, Cpu, MapPin, Plus, RectangleHorizontal, X } from 'lucide-react';
+import { addArtifact, addComputer, addDevice, canNest, setLocationInside, setLocationProtection, updateLocation, type CustodyModel, type Location } from '@llave-inglesa/domain';
+import { Camera, Cpu, MapPin, Monitor, Plus, RectangleHorizontal, X } from 'lucide-react';
 import { locationIcon } from '../../graph/LocationNode.tsx';
 import { UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
@@ -39,12 +39,13 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
   const items = [
     ...model.devices.filter((d) => d.location === id).map((d) => ({ kind: 'device' as const, id: d.id, label: d.label, icon: d.kind === 'stateful' ? Cpu : Camera })),
     ...model.artifacts.filter((a) => a.location === id).map((a) => ({ kind: 'artifact' as const, id: a.id, label: a.label, icon: RectangleHorizontal })),
+    ...model.computers.filter((c) => c.location === id).map((c) => ({ kind: 'computer' as const, id: c.id, label: c.label, icon: Monitor })),
   ];
   const withoutAccess = model.people.filter((p) => !location.access.some((a) => a.person === p.id));
   const contained = model.locations.filter((l) => l.inside === id);
   const containers = model.locations.filter((l) => l.id === location.inside || canNest(model, id, l.id));
 
-  const create = (make: (m: CustodyModel) => { model: CustodyModel; id: string }, kind: 'device' | 'artifact') => {
+  const create = (make: (m: CustodyModel) => { model: CustodyModel; id: string }, kind: 'device' | 'artifact' | 'computer') => {
     let createdId = '';
     apply((m) => {
       const r = make(m);
@@ -169,6 +170,9 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
           <Button icon={Cpu} onClick={() => create((m) => addDevice(m, id, 'stateful', UI.nuevos.dispositivo), 'device')}>{T.dispositivo}</Button>
           <Button icon={Camera} onClick={() => create((m) => addDevice(m, id, 'stateless', UI.nuevos.stateless), 'device')}>{T.stateless}</Button>
           <Button icon={RectangleHorizontal} onClick={() => create((m) => addArtifact(m, id, UI.nuevos.backup), 'artifact')}>{T.backup}</Button>
+          {location.kind === 'physical' && (
+            <Button icon={Monitor} onClick={() => create((m) => addComputer(m, { location: id }, UI.nuevos.ordenador), 'computer')}>{T.ordenador}</Button>
+          )}
         </div>
       </Section>
 

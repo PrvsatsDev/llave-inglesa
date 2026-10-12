@@ -1,4 +1,4 @@
-import type { Id, Location, ModelIndex } from '@llave-inglesa/domain';
+import type { Computer, Id, Location, ModelIndex } from '@llave-inglesa/domain';
 import type { AttackAtom } from './attacks.ts';
 import type { LossEvent } from './world.ts';
 
@@ -12,7 +12,7 @@ import type { LossEvent } from './world.ts';
  * Esfuerzo y riesgo que supone cada tipo de ataque para el atacante.
  * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
  */
-export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce'>, number>> = {
+export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce' | 'computer-malware'>, number>> = {
   /** Entrar sin nadie presente: sigiloso, sin confrontación. En sitios protegidos, ver BURGLARY_EFFORT. */
   burglary: 1.5,
   /** Alguien de confianza: ya tiene acceso y conocimiento, pero traicionar a la pareja es mucho más raro que un robo. */
@@ -33,6 +33,15 @@ export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphr
 };
 
 /**
+ * Malware en el ordenador de firma. Uno de uso general cae en remoto y a escala, como una cuenta en la nube; uno
+ * dedicado (solo para firmar e instalado a conciencia) exige algo sofisticado, como un firmware malicioso.
+ */
+export const COMPUTER_MALWARE_EFFORT: Readonly<Record<Computer['use'], number>> = {
+  daily: 1,
+  dedicated: 3,
+};
+
+/**
  * Fuerza bruta a una passphrase, teniendo ya la semilla. Una débil (palabra, fecha) cae casi gratis;
  * una frase elegida por uno exige mucho cómputo y algo de suerte. Una aleatoria larga no se intenta.
  */
@@ -46,8 +55,9 @@ type Protection = NonNullable<Location['protection']> | 'none';
 
 /**
  * Esfuerzo de una intrusión hasta llegar al contenido, según la protección. Si la ubicación está
- * dentro de otra, el robo exige entrar en ambas y esta solo suma la diferencia: la caja fuerte de
- * casa cuesta 1.5 (casa) + 1 (abrirla) = 2.5.
+ * dentro de otra, el robo exige entrar en ambas y esta solo suma lo que su protección añade sobre una casa sin
+ * protección: la caja fuerte de casa cuesta 1.5 (casa) + 1 (abrirla) = 2.5. No depende de la protección del
+ * contenedor: una caja fuerte dentro de otra ubicación con caja fuerte también hay que forzarla.
  */
 export const BURGLARY_EFFORT: Readonly<Record<Protection, number>> = {
   none: ATTACK_EFFORT.burglary,
@@ -112,13 +122,15 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
   switch (a.type) {
     case 'passphrase-bruteforce':
       return PASSPHRASE_EFFORT[a.strength];
+    case 'computer-malware':
+      return COMPUTER_MALWARE_EFFORT[index.computers.get(a.computer)?.use ?? 'daily'];
     case 'burglary': {
       const location = index.locations.get(a.location);
       if (location?.kind === 'cloud') return CLOUD_BREACH_EFFORT;
       // Un dispositivo no tiene protección: su intrusión es robarlo o meterle malware.
       if (location?.kind !== 'physical') return ATTACK_EFFORT.burglary;
       const own = BURGLARY_EFFORT[protectionOf(index, a.location)];
-      return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT[protectionOf(index, location.inside)]);
+      return location.inside === undefined ? own : Math.max(0, own - BURGLARY_EFFORT.none);
     }
     case 'coercion':
       return ATTACK_EFFORT.coercion + coercionSurcharge(a, index);
@@ -249,24 +261,34 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'other-routes' | 'lockout' | 'heir-fragility' | 'no-descriptor'; points: number }[];
+  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'heir-fragility' | 'no-descriptor'; points: number }[];
   score: number;
 }
 
-/** Seguridad: esfuerzo del robo más barato, menos la exposición por vías alternativas. */
-export function securityBreakdown(minEffort: number | null, cheapRoutes: number): ScoreBreakdown {
-  if (minEffort === null) return { base: 100, penalties: [], score: 100 }; // ningún robo dentro del límite buscado
+/**
+ * Firmar con un ordenador o móvil de uso general: el malware puede cambiar la dirección de destino o de cambio, o llevar
+ * a firmar a ciegas. Los dispositivos verifican direcciones y la cartera registrada, así que resta poco; con uno
+ * dedicado (solo para firmar, instalado a conciencia), nada.
+ */
+export const DAILY_COMPUTER_PENALTY = 2;
+
+/** Seguridad: esfuerzo del robo más barato, menos la exposición por vías alternativas y firmar en un ordenador de uso general. */
+export function securityBreakdown(minEffort: number | null, cheapRoutes: number, dailyComputer = false): ScoreBreakdown {
+  const daily: ScoreBreakdown['penalties'] = dailyComputer ? [{ reason: 'daily-computer', points: DAILY_COMPUTER_PENALTY }] : [];
+  // Ningún robo dentro del límite buscado.
+  if (minEffort === null) return { base: 100, penalties: daily, score: 100 - (dailyComputer ? DAILY_COMPUTER_PENALTY : 0) };
   const base = Math.round(interpolate(EFFORT_CURVE, minEffort));
-  const penalty = Math.min(EXPOSURE.maxPenalty, EXPOSURE.penaltyPerExtraRoute * Math.max(0, cheapRoutes - 1));
+  const exposure = Math.min(EXPOSURE.maxPenalty, EXPOSURE.penaltyPerExtraRoute * Math.max(0, cheapRoutes - 1));
+  const penalties: ScoreBreakdown['penalties'] = [...(exposure > 0 ? [{ reason: 'exposure' as const, points: exposure }] : []), ...daily];
   return {
     base,
-    penalties: penalty > 0 ? [{ reason: 'exposure', points: penalty }] : [],
-    score: Math.max(minEffort > 0 ? 5 : 0, base - penalty),
+    penalties,
+    score: Math.max(minEffort > 0 ? 5 : 0, base - penalties.reduce((sum, p) => sum + p.points, 0)),
   };
 }
 
-export function securityScore(minEffort: number | null, cheapRoutes: number): number {
-  return securityBreakdown(minEffort, cheapRoutes).score;
+export function securityScore(minEffort: number | null, cheapRoutes: number, dailyComputer = false): number {
+  return securityBreakdown(minEffort, cheapRoutes, dailyComputer).score;
 }
 
 /**

@@ -20,7 +20,8 @@ export type IssueCode =
   | 'multisig-without-descriptor'
   | 'protection-not-physical'
   | 'invalid-nesting'
-  | 'invalid-home';
+  | 'invalid-home'
+  | 'invalid-computer-place';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -64,7 +65,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     issues.push(ref === undefined ? { severity, code, path } : { severity, code, path, ref });
 
   const seen = new Set<Id>();
-  for (const collection of ['keys', 'devices', 'artifacts', 'people', 'locations'] as const) {
+  for (const collection of ['keys', 'devices', 'artifacts', 'computers', 'people', 'locations'] as const) {
     model[collection].forEach((entity, i) => {
       if (seen.has(entity.id)) report('error', 'duplicate-id', [collection, i, 'id'], entity.id);
       seen.add(entity.id);
@@ -145,6 +146,14 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
 
   model.people.forEach((p, i) => p.knows.forEach((s, j) => secret(s, ['people', i, 'knows', j])));
 
+  // Un ordenador está guardado en una ubicación o lo lleva una persona: exactamente una de las dos.
+  model.computers.forEach((c, i) => {
+    if ((c.location === undefined) === (c.carriedBy === undefined)) report('error', 'invalid-computer-place', ['computers', i], c.id);
+    if (c.location !== undefined) ref(locations, c.location, ['computers', i, 'location']);
+    if (c.carriedBy !== undefined) ref(people, c.carriedBy, ['computers', i, 'carriedBy']);
+    c.connects?.forEach((d, j) => ref(devices, d, ['computers', i, 'connects', j]));
+  });
+
   model.locations.forEach((l, i) =>
     l.access.forEach((a, j) => {
       ref(people, a.person, ['locations', i, 'access', j, 'person']);
@@ -174,14 +183,16 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   const sameName = (path: (first: Id) => string, groups: { id: Id }[][], names: Map<Id, string>) =>
     groups.forEach((g) => issues.push({ severity: 'warning', code: 'duplicate-label', path: [path(g[0]!.id)], ref: g[0]!.id, detail: names.get(g[0]!.id)! }));
   const names = new Map<Id, string>([
-    ...[...model.keys, ...model.devices, ...model.artifacts].map((e) => [e.id, e.label] as const),
+    ...[...model.keys, ...model.devices, ...model.artifacts, ...model.computers].map((e) => [e.id, e.label] as const),
     ...[...model.people, ...model.locations].map((e) => [e.id, e.name] as const),
   ]);
   sameName(() => 'keys', repeated(model.keys, (k) => normalizeLabel(k.label)), names);
   sameName(() => 'people', repeated(model.people, (p) => normalizeLabel(p.name)), names);
   sameName(() => 'locations', repeated(model.locations, (l) => normalizeLabel(l.name)), names);
-  const items = [...model.devices, ...model.artifacts];
-  sameName((id) => (devices.has(id) ? 'devices' : 'artifacts'), repeated(items, (i) => `${i.location}\u0000${normalizeLabel(i.label)}`), names);
+  const items = [...model.devices, ...model.artifacts, ...model.computers];
+  const collectionOf = (id: Id) => (devices.has(id) ? 'devices' : artifacts.has(id) ? 'artifacts' : 'computers');
+  const place = (i: (typeof items)[number]) => i.location ?? ('carriedBy' in i ? i.carriedBy : undefined) ?? '';
+  sameName(collectionOf, repeated(items, (i) => `${place(i)}\u0000${normalizeLabel(i.label)}`), names);
 
   return issues;
 }

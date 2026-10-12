@@ -35,6 +35,8 @@ export const simular = {
     firmware: (fabricante: string | null) =>
       `queda comprometido: un firmware malicioso de ${fabricante ?? 'su fabricante'} filtra en las firmas las semillas que pasan por él. Solo lo evita el anti-exfil.`,
     extraccion: 'queda comprometido: con el dispositivo en la mano, un fallo publicado permite extraer su semilla aunque tenga PIN. Solo la protege una passphrase.',
+    host: 'queda comprometido: se conecta por cable o Bluetooth a un ordenador con malware y tiene un fallo publicado que permite atacarlo desde ahí. Lo evita actualizar el firmware o conectarlo solo por QR o microSD.',
+    malware: 'tiene malware: lee la cartera (y con ella el descriptor) y ataca los dispositivos con un fallo conocido que se le conectan.',
   },
   privacidad: {
     titulo: 'Privacidad',

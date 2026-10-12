@@ -14,7 +14,7 @@ export const navegacion = {
     inheritance: 'Si tus herederos podrían recuperar los fondos.',
   },
   introGuia: 'Cómo usar llave-inglesa, paso a paso. Los botones abren ejemplos y simulan en el mapa sin salir de la guía.',
-  tipos: { location: 'Ubicación', person: 'Persona', device: 'Dispositivo', artifact: 'Backup', key: 'Key' },
+  tipos: { location: 'Ubicación', person: 'Persona', device: 'Dispositivo', artifact: 'Backup', computer: 'Ordenador', key: 'Key' },
   nombreSecciones: 'Secciones',
   errores: (n: number) => `${n} errores en el modelo`,
   avisos: (n: number) => `${n} avisos en el modelo`,

@@ -4,6 +4,8 @@ import {
   CLOUD_BREACH_EFFORT,
   COERCION_AWAY_SURCHARGE,
   COERCION_SURCHARGE,
+  COMPUTER_MALWARE_EFFORT,
+  DAILY_COMPUTER_PENALTY,
   DURESS_SURCHARGE,
   EXPOSURE,
   EXTRA_SITE_SURCHARGE,
@@ -47,6 +49,9 @@ export const analisis: typeof es = {
     sinDescriptor:
       'With no backup of the descriptor, the thief has a harder time: besides the seeds to sign, they need to gather the xpubs of every key to build the transaction, so there are fewer ways to steal. That is why security may come out a bit higher, but it does not pay off: resilience and inheritance lose much more.',
     viasBaratas: (vias: number, hasta: number) => `${vias} almost equally cheap routes (effort ≤ ${num(hasta)})`,
+    ordenadorDiario: 'Signing with a general-purpose computer or phone',
+    sinOrdenador:
+      'It does not say which computer or phone you sign with. Add it from its location (or from the person, if it is a phone they carry): it holds the wallet and, with it, the descriptor, and a general-purpose one takes some security off.',
     como: (hasta: number) => {
       const efforts = (Object.entries(ATTACK_EFFORT) as [keyof typeof ATTACK_EFFORT, number][])
         .sort((x, y) => x[1] - y[1])
@@ -54,9 +59,10 @@ export const analisis: typeof es = {
         .join(' · ');
       const curve = [1, 1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' or more' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
       return [
-        `Every combination of up to ${hasta} attacks that allows spending is searched for. Each attack adds its effort: ${efforts}. Hacking a cloud account costs ${num(CLOUD_BREACH_EFFORT)}. Breaking into a home safe costs ${num(BURGLARY_EFFORT['home-safe'])} and into a bank safe deposit box ${num(BURGLARY_EFFORT['bank-box'])}; if it is inside another location, both have to be broken into and only the difference is added. Each additional physical place that has to be raided, after the first, +${num(EXTRA_SITE_SURCHARGE)} (a location inside another is the same place). The wrench attack is paid once per raid: coercing several people at the same place, or taking the same person to another place, is a single raid. Coercing someone where they do not live (if it is known where they live), +${num(COERCION_AWAY_SURCHARGE)}; at a bank box, +${num(COERCION_SURCHARGE['bank-box'])} (they do not add up: the larger one counts). Guessing a passphrase once you have the seed: weak ${num(PASSPHRASE_EFFORT.weak)} · phrase ${num(PASSPHRASE_EFFORT.phrase)} · long random, impossible. If a duress PIN has to be defeated, +${num(DURESS_SURCHARGE)}.`,
+        `Every combination of up to ${hasta} attacks that allows spending is searched for. Each attack adds its effort: ${efforts}. Hacking a cloud account costs ${num(CLOUD_BREACH_EFFORT)}. Getting malware onto the signing computer, ${num(COMPUTER_MALWARE_EFFORT.daily)} if it is general-purpose and ${num(COMPUTER_MALWARE_EFFORT.dedicated)} if it is dedicated. Breaking into a home safe costs ${num(BURGLARY_EFFORT['home-safe'])} and into a bank safe deposit box ${num(BURGLARY_EFFORT['bank-box'])}; if it is inside another location, both have to be broken into and it only adds what its protection adds over an unprotected house (forcing the safe, +${num(BURGLARY_EFFORT['home-safe'] - BURGLARY_EFFORT.none)}), whatever the protection of the other one. Each additional physical place that has to be raided, after the first, +${num(EXTRA_SITE_SURCHARGE)} (a location inside another is the same place). The wrench attack is paid once per raid: coercing several people at the same place, or taking the same person to another place, is a single raid. Coercing someone where they do not live (if it is known where they live), +${num(COERCION_AWAY_SURCHARGE)}; at a bank box, +${num(COERCION_SURCHARGE['bank-box'])} (they do not add up: the larger one counts). Guessing a passphrase once you have the seed: weak ${num(PASSPHRASE_EFFORT.weak)} · phrase ${num(PASSPHRASE_EFFORT.phrase)} · long random, impossible. If a duress PIN has to be defeated, +${num(DURESS_SURCHARGE)}.`,
         `The more effort the cheapest theft requires, the higher the score: ${curve}.`,
         `Having several almost equally cheap routes (up to ${num(EXPOSURE.margin)} more effort) subtracts ${EXPOSURE.penaltyPerExtraRoute} for each extra route, at most ${EXPOSURE.maxPenalty}.`,
+        `Signing with a general-purpose computer or phone subtracts ${DAILY_COMPUTER_PENALTY}: its malware can swap the destination or change address, or lead you to sign blindly. It is little because devices show the address and, with the wallet registered, check the change; even so, compare the destination through another channel. A dedicated one (only for signing and carefully set up) subtracts nothing.`,
       ];
     },
   },

@@ -57,6 +57,14 @@ describe('ubicaciones protegidas', () => {
     expect(effort([burglary('casa'), burglary('caja')])).toBe(BURGLARY_EFFORT['home-safe']);
   });
 
+  it('dentro de una ubicación que también tiene protección, la caja fuerte sigue costando forzarla', () => {
+    const guarded = parse(input({ locations: input().locations!.map((l) => (l.id === 'casa' ? { ...l, protection: 'home-safe' as const } : l)) }));
+    const i = indexModel(guarded);
+    expect(atomEffort(burglary('caja'), i)).toBe(BURGLARY_EFFORT['home-safe'] - BURGLARY_EFFORT.none);
+    // Pareja entra en casa: traicionar y forzar la caja no puede salir más barato que la traición sola.
+    expect(atomEffort({ type: 'insider', person: 'pareja' }, i) + atomEffort(burglary('caja'), i)).toBeGreaterThan(ATTACK_EFFORT.insider);
+  });
+
   it('una caja fuerte suelta (sin contenedor) cuesta lo mismo que dentro de casa', () => {
     const loose = parse(input({ locations: input().locations!.map((l) => (l.id === 'caja' ? { ...l, inside: undefined } : l)) }));
     expect(atomEffort(burglary('caja'), indexModel(loose))).toBe(BURGLARY_EFFORT['home-safe']);

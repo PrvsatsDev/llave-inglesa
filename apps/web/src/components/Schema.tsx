@@ -1,5 +1,5 @@
-import { addArtifact, addDevice, addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
-import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, MapPin, Plus, RectangleHorizontal, User, UserPlus, X, XCircle } from 'lucide-react';
+import { addArtifact, addComputer, addDevice, addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
+import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, MapPin, Plus, RectangleHorizontal, Smartphone, User, UserPlus, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
 import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.tsx';
@@ -93,7 +93,11 @@ export function Schema({ model }: { model: CustodyModel }) {
         model={model}
         onAdd={() => create((m) => addLocation(m, UI.nuevos.ubicacion), 'location')}
         onAddItem={(kind, location) =>
-          kind === 'artifact' ? create((m) => addArtifact(m, location, UI.nuevos.backup), 'artifact') : create((m) => addDevice(m, location, kind, kind === 'stateful' ? UI.nuevos.dispositivo : UI.nuevos.stateless), 'device')
+          kind === 'artifact'
+            ? create((m) => addArtifact(m, location, UI.nuevos.backup), 'artifact')
+            : kind === 'computer'
+              ? create((m) => addComputer(m, { location }, UI.nuevos.ordenador), 'computer')
+              : create((m) => addDevice(m, location, kind, kind === 'stateful' ? UI.nuevos.dispositivo : UI.nuevos.stateless), 'device')
         }
       />
       <People model={model} onAdd={() => create((m) => addPerson(m, UI.nuevos.persona), 'person')} />
@@ -146,10 +150,10 @@ function Problems({ model }: { model: CustodyModel }) {
 
 const useGraph = (model: CustodyModel) => useMemo(() => buildGraph(model), [model]);
 
-type ItemKind = 'stateful' | 'stateless' | 'artifact';
+type ItemKind = 'stateful' | 'stateless' | 'artifact' | 'computer';
 
 /** Se calcula al pintar: las etiquetas siguen al idioma activo. */
-const itemKinds = () => (['stateful', 'stateless', 'artifact'] as const).map((value) => ({ value, label: T.tiposElemento[value] }));
+const itemKinds = () => (['stateful', 'stateless', 'artifact', 'computer'] as const).map((value) => ({ value, label: T.tiposElemento[value] }));
 
 /** Formulario para añadir un dispositivo o backup: qué y dónde. */
 interface Adding {
@@ -300,6 +304,12 @@ function People({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
                       {data.knows.map((b, i) => (
                         <SecretBadge key={i} badge={b} withDevice />
                       ))}
+                    </span>
+                  )}
+                  {data.carries.length > 0 && (
+                    <span className={styles.secrets}>
+                      <Smartphone size={12} aria-label={UI.mapa.llevaEncima} />
+                      {data.carries.map((c) => c.label).join(', ')}
                     </span>
                   )}
                 </span>

@@ -22,7 +22,7 @@ export const esquema = {
   graves: 'Problemas graves y avisos',
   errores: 'Errores que corregir',
   analisisEnPausa: 'Mientras haya errores, el análisis está en pausa.',
-  tiposElemento: { stateful: 'Dispositivo', stateless: 'Stateless', artifact: 'Backup' },
+  tiposElemento: { stateful: 'Dispositivo', stateless: 'Stateless', artifact: 'Backup', computer: 'Ordenador de firma' },
   queAnadir: 'Qué añadir',
   donde: 'Dónde',
   ubicaciones: (n: number) => `Ubicaciones (${n})`,
@@ -50,4 +50,6 @@ export const nuevos = {
   dispositivo: 'Nuevo dispositivo',
   stateless: 'Nuevo firmante stateless',
   backup: (key: string) => `Backup ${key}`,
+  ordenador: 'Nuevo ordenador',
+  movil: (persona: string) => `Móvil de ${persona}`,
 };

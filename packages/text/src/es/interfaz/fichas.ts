@@ -23,6 +23,9 @@ export const persona = {
   trasFallecer: (persona: string) => `tras fallecer ${persona}`,
   siNoPuede: (persona: string) => `si ${persona} no puede actuar`,
   desconocida: '?',
+  llevaEncima: 'Lleva encima',
+  movil: 'Móvil de firma',
+  pistaLlevaEncima: 'Un móvil con la cartera (Nunchuk, Sparrow…) que va siempre con la persona.',
   eliminar: 'Eliminar persona',
   haceFaltaTitular: 'Tiene que haber al menos un titular.',
 };
@@ -207,14 +210,44 @@ export const ubicacion = {
   dispositivo: 'Dispositivo',
   stateless: 'Stateless',
   backup: 'Backup',
+  ordenador: 'Ordenador de firma',
   eliminar: 'Eliminar ubicación',
   eliminarCon: (n: number) => `Eliminar ubicación y sus ${n} objetos`,
   confirmarEliminar: {
     titulo: (ubicacion: string) => `¿Eliminar ${ubicacion}?`,
     mensaje: (n: number, dentro: readonly string[]) =>
-      `Se eliminan también ${n === 1 ? 'el dispositivo o backup que contiene' : `los ${n} dispositivos y backups que contiene`}.${dentro.length ? ` ${dentro.join(' y ')} ${dentro.length === 1 ? 'se queda' : 'se quedan'}, por su cuenta.` : ''} Se puede deshacer.`,
+      `Se eliminan también ${n === 1 ? 'el objeto que contiene' : `los ${n} objetos que contiene`}.${dentro.length ? ` ${dentro.join(' y ')} ${dentro.length === 1 ? 'se queda' : 'se quedan'}, por su cuenta.` : ''} Se puede deshacer.`,
   },
   haceFalta: 'Tiene que haber al menos una ubicación.',
+};
+
+export const ordenador = {
+  tipo: 'Ordenador de firma',
+  uso: 'Uso',
+  usos: { daily: 'De uso general', dedicated: 'Dedicado' },
+  pistasUso: {
+    daily:
+      'El de todos los días: navegador, correo, programas. Su malware puede cambiar la dirección de destino o la de cambio: comprueba siempre en el dispositivo y compara el destino por otro canal. Resta algo de seguridad, y meterle malware es fácil (esfuerzo 1): lee la cartera y ataca los dispositivos con un fallo conocido que se le conectan.',
+    dedicated: 'Solo para firmar, e instalado a conciencia. No resta seguridad, y meterle malware es mucho más difícil (esfuerzo 3).',
+  },
+  cartera: 'Guarda la cartera',
+  pistaCartera:
+    'Sparrow, Nunchuk… guardan la cartera y, con ella, el descriptor: quien llegue a este ordenador lo tiene. Para la recuperación es una copia más, pero poco fiable (se estropea o se formatea): no sustituye a un backup.',
+  dondeEsta: 'Dónde está',
+  guardadoEn: (ubicacion: string) => `Guardado en ${ubicacion}`,
+  loLleva: (persona: string) => `Lo lleva encima ${persona}`,
+  pistaGuardado: 'Quien entre en esta ubicación se lo lleva, y un incendio o una inundación lo destruyen.',
+  pistaLleva:
+    'Va siempre con su dueño: no se lo lleva quien entra en casa, sino quien le coaccione. Si fallece, cuenta como perdido: sus herederos no sabrán desbloquearlo.',
+  conectados: 'Se le conectan por cable o Bluetooth',
+  sinIndicar: 'Sin indicar',
+  pistaSinIndicar: 'Vuelve a «sin indicar»: se supone que se conectan todos.',
+  sinDispositivos: 'No hay dispositivos en el esquema.',
+  explotable: (aviso: string) => `Tiene un fallo explotable desde un ordenador con malware (${aviso}).`,
+  conectadosSinIndicar:
+    'Sin indicar, se supone que se conectan todos (ante la duda, lo peor). Un malware en este ordenador ataca los que tienen un fallo conocido. Desmarca los que solo usas por QR o microSD.',
+  pistaConectados: 'Un malware en este ordenador ataca los que tienen un fallo conocido. Los que solo usas por QR o microSD no cuentan.',
+  eliminar: 'Eliminar ordenador',
 };
 
 /** Esquema › Descriptor de la cartera. */

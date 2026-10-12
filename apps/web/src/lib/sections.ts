@@ -21,6 +21,8 @@ export function entityName(model: CustodyModel, s: Selection): string | null {
       return model.devices.find((e) => e.id === s.id)?.label ?? null;
     case 'artifact':
       return model.artifacts.find((e) => e.id === s.id)?.label ?? null;
+    case 'computer':
+      return model.computers.find((e) => e.id === s.id)?.label ?? null;
     case 'key':
       return model.keys.find((e) => e.id === s.id)?.label ?? null;
   }

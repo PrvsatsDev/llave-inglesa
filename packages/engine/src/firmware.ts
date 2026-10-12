@@ -10,7 +10,7 @@ import { catalogModelByName, type CustodyModel, type Device, type Id } from '@ll
 const vendorKey = (vendor: string) => vendor.trim().toLowerCase();
 
 /** Keys cuyas semillas tienen escritas o memorizadas: las que podrían cargarse en un stateless. */
-function seedKeys(model: CustodyModel): Set<Id> {
+export function seedKeys(model: CustodyModel): Set<Id> {
   const keys = new Set<Id>();
   const add = (s: { type: string; key?: Id }) => {
     if (s.type === 'seed' && s.key) keys.add(s.key);
@@ -21,7 +21,7 @@ function seedKeys(model: CustodyModel): Set<Id> {
 }
 
 /** Keys que pasan por un dispositivo al firmar. */
-function keysUsedOn(device: Device, allSeeds: ReadonlySet<Id>): Id[] {
+export function keysUsedOn(device: Device, allSeeds: ReadonlySet<Id>): Id[] {
   const held = device.kind === 'stateful' ? device.holds : [];
   // Stateless sin indicar: ante la duda, cualquier semilla puede pasar por él.
   // Semilla externa en un stateful: solo si se indica (poder no es hacerlo).

@@ -1,6 +1,7 @@
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { ArtifactInspector } from './ArtifactInspector.tsx';
+import { ComputerInspector } from './ComputerInspector.tsx';
 import { DeviceInspector } from './DeviceInspector.tsx';
 import { KeyInspector } from './KeyInspector.tsx';
 import { LocationInspector } from './LocationInspector.tsx';
@@ -28,6 +29,10 @@ export function Inspector() {
     case 'artifact': {
       const artifact = model.artifacts.find((e) => e.id === selected.id);
       return artifact ? <ArtifactInspector key={artifact.id} model={model} artifact={artifact} /> : null;
+    }
+    case 'computer': {
+      const computer = model.computers.find((e) => e.id === selected.id);
+      return computer ? <ComputerInspector key={computer.id} model={model} computer={computer} /> : null;
     }
     case 'key': {
       const key = model.keys.find((e) => e.id === selected.id);

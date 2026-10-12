@@ -1,11 +1,11 @@
-import { canLiveAt, setPersonHome, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
-import { MapPin, User } from 'lucide-react';
+import { addComputer, canLiveAt, setPersonHome, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
+import { MapPin, Smartphone, User } from 'lucide-react';
 import { secretOptions, toggleSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
-import { DeleteButton, Field, PanelHeader, Section, SecretToggles, Select, TextInput } from './fields.tsx';
+import { Button, DeleteButton, Field, PanelHeader, Section, SecretToggles, Select, TextInput } from './fields.tsx';
 import styles from './fields.module.css';
 
 const T = UI.persona;
@@ -18,6 +18,16 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
   const id = person.id;
   const isLastOwner = person.role === 'owner' && model.people.filter((p) => p.role === 'owner').length === 1;
   const homes = [{ value: '', label: T.sinIndicar }, ...model.locations.filter((l) => canLiveAt(model, l.id)).map((l) => ({ value: l.id, label: l.name }))];
+  const carried = model.computers.filter((c) => c.carriedBy === id);
+  const addPhone = () => {
+    let created = '';
+    apply((m) => {
+      const r = addComputer(m, { carriedBy: id }, UI.nuevos.movil(person.name));
+      created = r.id;
+      return r.model;
+    });
+    open({ kind: 'computer', id: created });
+  };
   const access = model.locations.flatMap((l) => l.access.filter((a) => a.person === id).map((a) => ({ location: l, when: a.when })));
 
   return (
@@ -65,6 +75,20 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
                     ? T.siempre
                     : (when.type === 'after-death' ? T.trasFallecer : T.siNoPuede)(model.people.find((p) => p.id === when.person)?.name ?? T.desconocida)}
                 </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title={T.llevaEncima} action={<Button icon={Smartphone} onClick={addPhone}>{T.movil}</Button>}>
+        {carried.length === 0 && <p className={styles.hint}>{T.pistaLlevaEncima}</p>}
+        <ul className={styles.list}>
+          {carried.map((c) => (
+            <li key={c.id}>
+              <button className={styles.rowButton} onClick={() => open({ kind: 'computer', id: c.id })}>
+                <Smartphone size={14} aria-hidden />
+                {c.label}
               </button>
             </li>
           ))}
