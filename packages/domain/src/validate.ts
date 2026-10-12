@@ -1,7 +1,8 @@
 import { normalizeLabel, repeated } from './model-index.ts';
 import { CustodyModelSchema, type CustodyModel, type Id, type Policy, type SecretRef } from './schema.ts';
 
-export type Severity = 'error' | 'warning';
+/** error: el modelo no es válido (el análisis se pausa). grave: válido, pero un fallo serio de custodia. warning: aviso. */
+export type Severity = 'error' | 'grave' | 'warning';
 
 export type IssueCode =
   | 'schema'
@@ -16,6 +17,7 @@ export type IssueCode =
   | 'no-owner'
   | 'passphrase-strength-unset'
   | 'entropy-count-unset'
+  | 'multisig-without-descriptor'
   | 'protection-not-physical'
   | 'invalid-nesting'
   | 'invalid-home';
@@ -166,6 +168,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   });
 
   if (!model.people.some((p) => p.role === 'owner')) report('error', 'no-owner', ['people']);
+  if (noDescriptorCopy(model)) report('grave', 'multisig-without-descriptor', ['artifacts']);
 
   // Nombres repetidos que no se pueden distinguir (dos objetos iguales en sitios distintos sí: llevan su ubicación).
   const sameName = (path: (first: Id) => string, groups: { id: Id }[][], names: Map<Id, string>) =>
@@ -199,4 +202,16 @@ export function canNest(model: CustodyModel, child: Id, parent: Id): boolean {
 export function canLiveAt(model: CustodyModel, location: Id): boolean {
   const l = model.locations.find((x) => x.id === location);
   return l !== undefined && l.kind === 'physical' && l.inside === undefined && l.protection !== 'bank-box';
+}
+
+/**
+ * Multisig sin ninguna copia del descriptor: ni en un backup ni en la memoria de nadie. Sin él, recuperar la cartera
+ * exige todas las semillas y saber cómo se creó. (Un dispositivo con la cartera registrada no cuenta como copia.)
+ */
+export function noDescriptorCopy(model: CustodyModel): boolean {
+  return (
+    model.policy.type === 'thresh' &&
+    !model.artifacts.some((a) => a.contents.some((c) => c.type === 'descriptor')) &&
+    !model.people.some((p) => p.knows.some((s) => s.type === 'descriptor'))
+  );
 }

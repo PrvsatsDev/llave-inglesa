@@ -21,9 +21,14 @@ const SECTIONS: { id: Section; icon: LucideIcon }[] = [
 function TabBadge({ section, issues, simulating }: { section: Section; issues: readonly Issue[]; simulating: boolean }) {
   if (section === 'schema' && issues.length > 0) {
     const errors = issues.filter((i) => i.severity === 'error').length;
+    const graves = issues.filter((i) => i.severity === 'grave').length;
     return errors > 0 ? (
       <span className={`${styles.badge} ${styles.error}`} title={T.errores(errors)}>
         <XCircle size={12} aria-hidden /> {errors}
+      </span>
+    ) : graves > 0 ? (
+      <span className={`${styles.badge} ${styles.error}`} title={T.graves(graves, issues.length - graves)}>
+        <XCircle size={12} aria-hidden /> {issues.length}
       </span>
     ) : (
       <span className={`${styles.badge} ${styles.warning}`} title={T.avisos(issues.length)}>

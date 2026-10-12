@@ -241,6 +241,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'no-owner': 'There must be a person with the owner role',
   'passphrase-strength-unset': 'A passphrase has no strength set: it is treated as weak',
   'entropy-count-unset': 'Dice, coin or cards with no number of rolls set: they do not count as entropy',
+  'multisig-without-descriptor': 'Multisig with no backup of the descriptor: without it, recovering the wallet needs every seed and knowing exactly how it was created, and may be impossible. It is advisable to keep at least one copy of the descriptor; better still, one next to each key',
   'protection-not-physical': 'Only a physical location can be a home safe or a bank box',
   'invalid-nesting': 'A location is inside another in an invalid way (both must be physical, one level only)',
   'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',

@@ -59,11 +59,12 @@ export function formatIssue(i: Issue): string {
     'no-owner': 'no hay ninguna persona con rol de titular',
     'passphrase-strength-unset': `passphrase sin fortaleza indicada${ref} (se trata como débil)`,
     'entropy-count-unset': `dados, moneda o cartas sin número de tiradas${ref} (no cuentan como entropía)`,
+    'multisig-without-descriptor': 'multisig sin ningún backup del descriptor (recuperar la cartera puede ser imposible)',
     'protection-not-physical': `protección en una ubicación que no es física${ref}`,
     'invalid-nesting': `ubicación dentro de otra no válida${ref} (ambas físicas y un solo nivel)`,
     'invalid-home': `vive en un sitio donde no se puede vivir${ref} (física, ni dentro de otra ni caja del banco)`,
   };
-  const tag = i.severity === 'error' ? red('error') : yellow('aviso');
+  const tag = i.severity === 'error' ? red('error') : i.severity === 'grave' ? red('grave') : yellow('aviso');
   return `${tag} ${dim(where)} ${text[i.code]}`;
 }
 

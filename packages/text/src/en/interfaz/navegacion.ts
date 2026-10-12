@@ -19,6 +19,8 @@ export const navegacion: typeof es = {
   nombreSecciones: 'Sections',
   errores: (n: number) => (n === 1 ? '1 error in the model' : `${n} errors in the model`),
   avisos: (n: number) => (n === 1 ? '1 warning in the model' : `${n} warnings in the model`),
+  graves: (graves: number, avisos: number) =>
+    `${graves} serious ${graves === 1 ? 'problem' : 'problems'}${avisos > 0 ? ` and ${avisos} ${avisos === 1 ? 'warning' : 'warnings'}` : ''} in the model`,
   simulacionActiva: 'There is a simulation on the map',
   activa: 'active',
   plegar: 'Collapse the panel',

@@ -1,4 +1,4 @@
-import type { CustodyModel, Id } from '@llave-inglesa/domain';
+import { noDescriptorCopy, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './attacks.ts';
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
@@ -237,14 +237,6 @@ function knowsWallet(d: Derivation): boolean {
   return d.has({ kind: 'secret', secret: { type: 'descriptor' } }) || [...d.facts.values()].some((f) => f.justification.rule === 'device-wallet');
 }
 
-/** Multisig sin ninguna copia del descriptor: ni en un backup ni en la memoria de nadie. */
-export function noDescriptorCopy(model: CustodyModel): boolean {
-  return (
-    model.policy.type === 'thresh' &&
-    !model.artifacts.some((a) => a.contents.some((c) => c.type === 'descriptor')) &&
-    !model.people.some((p) => p.knows.some((s) => s.type === 'descriptor'))
-  );
-}
 
 /** Viajes necesarios para ir a `locations`: la caja fuerte de casa se abre en la misma visita a casa. */
 export function visits(world: World, locations: readonly Id[] | null): number | null {

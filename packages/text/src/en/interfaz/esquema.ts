@@ -21,6 +21,7 @@ export const esquema: typeof es = {
   descripcion: 'Description',
   pistaDescripcion: 'What this setup is for, notes…',
   avisos: 'Warnings',
+  graves: 'Serious problems and warnings',
   errores: 'Errors to fix',
   analisisEnPausa: 'While there are errors, the analysis is paused.',
   tiposElemento: { stateful: 'Device', stateless: 'Stateless', artifact: 'Backup' },

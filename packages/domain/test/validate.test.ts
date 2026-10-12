@@ -116,3 +116,30 @@ describe('nombres repetidos', () => {
     expect(r.ok && indexModel(r.model).label('a')).toBe('Backup K1');
   });
 });
+
+describe('multisig sin ningún backup del descriptor', () => {
+  const multisig = {
+    ...valid,
+    keys: [
+      { id: 'k1', label: 'K1' },
+      { id: 'k2', label: 'K2' },
+    ],
+    policy: { type: 'thresh', k: 1, of: [{ type: 'key', key: 'k1' }, { type: 'key', key: 'k2' }] },
+  };
+  const descriptor = { id: 'desc', label: 'Descriptor', medium: 'paper', contents: [{ type: 'descriptor' }], location: 'casa' };
+
+  it('es un problema grave, pero el modelo sigue siendo válido (el análisis no se pausa)', () => {
+    const r = parseModel(multisig);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.warnings).toContainEqual({ severity: 'grave', code: 'multisig-without-descriptor', path: ['artifacts'] });
+  });
+
+  it('basta un backup con el descriptor, aunque no se haya importado el descriptor real', () => {
+    expect(codes({ ...multisig, artifacts: [descriptor] })).not.toContain('multisig-without-descriptor');
+  });
+
+  it('en single-sig no aplica', () => {
+    expect(codes(valid)).not.toContain('multisig-without-descriptor');
+  });
+});

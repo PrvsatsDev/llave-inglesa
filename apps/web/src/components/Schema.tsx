@@ -1,4 +1,4 @@
-import { addArtifact, addDevice, addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel, type Id } from '@llave-inglesa/domain';
+import { addArtifact, addDevice, addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
 import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, MapPin, Plus, RectangleHorizontal, User, UserPlus, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
@@ -120,17 +120,21 @@ export function Schema({ model }: { model: CustodyModel }) {
   );
 }
 
+const SEVERITY_ORDER = { error: 0, grave: 1, warning: 2 } as const;
+/** Lo más serio primero (el orden de cada gravedad se conserva). */
+const bySeverity = (issues: readonly Issue[]) => [...issues].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+
 /** Errores y avisos del modelo, arriba del todo; si no hay ninguno, no ocupa sitio. */
 function Problems({ model }: { model: CustodyModel }) {
   const { valid, issues } = useValidation(model);
   if (issues.length === 0) return null;
   const label = indexModel(model).label;
   return (
-    <Section title={valid ? T.avisos : T.errores}>
+    <Section title={!valid ? T.errores : issues.some((i) => i.severity === 'grave') ? T.graves : T.avisos}>
       <ul className={styles.issues}>
-        {issues.map((i, n) => (
-          <li key={n} className={i.severity === 'error' ? styles.error : styles.warning}>
-            {i.severity === 'error' ? <XCircle size={14} aria-hidden /> : <AlertTriangle size={14} aria-hidden />}
+        {bySeverity(issues).map((i, n) => (
+          <li key={n} className={i.severity === 'warning' ? styles.warning : styles.error}>
+            {i.severity === 'warning' ? <AlertTriangle size={14} aria-hidden /> : <XCircle size={14} aria-hidden />}
             {issueText(i, label)}
           </li>
         ))}

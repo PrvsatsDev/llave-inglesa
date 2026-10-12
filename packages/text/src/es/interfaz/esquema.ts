@@ -19,6 +19,7 @@ export const esquema = {
   descripcion: 'Descripción',
   pistaDescripcion: 'Para qué sirve este esquema, notas…',
   avisos: 'Avisos',
+  graves: 'Problemas graves y avisos',
   errores: 'Errores que corregir',
   analisisEnPausa: 'Mientras haya errores, el análisis está en pausa.',
   tiposElemento: { stateful: 'Dispositivo', stateless: 'Stateless', artifact: 'Backup' },

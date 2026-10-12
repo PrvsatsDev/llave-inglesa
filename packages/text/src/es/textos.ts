@@ -239,6 +239,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'no-owner': 'Falta una persona con rol de titular',
   'passphrase-strength-unset': 'Hay una passphrase sin fortaleza indicada: se trata como débil',
   'entropy-count-unset': 'Hay dados, moneda o cartas sin indicar cuántas tiradas: no cuentan como entropía',
+  'multisig-without-descriptor': 'Multisig sin ningún backup del descriptor: sin él, recuperar la cartera exige todas las semillas y saber exactamente cómo se creó, y puede ser imposible. Es recomendable guardar al menos una copia del descriptor; mejor aún, una junto a cada key',
   'protection-not-physical': 'Solo una ubicación física puede ser caja fuerte o caja del banco',
   'invalid-nesting': 'Una ubicación está dentro de otra de forma no válida (ambas físicas y un solo nivel)',
   'invalid-home': 'Alguien vive en un sitio donde no se puede vivir (tiene que ser una ubicación física, ni dentro de otra ni una caja del banco)',

@@ -18,6 +18,7 @@ export const navegacion = {
   nombreSecciones: 'Secciones',
   errores: (n: number) => `${n} errores en el modelo`,
   avisos: (n: number) => `${n} avisos en el modelo`,
+  graves: (graves: number, avisos: number) => `${graves} ${graves === 1 ? 'problema grave' : 'problemas graves'}${avisos > 0 ? ` y ${avisos} ${avisos === 1 ? 'aviso' : 'avisos'}` : ''} en el modelo`,
   simulacionActiva: 'Hay una simulación en el mapa',
   activa: 'activa',
   plegar: 'Plegar el panel',
