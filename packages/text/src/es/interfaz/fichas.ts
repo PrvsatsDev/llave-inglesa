@@ -139,7 +139,15 @@ export const key = {
   enNingunSitio: 'En ningún sitio: si nadie la sabe de memoria, esta key está perdida.',
   entropia: 'Entropía',
   fuente: 'Fuente',
-  pistaMezcla: 'Si mezclas varias fuentes, basta con que una sea buena… salvo que el dispositivo que las mezcla esté comprometido.',
+  pistaMezcla: 'Si mezclas varias fuentes, basta con que una sea buena (dados, moneda o cartas, solo si llegan a 128 bits)… salvo que el dispositivo que las mezcla esté comprometido.',
+  entropiaPropia: {
+    suficiente: (bits: number) => `≈ ${bits} bits de entropía propia: llega al estándar (128).`,
+    sola: (bits: number) => `Solo ≈ ${bits} bits de entropía propia, menos de los 128 del estándar (50 dados o 128 monedas): la semilla se puede adivinar por fuerza bruta.`,
+    mezcla: (bits: number) => `Solo ≈ ${bits} bits de entropía propia, menos de los 128 del estándar (50 dados o 128 monedas): si el RNG falla, no la protege.`,
+    sinNumeroSola: 'Indica cuántas tiradas: sin el número no cuentan como entropía y la semilla se trata como adivinable por fuerza bruta.',
+    sinNumeroMezcla: 'Indica cuántas tiradas: sin el número no cuentan como entropía ni protegen si el RNG falla.',
+    sinNumero: 'Alguna fuente no dice cuántas tiradas: esa no cuenta.',
+  },
   /** «… una guía paso a paso es {enlace}, de Estudio Bitcoin.» */
   moneda: { antes: 'Hay varias formas de crear la semilla a mano con una moneda; una guía paso a paso es', enlace: 'semilla-moneda', despues: ', de Estudio Bitcoin.' },
   generacion: 'Generación',

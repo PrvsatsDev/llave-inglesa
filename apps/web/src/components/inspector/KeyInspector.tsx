@@ -1,5 +1,6 @@
 import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
-import { AlertTriangle, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
+import { ownEntropyBits, STANDARD_SEED_BITS } from '@llave-inglesa/engine';
+import { AlertTriangle, CircleCheck, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { UI, vendorText } from '../../lib/text.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
@@ -70,6 +71,26 @@ function SourceRow({ source, onChange, onRemove, canRemove }: { source: EntropyS
         <X size={14} />
       </button>
     </li>
+  );
+}
+
+/** Cuánta entropía propia (dados, moneda, cartas) hay y si llega al estándar de 128 bits. */
+function OwnEntropy({ sources, mixed }: { sources: readonly EntropySource[]; mixed: boolean }) {
+  const E = T.entropiaPropia;
+  const bits = Math.floor(ownEntropyBits(sources));
+  const missing = sources.some((s) => (s.kind === 'dice' || s.kind === 'coin' || s.kind === 'cards') && s.count === undefined);
+  if (bits >= STANDARD_SEED_BITS) {
+    return (
+      <p className={styles.hint}>
+        <CircleCheck size={12} aria-hidden /> {E.suficiente(bits)} {missing && E.sinNumero}
+      </p>
+    );
+  }
+  const text = bits === 0 ? (mixed ? E.sinNumeroMezcla : E.sinNumeroSola) : `${(mixed ? E.mezcla : E.sola)(bits)}${missing ? ` ${E.sinNumero}` : ''}`;
+  return (
+    <p className={styles.warningHint}>
+      <AlertTriangle size={12} aria-hidden /> {text}
+    </p>
   );
 }
 
@@ -178,6 +199,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
             />
           ))}
         </ul>
+        {hasOwnEntropy && <OwnEntropy sources={sources} mixed={mixesRng} />}
         <p className={styles.hint}>{T.pistaMezcla}</p>
         {sources.some((s) => s.kind === 'coin') && (
           <p className={styles.hint}>
