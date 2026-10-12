@@ -25,6 +25,9 @@ export const persona: typeof es.persona = {
   trasFallecer: (persona: string) => `after the death of ${persona}`,
   siNoPuede: (persona: string) => `if ${persona} cannot act`,
   desconocida: '?',
+  llevaEncima: 'Carries',
+  movil: 'Signing phone',
+  pistaLlevaEncima: 'A phone with the wallet (Nunchuk, Sparrow…) that always goes with the person.',
   eliminar: 'Delete person',
   haceFaltaTitular: 'There must be at least one owner.',
 };
@@ -208,14 +211,36 @@ export const ubicacion: typeof es.ubicacion = {
   dispositivo: 'Device',
   stateless: 'Stateless',
   backup: 'Backup',
+  ordenador: 'Signing computer',
   eliminar: 'Delete location',
   eliminarCon: (n: number) => `Delete the location and its ${n} items`,
   confirmarEliminar: {
     titulo: (ubicacion: string) => `Delete ${ubicacion}?`,
     mensaje: (n: number, dentro: readonly string[]) =>
-      `${n === 1 ? 'The device or backup it contains is' : `The ${n} devices and backups it contains are`} deleted too.${dentro.length ? ` ${dentro.join(' and ')} ${dentro.length === 1 ? 'stays, on its own' : 'stay, on their own'}.` : ''} It can be undone.`,
+      `${n === 1 ? 'The item it contains is' : `The ${n} items it contains are`} deleted too.${dentro.length ? ` ${dentro.join(' and ')} ${dentro.length === 1 ? 'stays, on its own' : 'stay, on their own'}.` : ''} It can be undone.`,
   },
   haceFalta: 'There must be at least one location.',
+};
+
+export const ordenador: typeof es.ordenador = {
+  tipo: 'Signing computer',
+  uso: 'Use',
+  usos: { daily: 'General-purpose', dedicated: 'Dedicated' },
+  pistasUso: {
+    daily:
+      'The one you use every day: browser, email, apps. Its malware can swap the destination or change address: always check on the device and compare the destination through another channel. It takes some security off.',
+    dedicated: 'Only for signing: offline and carefully set up. It takes no security off.',
+  },
+  cartera: 'Holds the wallet',
+  pistaCartera:
+    'Sparrow, Nunchuk… keep the wallet and, with it, the descriptor: whoever gets to this computer has it. For recovery it is one more copy, but an unreliable one (it breaks or gets wiped): it does not replace a backup.',
+  dondeEsta: 'Where it is',
+  guardadoEn: (ubicacion: string) => `Kept at ${ubicacion}`,
+  loLleva: (persona: string) => `Carried by ${persona}`,
+  pistaGuardado: 'Whoever gets into this location takes it, and a fire or a flood destroys it.',
+  pistaLleva:
+    'It always goes with its owner: a burglar does not get it, whoever coerces them does. If they die, it counts as lost: their heirs will not know how to unlock it.',
+  eliminar: 'Delete computer',
 };
 
 /** Setup › Wallet descriptor. */

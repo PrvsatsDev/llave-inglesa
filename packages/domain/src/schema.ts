@@ -133,6 +133,24 @@ export const ArtifactSchema = z.object({
 });
 export type Artifact = z.infer<typeof ArtifactSchema>;
 
+/**
+ * Ordenador o móvil con el que se firma: la cartera (Sparrow, Nunchuk…) que prepara las transacciones y las pasa a los
+ * dispositivos. Se guarda en una ubicación física o lo lleva encima una persona (un móvil): exactamente una de las dos.
+ */
+export const ComputerSchema = z.object({
+  id: IdSchema,
+  label: z.string().min(1),
+  /** daily: de uso general (navegador, correo…). dedicated: solo para firmar, sin red e instalado a conciencia. */
+  use: z.enum(['daily', 'dedicated']),
+  /** Guarda la cartera y, con ella, el descriptor (lo normal). */
+  wallet: z.boolean().default(true),
+  /** Ubicación física donde se guarda. */
+  location: IdSchema.optional(),
+  /** Persona que lo lleva siempre encima (un móvil). */
+  carriedBy: IdSchema.optional(),
+});
+export type Computer = z.infer<typeof ComputerSchema>;
+
 export const PersonSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
@@ -202,6 +220,7 @@ export const CustodyModelSchema = z.object({
   wallet: WalletSchema.optional(),
   devices: z.array(DeviceSchema).default([]),
   artifacts: z.array(ArtifactSchema).default([]),
+  computers: z.array(ComputerSchema).default([]),
   people: z.array(PersonSchema).min(1),
   locations: z.array(LocationSchema).min(1),
 });

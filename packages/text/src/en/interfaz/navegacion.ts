@@ -15,7 +15,7 @@ export const navegacion: typeof es = {
     inheritance: 'Whether your heirs could recover the funds.',
   },
   introGuia: 'How to use llave-inglesa, step by step. The buttons open examples and simulate on the map without leaving the guide.',
-  tipos: { location: 'Location', person: 'Person', device: 'Device', artifact: 'Backup', key: 'Key' },
+  tipos: { location: 'Location', person: 'Person', device: 'Device', artifact: 'Backup', computer: 'Computer', key: 'Key' },
   nombreSecciones: 'Sections',
   errores: (n: number) => (n === 1 ? '1 error in the model' : `${n} errors in the model`),
   avisos: (n: number) => (n === 1 ? '1 warning in the model' : `${n} warnings in the model`),

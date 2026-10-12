@@ -8,13 +8,13 @@ import { accessibleLocations, createWorld, type World } from './world.ts';
 /** Una pieza que los herederos tienen que ir a buscar, y para qué sirve. */
 export interface LetterPiece {
   item: Id;
-  kind: 'device' | 'artifact';
+  kind: 'device' | 'artifact' | 'computer';
   /**
    * La usa la recuperación más sencilla. Si no, es un backup de reserva al que también llegan: no hace falta, pero
    * conviene que sepan que existe por si no llegan a alguna otra pieza.
    */
   needed: boolean;
-  /** Lo que se lee de ella (frase semilla, passphrase, PIN apuntado, descriptor…). */
+  /** Lo que se lee de ella (frase semilla, passphrase, PIN apuntado, descriptor de la cartera de un ordenador…). */
   provides: SecretRef[];
   /** Keys que se firman con este dispositivo. */
   signs: Id[];
@@ -99,12 +99,15 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
     const device = model.devices.find((d) => d.id === item);
     const itemFact = factId({ kind: 'item', item });
     const provides = facts.flatMap((f) =>
-      f.fact.kind === 'secret' && f.justification.rule === 'read-artifact' && f.justification.via?.item === item ? [f.fact.secret] : [],
+      f.fact.kind === 'secret' && (f.justification.rule === 'read-artifact' || f.justification.rule === 'computer-wallet') && f.justification.via?.item === item
+        ? [f.fact.secret]
+        : [],
     );
     const signs = facts.flatMap((f) => (f.fact.kind === 'sign' && f.justification.via?.device === item ? [f.fact.key] : []));
     const hasWallet = facts.some((f) => f.justification.rule === 'device-wallet' && f.justification.via?.device === item);
     const unlocked = facts.some((f) => f.fact.kind === 'unlocked' && f.fact.device === item && f.justification.premises.includes(itemFact));
-    return { item, kind: device ? 'device' : 'artifact', needed: true, provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet };
+    const kind = device ? 'device' : model.computers.some((c) => c.id === item) ? 'computer' : 'artifact';
+    return { item, kind, needed: true, provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet };
   };
   /** Un backup que no se usa pero al que llegan: lo que contiene, tal cual. */
   const spare = (item: Id): LetterPiece => {
@@ -113,7 +116,7 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
   };
 
   const usedItems = new Set(facts.flatMap((f) => (f.fact.kind === 'item' ? [f.fact.item] : [])));
-  const locationOf = (item: Id) => model.devices.find((d) => d.id === item)?.location ?? model.artifacts.find((a) => a.id === item)?.location;
+  const locationOf = (item: Id) => [...model.devices, ...model.artifacts, ...model.computers].find((i) => i.id === item)?.location;
   // Primero las ubicaciones de la recuperación; después, las demás a las que llegan y tienen algún backup de reserva.
   const order = [...inheritance.locations, ...model.locations.map((l) => l.id).filter((l) => reachable.has(l) && !inheritance.locations!.includes(l))];
   const stops = order

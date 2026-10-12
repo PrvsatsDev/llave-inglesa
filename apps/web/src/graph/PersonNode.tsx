@@ -4,6 +4,7 @@ import { UI } from '../lib/text.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
 import type { PersonNode as PersonNodeType } from './build.ts';
 import { PERSON_WIDTH } from './layout.ts';
+import { ItemRow } from './LocationNode.tsx';
 import { SecretBadge } from './SecretBadge.tsx';
 import styles from './nodes.module.css';
 
@@ -49,6 +50,14 @@ export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
             <SecretBadge key={i} badge={b} withDevice />
           ))}
         </div>
+      )}
+      {data.carries.length > 0 && (
+        <ul className={styles.carries} aria-label={UI.mapa.llevaEncima}>
+          {data.carries.map((item) => (
+            // En la tarjeta no cabe la insignia del descriptor: ya lo dice «con la cartera».
+            <ItemRow key={item.id} item={{ ...item, badges: [] }} location={null} />
+          ))}
+        </ul>
       )}
     </div>
   );

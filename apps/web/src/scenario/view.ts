@@ -97,7 +97,7 @@ function balanceExposure(model: CustodyModel, d: Derivation): ScenarioView['expo
 }
 
 function referencesExist(model: CustodyModel, s: Scenario): boolean {
-  const ids = new Set([...model.locations, ...model.people, ...model.devices, ...model.artifacts, ...model.keys].map((e) => e.id));
+  const ids = new Set([...model.locations, ...model.people, ...model.devices, ...model.artifacts, ...model.computers, ...model.keys].map((e) => e.id));
   const refs =
     s.kind === 'attack'
       ? s.atoms.flatMap((a) =>
@@ -117,9 +117,9 @@ export function scenarioView(model: CustodyModel, scenario: Scenario): ScenarioV
   return scenario.kind === 'attack' ? attackView(model, scenario) : lossView(model, scenario);
 }
 
-function itemStates(model: CustodyModel, d: Derivation, used: Set<FactId>, destroyed: (id: Id, location: Id) => boolean) {
+function itemStates(model: CustodyModel, d: Derivation, used: Set<FactId>, destroyed: (id: Id, location: Id | undefined) => boolean) {
   const items = new Map<Id, ItemState>();
-  for (const i of [...model.devices, ...model.artifacts]) {
+  for (const i of [...model.devices, ...model.artifacts, ...model.computers]) {
     const id = factId({ kind: 'item', item: i.id });
     items.set(i.id, destroyed(i.id, i.location) ? 'destroyed' : used.has(id) ? 'used' : d.facts.has(id) ? 'reached' : 'dim');
   }
@@ -130,7 +130,7 @@ function itemStates(model: CustodyModel, d: Derivation, used: Set<FactId>, destr
 function usedLocations(model: CustodyModel, items: ReadonlyMap<Id, ItemState>): Set<Id> {
   const parent = new Map(model.locations.map((l) => [l.id, l.inside]));
   const used = new Set<Id>();
-  for (const i of [...model.devices, ...model.artifacts]) {
+  for (const i of [...model.devices, ...model.artifacts, ...model.computers]) {
     if (items.get(i.id) !== 'used') continue;
     for (let l: Id | undefined = i.location; l !== undefined && !used.has(l); l = parent.get(l)) used.add(l);
   }
@@ -216,7 +216,7 @@ function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss
   const edges = new Set<string>();
   for (const p of holdings.people) accessibleLocations(world, p).forEach((l) => edges.add(accessEdgeId(p, l)));
   const reachable = new Set(holdings.locations);
-  const items = itemStates(model, derivation, used, (id, location) => world.lostItems.has(id) || world.destroyed.has(location));
+  const items = itemStates(model, derivation, used, (id, location) => world.lostItems.has(id) || (location !== undefined && world.destroyed.has(location)));
   const usedHere = usedLocations(model, items);
 
   return {

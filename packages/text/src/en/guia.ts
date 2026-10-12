@@ -601,6 +601,10 @@ export const GUIA: typeof es = [
             ': with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware, which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, and whether it has a duress PIN. For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…',
           ],
           [
+            n('Signing computer'),
+            ': the computer or phone with the wallet (Sparrow, Nunchuk…), with the + of its location or, if it is a phone, from the person who carries it. It holds the descriptor: whoever gets to it has it, and for recovery it is an unreliable copy. A general-purpose one takes some security off (its malware can swap addresses); a dedicated, offline one does not.',
+          ],
+          [
             n('People'),
             ': owner, heir, custodian…, what they know by heart (a PIN, a passphrase) and where they live. What someone knows they can reveal under coercion, and it is lost if they forget it, die, or become incapacitated. Coercing someone away from home means taking them there and costs a bit more; if you do not set where they live, the worst is assumed.',
           ],

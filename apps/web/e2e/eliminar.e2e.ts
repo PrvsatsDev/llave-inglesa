@@ -47,7 +47,7 @@ test('una ubicación con objetos pide confirmación, con Supr y con su botón', 
   await page.keyboard.press('Delete');
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('¿Eliminar Casa de mis padres?');
-  await expect(dialog).toContainText('los 2 dispositivos y backups que contiene');
+  await expect(dialog).toContainText('los 2 objetos que contiene');
   await capture(page, 'eliminar-confirmar');
   await dialog.getByRole('button', { name: 'Cancelar' }).click();
   await expect(parents).toBeVisible();

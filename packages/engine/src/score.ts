@@ -249,24 +249,34 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'other-routes' | 'lockout' | 'heir-fragility' | 'no-descriptor'; points: number }[];
+  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'heir-fragility' | 'no-descriptor'; points: number }[];
   score: number;
 }
 
-/** Seguridad: esfuerzo del robo más barato, menos la exposición por vías alternativas. */
-export function securityBreakdown(minEffort: number | null, cheapRoutes: number): ScoreBreakdown {
-  if (minEffort === null) return { base: 100, penalties: [], score: 100 }; // ningún robo dentro del límite buscado
+/**
+ * Firmar con un ordenador o móvil de uso general: el malware puede cambiar la dirección de destino o de cambio, o llevar
+ * a firmar a ciegas. Los dispositivos verifican direcciones y la cartera registrada, así que resta poco; con uno
+ * dedicado (sin red, instalado a conciencia), nada.
+ */
+export const DAILY_COMPUTER_PENALTY = 2;
+
+/** Seguridad: esfuerzo del robo más barato, menos la exposición por vías alternativas y firmar en un ordenador de uso general. */
+export function securityBreakdown(minEffort: number | null, cheapRoutes: number, dailyComputer = false): ScoreBreakdown {
+  const daily: ScoreBreakdown['penalties'] = dailyComputer ? [{ reason: 'daily-computer', points: DAILY_COMPUTER_PENALTY }] : [];
+  // Ningún robo dentro del límite buscado.
+  if (minEffort === null) return { base: 100, penalties: daily, score: 100 - (dailyComputer ? DAILY_COMPUTER_PENALTY : 0) };
   const base = Math.round(interpolate(EFFORT_CURVE, minEffort));
-  const penalty = Math.min(EXPOSURE.maxPenalty, EXPOSURE.penaltyPerExtraRoute * Math.max(0, cheapRoutes - 1));
+  const exposure = Math.min(EXPOSURE.maxPenalty, EXPOSURE.penaltyPerExtraRoute * Math.max(0, cheapRoutes - 1));
+  const penalties: ScoreBreakdown['penalties'] = [...(exposure > 0 ? [{ reason: 'exposure' as const, points: exposure }] : []), ...daily];
   return {
     base,
-    penalties: penalty > 0 ? [{ reason: 'exposure', points: penalty }] : [],
-    score: Math.max(minEffort > 0 ? 5 : 0, base - penalty),
+    penalties,
+    score: Math.max(minEffort > 0 ? 5 : 0, base - penalties.reduce((sum, p) => sum + p.points, 0)),
   };
 }
 
-export function securityScore(minEffort: number | null, cheapRoutes: number): number {
-  return securityBreakdown(minEffort, cheapRoutes).score;
+export function securityScore(minEffort: number | null, cheapRoutes: number, dailyComputer = false): number {
+  return securityBreakdown(minEffort, cheapRoutes, dailyComputer).score;
 }
 
 /**

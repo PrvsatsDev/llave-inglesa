@@ -1,7 +1,7 @@
 import type { Id } from '@llave-inglesa/domain';
 import { create } from 'zustand';
 
-export type SelectionKind = 'location' | 'person' | 'device' | 'artifact' | 'key';
+export type SelectionKind = 'location' | 'person' | 'device' | 'artifact' | 'computer' | 'key';
 export type Selection = { kind: SelectionKind; id: Id };
 
 interface SelectionState {

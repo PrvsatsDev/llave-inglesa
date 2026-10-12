@@ -601,6 +601,10 @@ export const GUIA: readonly Capitulo[] = [
             ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN y si tiene PIN de coacción. En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
           ],
           [
+            n('Ordenador de firma'),
+            ': el ordenador o móvil con la cartera (Sparrow, Nunchuk…), con el + de su ubicación o, si es un móvil, desde la persona que lo lleva encima. Guarda el descriptor: quien llegue a él lo tiene, y para la recuperación es una copia poco fiable. Si es de uso general resta algo de seguridad (su malware puede cambiar direcciones); uno dedicado, sin red, no.',
+          ],
+          [
             n('Personas'),
             ': titular, heredero, custodio…, qué saben de memoria (un PIN, una passphrase) y dónde viven. Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado. Coaccionar a alguien lejos de su casa exige llevarle allí y cuesta algo más; si no indicas dónde vive, se supone lo peor.',
           ],

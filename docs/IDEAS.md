@@ -28,16 +28,11 @@ ningún backup del descriptor como problema grave.
 
 ### Después
 
-7. **Ordenador de firma**, solo dos extremos: ordenador de uso diario (muy mala idea, muy penalizado) y ordenador
-   dedicado, sin red e instalado a conciencia (penaliza algo, mucho menos). Falta decidir en qué consiste la
-   penalización (malware que cambia direcciones de recepción o cambio, firma a ciegas, explotar los fallos de
-   dispositivo que hoy solo se avisan).
-   Además, ese ordenador o móvil guarda la cartera (Sparrow, Nunchuk…) y, con ella, el **descriptor**: debería
-   contar como una copia del descriptor. Para el robo, al alcance de quien entre en casa (o meta malware); para la
-   resiliencia, una copia poco fiable (se estropea, se formatea). Hoy, quitar los descriptores impresos puede subir
-   la seguridad (sin la xpub de todas las keys no se construye la transacción), algo que solo es cierto si la
-   cartera no está en ningún aparato de casa; ahora solo se refleja modelándolo a mano (un backup digital con el
-   descriptor en una ubicación «Portátil»).
+7. **Ordenador de firma**: primera fase hecha (2026-10-12). Ordenador o móvil, guardado en una ubicación o encima de
+   una persona, de uso general (−2 de seguridad) o dedicado; si guarda la cartera, da el descriptor a quien llegue a él
+   y cuenta como copia poco fiable. **Falta**: el malware como ataque (uso general 1, dedicado 3), que da el descriptor y
+   explota los avisos `host-exploit` de los dispositivos que se conectan a él por cable o Bluetooth (campo opcional
+   en el ordenador; sin indicar, todos; por QR o microSD no cuentan).
 8. **Procedencia del dispositivo**, cerca del firmware: (a) DIY, comprando las piezas y montado en casa, mejor que
    comprado montado (solo en los que de verdad tienen esa opción); (b) si se compró montado, si llegó con el precinto
    de seguridad (tamper-evident) intacto; (c) si no es DIY, dónde se compró: al fabricante (lo mejor), revendedor

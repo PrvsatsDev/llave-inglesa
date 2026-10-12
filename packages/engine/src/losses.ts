@@ -11,7 +11,7 @@ export function lossAtoms(world: World): LossEvent[] {
     atoms.push({ type: 'death', person: p.id }, { type: 'incapacity', person: p.id });
     if (p.knows.length > 0) atoms.push({ type: 'forget', person: p.id });
   }
-  for (const i of [...model.devices, ...model.artifacts]) atoms.push({ type: 'item-loss', item: i.id });
+  for (const i of [...model.devices, ...model.artifacts, ...model.computers]) atoms.push({ type: 'item-loss', item: i.id });
   return atoms;
 }
 

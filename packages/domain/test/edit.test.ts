@@ -3,6 +3,10 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   activeHolds,
+  addComputer,
+  removeComputer,
+  setComputerPlace,
+  updateComputer,
   isActiveSecret,
   addArtifact,
   blankModel,
@@ -282,12 +286,63 @@ const ops: Op[] = [
   (m, pick) => setLocationInside(m, m.locations[pick(m.locations.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => updateLocation(m, m.locations[pick(m.locations.length)]!.id, { kind: (['physical', 'device', 'cloud'] as const)[pick(3)] }),
   (m, pick) => {
-    const items = [...m.devices.map((d) => ({ kind: 'device' as const, id: d.id })), ...m.artifacts.map((a) => ({ kind: 'artifact' as const, id: a.id }))];
+    const items = [
+      ...m.devices.map((d) => ({ kind: 'device' as const, id: d.id })),
+      ...m.artifacts.map((a) => ({ kind: 'artifact' as const, id: a.id })),
+      ...m.computers.map((c) => ({ kind: 'computer' as const, id: c.id })),
+    ];
     return items.length ? moveItem(m, items[pick(items.length)]!, m.locations[pick(m.locations.length)]!.id) : m;
   },
   (m, pick) => setPersonHome(m, m.people[pick(m.people.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
+  (m, pick) =>
+    addComputer(m, pick(2) ? { location: m.locations[pick(m.locations.length)]!.id } : { carriedBy: m.people[pick(m.people.length)]!.id }).model,
+  (m, pick) => (m.computers.length ? removeComputer(m, m.computers[pick(m.computers.length)]!.id) : m),
+  (m, pick) => (m.computers.length ? updateComputer(m, m.computers[pick(m.computers.length)]!.id, { use: pick(2) ? 'daily' : 'dedicated', wallet: pick(2) === 0 }) : m),
+  (m, pick) => {
+    if (!m.computers.length) return m;
+    const id = m.computers[pick(m.computers.length)]!.id;
+    return setComputerPlace(m, id, pick(2) ? { location: m.locations[pick(m.locations.length)]!.id } : { carriedBy: m.people[pick(m.people.length)]!.id });
+  },
   (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
 ];
+
+describe('ordenador de firma', () => {
+  it('en una ubicación o encima de una persona; cambiar de sitio deja el otro', () => {
+    const { model, id } = addComputer(casa, { location: 'casa' });
+    expect(model.computers.at(-1)).toEqual({ id: 'nuevo-ordenador', label: 'Nuevo ordenador', use: 'daily', wallet: true, location: 'casa' });
+    const carried = setComputerPlace(model, id, { carriedBy: 'yo' });
+    expect(carried.computers.at(-1)).toEqual({ id, label: 'Nuevo ordenador', use: 'daily', wallet: true, carriedBy: 'yo' });
+    expect(errors(carried)).toEqual([]);
+    expect(moveItem(carried, { kind: 'computer', id }, 'padres').computers.at(-1)).toMatchObject({ location: 'padres' });
+    expect(moveItem(carried, { kind: 'computer', id }, 'padres').computers.at(-1)!.carriedBy).toBeUndefined();
+    expect(setComputerPlace(model, id, { carriedBy: 'nadie' })).toBe(model);
+  });
+
+  it('eliminar a la persona se lleva su móvil; eliminar la ubicación, el ordenador', () => {
+    const a = addComputer(casa, { carriedBy: 'yo' });
+    const b = addComputer(a.model, { location: 'padres' });
+    const withHeir = addPerson(b.model);
+    const phone = setComputerPlace(withHeir.model, a.id, { carriedBy: withHeir.id });
+    expect(removePerson(phone, withHeir.id).computers.map((c) => c.id)).toEqual([b.id]);
+    expect(removeLocation(phone, 'padres').computers.map((c) => c.id)).toEqual([a.id]);
+  });
+
+  it('sin sitio o con dos no es válido', () => {
+    const { model } = addComputer(casa, { location: 'casa' });
+    const both = { ...model, computers: model.computers.map((c) => ({ ...c, carriedBy: 'yo' })) };
+    expect(errors(both)).toEqual(['invalid-computer-place']);
+    const none = { ...model, computers: model.computers.map(({ location: _, ...c }) => c) };
+    expect(errors(none)).toEqual(['invalid-computer-place']);
+  });
+
+  it('al exportar, su id sale del nombre, también en quien lo lleva', () => {
+    const p = addPerson(casa, 'Ana');
+    const c = addComputer(p.model, { carriedBy: p.id }, 'Móvil de Ana');
+    const m = tidyIds(c.model);
+    expect(m.computers.at(-1)).toMatchObject({ id: 'movil-de-ana', carriedBy: 'ana' });
+    expect(errors(m)).toEqual([]);
+  });
+});
 
 describe('procedencia generada en un dispositivo', () => {
   it('una key nueva rellena su procedencia desde el dispositivo: RNG y generación', () => {

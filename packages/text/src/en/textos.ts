@@ -1,4 +1,4 @@
-import { ADVISORIES, UNKNOWN_VENDOR } from '@llave-inglesa/domain';
+import { ADVISORIES, UNKNOWN_VENDOR, itemPlace } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import type * as es from '../es/textos.ts';
 import type { Label } from '../tipos.ts';
@@ -188,7 +188,9 @@ export const factText: typeof es.factText = (f: Fact, index: ModelIndex) => {
   switch (f.kind) {
     case 'item': {
       const item = index.items.get(f.item);
-      return item ? `${item.value.label} (${index.label(item.value.location)})` : f.item;
+      if (!item) return f.item;
+      if (item.kind === 'computer' && item.value.carriedBy) return `${item.value.label} (carried by ${index.label(item.value.carriedBy)})`;
+      return `${item.value.label} (${index.label(itemPlace(item))})`;
     }
     case 'secret': return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} unlocked`;
@@ -203,6 +205,8 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
   const name = (id: string | undefined) => index.label(id ?? '?');
   switch (j.rule) {
     case 'location-access': return `within reach at ${name(v.location)}`;
+    case 'carried': return `${name(v.person)} carries it`;
+    case 'computer-wallet': return `in the wallet on ${name(v.item)}`;
     case 'memory': return `${name(v.person)} knows it`;
     case 'entropy-compromise': return `predictable if the RNG of ${(v.origins ?? []).map(originText).join(' + ')} has a still-unknown flaw`;
     case 'known-weak-entropy': return `guessable through a published flaw (${advisoryShortName(v.advisory ?? '')})`;
@@ -241,10 +245,11 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'no-owner': 'There must be a person with the owner role',
   'passphrase-strength-unset': 'A passphrase has no strength set: it is treated as weak',
   'entropy-count-unset': 'Dice, coin or cards with no number of rolls set: they do not count as entropy',
-  'multisig-without-descriptor': 'Multisig with no backup of the descriptor: without it, recovering the wallet needs every seed and knowing exactly how it was created, and may be impossible. It is advisable to keep at least one copy of the descriptor; better still, one next to each key',
+  'multisig-without-descriptor': 'Multisig with no backup of the descriptor: without it, recovering the wallet needs every seed and knowing exactly how it was created, and may be impossible (the wallet on a computer or a device with the multisig registered is not enough: they break or get wiped). It is advisable to keep at least one copy of the descriptor; better still, one next to each key',
   'protection-not-physical': 'Only a physical location can be a home safe or a bank box',
   'invalid-nesting': 'A location is inside another in an invalid way (both must be physical, one level only)',
   'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',
+  'invalid-computer-place': 'A signing computer must be kept in a location or carried by a person (one of the two)',
 };
 
 export const issueText: typeof es.issueText = (issue: Issue, label: Label) => {

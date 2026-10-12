@@ -64,6 +64,11 @@ export function MetricAnalysis({ model, metric }: { model: CustodyModel; metric:
               <p className={styles.muted}>{T.seguridad.sinDescriptor}</p>
             </Section>
           )}
+          {model.computers.length === 0 && (
+            <Section>
+              <p className={styles.muted}>{T.seguridad.sinOrdenador}</p>
+            </Section>
+          )}
           <TheftRoutes model={model} />
           {analysis.duress.length > 0 && (
             <Section title={T.coaccion}>
@@ -140,14 +145,14 @@ function Score({ score, rows, how }: { score: number; rows: Row[]; how: string[]
 
 function securityScore(a: EngineAnalysis) {
   const sec = a.security;
-  const b = securityBreakdown(sec.minEffort, sec.cheapRoutes);
-  const rows: Row[] =
-    sec.minEffort === null
-      ? [{ label: T.seguridad.sinRobo(sec.searchedUpTo), points: b.base }]
-      : [
-          { label: T.seguridad.roboMasBarato(sec.minEffort), points: b.base },
-          ...b.penalties.map((p) => ({ label: T.seguridad.viasBaratas(sec.cheapRoutes, sec.minEffort! + EXPOSURE.margin), points: -p.points })),
-        ];
+  const b = securityBreakdown(sec.minEffort, sec.cheapRoutes, sec.dailyComputer);
+  const rows: Row[] = [
+    sec.minEffort === null ? { label: T.seguridad.sinRobo(sec.searchedUpTo), points: b.base } : { label: T.seguridad.roboMasBarato(sec.minEffort), points: b.base },
+    ...b.penalties.map((p) => ({
+      label: p.reason === 'daily-computer' ? T.seguridad.ordenadorDiario : T.seguridad.viasBaratas(sec.cheapRoutes, sec.minEffort! + EXPOSURE.margin),
+      points: -p.points,
+    })),
+  ];
   return {
     score: sec.score,
     rows,

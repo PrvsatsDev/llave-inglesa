@@ -1,4 +1,4 @@
-import { ADVISORIES } from '@llave-inglesa/domain';
+import { ADVISORIES, itemPlace } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import { plural, type Label } from '../tipos.ts';
 import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
@@ -186,7 +186,9 @@ export function factText(f: Fact, index: ModelIndex): string {
   switch (f.kind) {
     case 'item': {
       const item = index.items.get(f.item);
-      return item ? `${item.value.label} (${index.label(item.value.location)})` : f.item;
+      if (!item) return f.item;
+      if (item.kind === 'computer' && item.value.carriedBy) return `${item.value.label} (lo lleva ${index.label(item.value.carriedBy)})`;
+      return `${item.value.label} (${index.label(itemPlace(item))})`;
     }
     case 'secret': return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} desbloqueado`;
@@ -201,6 +203,8 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
   const name = (id: string | undefined) => index.label(id ?? '?');
   switch (j.rule) {
     case 'location-access': return `al alcance en ${name(v.location)}`;
+    case 'carried': return `lo lleva encima ${name(v.person)}`;
+    case 'computer-wallet': return `en la cartera de ${name(v.item)}`;
     case 'memory': return `lo sabe ${name(v.person)}`;
     case 'entropy-compromise': return `predecible si el RNG de ${(v.origins ?? []).map(originText).join(' + ')} tiene un fallo aún desconocido`;
     case 'known-weak-entropy': return `adivinable por un fallo publicado (${advisoryShortName(v.advisory ?? '')})`;
@@ -239,10 +243,11 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'no-owner': 'Falta una persona con rol de titular',
   'passphrase-strength-unset': 'Hay una passphrase sin fortaleza indicada: se trata como débil',
   'entropy-count-unset': 'Hay dados, moneda o cartas sin indicar cuántas tiradas: no cuentan como entropía',
-  'multisig-without-descriptor': 'Multisig sin ningún backup del descriptor: sin él, recuperar la cartera exige todas las semillas y saber exactamente cómo se creó, y puede ser imposible. Es recomendable guardar al menos una copia del descriptor; mejor aún, una junto a cada key',
+  'multisig-without-descriptor': 'Multisig sin ningún backup del descriptor: sin él, recuperar la cartera exige todas las semillas y saber exactamente cómo se creó, y puede ser imposible (la cartera de un ordenador o un dispositivo con el multisig registrado no bastan: se estropean o se formatean). Es recomendable guardar al menos una copia del descriptor; mejor aún, una junto a cada key',
   'protection-not-physical': 'Solo una ubicación física puede ser caja fuerte o caja del banco',
   'invalid-nesting': 'Una ubicación está dentro de otra de forma no válida (ambas físicas y un solo nivel)',
   'invalid-home': 'Alguien vive en un sitio donde no se puede vivir (tiene que ser una ubicación física, ni dentro de otra ni una caja del banco)',
+  'invalid-computer-place': 'Un ordenador de firma tiene que estar guardado en una ubicación o llevarlo una persona (una de las dos)',
 };
 
 export function issueText(issue: Issue, label: Label): string {

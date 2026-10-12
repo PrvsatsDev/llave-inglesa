@@ -2,7 +2,7 @@ import type { Device, Id, SecretRef } from '@llave-inglesa/domain';
 import type { EntropyOrigin } from './entropy.ts';
 import { factId, type DerivedFact, type Fact, type FactId, type Justification } from './facts.ts';
 import { satisfy } from './policy.ts';
-import { itemsAvailableAt, knowledgeOf, type World } from './world.ts';
+import { canAct, itemsAvailableAt, knowledgeOf, type World } from './world.ts';
 
 /**
  * - `any`: vale cualquier herramienta, p. ej. teclear la semilla en un software (ladrón, recuperación de emergencia).
@@ -75,6 +75,14 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       add({ kind: 'item', item: item.value.id }, { rule: 'location-access', premises: [], via: { location } });
     }
   }
+  // Lo que una persona lleva encima (su móvil) llega con ella.
+  for (const person of holdings.people) {
+    if (!canAct(world, person)) continue;
+    for (const computer of index.carriedBy(person)) {
+      if (world.lostItems.has(computer.id)) continue;
+      add({ kind: 'item', item: computer.id }, { rule: 'carried', premises: [], via: { person } });
+    }
+  }
   const withheld = new Set((holdings.withheldPins ?? []).map((w) => `${w.person}:${w.device}`));
   for (const person of holdings.people) {
     for (const s of knowledgeOf(world, person)) {
@@ -116,6 +124,12 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       const locks = a.lockedBy.map((s) => factId(secret(s)));
       if (!locks.every((l) => facts.has(l))) continue;
       for (const s of a.contents) add(secret(s), { rule: 'read-artifact', premises: [itemId, ...locks], via: { item: a.id } });
+    }
+
+    // La cartera del ordenador de firma tiene el descriptor. Ante la duda, se lee sin contraseña.
+    for (const c of model.computers) {
+      const itemId = factId({ kind: 'item', item: c.id });
+      if (c.wallet && facts.has(itemId)) add(secret({ type: 'descriptor' }), { rule: 'computer-wallet', premises: [itemId], via: { item: c.id } });
     }
 
     if (facts.has(descriptorId)) {

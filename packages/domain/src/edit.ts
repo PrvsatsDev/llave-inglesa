@@ -1,4 +1,4 @@
-import type { Artifact, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
+import type { Artifact, Computer, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 import { canLiveAt, canNest } from './validate.ts';
 
 /**
@@ -18,7 +18,7 @@ export interface Created {
 }
 
 const allIds = (m: CustodyModel) =>
-  new Set([...m.keys, ...m.devices, ...m.artifacts, ...m.people, ...m.locations].map((e) => e.id));
+  new Set([...m.keys, ...m.devices, ...m.artifacts, ...m.computers, ...m.people, ...m.locations].map((e) => e.id));
 
 /** Id único y legible derivado de un nombre ("Casa de mis padres" → "casa-de-mis-padres"). */
 export function uniqueId(model: CustodyModel, name: string): Id {
@@ -50,7 +50,7 @@ export const UNKNOWN_VENDOR = 'Desconocido';
  * Ids que ponen las operaciones `add*` antes de que el usuario elija un nombre. No dependen del nombre que se le dé
  * (que viene en el idioma de la interfaz): son internos y `tidyIds` los cambia al exportar.
  */
-const DEFAULT_ID = /^(nueva-ubicacion|nueva-persona|nuevo-dispositivo|nuevo-firmante-stateless|nuevo-backup)(-\d+)?$/;
+const DEFAULT_ID = /^(nueva-ubicacion|nueva-persona|nuevo-dispositivo|nuevo-firmante-stateless|nuevo-backup|nuevo-ordenador)(-\d+)?$/;
 
 /**
  * Cambia los ids por defecto (`nuevo-dispositivo-2`…) por el de su nombre actual ("Trezor de casa"
@@ -63,6 +63,7 @@ export function tidyIds(model: CustodyModel): CustodyModel {
     ...model.people.map((e) => ({ id: e.id, name: e.name })),
     ...model.devices.map((e) => ({ id: e.id, name: e.label })),
     ...model.artifacts.map((e) => ({ id: e.id, name: e.label })),
+    ...model.computers.map((e) => ({ id: e.id, name: e.label })),
   ].filter((e) => DEFAULT_ID.test(e.id));
   const taken = new Set([...allIds(model)].filter((id) => !named.some((e) => e.id === id)));
   const renames = new Map<Id, Id>();
@@ -74,7 +75,7 @@ export function tidyIds(model: CustodyModel): CustodyModel {
   return renames.size ? renameIds(model, renames) : model;
 }
 
-/** Cambia ids de ubicaciones, personas, dispositivos y backups en todas sus referencias. */
+/** Cambia ids de ubicaciones, personas, dispositivos, backups y ordenadores en todas sus referencias. */
 export function renameIds(model: CustodyModel, renames: ReadonlyMap<Id, Id>): CustodyModel {
   const to = (id: Id) => renames.get(id) ?? id;
   const secret = (s: SecretRef): SecretRef =>
@@ -88,6 +89,12 @@ export function renameIds(model: CustodyModel, renames: ReadonlyMap<Id, Id>): Cu
       location: to(a.location),
       contents: a.contents.map(secret),
       lockedBy: a.lockedBy.map(secret),
+    })),
+    computers: model.computers.map((c) => ({
+      ...c,
+      id: to(c.id),
+      ...(c.location !== undefined && { location: to(c.location) }),
+      ...(c.carriedBy !== undefined && { carriedBy: to(c.carriedBy) }),
     })),
     people: model.people.map((p) => ({ ...p, id: to(p.id), knows: p.knows.map(secret), ...(p.livesAt !== undefined && { livesAt: to(p.livesAt) }) })),
     locations: model.locations.map((l) => ({
@@ -132,6 +139,7 @@ export function blankModel(names: BlankNames = { scheme: 'Mi esquema', owner: 'Y
     policy: { type: 'key', key: 'k1' },
     devices: [],
     artifacts: [],
+    computers: [],
     people: [{ id: 'yo', name: names.owner, role: 'owner', knows: [], livesAt: 'casa' }],
     locations: [{ id: 'casa', name: names.home, kind: 'physical', access: [{ person: 'yo', when: { type: 'always' } }] }],
   };
@@ -300,6 +308,7 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
       locations: model.locations.filter((l) => l.id !== id).map((l) => (l.inside === id ? withoutKeys(l, 'inside') : l)),
       devices: model.devices.filter((d) => d.location !== id),
       artifacts: model.artifacts.filter((a) => a.location !== id),
+      computers: model.computers.filter((c) => c.location !== id),
     }),
     (s) => (s.type === 'pin' && goneDevices.has(s.device)) || (s.type === 'password' && goneArtifacts.has(s.artifact)),
   );
@@ -322,13 +331,14 @@ export function setPersonHome(model: CustodyModel, id: Id, location: Id | undefi
   return { ...model, people: replace(model.people, id, (p) => (location ? { ...p, livesAt: location } : withoutKeys(p, 'livesAt'))) };
 }
 
-/** Elimina a la persona, sus accesos y los accesos condicionados a lo que le ocurra. */
+/** Elimina a la persona, sus accesos, los accesos condicionados a lo que le ocurra y lo que lleva encima. */
 export function removePerson(model: CustodyModel, id: Id): CustodyModel {
   const remaining = model.people.filter((p) => p.id !== id);
   if (!remaining.some((p) => p.role === 'owner')) return model;
   return {
     ...model,
     people: remaining,
+    computers: model.computers.filter((c) => c.carriedBy !== id),
     locations: model.locations.map((l) => ({
       ...l,
       access: l.access.filter((a) => a.person !== id && !(a.when.type !== 'always' && a.when.person === id)),
@@ -392,10 +402,16 @@ export function addArtifact(model: CustodyModel, location: Id, label = (key: str
   return { model: { ...model, artifacts: [...model.artifacts, artifact] }, id };
 }
 
-/** Un backup no puede quedarse sin contenido: esa edición se ignora. */
-/** Lleva un dispositivo o backup a otra ubicación (p. ej. arrastrándolo en el mapa). Si no existe alguno, no hace nada. */
-export function moveItem(model: CustodyModel, item: { kind: 'device' | 'artifact'; id: Id }, location: Id): CustodyModel {
+/**
+ * Lleva un dispositivo, backup u ordenador a otra ubicación (p. ej. arrastrándolo en el mapa). Si no existe alguno, no
+ * hace nada. Un ordenador que alguien llevaba encima pasa a guardarse ahí.
+ */
+export function moveItem(model: CustodyModel, item: { kind: 'device' | 'artifact' | 'computer'; id: Id }, location: Id): CustodyModel {
   if (!model.locations.some((l) => l.id === location)) return model;
+  if (item.kind === 'computer') {
+    const computer = model.computers.find((c) => c.id === item.id);
+    return computer && computer.location !== location ? setComputerPlace(model, item.id, { location }) : model;
+  }
   if (item.kind === 'device') {
     const device = model.devices.find((d) => d.id === item.id);
     return device && device.location !== location ? updateDevice(model, item.id, { location }) : model;
@@ -404,6 +420,7 @@ export function moveItem(model: CustodyModel, item: { kind: 'device' | 'artifact
   return artifact && artifact.location !== location ? updateArtifact(model, item.id, { location }) : model;
 }
 
+/** Un backup no puede quedarse sin contenido: esa edición se ignora. */
 export function updateArtifact(model: CustodyModel, id: Id, patch: Patch<Artifact>): CustodyModel {
   if (patch.contents && patch.contents.length === 0) return model;
   return { ...model, artifacts: replace(model.artifacts, id, (a) => ({ ...a, ...patch })) };
@@ -427,4 +444,31 @@ export function setArtifactPassword(model: CustodyModel, id: Id, enabled: boolea
       lockedBy: enabled ? [...a.lockedBy.filter((s) => !own(s)), { type: 'password', artifact: id }] : a.lockedBy.filter((s) => !own(s)),
     })),
   };
+}
+
+// ---------- Ordenadores de firma ----------
+
+/** Un ordenador nuevo en una ubicación, o un móvil que lleva encima una persona. Por defecto, de uso general y con la cartera. */
+export function addComputer(model: CustodyModel, place: ComputerPlace, name = 'Nuevo ordenador'): Created {
+  const id = uniqueId(model, 'nuevo-ordenador');
+  const computer: Computer = { id, label: name, use: 'daily', wallet: true, ...place };
+  return { model: { ...model, computers: [...model.computers, computer] }, id };
+}
+
+/** Dónde está un ordenador: guardado en una ubicación o encima de una persona. */
+export type ComputerPlace = { location: Id; carriedBy?: never } | { carriedBy: Id; location?: never };
+
+export function updateComputer(model: CustodyModel, id: Id, patch: Patch<Omit<Computer, 'location' | 'carriedBy'>>): CustodyModel {
+  return { ...model, computers: replace(model.computers, id, (c) => ({ ...c, ...patch })) };
+}
+
+/** Lo guarda en una ubicación o se lo da a una persona (deja de estar en el otro sitio). Si no existe, no hace nada. */
+export function setComputerPlace(model: CustodyModel, id: Id, place: ComputerPlace): CustodyModel {
+  const exists = place.location !== undefined ? model.locations.some((l) => l.id === place.location) : model.people.some((p) => p.id === place.carriedBy);
+  if (!exists) return model;
+  return { ...model, computers: replace(model.computers, id, (c) => ({ ...withoutKeys(c, 'location', 'carriedBy'), ...place })) };
+}
+
+export function removeComputer(model: CustodyModel, id: Id): CustodyModel {
+  return { ...model, computers: model.computers.filter((c) => c.id !== id) };
 }
