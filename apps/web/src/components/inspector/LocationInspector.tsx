@@ -1,7 +1,8 @@
-import { addArtifact, addDevice, canNest, removeLocation, setLocationInside, setLocationProtection, updateLocation, type CustodyModel, type Location } from '@llave-inglesa/domain';
+import { addArtifact, addDevice, canNest, setLocationInside, setLocationProtection, updateLocation, type CustodyModel, type Location } from '@llave-inglesa/domain';
 import { Camera, Cpu, MapPin, Plus, RectangleHorizontal, X } from 'lucide-react';
 import { locationIcon } from '../../graph/LocationNode.tsx';
 import { UI } from '../../lib/text.ts';
+import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, TextInput } from './fields.tsx';
@@ -31,7 +32,6 @@ function parseCondition(v: string): Access['when'] {
 
 export function LocationInspector({ model, location }: { model: CustodyModel; location: Location }) {
   const apply = useDocument((s) => s.apply);
-  const back = useSelection((s) => s.back);
   const open = useSelection((s) => s.open);
   const id = location.id;
   const setAccess = (access: Access[]) => apply((m) => updateLocation(m, id, { access }));
@@ -174,10 +174,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
 
       <DeleteButton
         label={items.length ? T.eliminarCon(items.length) : T.eliminar}
-        onClick={() => {
-          apply((m) => removeLocation(m, id));
-          back();
-        }}
+        onClick={() => void removeElement({ kind: 'location', id })}
         disabled={model.locations.length <= 1}
         reason={T.haceFalta}
       />

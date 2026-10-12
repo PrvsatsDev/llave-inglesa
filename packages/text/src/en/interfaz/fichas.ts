@@ -210,6 +210,11 @@ export const ubicacion: typeof es.ubicacion = {
   backup: 'Backup',
   eliminar: 'Delete location',
   eliminarCon: (n: number) => `Delete the location and its ${n} items`,
+  confirmarEliminar: {
+    titulo: (ubicacion: string) => `Delete ${ubicacion}?`,
+    mensaje: (n: number, dentro: readonly string[]) =>
+      `${n === 1 ? 'The device or backup it contains is' : `The ${n} devices and backups it contains are`} deleted too.${dentro.length ? ` ${dentro.join(' and ')} ${dentro.length === 1 ? 'stays, on its own' : 'stay, on their own'}.` : ''} It can be undone.`,
+  },
   haceFalta: 'There must be at least one location.',
 };
 

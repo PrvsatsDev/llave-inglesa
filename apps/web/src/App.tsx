@@ -12,13 +12,15 @@ import { hasUnsavedChanges, useDocument } from './store/document.ts';
 import { useIdioma } from './store/idioma.ts';
 import { useLayout } from './store/layout.ts';
 import { useMobile, useNarrow } from './store/mobile.ts';
+import { removeElement } from './lib/remove.ts';
 import { goBack } from './store/navigation.ts';
+import { useSelection } from './store/selection.ts';
 import styles from './App.module.css';
 
 const isEditable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
-/** Atajos globales: deshacer/rehacer, guardar y Esc para volver. */
+/** Atajos globales: deshacer/rehacer, guardar, Esc para volver y Supr para eliminar lo seleccionado. */
 function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -32,6 +34,13 @@ function useShortcuts() {
       if (e.key === 'Escape') {
         // Lo mismo que "volver": cierra la ficha, regresa a la lista o sale de la simulación.
         goBack();
+        return;
+      }
+      // Supr elimina el elemento de la ficha abierta, como su botón «Eliminar» (fuera de los campos de texto).
+      const selected = useSelection.getState().selected;
+      if (e.key === 'Delete' && selected && !isEditable(e.target) && !e.ctrlKey && !e.metaKey && !e.altKey) { // texto-ok: nombre de la tecla
+        e.preventDefault();
+        void removeElement(selected);
         return;
       }
       // Dentro de un campo de texto, Ctrl+Z es el deshacer nativo del campo.

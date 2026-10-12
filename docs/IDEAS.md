@@ -15,19 +15,16 @@ pensarse antes de implementarla.
 Hechos el 2026-10-12: dónde vive cada persona, calidad de la entropía (un solo corte en 128 bits) y multisig sin
 ningún backup del descriptor como problema grave.
 
-### Ahora: cambios pequeños antes de la próxima versión (sin tocar el motor)
+### Cambios pequeños antes de la próxima versión: hechos (2026-10-12)
 
-1. **«+ Fuente» enfoca las tiradas**: hoy añade «Dados» sin número y el aviso salta al momento; llevar el cursor a
-   la casilla de tiradas.
-2. **La guía menciona «Vive en»** en *Montar tu esquema* (si no se indica, se supone lo peor).
-3. **R10: el custodio sin «Vive en»**: explicarlo en la descripción del ejemplo (no vive en su despacho).
-4. **Por qué sube la seguridad sin descriptor**: un texto en el desglose de Seguridad (sin descriptor, el ladrón
-   tampoco puede construir la transacción). Solo texto: el motor ya lo calcula.
-5. **Ejemplos sin Coldcard**, salvo el de su propio fallo (R07): no se quiere darles más publicidad (ni a Ledger).
-   Si alguno usa el PIN de coacción, sustituirla por otro modelo que lo tenga; si no lo hay, ese se queda.
-   Candidatos: Trezor, BitBox, Passport, Keystone.
-6. **Más acciones en el mapa**: borrar con la tecla Supr el elemento seleccionado y, si no es complicado, mover
-   dispositivos y backups entre ubicaciones arrastrándolos.
+1. ~~«+ Fuente» enfoca las tiradas~~.
+2. ~~La guía menciona «Vive en»~~.
+3. ~~R10: el custodio sin «Vive en», explicado en la descripción~~.
+4. ~~Por qué sube la seguridad sin descriptor~~, en el desglose de Seguridad.
+5. ~~Ejemplos sin Coldcard~~ (salvo R07): Passport Prime, Keystone 3 Pro, BitBox02 y Trezor Safe 5; las notas no
+   cambian. Vídeo regenerado.
+6. ~~Más acciones en el mapa~~: Supr elimina lo seleccionado (con confirmación si es una ubicación con objetos) y,
+   en escritorio, los dispositivos y backups se arrastran a otra ubicación.
 
 ### Después
 

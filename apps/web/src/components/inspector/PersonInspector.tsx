@@ -1,7 +1,8 @@
-import { canLiveAt, removePerson, setPersonHome, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
+import { canLiveAt, setPersonHome, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
 import { MapPin, User } from 'lucide-react';
 import { secretOptions, toggleSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
+import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { DeleteButton, Field, PanelHeader, Section, SecretToggles, Select, TextInput } from './fields.tsx';
@@ -13,7 +14,6 @@ const roleOptions = () => (['owner', 'heir', 'custodian', 'other'] as const).map
 
 export function PersonInspector({ model, person }: { model: CustodyModel; person: Person }) {
   const apply = useDocument((s) => s.apply);
-  const back = useSelection((s) => s.back);
   const open = useSelection((s) => s.open);
   const id = person.id;
   const isLastOwner = person.role === 'owner' && model.people.filter((p) => p.role === 'owner').length === 1;
@@ -73,10 +73,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
 
       <DeleteButton
         label={T.eliminar}
-        onClick={() => {
-          apply((m) => removePerson(m, id));
-          back();
-        }}
+        onClick={() => void removeElement({ kind: 'person', id })}
         disabled={isLastOwner}
         reason={T.haceFaltaTitular}
       />

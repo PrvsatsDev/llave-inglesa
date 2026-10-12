@@ -393,6 +393,17 @@ export function addArtifact(model: CustodyModel, location: Id, label = (key: str
 }
 
 /** Un backup no puede quedarse sin contenido: esa edición se ignora. */
+/** Lleva un dispositivo o backup a otra ubicación (p. ej. arrastrándolo en el mapa). Si no existe alguno, no hace nada. */
+export function moveItem(model: CustodyModel, item: { kind: 'device' | 'artifact'; id: Id }, location: Id): CustodyModel {
+  if (!model.locations.some((l) => l.id === location)) return model;
+  if (item.kind === 'device') {
+    const device = model.devices.find((d) => d.id === item.id);
+    return device && device.location !== location ? updateDevice(model, item.id, { location }) : model;
+  }
+  const artifact = model.artifacts.find((a) => a.id === item.id);
+  return artifact && artifact.location !== location ? updateArtifact(model, item.id, { location }) : model;
+}
+
 export function updateArtifact(model: CustodyModel, id: Id, patch: Patch<Artifact>): CustodyModel {
   if (patch.contents && patch.contents.length === 0) return model;
   return { ...model, artifacts: replace(model.artifacts, id, (a) => ({ ...a, ...patch })) };

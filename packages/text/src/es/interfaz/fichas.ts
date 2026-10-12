@@ -209,6 +209,11 @@ export const ubicacion = {
   backup: 'Backup',
   eliminar: 'Eliminar ubicación',
   eliminarCon: (n: number) => `Eliminar ubicación y sus ${n} objetos`,
+  confirmarEliminar: {
+    titulo: (ubicacion: string) => `¿Eliminar ${ubicacion}?`,
+    mensaje: (n: number, dentro: readonly string[]) =>
+      `Se eliminan también ${n === 1 ? 'el dispositivo o backup que contiene' : `los ${n} dispositivos y backups que contiene`}.${dentro.length ? ` ${dentro.join(' y ')} ${dentro.length === 1 ? 'se queda' : 'se quedan'}, por su cuenta.` : ''} Se puede deshacer.`,
+  },
   haceFalta: 'Tiene que haber al menos una ubicación.',
 };
 

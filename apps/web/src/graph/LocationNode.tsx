@@ -21,11 +21,13 @@ import {
   Vault,
   type LucideIcon,
 } from 'lucide-react';
-import type { CSSProperties } from 'react';
+import { moveItem } from '@llave-inglesa/domain';
+import { useState, type CSSProperties } from 'react';
 import { UI } from '../lib/text.ts';
 import { useScenario } from '../store/scenario.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
-import { showPanel } from '../store/mobile.ts';
+import { useDocument } from '../store/document.ts';
+import { showPanel, useNarrow } from '../store/mobile.ts';
 import type { ItemIcon, ItemView, LocationNode as LocationNodeType } from './build.ts';
 import { LOCATION_WIDTH } from './layout.ts';
 import { SecretBadge } from './SecretBadge.tsx';
@@ -60,16 +62,35 @@ function addLoss(item: string) {
   set({ kind: 'loss', events: [...active.events, { type: 'item-loss', item }] });
 }
 
-function ItemRow({ item }: { item: ItemView }) {
+/**
+ * Lo que se está arrastrando en el mapa (solo en escritorio): qué objeto y desde qué ubicación. Se guarda aquí y no en
+ * el dataTransfer, para saber al pasar por encima si es otra ubicación y no leer nunca datos de fuera de la app.
+ */
+let dragging: { item: Pick<ItemView, 'kind' | 'id'>; from: string } | null = null;
+const DRAG_TYPE = 'application/x-llave-inglesa-item';
+
+function ItemRow({ item, location }: { item: ItemView; location: string }) {
   const Icon = ITEM_ICONS[item.icon];
   const isDevice = item.icon === 'stateful' || item.icon === 'stateless';
   const selected = useSelection((s) => isSelected(s.selected, item.kind, item.id));
   const select = useSelection((s) => s.select);
+  const draggable = !useNarrow();
   return (
     <li
       data-state={item.state}
       data-compromised={item.compromise}
-      className={`${styles.item} ${selected ? styles.itemSelected : ''}`}
+      // nodrag: arrastrar la fila mueve el objeto, no la ubicación entera (esa se arrastra por su cabecera).
+      className={`${styles.item} ${selected ? styles.itemSelected : ''} ${draggable ? `nodrag ${styles.draggable}` : ''}`}
+      draggable={draggable}
+      title={draggable ? T.pistaArrastrar : undefined}
+      onDragStart={(e) => {
+        dragging = { item: { kind: item.kind, id: item.id }, from: location };
+        e.dataTransfer.setData(DRAG_TYPE, item.id);
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+      onDragEnd={() => {
+        dragging = null;
+      }}
       onClick={(e) => {
         e.stopPropagation();
         showPanel();
@@ -149,20 +170,41 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
   const LocationIcon = locationIcon(data);
   const meta = locationMeta(data);
   const selected = useSelection((s) => isSelected(s.selected, 'location', id));
+  const apply = useDocument((s) => s.apply);
+  /** Se está arrastrando encima un objeto de otra ubicación. */
+  const [dropTarget, setDropTarget] = useState(false);
   return (
     <div
       data-state={data.state}
       data-tone={data.tone}
-      className={`${styles.location} ${selected ? styles.selected : ''}`}
+      className={`${styles.location} ${selected ? styles.selected : ''} ${dropTarget ? styles.dropTarget : ''}`}
       style={{ width: LOCATION_WIDTH }}
+      onDragOver={(e) => {
+        if (!dragging || dragging.from === id) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDropTarget(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropTarget(false);
+      }}
+      onDrop={(e) => {
+        setDropTarget(false);
+        if (!dragging || dragging.from === id) return;
+        e.preventDefault();
+        const { item } = dragging;
+        dragging = null;
+        apply((m) => moveItem(m, item, id));
+      }}
     >
       <header className={styles.locationHeader}>
         <LocationIcon size={14} className={styles.locationPin} aria-hidden />
         <span className={styles.locationTitle}>
           <span className={styles.locationName}>{data.name}</span>
           {meta && <span className={styles.locationMeta}>{meta}</span>}
-          {(data.disaster || data.state === 'used' || data.state === 'reached') && (
+          {(data.disaster || data.state === 'used' || data.state === 'reached' || dropTarget) && (
             <span className={styles.locationTags}>
+              {dropTarget && <span className={`${styles.stateTag} ${styles.dropTag}`}>{T.soltarAqui}</span>}
               {data.disaster && <span className={styles.stateTag}>{DISASTER_TAG[data.disaster === 'total' ? data.kind : data.disaster]}</span>}
               {data.state === 'used' && <span className={styles.stateTag}>{USED_TAG[data.tone ?? 'recovery']}</span>}
               {data.state === 'reached' && <span className={`${styles.stateTag} ${styles.reachedTag}`}>{T.alAlcance}</span>}
@@ -180,7 +222,7 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
       {data.items.length > 0 ? (
         <ul className={styles.items}>
           {data.items.map((item) => (
-            <ItemRow key={item.id} item={item} />
+            <ItemRow key={item.id} item={item} location={id} />
           ))}
         </ul>
       ) : (

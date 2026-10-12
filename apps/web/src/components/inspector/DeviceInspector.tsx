@@ -1,8 +1,8 @@
-import { advisoriesFor, catalogModelByName, removeDevice, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
 import { Camera, Cpu } from 'lucide-react';
 import { UI } from '../../lib/text.ts';
+import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
-import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, SecretToggles, Segmented, Select, Switch, TextInput } from './fields.tsx';
 import { DuressNotes } from '../Findings.tsx';
 import { AdvisoryList, catalogFeatures, HardwareModelSelect } from './Hardware.tsx';
@@ -22,7 +22,6 @@ function duressHint(catalog: CatalogModel | undefined): string {
 
 export function DeviceInspector({ model, device }: { model: CustodyModel; device: Device }) {
   const apply = useDocument((s) => s.apply);
-  const back = useSelection((s) => s.back);
   const id = device.id;
   const patch = (p: Partial<Device>, field?: string) => apply((m) => updateDevice(m, id, p), field && `device:${id}:${field}`);
 
@@ -164,10 +163,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
 
       <DeleteButton
         label={T.eliminar}
-        onClick={() => {
-          apply((m) => removeDevice(m, id));
-          back();
-        }}
+        onClick={() => void removeElement({ kind: 'device', id })}
       />
     </>
   );

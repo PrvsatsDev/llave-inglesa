@@ -13,6 +13,8 @@ export const mapa: typeof es = {
   desastres: { fire: 'Fire', flood: 'Flood', physical: 'No access', device: 'Broken', cloud: 'Account lost' },
   usada: { attack: 'Used by the attacker', recovery: 'Needed' },
   alAlcance: 'Within reach',
+  soltarAqui: 'Drop here',
+  pistaArrastrar: 'Drag to move it to another location',
   comprometido: { firmware: 'Malicious firmware', extraction: 'Seed extracted' },
   conPin: 'with PIN',
   cifradoAccesible: 'encrypted',

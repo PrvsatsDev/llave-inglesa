@@ -18,6 +18,7 @@ import {
   removeKey,
   removeLocation,
   setLocationInside,
+  moveItem,
   setPersonHome,
   setLocationProtection,
   updateLocation,
@@ -242,6 +243,21 @@ describe('dónde vive cada persona', () => {
   });
 });
 
+describe('mover objetos entre ubicaciones', () => {
+  it('un backup o un dispositivo cambian de ubicación', () => {
+    const m = moveItem(moveItem(casa, { kind: 'artifact', id: 'arandelas-k3' }, 'banco'), { kind: 'device', id: 'keystone' }, 'padres');
+    expect(m.artifacts.find((a) => a.id === 'arandelas-k3')!.location).toBe('banco');
+    expect(m.devices.find((d) => d.id === 'keystone')!.location).toBe('padres');
+    expect(errors(m)).toEqual([]);
+  });
+
+  it('a su misma ubicación, a una que no existe o algo que no existe: nada', () => {
+    expect(moveItem(casa, { kind: 'artifact', id: 'arandelas-k3' }, 'padres')).toBe(casa);
+    expect(moveItem(casa, { kind: 'artifact', id: 'arandelas-k3' }, 'no-existe')).toBe(casa);
+    expect(moveItem(casa, { kind: 'device', id: 'no-existe' }, 'banco')).toBe(casa);
+  });
+});
+
 /** Operación aleatoria sobre ids que existen en el modelo actual. */
 type Op = (m: CustodyModel, pick: (n: number) => number) => CustodyModel;
 const ops: Op[] = [
@@ -265,6 +281,10 @@ const ops: Op[] = [
   (m, pick) => setLocationProtection(m, m.locations[pick(m.locations.length)]!.id, ([undefined, 'home-safe', 'bank-box'] as const)[pick(3)]),
   (m, pick) => setLocationInside(m, m.locations[pick(m.locations.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => updateLocation(m, m.locations[pick(m.locations.length)]!.id, { kind: (['physical', 'device', 'cloud'] as const)[pick(3)] }),
+  (m, pick) => {
+    const items = [...m.devices.map((d) => ({ kind: 'device' as const, id: d.id })), ...m.artifacts.map((a) => ({ kind: 'artifact' as const, id: a.id }))];
+    return items.length ? moveItem(m, items[pick(items.length)]!, m.locations[pick(m.locations.length)]!.id) : m;
+  },
   (m, pick) => setPersonHome(m, m.people[pick(m.people.length)]!.id, pick(4) ? m.locations[pick(m.locations.length)]!.id : undefined),
   (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
 ];

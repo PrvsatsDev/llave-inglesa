@@ -1,9 +1,9 @@
-import { removeArtifact, setArtifactPassword, updateArtifact, type Artifact, type CustodyModel, type SecretRef } from '@llave-inglesa/domain';
+import { setArtifactPassword, updateArtifact, type Artifact, type CustodyModel, type SecretRef } from '@llave-inglesa/domain';
 import { RectangleHorizontal } from 'lucide-react';
 import { sameSecret, secretOptions, toggleSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
+import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
-import { useSelection } from '../../store/selection.ts';
 import { DeleteButton, Field, PanelHeader, Section, SecretToggles, Select, Switch, TextInput } from './fields.tsx';
 import styles from './fields.module.css';
 
@@ -13,7 +13,6 @@ const mediumOptions = () => (['metal', 'washers', 'paper', 'digital', 'other'] a
 
 export function ArtifactInspector({ model, artifact }: { model: CustodyModel; artifact: Artifact }) {
   const apply = useDocument((s) => s.apply);
-  const back = useSelection((s) => s.back);
   const id = artifact.id;
   const patch = (p: Partial<Artifact>, field?: string) => apply((m) => updateArtifact(m, id, p), field && `artifact:${id}:${field}`);
   const options = secretOptions(model);
@@ -60,10 +59,7 @@ export function ArtifactInspector({ model, artifact }: { model: CustodyModel; ar
 
       <DeleteButton
         label={T.eliminar}
-        onClick={() => {
-          apply((m) => removeArtifact(m, id));
-          back();
-        }}
+        onClick={() => void removeElement({ kind: 'artifact', id })}
       />
     </>
   );

@@ -17,6 +17,21 @@
   box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
 }
 
+/* Se le puede soltar un objeto arrastrado desde otra ubicación (además de la etiqueta «Soltar aquí»). */
+.dropTarget {
+  outline: 2px dashed var(--accent);
+  outline-offset: 3px;
+}
+
+.dropTag {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.draggable {
+  cursor: grab;
+}
+
 .locationHeader {
   display: flex;
   align-items: center;

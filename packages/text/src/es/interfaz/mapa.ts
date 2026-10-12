@@ -13,6 +13,8 @@ export const mapa = {
   desastres: { fire: 'Incendio', flood: 'Inundación', physical: 'Sin acceso', device: 'Averiado', cloud: 'Cuenta perdida' },
   usada: { attack: 'La usa el atacante', recovery: 'Necesaria' },
   alAlcance: 'Al alcance',
+  soltarAqui: 'Soltar aquí',
+  pistaArrastrar: 'Arrastra para llevarlo a otra ubicación',
   comprometido: { firmware: 'Firmware malicioso', extraction: 'Semilla extraída' },
   conPin: 'con PIN',
   cifradoAccesible: 'cifrado',

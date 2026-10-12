@@ -1,8 +1,9 @@
-import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, removeKey, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
+import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
 import { ownEntropyBits, STANDARD_SEED_BITS } from '@llave-inglesa/engine';
 import { useState } from 'react';
 import { AlertTriangle, CircleCheck, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
 import { UI, vendorText } from '../../lib/text.ts';
+import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
@@ -105,7 +106,6 @@ const STRENGTH_HINT = T.pistasFuerza;
 
 export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; keyEntity: Key }) {
   const apply = useDocument((s) => s.apply);
-  const back = useSelection((s) => s.back);
   const open = useSelection((s) => s.open);
   const id = key.id;
   const patch = (p: Partial<Key>, field?: string) => apply((m) => updateKey(m, id, p), field && `key:${id}:${field}`);
@@ -308,10 +308,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
 
       <DeleteButton
         label={T.eliminar}
-        onClick={() => {
-          apply((m) => removeKey(m, id));
-          back();
-        }}
+        onClick={() => void removeElement({ kind: 'key', id })}
         disabled={model.keys.length <= 1}
         reason={T.haceFaltaKey}
       />
