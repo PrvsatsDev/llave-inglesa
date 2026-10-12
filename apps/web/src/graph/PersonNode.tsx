@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Brain, Crown, User } from 'lucide-react';
+import { Brain, Crown, House, User } from 'lucide-react';
 import { UI } from '../lib/text.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
 import type { PersonNode as PersonNodeType } from './build.ts';
@@ -33,6 +33,12 @@ export function PersonNode({ id, data }: NodeProps<PersonNodeType>) {
         <span className={styles.personText}>
           <span className={styles.personName}>{data.name}</span>
           <span className={styles.role}>{ROLE[data.role]}</span>
+          {data.home !== undefined && (
+            <span className={styles.home} title={`${UI.mapa.viveEn} ${data.home}`}>
+              <House size={11} aria-hidden />
+              {data.home}
+            </span>
+          )}
         </span>
         {stateTag && <span className={styles.stateTag}>{stateTag}</span>}
       </div>

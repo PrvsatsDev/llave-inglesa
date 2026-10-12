@@ -24,8 +24,8 @@
     { "id": "papel-pass", "label": "Passphrase en papel", "medium": "paper", "contents": [{ "type": "passphrase", "key": "k1" }], "location": "padres" }
   ],
   "people": [
-    { "id": "yo", "name": "Yo", "role": "owner", "knows": [{ "type": "pin", "device": "mk4" }, { "type": "passphrase", "key": "k1" }] },
-    { "id": "pareja", "name": "Pareja", "role": "heir" }
+    { "id": "yo", "name": "Yo", "role": "owner", "knows": [{ "type": "pin", "device": "mk4" }, { "type": "passphrase", "key": "k1" }], "livesAt": "casa" },
+    { "id": "pareja", "name": "Pareja", "role": "heir", "livesAt": "casa" }
   ],
   "locations": [
     { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },

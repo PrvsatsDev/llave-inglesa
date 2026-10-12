@@ -255,13 +255,15 @@
           "type": "pin",
           "device": "nuevo-dispositivo-3"
         }
-      ]
+      ],
+      "livesAt": "casa"
     },
     {
       "id": "nueva-persona",
       "name": "Pareja",
       "role": "heir",
-      "knows": []
+      "knows": [],
+      "livesAt": "casa"
     },
     {
       "id": "nueva-persona-2",

@@ -24,6 +24,7 @@ export const mapa: typeof es = {
   keysAqui: 'Keys present here',
   keyAqui: (key: string) => `${key} is here`,
   sabeDeMemoria: 'Knows by heart',
+  viveEn: 'Lives at',
   insignias: {
     pin: 'PIN',
     pistaPin: (dispositivo: string) => `PIN of ${dispositivo}`,

@@ -24,6 +24,7 @@ export const mapa = {
   keysAqui: 'Keys materializadas aquí',
   keyAqui: (key: string) => `${key} está aquí`,
   sabeDeMemoria: 'Sabe de memoria',
+  viveEn: 'Vive en',
   insignias: {
     pin: 'PIN',
     pistaPin: (dispositivo: string) => `PIN de ${dispositivo}`,

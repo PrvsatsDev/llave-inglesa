@@ -92,6 +92,13 @@ export function coercionSurcharge(a: Extract<AttackAtom, { type: 'coercion' }>, 
   return Math.max(COERCION_SURCHARGE[protectionOf(index, a.location)], coercedAway(a, index) ? COERCION_AWAY_SURCHARGE : 0);
 }
 
+/** De dónde sale el recargo de una coacción: llevarla a la caja del banco, a donde no vive, o ninguno. */
+export function coercionSurchargeReason(a: Extract<AttackAtom, { type: 'coercion' }>, index: ModelIndex): 'bank-box' | 'away' | null {
+  const bank = COERCION_SURCHARGE[protectionOf(index, a.location)];
+  if (coercedAway(a, index) && COERCION_AWAY_SURCHARGE > bank) return 'away';
+  return bank > 0 ? 'bank-box' : null;
+}
+
 /**
  * Esfuerzo de un ataque concreto por sí solo (la ubicación decide el de intrusiones y coacciones). En un robo con
  * varias coacciones, la llave inglesa se paga por asalto, no por coacción: ver `atomEfforts`.

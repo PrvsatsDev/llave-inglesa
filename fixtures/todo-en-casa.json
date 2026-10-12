@@ -59,8 +59,8 @@
     { "id": "desc-padres", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "padres" }
   ],
   "people": [
-    { "id": "yo", "name": "Yo", "role": "owner", "knows": [{ "type": "pin", "device": "ccq" }] },
-    { "id": "pareja", "name": "Pareja", "role": "heir" }
+    { "id": "yo", "name": "Yo", "role": "owner", "knows": [{ "type": "pin", "device": "ccq" }], "livesAt": "casa" },
+    { "id": "pareja", "name": "Pareja", "role": "heir", "livesAt": "casa" }
   ],
   "locations": [
     { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },

@@ -73,13 +73,15 @@
           "type": "pin",
           "device": "nuevo-dispositivo"
         }
-      ]
+      ],
+      "livesAt": "casa"
     },
     {
       "id": "nueva-persona",
       "name": "Pareja",
       "role": "heir",
-      "knows": []
+      "knows": [],
+      "livesAt": "casa"
     }
   ],
   "locations": [

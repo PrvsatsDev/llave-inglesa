@@ -51,7 +51,15 @@ export type LocationNodeData = {
   /** Desastre simulado aquí, si lo hay. */
   disaster?: Disaster;
 };
-export type PersonNodeData = { name: string; role: Person['role']; knows: SecretBadge[]; state?: PersonState; tone?: Tone };
+export type PersonNodeData = {
+  name: string;
+  role: Person['role'];
+  /** Nombre de la ubicación donde vive, si consta. */
+  home?: string;
+  knows: SecretBadge[];
+  state?: PersonState;
+  tone?: Tone;
+};
 
 export type LocationNode = Node<LocationNodeData, 'location'>;
 export type PersonNode = Node<PersonNodeData, 'person'>;
@@ -163,7 +171,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
 
   const positions = layoutGraph(
     ordered.map((l) => ({ id: l.id, rows: l.data.items.length })),
-    model.people.map((p) => ({ id: p.id, rows: p.knows.filter(active).length, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
+    model.people.map((p) => ({ id: p.id, rows: p.knows.filter(active).length, home: p.livesAt !== undefined, links: edges.filter((e) => e.source === p.id).map((e) => e.target) })),
     orientation,
   );
   const at = (id: Id) => positions.get(id) ?? { x: 0, y: 0 };
@@ -174,7 +182,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
       id: p.id,
       type: 'person',
       position: at(p.id),
-      data: { name: p.name, role: p.role, knows: p.knows.filter(active).map(badge) },
+      data: { name: p.name, role: p.role, ...(p.livesAt !== undefined && { home: label(p.livesAt) }), knows: p.knows.filter(active).map(badge) },
     })),
   ];
 

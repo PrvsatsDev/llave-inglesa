@@ -696,7 +696,7 @@ export const GUIA: typeof es = [
           ['Passphrase strength is three rough levels (weak, phrase, long random); its entropy is not measured.'],
           ['Metal is assumed to be steel: an aluminum or brass plate would not survive a fire. Nor are a waterproof bag or a fireproof safe told apart.'],
           ['Protection is three levels (none, home safe, bank box), without telling apart the quality of the safe or alarms. Locations nest only one level deep.'],
-          ['It does not know where each person lives: the wrench attack can happen anywhere the victim has access to. Coercing two people at once counts as two attacks.'],
+          ['Each person lives in a single place and is assumed to be there: schedules (being at work) are not taken into account. If you do not set where they live, they can be coerced anywhere at no extra cost.'],
           ['The computer or phone used to sign is not modeled: flaws exploitable from a computer with malware are only warned about.'],
           ['The catalog of devices and their known flaws does not update itself: each version ships its own, with its date.'],
           ['There are no timelocks yet (inheritance with a waiting period, delayed recovery keys).'],

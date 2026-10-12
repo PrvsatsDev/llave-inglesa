@@ -283,10 +283,29 @@
   color: var(--text-faint);
   font-size: var(--text-xs);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .owner .role {
   color: var(--accent);
+}
+
+/* Dónde vive, bajo el papel. */
+.home {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home svg {
+  flex: none;
 }
 
 .knows {

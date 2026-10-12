@@ -15,8 +15,8 @@ const HEADER_MIDDLE = 28;
 /** Altura aproximada de una ubicación (cabecera + filas de objetos). */
 export const locationHeight = (rows: number) => 60 + Math.max(rows, 1) * 52 + 12;
 
-/** Altura aproximada de una persona: cabecera y, si sabe algo de memoria, sus insignias (unas dos por fila). */
-export const personHeight = (rows: number) => (rows > 0 ? 80 + Math.ceil(rows / 2) * 26 : 60);
+/** Altura aproximada de una persona: cabecera (más alta si dice dónde vive) y, si sabe algo de memoria, sus insignias (unas dos por fila). */
+export const personHeight = (rows: number, home = false) => (rows > 0 ? 80 + Math.ceil(rows / 2) * 26 : 60) + (home ? 16 : 0);
 
 /** Horizontal: ubicaciones en fila y personas debajo. Vertical (pantalla estrecha): dos columnas. */
 export type Orientation = 'horizontal' | 'vertical';
@@ -29,6 +29,8 @@ interface LocationInput {
 interface PersonInput {
   id: Id;
   rows: number;
+  /** Consta dónde vive (una línea más en la cabecera). */
+  home?: boolean;
   /** Ubicaciones a las que accede (para ordenar y reducir cruces). */
   links: Id[];
 }
@@ -87,7 +89,7 @@ function layoutVertical(locations: LocationInput[], people: PersonInput[]): Map<
   const wanted = (p: PersonInput) => {
     const ys = p.links.map((id) => positions.get(id)?.y).filter((v): v is number => v !== undefined);
     // El centro de la persona, a la altura de las cabeceras de sus ubicaciones.
-    return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length + HEADER_MIDDLE - personHeight(p.rows) / 2 : Number.POSITIVE_INFINITY;
+    return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length + HEADER_MIDDLE - personHeight(p.rows, p.home) / 2 : Number.POSITIVE_INFINITY;
   };
   const ordered = people
     .map((p, i) => ({ p, i, w: wanted(p) }))
@@ -97,7 +99,7 @@ function layoutVertical(locations: LocationInput[], people: PersonInput[]): Map<
   for (const { p, w } of ordered) {
     const top = Math.max(free, Number.isFinite(w) ? w : free);
     positions.set(p.id, { x: personX, y: top });
-    free = top + personHeight(p.rows) + PERSON_STACK_GAP;
+    free = top + personHeight(p.rows, p.home) + PERSON_STACK_GAP;
   }
 
   return positions;

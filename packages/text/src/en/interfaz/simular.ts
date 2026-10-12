@@ -23,6 +23,8 @@ export const simular: typeof es = {
   asaltar: (n: number, sitios: string) => `Raiding ${n} different locations (${sitios})`,
   vencerCoaccion: (dispositivos: string) => `Defeating the duress PIN of ${dispositivos}`,
   total: 'Total',
+  mismoAsalto: 'in the same raid',
+  recargoCoaccion: { away: 'where they do not live: they have to be taken there', 'bank-box': 'they have to be taken to the bank', ninguno: '' },
   coaccion: {
     antes: (personas: string, varias: boolean) => `${personas} ${varias ? 'have' : 'has'} a`,
     destacado: 'duress PIN',

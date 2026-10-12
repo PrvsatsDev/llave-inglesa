@@ -22,6 +22,9 @@ export const simular = {
   asaltar: (n: number, sitios: string) => `Asaltar ${n} sitios distintos (${sitios})`,
   vencerCoaccion: (dispositivos: string) => `Vencer el PIN de coacción de ${dispositivos}`,
   total: 'Total',
+  mismoAsalto: 'en el mismo asalto',
+  /** Por qué cuesta más una llave inglesa (vacío: nada que decir). */
+  recargoCoaccion: { away: 'donde no vive: hay que llevarle', 'bank-box': 'hay que llevarle al banco', ninguno: '' },
   coaccion: {
     antes: (personas: string, varias: boolean) => `${personas} ${varias ? 'tienen' : 'tiene'} un`,
     destacado: 'PIN de coacción',

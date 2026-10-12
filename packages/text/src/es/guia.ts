@@ -698,7 +698,7 @@ export const GUIA: readonly Capitulo[] = [
           ['La fortaleza de una passphrase son tres niveles aproximados (débil, frase, aleatoria larga); no se mide su entropía.'],
           ['El metal se supone acero: una placa de aluminio o latón no resistiría un incendio. Tampoco se distinguen una bolsa estanca o una caja fuerte ignífuga.'],
           ['La protección son tres niveles (ninguna, caja fuerte, caja del banco), sin distinguir la calidad de la caja ni alarmas. Las ubicaciones se anidan un solo nivel.'],
-          ['No se sabe dónde vive cada persona: la llave inglesa puede hacerse en cualquier sitio al que la víctima tenga acceso. Coaccionar a dos personas a la vez cuenta como dos ataques.'],
+          ['Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.'],
           ['No se modela el ordenador o el móvil con el que se firma: los fallos explotables desde un ordenador con malware solo se avisan.'],
           ['El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.'],
           ['Todavía no hay timelocks (herencia con espera, claves de recuperación con retraso).'],

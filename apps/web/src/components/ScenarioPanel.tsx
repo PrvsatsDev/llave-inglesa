@@ -1,5 +1,5 @@
 import { indexModel, type CustodyModel, type ModelIndex } from '@llave-inglesa/domain';
-import { atomEffort, attackAtoms, attackEffort, attackSites, createWorld, DURESS_SURCHARGE, extraSitesSurcharge, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
+import { atomEfforts, attackAtoms, attackEffort, attackSites, coercionSurchargeReason, createWorld, DURESS_SURCHARGE, extraSitesSurcharge, explain, lossAtoms, type AttackAtom, type ExplanationNode, type LossEvent } from '@llave-inglesa/engine';
 import { Bug, Eye, EyeOff, Flame, ShieldQuestion, Skull, X } from 'lucide-react';
 import { attackText, factText, lossText, ruleText, UI, vendorText } from '../lib/text.ts';
 import type { ScenarioView } from '../scenario/view.ts';
@@ -76,14 +76,23 @@ function Effort({ model, view, index }: { model: CustodyModel; view: ScenarioVie
   const devices = T.unir([...new Set(duress.map((d) => d.device))].map(name));
   const sites = attackSites(atoms, index);
   const sitesSurcharge = extraSitesSurcharge(atoms, index);
+  const efforts = atomEfforts(atoms, index);
+  // Por qué cuesta lo que cuesta una coacción: si va en el asalto de otra o hay que llevar a la víctima.
+  const why = (a: AttackAtom, i: number) =>
+    [efforts[i]!.sameAssault && T.mismoAsalto, a.type === 'coercion' && T.recargoCoaccion[coercionSurchargeReason(a, index) ?? 'ninguno']]
+      .filter(Boolean)
+      .join('; ');
   return (
     <Section title={T.esfuerzo}>
       <table className={styles.effort}>
         <tbody>
           {atoms.map((a, i) => (
             <tr key={i}>
-              <td>{attackText(a, index)}</td>
-              <td className={styles.points}>{num(atomEffort(a, index))}</td>
+              <td>
+                {attackText(a, index)}
+                {why(a, i) && <span className={styles.why}> ({why(a, i)})</span>}
+              </td>
+              <td className={styles.points}>{num(efforts[i]!.effort)}</td>
             </tr>
           ))}
           {sitesSurcharge > 0 && (

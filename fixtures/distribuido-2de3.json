@@ -25,9 +25,9 @@
     { "id": "desc-hermano", "label": "Descriptor impreso", "medium": "paper", "contents": [{ "type": "descriptor" }], "location": "casa-hermano" }
   ],
   "people": [
-    { "id": "yo", "name": "Yo", "role": "owner" },
-    { "id": "pareja", "name": "Pareja", "role": "heir" },
-    { "id": "hermano", "name": "Hermano", "role": "custodian" }
+    { "id": "yo", "name": "Yo", "role": "owner", "livesAt": "casa" },
+    { "id": "pareja", "name": "Pareja", "role": "heir", "livesAt": "casa" },
+    { "id": "hermano", "name": "Hermano", "role": "custodian", "livesAt": "casa-hermano" }
   ],
   "locations": [
     { "id": "casa", "name": "Casa", "access": [{ "person": "yo" }, { "person": "pareja" }] },

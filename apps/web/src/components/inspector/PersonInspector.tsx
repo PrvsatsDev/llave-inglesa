@@ -1,4 +1,4 @@
-import { removePerson, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
+import { canLiveAt, removePerson, setPersonHome, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
 import { MapPin, User } from 'lucide-react';
 import { secretOptions, toggleSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
@@ -17,6 +17,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
   const open = useSelection((s) => s.open);
   const id = person.id;
   const isLastOwner = person.role === 'owner' && model.people.filter((p) => p.role === 'owner').length === 1;
+  const homes = [{ value: '', label: T.sinIndicar }, ...model.locations.filter((l) => canLiveAt(model, l.id)).map((l) => ({ value: l.id, label: l.name }))];
   const access = model.locations.flatMap((l) => l.access.filter((a) => a.person === id).map((a) => ({ location: l, when: a.when })));
 
   return (
@@ -35,6 +36,9 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
               <Select id={fid} value={person.role} options={roleOptions()} onChange={(role) => apply((m) => updatePerson(m, id, { role }))} />
             )
           }
+        </Field>
+        <Field label={T.viveEn} hint={person.livesAt === undefined ? T.pistaSinIndicar : T.pistaViveEn}>
+          {(fid) => <Select id={fid} value={person.livesAt ?? ''} options={homes} onChange={(home) => apply((m) => setPersonHome(m, id, home || undefined))} />}
         </Field>
       </Section>
 

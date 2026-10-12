@@ -9,11 +9,12 @@ import {
   EXTRA_SITE_SURCHARGE,
   atomEfforts,
   attackEffort,
+  coercionSurchargeReason,
   coercionAssaults,
 } from '../src/score.ts';
 import { base, loadFixture, parse } from './helpers.ts';
 
-const coercion = (person: string, location: string | null): AttackAtom => ({ type: 'coercion', person, location });
+const coercion = (person: string, location: string | null) => ({ type: 'coercion' as const, person, location });
 
 /** Single-sig con passphrase aleatoria (no se adivina): hace falta la semilla y la passphrase. */
 function input(overrides: Partial<CustodyModelInput>): CustodyModelInput {
@@ -59,6 +60,8 @@ describe('la misma persona en dos sitios es un solo secuestro', () => {
   it('la caja del banco no suma además el recargo de no vivir allí', () => {
     const m = model('casa');
     expect(atomEfforts(cut, indexModel(m)).map((a) => a.effort)).toEqual([ATTACK_EFFORT.coercion, COERCION_SURCHARGE['bank-box']]);
+    expect(cut.map((a) => coercionSurchargeReason(a, indexModel(m)))).toEqual([null, 'bank-box']);
+    expect(coercionSurchargeReason(coercion('yo', 'casa'), indexModel(model('piso')))).toBe('away');
   });
 
   it('si no vive en casa, cogerle allí cuesta algo más', () => {

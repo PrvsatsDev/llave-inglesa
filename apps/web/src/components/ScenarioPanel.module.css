@@ -92,6 +92,10 @@
   font-size: var(--text-sm);
 }
 
+.why {
+  color: var(--text-faint);
+}
+
 .effort td {
   padding: 4px 0;
   color: var(--text-muted);
