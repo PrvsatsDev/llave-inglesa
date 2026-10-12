@@ -1,6 +1,6 @@
 import { advisoriesFor, catalogModelByName, type Device, type Id, type Key } from '@llave-inglesa/domain';
 import type { CompromisedSeed, Holdings } from './derive.ts';
-import { entropyOrigins, keyCompromise, originKey, weakEntropyKeys, type EntropyOrigin } from './entropy.ts';
+import { entropyOrigins, keyCompromise, originKey, ownEntropyBits, weakEntropyKeys, weakOwnEntropyKeys, type EntropyOrigin } from './entropy.ts';
 import { firmwareDevices, firmwareExposure } from './firmware.ts';
 import { accessibleLocations, itemsAvailableAt, type World } from './world.ts';
 
@@ -23,6 +23,8 @@ export type AttackAtom =
   | { type: 'entropy-compromise'; origin: EntropyOrigin }
   /** Fallo de entropía publicado (p. ej. Coldcard 2026): las semillas afectadas se pueden adivinar. */
   | { type: 'known-weak-entropy'; advisory: string }
+  /** Semilla de solo dados, moneda o cartas por debajo del estándar (128 bits): se adivina por fuerza bruta. */
+  | { type: 'weak-own-entropy'; key: Id }
   /** Firmware malicioso de un fabricante: filtra en las firmas las semillas que pasan por sus dispositivos. */
   | { type: 'malicious-firmware'; vendor: string }
   /** Adivinar por fuerza bruta una passphrase no aleatoria; solo sirve teniendo ya la semilla. */
@@ -52,6 +54,7 @@ export function attackAtoms(world: World): AttackAtom[] {
   }
   for (const origin of entropyOrigins(model)) atoms.push({ type: 'entropy-compromise', origin });
   for (const advisory of weakEntropyKeys(model).keys()) atoms.push({ type: 'known-weak-entropy', advisory });
+  for (const key of weakOwnEntropyKeys(model)) atoms.push({ type: 'weak-own-entropy', key: key.id });
   for (const { vendor } of firmwareExposure(model).values()) atoms.push({ type: 'malicious-firmware', vendor });
   for (const key of model.keys) {
     const strength = guessablePassphrase(key);
@@ -77,6 +80,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   const origins = new Set<string>();
   const advisories = new Set<string>();
   const firmware = new Set<string>();
+  const weakOwn = new Set<Id>();
   const bruteforce: { key: Id; strength: PassphraseGuess }[] = [];
   for (const a of atoms) {
     switch (a.type) {
@@ -102,6 +106,9 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'known-weak-entropy':
         advisories.add(a.advisory);
         break;
+      case 'weak-own-entropy':
+        weakOwn.add(a.key);
+        break;
       case 'malicious-firmware':
         firmware.add(a.vendor.trim().toLowerCase());
         break;
@@ -116,6 +123,9 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   });
   for (const [advisory, keys] of weakEntropyKeys(world.model)) {
     if (advisories.has(advisory)) keys.forEach((key) => compromisedSeeds.push({ key, advisory }));
+  }
+  for (const key of world.model.keys) {
+    if (weakOwn.has(key.id)) compromisedSeeds.push({ key: key.id, ownBits: ownEntropyBits(key.provenance.sources) });
   }
   for (const [k, { vendor, keys }] of firmwareExposure(world.model)) {
     if (firmware.has(k)) keys.forEach((key) => compromisedSeeds.push({ key, firmware: vendor }));

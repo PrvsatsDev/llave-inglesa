@@ -162,9 +162,9 @@ Steel survives fire and the safe slows the thief down, but whoever knows the saf
 
 > ▶ In the app, with the example “Affected Coldcard”: *Guess the seed through the published flaw*.
 
-Security **12** (very poor): it does not matter how well it is kept. Updating the firmware does not fix it; you have to create a new wallet, with good entropy, and move the funds to it. Dice prevent it (enough rolls, mixed in when generating it), and so does a passphrase.
+Security **12** (very poor): it does not matter how well it is kept. Updating the firmware does not fix it; you have to create a new wallet, with good entropy, and move the funds to it. Dice prevent it (at least 50, mixed in when generating it), and so does a passphrase.
 
-> 💡 Mixing dice with the device’s generator protects you from its flaws, but it usually cannot be verified: the device’s part is secret. To be able to verify, generate the seed phrase with your entropy alone (dice or a coin) and recompute it in another tool.
+> 💡 Mixing dice with the device’s generator protects you from its flaws, but it usually cannot be verified: the device’s part is secret. To be able to verify, generate the seed phrase with your entropy alone (dice or a coin) and recompute it in another tool. But use the standard amount: 128 bits, at least 50 dice rolls or 128 coin flips. With less, the seed phrase can be guessed, and mixed with the generator they do not protect you from its flaws.
 
 **7. 2-of-3 multisig, all at home.** Three devices and three plates, but all in the same place: whoever gets into the house (or your partner) has everything. Security **53** (fair), resilience **65** (fair). A multisig that is not distributed is very much like a single-sig.
 

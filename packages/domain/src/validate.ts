@@ -15,6 +15,7 @@ export type IssueCode =
   | 'key-not-in-policy'
   | 'no-owner'
   | 'passphrase-strength-unset'
+  | 'entropy-count-unset'
   | 'protection-not-physical'
   | 'invalid-nesting'
   | 'invalid-home';
@@ -115,6 +116,11 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
 
   model.keys.forEach((k, i) => {
     if (k.passphrase && !k.passphraseStrength) report('warning', 'passphrase-strength-unset', ['keys', i, 'passphraseStrength'], k.id);
+    // Dados, moneda o cartas sin cuántos: no cuentan como entropía (ante la duda, lo peor).
+    k.provenance.sources.forEach((s, j) => {
+      if ((s.kind === 'dice' || s.kind === 'coin' || s.kind === 'cards') && s.count === undefined)
+        report('warning', 'entropy-count-unset', ['keys', i, 'provenance', 'sources', j, 'count'], k.id);
+    });
   });
 
   model.devices.forEach((d, i) => {

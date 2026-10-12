@@ -23,6 +23,11 @@ export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphr
   'entropy-compromise': 3,
   /** Fallo de entropía publicado: se adivina en remoto, sin tocar nada (ya se ha explotado). */
   'known-weak-entropy': 0.5,
+  /**
+   * Semilla solo de dados, moneda o cartas por debajo de 128 bits: como un fallo publicado. Entre 50 y 120 bits hay
+   * un mundo, pero se trata igual a propósito: el estándar es 128 y las improvisaciones no valen.
+   */
+  'weak-own-entropy': 0.5,
   /** Actualización maliciosa o fabricante comprometido, y que el usuario firme: sofisticado. */
   'malicious-firmware': 3,
 };

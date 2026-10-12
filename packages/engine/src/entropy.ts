@@ -41,12 +41,28 @@ export function entropyOrigins(model: CustodyModel): EntropyOrigin[] {
 }
 
 /**
+ * Entropía propia mínima: la del estándar (BIP39, 12 palabras). Menos no se trata como «casi suficiente»: o se llega
+ * o no. 50 tiradas de dado ≈ 129 bits; 128 lanzamientos de moneda.
+ */
+export const STANDARD_SEED_BITS = 128;
+
+const isOwn = (s: EntropySource) => s.kind === 'dice' || s.kind === 'coin' || s.kind === 'cards';
+
+/** ¿La semilla sale solo de entropía propia (dados, moneda, cartas), sin ningún RNG? */
+export const onlyOwnEntropy = (key: Key) => key.provenance.sources.every(isOwn);
+
+/** ¿La entropía propia mezclada llega al estándar? Sin número de tiradas cuenta como 0 bits. */
+export const enoughOwnEntropy = (key: Key) => ownEntropyBits(key.provenance.sources) >= STANDARD_SEED_BITS;
+
+/**
  * ¿Queda expuesta la semilla de `key` si caen los orígenes `compromised` (por originKey)?
  * Devuelve los orígenes responsables, o null si la key resiste.
  *
  * - Si quien generó la semilla está comprometido y no se verificó de forma independiente,
  *   su firmware pudo ignorar el resto de entropía: cae.
- * - Si no, cae solo si TODAS las fuentes están comprometidas (una buena fuente basta).
+ * - Si no, la entropía propia solo protege si llega al estándar: entonces resiste. Si no llega, el atacante que
+ *   conoce el RNG adivina el resto, así que cae si TODOS los RNG mezclados están comprometidos (uno bueno basta).
+ *   Una semilla solo de entropía propia no cae por aquí: ver `weakOwnEntropyKeys`.
  */
 export function keyCompromise(key: Key, compromised: ReadonlySet<string>): EntropyOrigin[] | null {
   const { generatedBy, independentlyVerified, sources } = key.provenance;
@@ -54,13 +70,17 @@ export function keyCompromise(key: Key, compromised: ReadonlySet<string>): Entro
     const origin: EntropyOrigin = { kind: 'vendor', vendor: generatedBy.vendor };
     if (compromised.has(originKey(origin))) return [origin];
   }
-  const origins = sources.map(sourceOrigin);
-  if (origins.every((o) => o !== null && compromised.has(originKey(o)))) {
-    const unique = new Map((origins as EntropyOrigin[]).map((o) => [originKey(o), o]));
+  if (enoughOwnEntropy(key)) return null;
+  const origins = sources.flatMap((s) => sourceOrigin(s) ?? []);
+  if (origins.length > 0 && origins.every((o) => compromised.has(originKey(o)))) {
+    const unique = new Map(origins.map((o) => [originKey(o), o]));
     return [...unique.values()];
   }
   return null;
 }
+
+/** Keys generadas solo con entropía propia que no llega al estándar: se pueden adivinar por fuerza bruta. */
+export const weakOwnEntropyKeys = (model: CustodyModel): Key[] => model.keys.filter((k) => onlyOwnEntropy(k) && !enoughOwnEntropy(k));
 
 /** Bits de entropía propia (dados, moneda, cartas) mezclados en la semilla. Sin número de tiradas: 0. */
 export function ownEntropyBits(sources: readonly EntropySource[]): number {

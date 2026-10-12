@@ -495,13 +495,13 @@ export const GUIA: readonly Capitulo[] = [
         texto: [
           'Seguridad ',
           cifra(COLDCARD, 'security'),
-          ': da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que crear una cartera nueva, con buena entropía, y mover los fondos a ella. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.',
+          ': da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que crear una cartera nueva, con buena entropía, y mover los fondos a ella. Lo evitan los dados (al menos 50, mezclados al generarla) o una passphrase.',
         ],
       },
       {
         tipo: 'nota',
         texto: [
-          'Mezclar dados con el generador del dispositivo protege de sus fallos, pero normalmente no se puede verificar: la parte del dispositivo es secreta. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta.',
+          'Mezclar dados con el generador del dispositivo protege de sus fallos, pero normalmente no se puede verificar: la parte del dispositivo es secreta. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta. Eso sí, la del estándar: 128 bits, al menos 50 dados o 128 lanzamientos de moneda. Con menos, la frase semilla se puede adivinar, y mezclados con el generador no protegen de sus fallos.',
         ],
       },
       {

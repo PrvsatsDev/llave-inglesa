@@ -162,9 +162,9 @@ El acero resiste el fuego y la caja fuerte frena al ladrón, pero quien conoce l
 
 > ▶ En la app, con el ejemplo «Coldcard afectada»: *Adivinar la semilla por el fallo publicado*.
 
-Seguridad **12** (muy mal): da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que crear una cartera nueva, con buena entropía, y mover los fondos a ella. Lo evitan los dados (tiradas suficientes, mezcladas al generarla) o una passphrase.
+Seguridad **12** (muy mal): da igual lo bien guardada que esté. Actualizar el firmware no la arregla; hay que crear una cartera nueva, con buena entropía, y mover los fondos a ella. Lo evitan los dados (al menos 50, mezclados al generarla) o una passphrase.
 
-> 💡 Mezclar dados con el generador del dispositivo protege de sus fallos, pero normalmente no se puede verificar: la parte del dispositivo es secreta. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta.
+> 💡 Mezclar dados con el generador del dispositivo protege de sus fallos, pero normalmente no se puede verificar: la parte del dispositivo es secreta. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta. Eso sí, la del estándar: 128 bits, al menos 50 dados o 128 lanzamientos de moneda. Con menos, la frase semilla se puede adivinar, y mezclados con el generador no protegen de sus fallos.
 
 **7. Multisig 2 de 3, todo en casa.** Tres dispositivos y tres placas, pero todo en el mismo sitio: quien llega a casa (o tu pareja) lo tiene todo. Seguridad **53** (aceptable), resiliencia **65** (aceptable). Un multisig sin distribuir se parece mucho a un single-sig.
 

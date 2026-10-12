@@ -78,9 +78,10 @@ describe('fallo de entropía de Coldcard (2026)', () => {
     expect(after.score).toBeLessThan(before.score);
   });
 
-  it('es el ataque más barato que existe', () => {
-    const others = Object.entries(ATTACK_EFFORT).filter(([type]) => type !== 'known-weak-entropy');
+  it('es el ataque más barato que existe (empatado con la semilla de poca entropía propia, que se trata igual)', () => {
+    const others = Object.entries(ATTACK_EFFORT).filter(([type]) => type !== 'known-weak-entropy' && type !== 'weak-own-entropy');
     for (const [, effort] of others) expect(ATTACK_EFFORT['known-weak-entropy']).toBeLessThan(effort);
+    expect(ATTACK_EFFORT['weak-own-entropy']).toBe(ATTACK_EFFORT['known-weak-entropy']);
   });
 
   it('la passphrase protege: con la semilla sola no se firma', () => {

@@ -495,13 +495,13 @@ export const GUIA: typeof es = [
         texto: [
           'Security ',
           cifra(COLDCARD, 'security'),
-          ': it does not matter how well it is kept. Updating the firmware does not fix it; you have to create a new wallet, with good entropy, and move the funds to it. Dice prevent it (enough rolls, mixed in when generating it), and so does a passphrase.',
+          ': it does not matter how well it is kept. Updating the firmware does not fix it; you have to create a new wallet, with good entropy, and move the funds to it. Dice prevent it (at least 50, mixed in when generating it), and so does a passphrase.',
         ],
       },
       {
         tipo: 'nota',
         texto: [
-          'Mixing dice with the device’s generator protects you from its flaws, but it usually cannot be verified: the device’s part is secret. To be able to verify, generate the seed phrase with your entropy alone (dice or a coin) and recompute it in another tool.',
+          'Mixing dice with the device’s generator protects you from its flaws, but it usually cannot be verified: the device’s part is secret. To be able to verify, generate the seed phrase with your entropy alone (dice or a coin) and recompute it in another tool. But use the standard amount: 128 bits, at least 50 dice rolls or 128 coin flips. With less, the seed phrase can be guessed, and mixed with the generator they do not protect you from its flaws.',
         ],
       },
       {

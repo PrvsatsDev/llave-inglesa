@@ -36,7 +36,9 @@ export type CompromisedSeed =
   /** Fallo publicado: de entropía (sin nada más) o de extracción física (teniendo `device`). */
   | { key: Id; advisory: string; device?: Id }
   /** Filtrada en las firmas por un firmware malicioso de ese fabricante. */
-  | { key: Id; firmware: string };
+  | { key: Id; firmware: string }
+  /** Adivinada por fuerza bruta: solo entropía propia, con estos bits (por debajo del estándar). */
+  | { key: Id; ownBits: number };
 
 export interface Derivation {
   readonly facts: ReadonlyMap<FactId, DerivedFact>;
@@ -84,6 +86,7 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
     const seed = secret({ type: 'seed', key: c.key });
     if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
     else if ('firmware' in c) add(seed, { rule: 'malicious-firmware', premises: [], via: { vendor: c.firmware } });
+    else if ('ownBits' in c) add(seed, { rule: 'weak-own-entropy', premises: [], via: { bits: c.ownBits } });
     else if (c.device) add(seed, { rule: 'physical-extraction', premises: [factId({ kind: 'item', item: c.device })], via: { device: c.device, advisory: c.advisory } });
     else add(seed, { rule: 'known-weak-entropy', premises: [], via: { advisory: c.advisory } });
   }

@@ -91,6 +91,7 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   coercion: 'wrench attack',
   'entropy-compromise': 'RNG with an unknown flaw',
   'known-weak-entropy': 'published entropy flaw',
+  'weak-own-entropy': 'seed with too little own entropy',
   'malicious-firmware': 'malicious firmware',
   'passphrase-bruteforce': 'passphrase brute force',
 };
@@ -110,6 +111,7 @@ export const attackText: typeof es.attackText = (a: AttackAtom, index: ModelInde
     case 'insider': return `Betrayal by ${label(a.person)}`;
     case 'entropy-compromise': return `RNG with a still-unknown flaw: ${originText(a.origin)}`;
     case 'known-weak-entropy': return `Seed guessable through a published flaw: ${advisoryShortName(a.advisory)}`;
+    case 'weak-own-entropy': return `Brute force on the seed of ${label(a.key)} (too little own entropy)`;
     case 'malicious-firmware': return `Malicious firmware: ${vendorText(a.vendor)}`;
     case 'passphrase-bruteforce': return `Brute force on the passphrase of ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
   }
@@ -204,6 +206,10 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'memory': return `${name(v.person)} knows it`;
     case 'entropy-compromise': return `predictable if the RNG of ${(v.origins ?? []).map(originText).join(' + ')} has a still-unknown flaw`;
     case 'known-weak-entropy': return `guessable through a published flaw (${advisoryShortName(v.advisory ?? '')})`;
+    case 'weak-own-entropy':
+      return v.bits
+        ? `guessable by brute force: only ${Math.floor(v.bits)} bits of own entropy, below the standard 128`
+        : 'guessable by brute force: the number of rolls is not set, so it does not count as entropy';
     case 'malicious-firmware': return `leaked in the signatures by malicious firmware from ${vendorText(v.vendor ?? '')}`;
     case 'passphrase-bruteforce': return `guessed by brute force from the seed (${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']} passphrase)`;
     case 'physical-extraction': return `extracted from the hardware of ${name(v.device)} despite the PIN (${advisoryShortName(v.advisory ?? '')})`;
@@ -234,6 +240,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'key-not-in-policy': 'A key does not take part in the policy',
   'no-owner': 'There must be a person with the owner role',
   'passphrase-strength-unset': 'A passphrase has no strength set: it is treated as weak',
+  'entropy-count-unset': 'Dice, coin or cards with no number of rolls set: they do not count as entropy',
   'protection-not-physical': 'Only a physical location can be a home safe or a bank box',
   'invalid-nesting': 'A location is inside another in an invalid way (both must be physical, one level only)',
   'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',
