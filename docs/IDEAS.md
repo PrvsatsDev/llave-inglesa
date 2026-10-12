@@ -10,19 +10,37 @@ pensarse antes de implementarla.
   capturas y logo en la descripción. La interfaz ya está también en inglés; `requiresHttps` lo admiten para apps que
   necesitan un contexto seguro (como Actual o Vaultwarden), y abierta por http:// ya avisa en vez de fallar.
 
-## Roadmap (acordado el 2026-10-12)
+## Roadmap (reordenado el 2026-10-12)
 
-En este orden; cada punto se diseña y se discute antes de implementarlo.
+Hechos el 2026-10-12: dónde vive cada persona, calidad de la entropía (un solo corte en 128 bits) y multisig sin
+ningún backup del descriptor como problema grave.
 
-1. ~~**Dónde vive cada persona**~~: hecho (2026-10-12).
-2. ~~**Calidad de la entropía**~~: hecho (2026-10-12), con un solo corte en 128 bits.
-3. ~~**Multisig sin descriptor como error grave**~~: hecho (2026-10-12), sin cambiar las restas.
-4. **Ordenador de firma**, solo dos extremos: ordenador de uso diario (muy mala idea, muy
-   penalizado) y ordenador dedicado, sin red e instalado a conciencia (penaliza algo, mucho
-   menos). Falta decidir en qué consiste la penalización (malware que cambia direcciones de
-   recepción o cambio, firma a ciegas, explotar los fallos de dispositivo que hoy solo se avisan).
-5. **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol, preparado para
-   nodos `after`/`older`.
+### Ahora: cambios pequeños antes de la próxima versión (sin tocar el motor)
+
+1. **«+ Fuente» enfoca las tiradas**: hoy añade «Dados» sin número y el aviso salta al momento; llevar el cursor a
+   la casilla de tiradas.
+2. **La guía menciona «Vive en»** en *Montar tu esquema* (si no se indica, se supone lo peor).
+3. **R10: el custodio sin «Vive en»**: explicarlo en la descripción del ejemplo (no vive en su despacho).
+4. **Por qué sube la seguridad sin descriptor**: un texto en el desglose de Seguridad (sin descriptor, el ladrón
+   tampoco puede construir la transacción). Solo texto: el motor ya lo calcula.
+5. **Ejemplos sin Coldcard**, salvo el de su propio fallo (R07): no se quiere darles más publicidad (ni a Ledger).
+   Si alguno usa el PIN de coacción, sustituirla por otro modelo que lo tenga; si no lo hay, ese se queda.
+   Candidatos: Trezor, BitBox, Passport, Keystone.
+6. **Más acciones en el mapa**: borrar con la tecla Supr el elemento seleccionado y, si no es complicado, mover
+   dispositivos y backups entre ubicaciones arrastrándolos.
+
+### Después
+
+7. **Ordenador de firma**, solo dos extremos: ordenador de uso diario (muy mala idea, muy penalizado) y ordenador
+   dedicado, sin red e instalado a conciencia (penaliza algo, mucho menos). Falta decidir en qué consiste la
+   penalización (malware que cambia direcciones de recepción o cambio, firma a ciegas, explotar los fallos de
+   dispositivo que hoy solo se avisan).
+8. **Procedencia del dispositivo**, cerca del firmware: (a) DIY, comprando las piezas y montado en casa, mejor que
+   comprado montado (solo en los que de verdad tienen esa opción); (b) si se compró montado, si llegó con el precinto
+   de seguridad (tamper-evident) intacto; (c) si no es DIY, dónde se compró: al fabricante (lo mejor), revendedor
+   oficial (medio), tienda no oficial, reacondicionado o de segunda mano (lo peor). Por madurar: si afecta a la
+   puntuación (sería lo ideal) o solo da avisos.
+9. **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol, preparado para nodos `after`/`older`.
 
 ## Aparcado
 
