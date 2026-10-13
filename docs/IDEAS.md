@@ -34,7 +34,17 @@ ningún backup del descriptor como problema grave.
 8. ~~**Procedencia del dispositivo**~~ (2026-10-12): montado en casa (solo DIY), precinto y dónde se compró; lo dudoso
    es el ataque «Dispositivo manipulado» (segunda mano o precinto roto 1,5, tienda no oficial 2,5, revendedor oficial
    4), que regala las semillas que pasan por él. Sin indicar no resta.
-9. **Timelocks y editor Miniscript** (la "idea 2"): la política ya es un árbol, preparado para nodos `after`/`older`.
+9. **Timelocks y editor Miniscript** (la "idea 2"), acordado el 2026-10-13. Nodo `older` (relativo, en días/meses
+   → bloques) dentro de `thresh`; `after` queda para más adelante. Dato nuevo: cada cuánto mueve el titular las monedas
+   (renovación). El motor evalúa la política «ahora» (sin timelocks) y «vencido» (con ellos): en el robo, la rama con
+   espera cuesta más salvo que se renueve menos a menudo que la espera; una pérdida que deja la recuperación en pie
+   pasa a «se recupera tras N meses»; la herencia se evalúa vencida; renovar cuesta usabilidad. Fases, una rama cada
+   una, todas en la misma versión:
+   1. Modelo y motor con `older`, y dos ejemplos nuevos.
+   2. Plantillas en la interfaz (recuperación con espera, multisig que se relaja, herencia), con la espera en el mapa
+      y en Simular.
+   3. Descriptor `wsh(miniscript)` (con los vectores de Bitcoin Core; sin Taproot) y qué dispositivos firman Miniscript.
+   4. Editor libre del árbol (opcional).
 
 ## Aparcado
 
