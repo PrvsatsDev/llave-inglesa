@@ -449,6 +449,17 @@ describe('ordenar los ids al exportar', () => {
   });
 });
 
+describe('eliminar una ubicación', () => {
+  it('el móvil que lleva alguien deja de conectarse a los dispositivos que se van con ella', () => {
+    const { model, id } = addComputer(casa, { carriedBy: 'yo' });
+    const devices = model.devices.filter((d) => d.location === 'casa').map((d) => d.id);
+    const connected = setComputerConnects(model, id, devices);
+    const after = removeLocation(connected, 'casa');
+    expect(after.computers.find((c) => c.id === id)?.connects).toEqual([]);
+    expect(errors(after)).toEqual([]);
+  });
+});
+
 describe('políticas con timelocks', () => {
   const r13 = fixture('referencia/r13-recuperacion-heredera');
   const r14 = fixture('referencia/r14-2de3-se-relaja');

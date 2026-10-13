@@ -322,7 +322,10 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
       locations: model.locations.filter((l) => l.id !== id).map((l) => (l.inside === id ? withoutKeys(l, 'inside') : l)),
       devices: model.devices.filter((d) => d.location !== id),
       artifacts: model.artifacts.filter((a) => a.location !== id),
-      computers: model.computers.filter((c) => c.location !== id),
+      // Los ordenadores que quedan (el móvil que lleva alguien) dejan de conectarse a los dispositivos que se van.
+      computers: model.computers
+        .filter((c) => c.location !== id)
+        .map((c) => (c.connects ? { ...c, connects: c.connects.filter((d) => !goneDevices.has(d)) } : c)),
     }),
     (s) => (s.type === 'pin' && goneDevices.has(s.device)) || (s.type === 'password' && goneArtifacts.has(s.artifact)),
   );
