@@ -26,6 +26,7 @@ export const mapa: typeof es = {
   ySiNoResiste: 'What if it does not survive?',
   ySiSePierde: 'What if it is lost?',
   multisig: 'multisig',
+  soloTrasEsperar: (espera: string) => `Only usable after the coins go ${espera} without moving (timelock)`,
   keysAqui: 'Keys present here',
   keyAqui: (key: string) => `${key} is here`,
   sabeDeMemoria: 'Knows by heart',

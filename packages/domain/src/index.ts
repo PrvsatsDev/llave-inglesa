@@ -4,3 +4,4 @@ export * from './validate.ts';
 export * from './edit.ts';
 export * from './catalog.ts';
 export * from './wallet.ts';
+export * from './shape.ts';

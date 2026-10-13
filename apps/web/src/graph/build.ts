@@ -1,6 +1,7 @@
 import { activeHolds, indexModel, isActiveSecret, type Artifact, type Computer, type CustodyModel, type Device, type Id, type Location, type Person, type SecretRef } from '@llave-inglesa/domain';
 import type { DeviceCompromise, Disaster } from '@llave-inglesa/engine';
 import type { Edge, MarkerType, Node } from '@xyflow/react';
+import { keyWaitBlocks } from '../lib/key-wait.ts';
 import { keyColor } from '../lib/key-colors.ts';
 import { UI, vendorText } from '../lib/text.ts';
 import type { ItemState, LocationState, PersonState, ScenarioView } from '../scenario/view.ts';
@@ -35,7 +36,7 @@ export type ItemView = {
   canLose?: boolean;
 };
 
-export type KeyTag = { id: Id; label: string; color: string };
+export type KeyTag = { id: Id; label: string; color: string; wait?: number | undefined };
 export type Tone = ScenarioView['tone'];
 
 export type LocationNodeData = {
@@ -149,7 +150,7 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
         i.kind === 'device' ? activeHolds(i.value) : i.kind === 'artifact' ? i.value.contents.flatMap((c) => (c.type === 'seed' ? [c.key] : [])) : [],
       ),
     );
-    const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id) }));
+    const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id), wait: keyWaitBlocks(model, k.id) }));
     const insideName = l.inside === undefined ? undefined : index.locations.get(l.inside)?.name;
     return { id: l.id, data: { name: l.name, kind: l.kind, ...(l.protection && { protection: l.protection }), ...(insideName !== undefined && { insideName }), items, keys } };
   });

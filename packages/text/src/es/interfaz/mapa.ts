@@ -26,6 +26,7 @@ export const mapa = {
   ySiNoResiste: '¿Y si no resiste?',
   ySiSePierde: '¿Y si se pierde?',
   multisig: 'multisig',
+  soloTrasEsperar: (espera: string) => `Solo sirve tras ${espera} sin mover las monedas (timelock)`,
   keysAqui: 'Keys materializadas aquí',
   keyAqui: (key: string) => `${key} está aquí`,
   sabeDeMemoria: 'Sabe de memoria',

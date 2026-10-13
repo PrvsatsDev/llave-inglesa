@@ -28,3 +28,13 @@
   background: var(--key-color);
   box-shadow: 0 0 8px var(--key-color);
 }
+
+/* Espera de una key que solo sirve tras un timelock. */
+.wait {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
