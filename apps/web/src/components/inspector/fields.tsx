@@ -1,6 +1,6 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
 import { ChevronDown, Trash2, X, type LucideIcon } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { secretBadge } from '../../graph/build.ts';
 import { SecretBadge } from '../../graph/SecretBadge.tsx';
 import { sameSecret } from '../../lib/secrets.ts';
@@ -74,16 +74,57 @@ export function TextInput({ id, value, onChange, placeholder, optional = false }
   );
 }
 
+/**
+ * Número entero entre `min` y `max`. Mientras se escribe no se corrige: solo se aplica cuando es válido, y al salir
+ * vuelve a lo que hay en el modelo. Vacío es `undefined` (sin indicar) si es `optional`.
+ */
+export function NumberInput({ id, value, min, max, onChange, optional = false, placeholder }: {
+  id?: string;
+  value: number | undefined;
+  min: number;
+  max: number;
+  onChange(v: number | undefined): void;
+  optional?: boolean;
+  placeholder?: string;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const parse = (text: string) => {
+    const n = Number(text);
+    return text.trim() !== '' && Number.isInteger(n) && n >= min && n <= max ? n : null;
+  };
+  const text = draft ?? (value === undefined ? '' : String(value));
+  const invalid = text.trim() === '' ? !optional : parse(text) === null;
+  return (
+    <input
+      id={id}
+      className={`${styles.input} ${invalid ? styles.invalid : ''}`}
+      type="number"
+      inputMode="numeric"
+      min={min}
+      max={max}
+      value={text}
+      placeholder={placeholder}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const n = parse(e.target.value);
+        if (n !== null) onChange(n);
+        else if (optional && e.target.value.trim() === '') onChange(undefined);
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  );
+}
+
 export function TextArea({ id, value, onChange, placeholder }: { id?: string; value: string; onChange(v: string): void; placeholder?: string }) {
   return <textarea id={id} className={styles.textarea} value={value} rows={3} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />;
 }
 
-export function Select<T extends string>({ id, value, options, onChange }: { id?: string; value: T; options: readonly { value: T; label: string }[]; onChange(v: T): void }) {
+export function Select<T extends string>({ id, value, options, onChange }: { id?: string; value: T; options: readonly { value: T; label: string; disabled?: boolean }[]; onChange(v: T): void }) {
   return (
     <span className={styles.selectWrap}>
       <select id={id} className={styles.select} value={value} onChange={(e) => onChange(e.target.value as T)}>
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </option>
         ))}

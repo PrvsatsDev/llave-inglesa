@@ -21,11 +21,12 @@ import {
   ShieldCheck,
   Smartphone,
   Vault,
+  Hourglass,
   type LucideIcon,
 } from 'lucide-react';
 import { moveItem } from '@llave-inglesa/domain';
 import { useState, type CSSProperties } from 'react';
-import { UI } from '../lib/text.ts';
+import { UI, waitText } from '../lib/text.ts';
 import { useScenario } from '../store/scenario.ts';
 import { isSelected, useSelection } from '../store/selection.ts';
 import { useDocument } from '../store/document.ts';
@@ -219,8 +220,19 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
         </span>
         <span className={styles.keyTags} aria-label={T.keysAqui}>
           {data.keys.map((k) => (
-            <span key={k.id} className={styles.keyTag} style={{ '--key-color': k.color } as CSSProperties} title={T.keyAqui(k.label)}>
+            <span
+              key={k.id}
+              className={styles.keyTag}
+              style={{ '--key-color': k.color } as CSSProperties}
+              title={k.wait ? `${T.keyAqui(k.label)}. ${T.soloTrasEsperar(waitText(k.wait))}` : T.keyAqui(k.label)}
+            >
               {k.label}
+              {k.wait && (
+                <span className={styles.keyWait}>
+                  <Hourglass size={10} aria-hidden />
+                  {waitText(k.wait)}
+                </span>
+              )}
             </span>
           ))}
         </span>

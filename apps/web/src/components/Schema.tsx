@@ -1,4 +1,4 @@
-import { addArtifact, addComputer, addDevice, addKey, addLocation, addPerson, indexModel, setThreshold, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
+import { addArtifact, addComputer, addDevice, addKey, addLocation, addPerson, indexModel, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
 import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, MapPin, Plus, RectangleHorizontal, Smartphone, User, UserPlus, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
@@ -6,12 +6,14 @@ import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.ts
 import { ROLE } from '../graph/PersonNode.tsx';
 import { SecretBadge } from '../graph/SecretBadge.tsx';
 import { keyColor } from '../lib/key-colors.ts';
-import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, policyText, provenanceText, UI } from '../lib/text.ts';
+import { keyWaitBlocks } from '../lib/key-wait.ts';
+import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, provenanceText, UI } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
 import { Button, Field, Section, Segmented, Select, TextArea, TextInput } from './inspector/fields.tsx';
 import { KeyChip } from './KeyChip.tsx';
+import { PolicySection } from './Policy.tsx';
 import { WalletSection } from './Wallet.tsx';
 import styles from './Schema.module.css';
 
@@ -32,11 +34,6 @@ export function Schema({ model }: { model: CustodyModel }) {
     select({ kind, id });
   };
 
-  const policy = model.policy;
-  const n = policy.type === 'thresh' ? policy.of.length : 1;
-  const flat = policy.type === 'thresh' && policy.of.every((p) => p.type === 'key');
-  const label = indexModel(model).label;
-
   return (
     <>
       {model.description && (
@@ -46,26 +43,7 @@ export function Schema({ model }: { model: CustodyModel }) {
       )}
       <Problems model={model} />
 
-      <Section title={T.politica}>
-        {policy.type === 'thresh' && !flat ? (
-          <>
-            <p className={styles.description}>{policyText(policy, label)}</p>
-            <p className={styles.hint}>{T.pistaRamas}</p>
-          </>
-        ) : policy.type === 'thresh' ? (
-          <>
-            <Segmented
-              label={T.firmasNecesarias}
-              value={String(policy.k)}
-              options={Array.from({ length: n }, (_, i) => ({ value: String(i + 1), label: T.kDeN(i + 1, n) }))}
-              onChange={(k) => apply((m) => setThreshold(m, Number(k)))}
-            />
-            <p className={styles.hint}>{T.pistaFirmas}</p>
-          </>
-        ) : (
-          <p className={styles.hint}>{T.singleSig}</p>
-        )}
-      </Section>
+      <PolicySection model={model} />
 
       <Section title={T.keys(model.keys.length)} action={<Button icon={Plus} onClick={() => create(addKey, 'key')}>{T.key}</Button>}>
         <ul className={styles.list}>
@@ -73,7 +51,7 @@ export function Schema({ model }: { model: CustodyModel }) {
             <li key={k.id}>
               <button className={styles.row} onClick={() => select({ kind: 'key', id: k.id })}>
                 <span className={styles.rowMain}>
-                  <KeyChip label={k.label} color={keyColor(model, k.id)} />
+                  <KeyChip label={k.label} color={keyColor(model, k.id)} wait={keyWaitBlocks(model, k.id)} />
                   {k.passphrase && <span className={styles.badge}>{T.conPassphrase(k.passphraseStrength ? PASSPHRASE_STRENGTH_TEXT[k.passphraseStrength] : T.sinIndicar)}</span>}
                   {k.xpub && (
                     <span className={styles.badge} title={T.pistaXpub}>
@@ -246,7 +224,7 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
                   <span className={styles.name}>{data.name || UI.comun.sinNombre}</span>
                   <span className={styles.keys}>
                     {data.keys.map((k) => (
-                      <KeyChip key={k.id} label={k.label} color={k.color} size="sm" />
+                      <KeyChip key={k.id} label={k.label} color={k.color} size="sm" wait={k.wait} />
                     ))}
                   </span>
                 </span>

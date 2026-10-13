@@ -556,3 +556,18 @@
 .handle.sideHandle {
   top: 28px;
 }
+
+/* Key que solo sirve tras un timelock: reloj de arena y la espera. */
+.keyTag:has(.keyWait) {
+  display: inline-flex;
+  align-items: center;
+}
+
+.keyWait {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}

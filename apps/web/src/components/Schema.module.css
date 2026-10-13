@@ -256,3 +256,44 @@
   line-height: 1.6;
   white-space: pre-line;
 }
+
+/* Campo con su unidad al lado (espera, renovación). */
+.inline {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.inline > input {
+  width: 6em;
+  flex: none;
+}
+
+.unit {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.ok,
+.warn {
+  display: flex;
+  gap: var(--space-1);
+  align-items: flex-start;
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.ok {
+  color: var(--safe);
+}
+
+.warn {
+  color: var(--warn);
+}
+
+.ok > svg,
+.warn > svg {
+  flex: none;
+  margin-top: 2px;
+}

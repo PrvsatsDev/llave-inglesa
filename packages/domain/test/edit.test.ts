@@ -516,6 +516,12 @@ describe('políticas con timelocks', () => {
     expect(setPolicyShape(r13, { kind: 'decaying', k: 2, keys: ['k1'], blocks: 100 })).toBe(r13);
   });
 
+  it('setPolicyShape deja las keys principales en el orden del modelo', () => {
+    const shape = policyShape(addKey(r13).model.policy)!;
+    const m = addKey(r13).model;
+    expect(policyShape(setPolicyShape(m, setShapeSpecialKey(shape, 'k1')).policy)).toMatchObject({ keys: ['k2', 'k3'], recovery: 'k1' });
+  });
+
   it('la renovación se indica en días y se puede dejar sin indicar', () => {
     expect(setRenewal(r13, 30).renewal).toEqual({ everyDays: 30 });
     expect('renewal' in setRenewal(r13, undefined)).toBe(false);

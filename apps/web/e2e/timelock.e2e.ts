@@ -39,3 +39,33 @@ test('2 de 3 que se relaja: la herencia dice cuánto esperan los herederos', asy
   await expect(page.getByText(/sin moverse \(lo explican los pasos\)/)).toBeVisible();
   await page.locator('article').screenshot({ path: 'e2e/.capturas/timelock-carta.png' });
 });
+
+test('plantillas: un 2 de 3 pasa a decreciente, con su espera y su renovación, y luego a herencia simple', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Documento abierto o ejemplo').selectOption('distribuido-2de3');
+  await expect(page.getByText(/análisis exhaustivo/)).toBeVisible();
+  await page.getByLabel('Forma').selectOption('decaying');
+  await expect(page.getByText('2 de 3, o 1 de 3 tras 6 meses').first()).toBeVisible();
+  await page.getByLabel('Espera').fill('12');
+  await expect(page.getByText('2 de 3, o 1 de 3 tras 12 meses').first()).toBeVisible();
+  await expect(page.getByText(/51840 bloques/)).toBeVisible();
+  await page.getByLabel('Mueves las monedas cada').fill('180');
+  await expect(page.getByText(/Las mueves antes de que venza la espera/)).toBeVisible();
+  await page.locator('aside').first().screenshot({ path: 'e2e/.capturas/plantilla-decreciente.png' });
+
+  // Herencia simple: la última key pasa a ser la de recuperación y en el mapa lleva su espera.
+  await page.getByLabel('Forma').selectOption('inheritance');
+  await expect(page.getByText('2 de 2 (K1, K2), o K3 tras 12 meses').first()).toBeVisible();
+  await page.getByLabel('Key de recuperación').selectOption('k1');
+  await expect(page.getByText('2 de 2 (K2, K3), o K1 tras 12 meses').first()).toBeVisible();
+  await expect(page.locator('.react-flow').getByText('12 meses').first()).toBeVisible();
+  await capture(page, 'plantilla-herencia');
+});
+
+test('2 de 3 que se amplía: la key extra lleva su espera en el mapa', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Documento abierto o ejemplo').selectOption('r15-2de3-se-amplia');
+  await expect(page.getByLabel('Forma')).toHaveValue('expanding');
+  await expect(page.getByLabel('Key extra')).toHaveValue('k4');
+  await capture(page, 'plantilla-ampliable');
+});

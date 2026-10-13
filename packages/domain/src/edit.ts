@@ -168,7 +168,10 @@ export function setPolicyShape(model: CustodyModel, shape: PolicyShape): Custody
   const keys = shapeKeys(shape);
   const known = new Set(model.keys.map((k) => k.id));
   if (keys.length < SHAPE_MIN_KEYS[shape.kind] || new Set(keys).size !== keys.length || !keys.every((k) => known.has(k))) return model;
-  return { ...model, policy: shapePolicy(shape) };
+  // Las keys principales, en el orden del modelo (al cambiar la de recuperación no quedan «K3, K2»).
+  const order = new Map(model.keys.map((k, i) => [k.id, i]));
+  const sorted = { ...shape, keys: [...shape.keys].sort((a, b) => order.get(a)! - order.get(b)!) };
+  return { ...model, policy: shapePolicy(sorted) };
 }
 
 /** Cada cuántos días mueve el titular las monedas (sin indicar: undefined). Se conserva aunque no haya timelocks. */
