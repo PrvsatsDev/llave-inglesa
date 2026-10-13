@@ -11,6 +11,7 @@ export const simular = {
     stolen: 'Robo posible',
     safe: 'El atacante no llega',
     recoverable: 'Fondos recuperables',
+    delay: 'Recuperables tras esperar',
     lockout: 'Bloqueo temporal',
     lost: 'Pérdida permanente',
   },

@@ -52,8 +52,8 @@ guardarla como backup y una **carta para tus herederos** con solo lo que necesit
 
 **No hace falta fiarse**: el build es reproducible y cada Release trae los hashes de todos sus
 ficheros. Cómo recompilarla y compararla, también con la web publicada, en
-[docs/VERIFICAR.md](docs/VERIFICAR.md). Al abrirla por primera vez verás una bienvenida y 15 ejemplos, desde
-"papel en el cajón" hasta un multisig 2 de 3 distribuido, cada uno con lo que enseña.
+[docs/VERIFICAR.md](docs/VERIFICAR.md). Al abrirla por primera vez verás una bienvenida y 18 ejemplos, desde
+"papel en el cajón" hasta un multisig 2 de 3 distribuido y esquemas con timelocks, cada uno con lo que enseña.
 
 **Guía de uso**: dentro de la app (*Archivo → Guía de uso*, interactiva) y en [docs/GUIA.md](docs/GUIA.md) (en inglés, [docs/GUIDE.md](docs/GUIDE.md)).
 

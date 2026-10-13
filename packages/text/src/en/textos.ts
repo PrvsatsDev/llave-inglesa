@@ -1,7 +1,7 @@
-import { ADVISORIES, UNKNOWN_VENDOR, itemPlace } from '@llave-inglesa/domain';
+import { ADVISORIES, BLOCKS_PER_DAY, UNKNOWN_VENDOR, itemPlace } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import type * as es from '../es/textos.ts';
-import type { Label } from '../tipos.ts';
+import { plural, type Label } from '../tipos.ts';
 import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
@@ -11,10 +11,34 @@ import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, Inherita
 
 // ---------- Policy and keys ----------
 
-export const policyText: typeof es.policyText = (policy: Policy, label: Label): string => {
+export const waitText: typeof es.waitText = (blocks) => {
+  const days = blocks / BLOCKS_PER_DAY;
+  const about = Number.isInteger(days) ? '' : 'about ';
+  const d = Math.max(1, Math.round(days));
+  if (d % 365 === 0) return `${about}${plural(d / 365, 'year', 'years')}`;
+  if (d % 30 === 0) return `${about}${plural(d / 30, 'month', 'months')}`;
+  return `${about}${plural(d, 'day', 'days')}`;
+};
+
+export const policyText: typeof es.policyText = (policy: Policy, label: Label, nested = false): string => {
   if (policy.type === 'key') return label(policy.key);
-  const allKeys = policy.of.every((p) => p.type === 'key');
-  return allKeys ? `${policy.k} of ${policy.of.length}` : `${policy.k} of ${policy.of.length} (${policy.of.map((p) => policyText(p, label)).join(', ')})`;
+  if (policy.type === 'older') return `wait ${waitText(policy.blocks)}`;
+  const { k, of } = policy;
+  if (of.every((p) => p.type === 'key')) {
+    return nested ? `${k} of ${of.length} (${of.map((p) => policyText(p, label, true)).join(', ')})` : `${k} of ${of.length}`;
+  }
+  const timelocks = of.filter((p) => p.type === 'older');
+  const keys = of.filter((p) => p.type === 'key');
+  // Decaying multisig: k of the keys now, one fewer once the time has passed.
+  if (timelocks.length === 1 && keys.length === of.length - 1 && k >= 2 && k < of.length) {
+    return `${k} of ${keys.length}, or ${k - 1} of ${keys.length} after ${waitText(timelocks[0]!.blocks)}`;
+  }
+  if (k === of.length && timelocks.length === 1) {
+    const rest = of.filter((p) => p.type !== 'older').map((p) => policyText(p, label, true)).join(' and ');
+    return `${rest} after ${waitText(timelocks[0]!.blocks)}`;
+  }
+  if (k === 1) return of.map((p) => policyText(p, label, true)).join(', or ');
+  return `${k} of ${of.length} (${of.map((p) => policyText(p, label, true)).join(', ')})`;
 };
 
 /** A vendor as shown: the model's «Desconocido» (`UNKNOWN_VENDOR`) is a stored value, shown translated. */
@@ -61,6 +85,8 @@ export const listText: typeof es.listText = (items) =>
  * Who recovers the inheritance, telling heirs apart from those who help them (custodians…).
  * Without the locations: the caller adds "going to …".
  */
+const waiting = (blocks: number) => (blocks > 0 ? `, after waiting ${waitText(blocks)} for the timelock to expire` : '');
+
 export const inheritanceText: typeof es.inheritanceText = (inh: InheritanceReport, people: readonly Person[]) => {
   const who = (ids: readonly string[]) =>
     listText(ids.map((id) => {
@@ -76,10 +102,11 @@ export const inheritanceText: typeof es.inheritanceText = (inh: InheritanceRepor
         ? `${who(inh.heirs)} cannot recover the funds`
         : 'Nobody has the heir role, and those who remain cannot recover the funds';
     case 'ok':
-      if (inh.heirs.length === 0) return `Nobody has the heir role, but ${who(inh.helpers)} can recover the funds`;
+      if (inh.heirs.length === 0) return `Nobody has the heir role, but ${who(inh.helpers)} can recover the funds${waiting(inh.wait)}`;
       return (
         `${who(inh.heirs)} ${verb(inh.heirs, 'recovers', 'recover')} the funds` +
-        (inh.helpers.length > 0 ? ` with the help of ${who(inh.helpers)}` : '')
+        (inh.helpers.length > 0 ? ` with the help of ${who(inh.helpers)}` : '') +
+        waiting(inh.wait)
       );
   }
 };
@@ -96,6 +123,7 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'computer-malware': 'malware on the signing computer',
   'tampered-device': 'tampered device',
   'passphrase-bruteforce': 'passphrase brute force',
+  'timelock-wait': 'waiting for a timelock to expire',
 };
 
 /** Why a device may have arrived tampered with. */
@@ -126,6 +154,7 @@ export const attackText: typeof es.attackText = (a: AttackAtom, index: ModelInde
     case 'computer-malware': return `Malware on ${label(a.computer)}`;
     case 'tampered-device': return `Tampered device: ${label(a.device)}`;
     case 'passphrase-bruteforce': return `Brute force on the passphrase of ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
+    case 'timelock-wait': return `Wait ${waitText(a.blocks)} for the timelock to expire`;
   }
 };
 
@@ -207,6 +236,7 @@ export const factText: typeof es.factText = (f: Fact, index: ModelIndex) => {
     case 'secret': return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} unlocked`;
     case 'sign': return `signature with ${index.label(f.key)}`;
+    case 'timelock': return `The ${waitText(f.blocks)} timelock expires`;
     case 'spend': return 'Can spend the funds';
   }
 };
@@ -241,6 +271,7 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'seed-xpub': return 'derived from the seed';
     case 'seed-sign': return 'typing the seed phrase into any software';
     case 'seed-sign-on-device': return `loading the seed onto ${name(v.device)}`;
+    case 'timelock-expired': return `the coins have not moved for ${waitText(v.blocks ?? 0)}`;
     case 'spend': return `policy ${policyText(policy, index.label)} satisfied`;
   }
 };
@@ -257,6 +288,8 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'threshold-out-of-range': 'The policy threshold is greater than the number of keys',
   'key-repeated-in-policy': 'A key appears twice in the policy',
   'key-not-in-policy': 'A key does not take part in the policy',
+  'spendable-without-keys': 'A branch of the policy is met just by waiting, with no signature: after that time, anyone could spend the funds',
+  'renewal-unset': 'The policy has a timelock and it does not say how often you move the coins to renew it: it is assumed you do not, and the branch with the wait ends up open',
   'no-owner': 'There must be a person with the owner role',
   'passphrase-strength-unset': 'A passphrase has no strength set: it is treated as weak',
   'entropy-count-unset': 'Dice, coin or cards with no number of rolls set: they do not count as entropy',

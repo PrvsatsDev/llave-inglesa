@@ -1,0 +1,266 @@
+{
+  "format": "llave-inglesa",
+  "version": 1,
+  "name": "Key de recuperación de la heredera",
+  "description": "Single-sig para el día a día, más una segunda key en casa de la hija que solo vale si las monedas pasan 6 meses sin moverse. El titular las mueve cada 3 meses. Si pierde su key, o fallece, la hija recupera los fondos esperando.",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "BitBox"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "BitBox",
+          "model": "BitBox02",
+          "firmware": "9.26.5"
+        },
+        "independentlyVerified": false
+      }
+    },
+    {
+      "id": "k2",
+      "label": "K2",
+      "passphrase": false,
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Blockstream"
+          },
+          {
+            "kind": "dice",
+            "count": 99
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Blockstream",
+          "model": "Jade",
+          "firmware": "1.0.37"
+        },
+        "independentlyVerified": false
+      }
+    }
+  ],
+  "policy": {
+    "type": "thresh",
+    "k": 1,
+    "of": [
+      {
+        "type": "key",
+        "key": "k1"
+      },
+      {
+        "type": "thresh",
+        "k": 2,
+        "of": [
+          {
+            "type": "key",
+            "key": "k2"
+          },
+          {
+            "type": "older",
+            "blocks": 25920
+          }
+        ]
+      }
+    ]
+  },
+  "renewal": {
+    "everyDays": 90
+  },
+  "devices": [
+    {
+      "id": "nuevo-dispositivo",
+      "label": "BitBox02",
+      "vendor": "BitBox",
+      "model": "BitBox02",
+      "firmware": "9.26.5",
+      "kind": "stateful",
+      "holds": [
+        "k1"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": true,
+      "location": "casa"
+    },
+    {
+      "id": "nuevo-dispositivo-2",
+      "label": "Jade",
+      "vendor": "Blockstream",
+      "model": "Jade",
+      "firmware": "1.0.37",
+      "kind": "stateful",
+      "holds": [
+        "k2"
+      ],
+      "loads": [
+        "k2"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": true,
+      "registeredWallet": true,
+      "location": "nueva-ubicacion-2"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "nuevo-backup",
+      "label": "Descriptor",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "casa"
+    },
+    {
+      "id": "nuevo-backup-2",
+      "label": "Backup K1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k1"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-3",
+      "label": "Descriptor cf",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion"
+    },
+    {
+      "id": "nuevo-backup-4",
+      "label": "Backup K2",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "seed",
+          "key": "k2"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    },
+    {
+      "id": "nuevo-backup-5",
+      "label": "Descriptor hija",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "descriptor"
+        }
+      ],
+      "lockedBy": [],
+      "location": "nueva-ubicacion-2"
+    }
+  ],
+  "computers": [],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": [
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo"
+        }
+      ],
+      "livesAt": "casa"
+    },
+    {
+      "id": "nueva-persona",
+      "name": "Hija",
+      "role": "heir",
+      "knows": [
+        {
+          "type": "pin",
+          "device": "nuevo-dispositivo-2"
+        }
+      ],
+      "livesAt": "nueva-ubicacion-2"
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion",
+      "name": "Caja fuerte",
+      "kind": "physical",
+      "protection": "home-safe",
+      "inside": "casa",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nueva-ubicacion-2",
+      "name": "Casa de la hija",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "nueva-persona",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    }
+  ]
+}

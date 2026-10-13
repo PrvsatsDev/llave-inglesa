@@ -1,5 +1,6 @@
 import { indexModel, parseModel, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import {
+  EVENTUALLY,
   accessibleLocations,
   attackDerivation,
   attackHoldings,
@@ -30,6 +31,8 @@ export type Outcome =
   | 'safe'
   /** Tras las desgracias, los fondos siguen recuperables. */
   | 'recoverable'
+  /** No se pueden mover ahora, pero se recuperan esperando a que venza un timelock. */
+  | 'delay'
   /** Inmovilizados mientras dure la incapacidad; se recuperan tras el fallecimiento. */
   | 'lockout'
   /** Perdidos para siempre. */
@@ -188,13 +191,16 @@ function attackView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'at
 function lossView(model: CustodyModel, scenario: Extract<Scenario, { kind: 'loss' }>): ScenarioView {
   const world = createWorld(model, scenario.events);
   const holdings = legitHoldings(world);
-  const derivation = derive(world, holdings, 'any');
+  const now = derive(world, holdings, 'any');
+  // Si no pueden gastar, tampoco renovar: esperando, vencen los timelocks. Entonces se explica cómo se recuperan.
+  const waiting = now.canSpend ? now : derive(world, legitHoldings(world, EVENTUALLY), 'any');
+  const derivation = waiting.canSpend ? waiting : now;
   const used = usedFacts(derivation);
 
-  let outcome: Outcome = 'recoverable';
+  let outcome: Outcome = now.canSpend ? 'recoverable' : 'delay';
   if (!derivation.canSpend) {
     const later = createWorld(model, eventually(scenario.events));
-    outcome = derive(later, legitHoldings(later), 'any').canSpend ? 'lockout' : 'lost';
+    outcome = derive(later, legitHoldings(later, EVENTUALLY), 'any').canSpend ? 'lockout' : 'lost';
   }
 
   const people = new Map<Id, PersonState>();

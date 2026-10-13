@@ -68,6 +68,27 @@ ni a Casa de mis padres. *Seguro para el titular, inútil para los herederos.*
 la que se firman las tres keys, cargando la semilla. Placas como en R09. *Todo pasa por un mismo
 aparato.*
 
+### Con timelocks (desde 2026-10-13)
+
+Las plantillas habituales de las carteras con Miniscript (Liana, Nunchuk). El titular renueva (mueve las monedas)
+antes de que venza el timelock, así que robar por la rama con espera cuesta 3 más.
+
+**R13 · Key de recuperación de la heredera.** Single-sig con un BitBox02 (K1) en Casa y su placa en la Caja fuerte;
+una segunda key (K2, Jade y placa) en **Casa de la hija**, que solo vale tras **6 meses** sin mover las monedas.
+Política «K1, o K2 tras 6 meses»; renueva cada 3 meses. *Perder la key del titular, o su incapacidad, ya no
+lo pierde ni lo bloquea: se recupera esperando.*
+
+**R14 · 2 de 3 que se relaja.** R09 con «2 de 3, o 1 de 3 tras 1 año» (*decaying multisig*); renueva cada 6
+meses. *La incapacidad del titular pasa de bloqueo a retraso, y perder dos keys ya no lo pierde todo.*
+
+**R15 · 2 de 3 que se amplía.** R09 más una cuarta key (K4) en el **Despacho de abogado**, con un custodio
+*Abogado*, que solo vale tras **1 año** y siempre junto a otra: «2 de 4 (K1, K2, K3, K4 tras 1 año)»
+(*expanding multisig*); renueva cada 6 meses. *Sigue siendo multifirma: el abogado solo no puede gastar ni
+esperando.*
+
+Resultados: R14 y R15 tan seguros como R09 (71) y más resilientes (78 y 79 frente a 72); R13, 55/73/90/82. Los
+tres restan 10 de usabilidad por tener que renovar.
+
 ## Lo que esperamos
 
 ### Orden
@@ -113,6 +134,9 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R10 2 de 3 con custodio | bueno | bueno | excelente | bueno |
 | R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
 | R12 2 de 3 con una SeedSigner | aceptable | aceptable ¹ | bueno | bueno |
+| R13 Key de recuperación de la heredera | aceptable | bueno | excelente | bueno |
+| R14 2 de 3 que se relaja | bueno | bueno | excelente | bueno |
+| R15 2 de 3 que se amplía | bueno | bueno | excelente | bueno |
 
 ¹ Revisadas en el diagnóstico conjunto, tras ver los resultados: en todas, el motor acierta y la banda
 era optimista. Herencia: desde el ajuste 2 descuenta la fragilidad del camino de los herederos, y con

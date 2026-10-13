@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { ADVISORIES, advisoriesFor, indexModel, parseModel, removeArtifact, updateDevice, type CustodyModel } from '@llave-inglesa/domain';
 import { analyze, inheritanceLetter } from '@llave-inglesa/engine';
 import { describe, expect, it } from 'vitest';
-import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, LETTER_TEXT, letterSteps, lossText, secretText } from '../src/index.ts';
+import { ADVISORY_TITLE, advisoryText, attackText, duressText, inheritanceText, LETTER_TEXT, letterSteps, lossText, policyText, secretText, waitText } from '../src/index.ts';
 
 /** Un ejemplo, quizá modificado, con su carta para los herederos. */
 const loadCarta = (name: string) => (change: (m: CustodyModel) => CustodyModel = (m) => m) => {
@@ -87,7 +87,7 @@ describe('texto de la herencia', () => {
     { id: 'hijo', name: 'Hijo', role: 'heir' as const, knows: [] },
     { id: 'hermano', name: 'Hermano', role: 'custodian' as const, knows: [] },
   ];
-  const ok = { score: 90, status: 'ok' as const, heirs: ['pareja'], helpers: [], locations: ['casa'], visits: 1, rebuild: false, losses: [], lossRarities: [], lossCombinedRarity: null };
+  const ok = { score: 90, status: 'ok' as const, heirs: ['pareja'], helpers: [], locations: ['casa'], visits: 1, wait: 0, withoutWait: null, rebuild: false, losses: [], lossRarities: [], lossCombinedRarity: null };
 
   it('nombra a los herederos con su papel y, solo si hace falta, a quien les ayuda', () => {
     expect(inheritanceText(ok, people)).toBe('Pareja (heredero/a) recupera los fondos');
@@ -140,5 +140,25 @@ describe('carta para los herederos', () => {
 
   it('no mete prisa', () => {
     expect(LETTER_TEXT.calm[0]).toContain('meses o años');
+  });
+});
+
+describe('políticas con timelocks', () => {
+  const ejemplo = (name: string) => {
+    const r = parseModel(JSON.parse(readFileSync(new URL(`../../../fixtures/referencia/${name}.json`, import.meta.url), 'utf8')));
+    if (!r.ok) throw new Error(name);
+    return r.model;
+  };
+  const label = (id: string) => id.toUpperCase();
+
+  it('se leen en una línea: alternativas con «o», ramas con espera con «tras»', () => {
+    expect(policyText(ejemplo('r13-recuperacion-heredera').policy, label)).toBe('K1, o K2 tras 6 meses');
+    expect(policyText(ejemplo('r14-2de3-se-relaja').policy, label)).toBe('2 de 3, o 1 de 3 tras 1 año');
+    expect(policyText(ejemplo('r15-2de3-se-amplia').policy, label)).toBe('2 de 4 (K1, K2, K3, K4 tras 1 año)');
+  });
+
+  it('la espera en la unidad más natural, y «aprox.» si no son días justos', () => {
+    expect([144, 30 * 144, 365 * 144, 2 * 365 * 144, 100].map(waitText)).toEqual(['1 día', '1 mes', '1 año', '2 años', 'aprox. 1 día']);
+    expect(waitText(52596)).toBe('aprox. 1 año');
   });
 });

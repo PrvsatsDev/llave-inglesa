@@ -10,6 +10,7 @@ import {
   letterMemoryText,
   letterPieceText,
   letterSteps,
+  letterWaitNote,
   letterWhatThereIs,
   letterWhen,
   UI,
@@ -33,7 +34,7 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
   const itemLabel = (id: Id) => model.devices.find((d) => d.id === id)?.label ?? model.artifacts.find((a) => a.id === id)?.label ?? id;
 
   const people = [...new Set([...letter.owners, ...letter.heirs, ...letter.helpers, ...letter.memory.map((m) => m.person)])];
-  const locations = [...new Set([...letter.stops.map((s) => s.location), ...letter.storage.map((s) => s.location)])];
+  const locations = [...new Set([...letter.stops, ...(letter.withoutWait ?? []), ...letter.storage].map((s) => s.location))];
   const today = UI.comun.fecha(new Date());
   const helpers = letterHelpers(letter, label);
 
@@ -134,6 +135,7 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
 
         <h2>{T.queReunir}</h2>
         {helpers && <p>{helpers}</p>}
+        {letterWaitNote(letter) && <p>{letterWaitNote(letter)}</p>}
         {letter.stops.some((s) => s.pieces.some((p) => !p.needed)) && <p>{LETTER_TEXT.spareNote}</p>}
         {letter.stops.map((s) => (
           <section key={s.location}>
@@ -159,6 +161,24 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
           </>
         )}
 
+        {letter.withoutWait && (
+          <>
+            <h2>{T.sinEsperar}</h2>
+            <p>{LETTER_TEXT.withoutWait}</p>
+            {letter.withoutWait.map((s) => (
+              <section key={s.location}>
+                <h3>{label(s.location)}</h3>
+                <ul>
+                  {s.pieces.map((p) => (
+                    <li key={p.item}>
+                      <strong>{itemLabel(p.item)}</strong>: {letterPieceText(p, label)}.
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </>
+        )}
         <h2>{T.pasos}</h2>
         <ol>
           {letterSteps(model, letter).map((t) => (

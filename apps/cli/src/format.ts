@@ -56,6 +56,8 @@ export function formatIssue(i: Issue): string {
     'threshold-out-of-range': 'el umbral es mayor que el número de opciones',
     'key-repeated-in-policy': `key repetida en la política${ref}`,
     'key-not-in-policy': `key que no participa en la política${ref}`,
+    'spendable-without-keys': 'una rama de la política se cumple solo esperando, sin ninguna firma',
+    'renewal-unset': 'política con timelock sin indicar cada cuánto se renueva (se supone que no)',
     'no-owner': 'no hay ninguna persona con rol de titular',
     'passphrase-strength-unset': `passphrase sin fortaleza indicada${ref} (se trata como débil)`,
     'entropy-count-unset': `dados, moneda o cartas sin número de tiradas${ref} (no cuentan como entropía)`,

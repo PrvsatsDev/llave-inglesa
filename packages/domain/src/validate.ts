@@ -1,4 +1,4 @@
-import { normalizeLabel, repeated } from './model-index.ts';
+import { normalizeLabel, policyTimelocks, repeated, spendableWithoutKeys } from './model-index.ts';
 import { CustodyModelSchema, type CustodyModel, type Id, type Policy, type SecretRef } from './schema.ts';
 
 /** error: el modelo no es válido (el análisis se pausa). grave: válido, pero un fallo serio de custodia. warning: aviso. */
@@ -14,6 +14,10 @@ export type IssueCode =
   | 'threshold-out-of-range'
   | 'key-repeated-in-policy'
   | 'key-not-in-policy'
+  /** Una rama de la política se cumple solo esperando, sin ninguna firma: cualquiera podría gastar. */
+  | 'spendable-without-keys'
+  /** Política con timelocks sin indicar cada cuánto se renuevan (ante la duda, no se renuevan). */
+  | 'renewal-unset'
   | 'no-owner'
   | 'passphrase-strength-unset'
   | 'entropy-count-unset'
@@ -109,10 +113,13 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
       used.push(p.key);
       return;
     }
+    if (p.type === 'older') return;
     if (p.k > p.of.length) report('error', 'threshold-out-of-range', [...path, 'k']);
     p.of.forEach((child, i) => walk(child, [...path, 'of', i]));
   };
   walk(model.policy, ['policy']);
+  if (spendableWithoutKeys(model.policy)) report('error', 'spendable-without-keys', ['policy']);
+  if (policyTimelocks(model.policy).length > 0 && !model.renewal) report('warning', 'renewal-unset', ['renewal']);
   model.keys.forEach((k, i) => {
     if (!used.includes(k.id)) report('warning', 'key-not-in-policy', ['keys', i], k.id);
   });

@@ -3,7 +3,7 @@ export const cabecera = {
   acercaDe: 'Acerca de llave-inglesa',
   documentoAbierto: 'Documento abierto o ejemplo',
   origen: { ejemplo: 'ejemplo', nuevo: 'nuevo', local: 'guardado en el navegador' },
-  gruposEjemplos: { inicio: 'Para empezar', single: 'Galería: single-sig', multi: 'Galería: multisig 2 de 3' },
+  gruposEjemplos: { inicio: 'Para empezar', single: 'Galería: single-sig', multi: 'Galería: multisig 2 de 3', timelock: 'Galería: con timelocks' },
   sinGuardar: 'Sin guardar',
   guardado: 'Guardado',
   pistaGuardar: 'Guarda con Ctrl+S (cifrado, en este navegador)',

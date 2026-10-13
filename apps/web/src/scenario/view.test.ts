@@ -183,3 +183,17 @@ describe('scenarioView: incendio', () => {
     expect(v.items.get('metal-k2')).not.toBe('destroyed');
   });
 });
+
+describe('scenarioView: timelocks', () => {
+  const r13 = fixture('referencia/r13-recuperacion-heredera');
+
+  it('si se recupera esperando a que venza el timelock, es un retraso y se explica cómo', () => {
+    const v = scenarioView(r13, { kind: 'loss', events: [{ type: 'item-loss', item: 'nuevo-dispositivo' }, { type: 'item-loss', item: 'nuevo-backup-2' }] })!;
+    expect(v.outcome).toBe('delay');
+    expect(v.explanation?.children.map((c) => c.id)).toContain('timelock:25920');
+  });
+
+  it('sin perder nada, se recupera ya', () => {
+    expect(scenarioView(r13, { kind: 'loss', events: [{ type: 'item-loss', item: 'nuevo-backup' }] })!.outcome).toBe('recoverable');
+  });
+});

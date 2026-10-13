@@ -13,6 +13,7 @@ export const OUTCOME: Record<Outcome, { icon: LucideIcon; level: 'bad' | 'good' 
   stolen: { icon: Skull, level: 'bad' },
   safe: { icon: CircleCheck, level: 'good' },
   recoverable: { icon: CircleCheck, level: 'good' },
+  delay: { icon: Hourglass, level: 'warn' },
   lockout: { icon: Hourglass, level: 'warn' },
   lost: { icon: XCircle, level: 'bad' },
 };

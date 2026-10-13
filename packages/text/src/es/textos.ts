@@ -1,4 +1,4 @@
-import { ADVISORIES, itemPlace } from '@llave-inglesa/domain';
+import { ADVISORIES, BLOCKS_PER_DAY, itemPlace } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import { plural, type Label } from '../tipos.ts';
 import type { AttackAtom, TamperReason, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
@@ -11,10 +11,39 @@ import type { AttackAtom, TamperReason, DuressReport, ScoreBand, EntropyOrigin, 
 
 // ---------- Política y keys ----------
 
-export function policyText(policy: Policy, label: Label): string {
+/** Una espera en bloques, en la unidad más natural: años, meses o días (144 bloques al día). */
+export function waitText(blocks: number): string {
+  const days = blocks / BLOCKS_PER_DAY;
+  const about = Number.isInteger(days) ? '' : 'aprox. ';
+  const d = Math.max(1, Math.round(days));
+  if (d % 365 === 0) return `${about}${plural(d / 365, 'año', 'años')}`;
+  if (d % 30 === 0) return `${about}${plural(d / 30, 'mes', 'meses')}`;
+  return `${about}${plural(d, 'día', 'días')}`;
+}
+
+/**
+ * La política en una línea. Un umbral de solo keys es «k de n» (anidado, con sus keys); uno con un timelock que hay que
+ * cumplir entero, «… tras 6 meses»; alternativas (1 de n), separadas por «o».
+ */
+export function policyText(policy: Policy, label: Label, nested = false): string {
   if (policy.type === 'key') return label(policy.key);
-  const allKeys = policy.of.every((p) => p.type === 'key');
-  return allKeys ? `${policy.k} de ${policy.of.length}` : `${policy.k} de ${policy.of.length} (${policy.of.map((p) => policyText(p, label)).join(', ')})`;
+  if (policy.type === 'older') return `esperar ${waitText(policy.blocks)}`;
+  const { k, of } = policy;
+  if (of.every((p) => p.type === 'key')) {
+    return nested ? `${k} de ${of.length} (${of.map((p) => policyText(p, label, true)).join(', ')})` : `${k} de ${of.length}`;
+  }
+  const timelocks = of.filter((p) => p.type === 'older');
+  const keys = of.filter((p) => p.type === 'key');
+  // Multisig que se relaja: k de las keys ahora, una menos pasado el tiempo.
+  if (timelocks.length === 1 && keys.length === of.length - 1 && k >= 2 && k < of.length) {
+    return `${k} de ${keys.length}, o ${k - 1} de ${keys.length} tras ${waitText(timelocks[0]!.blocks)}`;
+  }
+  if (k === of.length && timelocks.length === 1) {
+    const rest = of.filter((p) => p.type !== 'older').map((p) => policyText(p, label, true)).join(' y ');
+    return `${rest} tras ${waitText(timelocks[0]!.blocks)}`;
+  }
+  if (k === 1) return of.map((p) => policyText(p, label, true)).join(', o ');
+  return `${k} de ${of.length} (${of.map((p) => policyText(p, label, true)).join(', ')})`;
 }
 
 function sourceText(s: EntropySource): string {
@@ -60,6 +89,8 @@ export const listText = (items: readonly string[]) => (items.length <= 1 ? (item
  * Quién recupera la herencia, distinguiendo herederos de quien les ayuda (custodios…).
  * Sin las ubicaciones: quien lo usa añade "yendo a …".
  */
+const waiting = (blocks: number) => (blocks > 0 ? `, tras esperar ${waitText(blocks)} a que venza el timelock` : '');
+
 export function inheritanceText(inh: InheritanceReport, people: readonly Person[]): string {
   const who = (ids: readonly string[]) =>
     listText(ids.map((id) => {
@@ -75,10 +106,11 @@ export function inheritanceText(inh: InheritanceReport, people: readonly Person[
         ? `${who(inh.heirs)} no ${verb(inh.heirs, 'consigue', 'consiguen')} recuperar los fondos`
         : 'Nadie tiene papel de heredero, y quien queda no consigue recuperar los fondos';
     case 'ok':
-      if (inh.heirs.length === 0) return `Nadie tiene papel de heredero, pero ${who(inh.helpers)} ${verb(inh.helpers, 'puede', 'pueden')} recuperar los fondos`;
+      if (inh.heirs.length === 0) return `Nadie tiene papel de heredero, pero ${who(inh.helpers)} ${verb(inh.helpers, 'puede', 'pueden')} recuperar los fondos${waiting(inh.wait)}`;
       return (
         `${who(inh.heirs)} ${verb(inh.heirs, 'recupera', 'recuperan')} los fondos` +
-        (inh.helpers.length > 0 ? ` con la ayuda de ${who(inh.helpers)}` : '')
+        (inh.helpers.length > 0 ? ` con la ayuda de ${who(inh.helpers)}` : '') +
+        waiting(inh.wait)
       );
   }
 }
@@ -95,6 +127,7 @@ export const ATTACK_KIND_TEXT: Record<AttackAtom['type'], string> = {
   'computer-malware': 'malware en el ordenador de firma',
   'tampered-device': 'dispositivo manipulado',
   'passphrase-bruteforce': 'fuerza bruta a la passphrase',
+  'timelock-wait': 'esperar a que venza un timelock',
 };
 
 /** Por qué un dispositivo pudo llegar manipulado. */
@@ -125,6 +158,7 @@ export function attackText(a: AttackAtom, index: ModelIndex): string {
     case 'computer-malware': return `Malware en ${label(a.computer)}`;
     case 'tampered-device': return `Dispositivo manipulado: ${label(a.device)}`;
     case 'passphrase-bruteforce': return `Fuerza bruta a la passphrase de ${label(a.key)} (${PASSPHRASE_STRENGTH_TEXT[a.strength]})`;
+    case 'timelock-wait': return `Esperar ${waitText(a.blocks)} a que venza el timelock`;
   }
 }
 
@@ -205,6 +239,7 @@ export function factText(f: Fact, index: ModelIndex): string {
     case 'secret': return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} desbloqueado`;
     case 'sign': return `firma con ${index.label(f.key)}`;
+    case 'timelock': return `Vence el timelock de ${waitText(f.blocks)}`;
     case 'spend': return 'Puede gastar los fondos';
   }
 }
@@ -239,6 +274,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'seed-xpub': return 'derivada de la semilla';
     case 'seed-sign': return 'tecleando la frase semilla en cualquier software';
     case 'seed-sign-on-device': return `cargando la semilla en ${name(v.device)}`;
+    case 'timelock-expired': return `las monedas llevan ${waitText(v.blocks ?? 0)} sin moverse`;
     case 'spend': return `política ${policyText(policy, index.label)} satisfecha`;
   }
 }
@@ -255,6 +291,8 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'threshold-out-of-range': 'El umbral de la política es mayor que el número de keys',
   'key-repeated-in-policy': 'Una key aparece dos veces en la política',
   'key-not-in-policy': 'Hay una key que no participa en la política',
+  'spendable-without-keys': 'Una rama de la política se cumple solo esperando, sin ninguna firma: pasado ese tiempo, cualquiera podría gastar los fondos',
+  'renewal-unset': 'La política tiene un timelock y no consta cada cuánto mueves las monedas para renovarlo: se supone que no lo renuevas y que la rama con espera acaba abierta',
   'no-owner': 'Falta una persona con rol de titular',
   'passphrase-strength-unset': 'Hay una passphrase sin fortaleza indicada: se trata como débil',
   'entropy-count-unset': 'Hay dados, moneda o cartas sin indicar cuántas tiradas: no cuentan como entropía',

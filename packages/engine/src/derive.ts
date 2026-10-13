@@ -32,6 +32,8 @@ export interface Holdings {
   guessedPassphrases?: readonly { key: Id; strength: 'weak' | 'phrase' }[];
   /** Ordenadores de firma con malware: el atacante lee su cartera. */
   infectedComputers?: readonly Id[];
+  /** Bloques que llevan las monedas sin moverse (vencen los timelocks hasta ahí). Sin indicar, 0: ahora mismo. */
+  elapsed?: number;
 }
 
 export type CompromisedSeed =
@@ -51,6 +53,8 @@ export interface Derivation {
   readonly facts: ReadonlyMap<FactId, DerivedFact>;
   readonly signable: ReadonlySet<Id>;
   readonly canSpend: boolean;
+  /** Espera (bloques) de la forma de gastar elegida: 0 si no pasa por ningún timelock o no se puede gastar. */
+  readonly wait: number;
   has(fact: Fact): boolean;
 }
 
@@ -195,15 +199,22 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
   } while (changed);
 
   const signable = new Set(index.policyKeys.filter((key) => has({ kind: 'sign', key })));
-  const used = satisfy(model.policy, signable);
+  const used = satisfy(model.policy, signable, holdings.elapsed ?? 0);
   // Para construir la transacción hacen falta las xpubs de TODAS las keys de la política.
   if (used && index.policyKeys.every((key) => has(xpub(key)))) {
-    const missingXpubs = index.policyKeys.filter((key) => !used.includes(key));
+    const missingXpubs = index.policyKeys.filter((key) => !used.keys.includes(key));
+    const timelock: Fact = { kind: 'timelock', blocks: used.wait };
+    if (used.wait > 0) add(timelock, { rule: 'timelock-expired', premises: [], via: { blocks: used.wait } });
     add({ kind: 'spend' }, {
       rule: 'spend',
-      premises: [...used.map((key) => factId({ kind: 'sign', key })), ...missingXpubs.map((key) => factId(xpub(key)))],
+      premises: [
+        ...used.keys.map((key) => factId({ kind: 'sign', key })),
+        ...missingXpubs.map((key) => factId(xpub(key))),
+        ...(used.wait > 0 ? [factId(timelock)] : []),
+      ],
     });
   }
 
-  return { facts, signable, canSpend: has({ kind: 'spend' }), has };
+  const canSpend = has({ kind: 'spend' });
+  return { facts, signable, canSpend, wait: canSpend && used ? used.wait : 0, has };
 }

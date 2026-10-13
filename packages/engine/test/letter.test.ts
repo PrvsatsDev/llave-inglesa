@@ -9,7 +9,7 @@ describe('carta para los herederos', () => {
   it('lleva las piezas que se usan, con lo que aporta cada una, y los backups de reserva a los que también llegan', () => {
     const letter = letterOf(loadFixture('todo-en-casa'));
     expect(letter).toMatchObject({ status: 'ok', owners: ['yo'], heirs: ['pareja'], helpers: [], usesDescriptor: true, missingDescriptor: false, noDescriptorCopy: false });
-    const piece = (item: string, needed: boolean, provides: unknown[]) => ({ item, kind: 'artifact', needed, provides, signs: [], needsPin: false, hasWallet: false });
+    const piece = (item: string, needed: boolean, provides: unknown[]) => ({ item, kind: 'artifact', needed, provides, signs: [], needsPin: false, hasWallet: false, wait: 0 });
     expect(letter.stops).toEqual([
       { location: 'casa', pieces: [piece('metal-k2', true, [{ type: 'seed', key: 'k2' }]), piece('desc-casa', true, [{ type: 'descriptor' }])] },
       { location: 'banco', pieces: [piece('metal-k1', true, [{ type: 'seed', key: 'k1' }]), piece('desc-banco', false, [{ type: 'descriptor' }])] },
@@ -62,7 +62,7 @@ describe('carta para los herederos', () => {
       }),
     );
     const letter = letterOf(model);
-    expect(letter.stops).toEqual([{ location: 'casa', pieces: [{ item: 'trezor', kind: 'device', needed: true, provides: [], signs: ['k1'], needsPin: true, hasWallet: false }] }]);
+    expect(letter.stops).toEqual([{ location: 'casa', pieces: [{ item: 'trezor', kind: 'device', needed: true, provides: [], signs: ['k1'], needsPin: true, hasWallet: false, wait: 0 }] }]);
     expect(letter.memory).toEqual([{ person: 'hijo', secret: { type: 'pin', device: 'trezor' } }]);
   });
 

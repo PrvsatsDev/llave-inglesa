@@ -1,6 +1,8 @@
 import { flatPolicy, isActiveSecret, uniqueId, type CustodyModel, type Id, type SecretRef } from '@llave-inglesa/domain';
 import { ownerDeaths, simulateInheritance, type InheritanceReport } from './analyze.ts';
+import type { Derivation } from './derive.ts';
 import { explain, type ExplanationNode } from './explain.ts';
+import { keyWait } from './policy.ts';
 import { factId, type DerivedFact, type FactId } from './facts.ts';
 import { legitHoldings } from './losses.ts';
 import { accessibleLocations, createWorld, type World } from './world.ts';
@@ -22,6 +24,11 @@ export interface LetterPiece {
   needsPin: boolean;
   /** El dispositivo tiene registrada la cartera: da las xpubs de todas las keys. */
   hasWallet: boolean;
+  /**
+   * De reserva: bloques que hay que esperar, como poco, para que sus llaves sirvan (solo cuentan pasado un timelock).
+   * 0 si sirven sin esperar, o si se usa.
+   */
+  wait: number;
 }
 
 /** Una ubicación con las piezas que se usan de ella y los backups de reserva (no los dispositivos que sobran). */
@@ -59,6 +66,10 @@ export interface InheritanceLetter {
    */
   noDescriptorCopy: boolean;
   storage: LetterStorage[];
+  /** Bloques que tienen que esperar a que venza un timelock para usar lo de `stops` (0 si nada). */
+  wait: number;
+  /** Si hay que esperar: lo que tendrían que reunir para no esperar (solo lo que se usa), o null si no hay forma. */
+  withoutWait: LetterStop[] | null;
 }
 
 /** Hechos que intervienen en el gasto (o en las firmas que se consiguen, si no llega). */
@@ -85,45 +96,28 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
     status === 'ok'
       ? inheritance.rebuild
       : flatPolicy(model)?.kind !== 'single' && !model.artifacts.some((a) => reachable.has(a.location) && a.contents.some((c) => c.type === 'descriptor'));
-  const base = { status, owners, heirs, helpers, storage, noDescriptorCopy };
+  const base = { status, owners, heirs, helpers, storage, noDescriptorCopy, wait: 0, withoutWait: null };
 
   if (status !== 'ok' || !inheritance.locations) {
     return { ...base, stops: [], memory: [], usesDescriptor: false, missingDescriptor: wouldRecoverWithDescriptor(model, storage) };
   }
 
-  const derivation = simulateInheritance(model, inheritance.locations, people);
-  const used = usedFacts(explain(derivation, factId({ kind: 'spend' })));
-  const facts = [...used.values()];
-
-  const pieceOf = (item: Id): LetterPiece => {
-    const device = model.devices.find((d) => d.id === item);
-    const itemFact = factId({ kind: 'item', item });
-    const provides = facts.flatMap((f) =>
-      f.fact.kind === 'secret' && (f.justification.rule === 'read-artifact' || f.justification.rule === 'computer-wallet') && f.justification.via?.item === item
-        ? [f.fact.secret]
-        : [],
-    );
-    const signs = facts.flatMap((f) => (f.fact.kind === 'sign' && f.justification.via?.device === item ? [f.fact.key] : []));
-    const hasWallet = facts.some((f) => f.justification.rule === 'device-wallet' && f.justification.via?.device === item);
-    const unlocked = facts.some((f) => f.fact.kind === 'unlocked' && f.fact.device === item && f.justification.premises.includes(itemFact));
-    const kind = device ? 'device' : model.computers.some((c) => c.id === item) ? 'computer' : 'artifact';
-    return { item, kind, needed: true, provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet };
-  };
-  /** Un backup que no se usa pero al que llegan: lo que contiene, tal cual. */
+  const facts = spendFacts(simulateInheritance(model, inheritance.locations, people));
+  /** Un backup que no se usa pero al que llegan: lo que contiene, tal cual, y cuánto hay que esperar para que sirva. */
   const spare = (item: Id): LetterPiece => {
-    const contents = model.artifacts.find((a) => a.id === item)?.contents ?? [];
-    return { item, kind: 'artifact', needed: false, provides: contents.filter((c) => isActiveSecret(model, c)), signs: [], needsPin: false, hasWallet: false };
+    const provides = (model.artifacts.find((a) => a.id === item)?.contents ?? []).filter((c) => isActiveSecret(model, c));
+    const waits = provides.flatMap((c) => (c.type === 'seed' ? [keyWait(model.policy, c.key)] : [])).filter((w): w is number => w !== null);
+    return { item, kind: 'artifact', needed: false, provides, signs: [], needsPin: false, hasWallet: false, wait: waits.length ? Math.min(...waits) : 0 };
   };
 
-  const usedItems = new Set(facts.flatMap((f) => (f.fact.kind === 'item' ? [f.fact.item] : [])));
-  const locationOf = (item: Id) => [...model.devices, ...model.artifacts, ...model.computers].find((i) => i.id === item)?.location;
+  const usedItems = itemsOf(facts);
   // Primero las ubicaciones de la recuperación; después, las demás a las que llegan y tienen algún backup de reserva.
   const order = [...inheritance.locations, ...model.locations.map((l) => l.id).filter((l) => reachable.has(l) && !inheritance.locations!.includes(l))];
   const stops = order
     .map((location) => ({
       location,
       pieces: [
-        ...[...usedItems].filter((i) => locationOf(i) === location).map(pieceOf),
+        ...[...usedItems].filter((i) => locationOf(model, i) === location).map((i) => piece(model, facts, i)),
         ...model.artifacts.filter((a) => a.location === location && !usedItems.has(a.id)).map((a) => spare(a.id)),
       ],
     }))
@@ -134,7 +128,40 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
   );
   const usesDescriptor = facts.some((f) => f.justification.rule === 'descriptor-xpubs' || (f.fact.kind === 'secret' && f.fact.secret.type === 'descriptor'));
 
-  return { ...base, stops, memory, usesDescriptor, missingDescriptor: false };
+  // Sin esperar: lo que se usa por ese otro camino, ubicación a ubicación.
+  let withoutWait: LetterStop[] | null = null;
+  if (inheritance.withoutWait) {
+    const alt = spendFacts(simulateInheritance(model, inheritance.withoutWait.locations, undefined, 0));
+    const altItems = itemsOf(alt);
+    withoutWait = inheritance.withoutWait.locations
+      .map((location) => ({ location, pieces: [...altItems].filter((i) => locationOf(model, i) === location).map((i) => piece(model, alt, i)) }))
+      .filter((s) => s.pieces.length > 0);
+  }
+
+  return { ...base, stops, memory, usesDescriptor, missingDescriptor: false, wait: inheritance.wait, withoutWait };
+}
+
+/** Hechos que intervienen en el gasto. */
+const spendFacts = (derivation: Derivation) => [...usedFacts(explain(derivation, factId({ kind: 'spend' }))).values()];
+
+const itemsOf = (facts: readonly DerivedFact[]) => new Set(facts.flatMap((f) => (f.fact.kind === 'item' ? [f.fact.item] : [])));
+
+const locationOf = (model: CustodyModel, item: Id) => [...model.devices, ...model.artifacts, ...model.computers].find((i) => i.id === item)?.location;
+
+/** Una pieza que se usa, con lo que aporta según los hechos del gasto. */
+function piece(model: CustodyModel, facts: readonly DerivedFact[], item: Id): LetterPiece {
+  const device = model.devices.find((d) => d.id === item);
+  const itemFact = factId({ kind: 'item', item });
+  const provides = facts.flatMap((f) =>
+    f.fact.kind === 'secret' && (f.justification.rule === 'read-artifact' || f.justification.rule === 'computer-wallet') && f.justification.via?.item === item
+      ? [f.fact.secret]
+      : [],
+  );
+  const signs = facts.flatMap((f) => (f.fact.kind === 'sign' && f.justification.via?.device === item ? [f.fact.key] : []));
+  const hasWallet = facts.some((f) => f.justification.rule === 'device-wallet' && f.justification.via?.device === item);
+  const unlocked = facts.some((f) => f.fact.kind === 'unlocked' && f.fact.device === item && f.justification.premises.includes(itemFact));
+  const kind = device ? 'device' : model.computers.some((c) => c.id === item) ? 'computer' : 'artifact';
+  return { item, kind, needed: true, provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet, wait: 0 };
 }
 
 /** Ubicaciones físicas a las que llega algún heredero tras el fallecimiento; primero las que solo se abren entonces. */

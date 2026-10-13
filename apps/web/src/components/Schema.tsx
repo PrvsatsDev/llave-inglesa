@@ -6,7 +6,7 @@ import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.ts
 import { ROLE } from '../graph/PersonNode.tsx';
 import { SecretBadge } from '../graph/SecretBadge.tsx';
 import { keyColor } from '../lib/key-colors.ts';
-import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, provenanceText, UI } from '../lib/text.ts';
+import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, policyText, provenanceText, UI } from '../lib/text.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
@@ -34,6 +34,8 @@ export function Schema({ model }: { model: CustodyModel }) {
 
   const policy = model.policy;
   const n = policy.type === 'thresh' ? policy.of.length : 1;
+  const flat = policy.type === 'thresh' && policy.of.every((p) => p.type === 'key');
+  const label = indexModel(model).label;
 
   return (
     <>
@@ -45,7 +47,12 @@ export function Schema({ model }: { model: CustodyModel }) {
       <Problems model={model} />
 
       <Section title={T.politica}>
-        {policy.type === 'thresh' ? (
+        {policy.type === 'thresh' && !flat ? (
+          <>
+            <p className={styles.description}>{policyText(policy, label)}</p>
+            <p className={styles.hint}>{T.pistaRamas}</p>
+          </>
+        ) : policy.type === 'thresh' ? (
           <>
             <Segmented
               label={T.firmasNecesarias}

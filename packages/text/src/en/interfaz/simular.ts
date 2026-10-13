@@ -12,6 +12,7 @@ export const simular: typeof es = {
     stolen: 'Theft possible',
     safe: 'The attacker falls short',
     recoverable: 'Funds recoverable',
+    delay: 'Recoverable after waiting',
     lockout: 'Temporary lockout',
     lost: 'Permanent loss',
   },

@@ -1,4 +1,4 @@
-import { advisoriesFor, catalogModelByName, type Device, type Id, type Key } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, policyTimelocks, type Device, type Id, type Key } from '@llave-inglesa/domain';
 import { hostExploits, malwareTargets } from './computer.ts';
 import type { CompromisedSeed, Holdings } from './derive.ts';
 import { entropyOrigins, keyCompromise, originKey, ownEntropyBits, weakEntropyKeys, weakOwnEntropyKeys, type EntropyOrigin } from './entropy.ts';
@@ -34,7 +34,9 @@ export type AttackAtom =
   /** Malware en un ordenador de firma: lee su cartera y ataca los dispositivos con un fallo que se le conectan. */
   | { type: 'computer-malware'; computer: Id }
   /** Adivinar por fuerza bruta una passphrase no aleatoria; solo sirve teniendo ya la semilla. */
-  | { type: 'passphrase-bruteforce'; key: Id; strength: PassphraseGuess };
+  | { type: 'passphrase-bruteforce'; key: Id; strength: PassphraseGuess }
+  /** Esperar sin gastar a que venza un timelock (`blocks`) sin que el titular mueva las monedas. */
+  | { type: 'timelock-wait'; blocks: number };
 
 /** Fortaleza de una passphrase que se puede adivinar (las aleatorias largas no). */
 export type PassphraseGuess = 'weak' | 'phrase';
@@ -74,6 +76,7 @@ export function attackAtoms(world: World): AttackAtom[] {
     const strength = guessablePassphrase(key);
     if (strength) atoms.push({ type: 'passphrase-bruteforce', key: key.id, strength });
   }
+  for (const blocks of policyTimelocks(model.policy)) atoms.push({ type: 'timelock-wait', blocks });
   return atoms;
 }
 
@@ -98,6 +101,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   const malware = new Set<Id>();
   const tampered = new Set<Id>();
   const bruteforce: { key: Id; strength: PassphraseGuess }[] = [];
+  let elapsed = 0;
   for (const a of atoms) {
     switch (a.type) {
       case 'burglary':
@@ -137,6 +141,9 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       case 'passphrase-bruteforce':
         bruteforce.push({ key: a.key, strength: a.strength });
         break;
+      case 'timelock-wait':
+        elapsed = Math.max(elapsed, a.blocks);
+        break;
     }
   }
   const compromisedSeeds: CompromisedSeed[] = world.model.keys.flatMap((key) => {
@@ -173,7 +180,7 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
       if (advisory) item.value.holds.forEach((key) => compromisedSeeds.push({ key, advisory, device: item.value.id }));
     }
   }
-  return { people: [...people], locations: [...locations], compromisedSeeds, guessedPassphrases: bruteforce, infectedComputers: [...malware] };
+  return { people: [...people], locations: [...locations], compromisedSeeds, guessedPassphrases: bruteforce, infectedComputers: [...malware], elapsed };
 }
 
 /**

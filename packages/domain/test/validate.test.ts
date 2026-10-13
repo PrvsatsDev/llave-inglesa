@@ -52,6 +52,30 @@ describe('parseModel', () => {
   });
 });
 
+describe('timelocks', () => {
+  const two = { ...valid, keys: [{ id: 'k1', label: 'K1' }, { id: 'k2', label: 'K2' }] };
+  const older = { type: 'older', blocks: 25920 };
+  const recovery = { type: 'thresh', k: 1, of: [{ type: 'key', key: 'k1' }, { type: 'thresh', k: 2, of: [{ type: 'key', key: 'k2' }, older] }] };
+
+  it('una rama que se cumple solo esperando es un error: cualquiera podría gastar', () => {
+    expect(codes({ ...two, policy: { type: 'thresh', k: 1, of: [{ type: 'key', key: 'k1' }, older] } })).toContain('spendable-without-keys');
+    expect(codes({ ...valid, policy: older })).toContain('spendable-without-keys');
+    expect(codes({ ...two, policy: { type: 'thresh', k: 2, of: [{ type: 'key', key: 'k1' }, { type: 'key', key: 'k2' }, older] } })).not.toContain('spendable-without-keys');
+  });
+
+  it('sin indicar cada cuánto se renueva, avisa', () => {
+    expect(codes({ ...two, policy: recovery })).toContain('renewal-unset');
+    expect(codes({ ...two, policy: recovery, renewal: { everyDays: 90 } })).not.toContain('renewal-unset');
+  });
+
+  it('el timelock va de 1 a 65535 bloques (el máximo de un timelock relativo)', () => {
+    const at = (blocks: number) => ({ ...two, renewal: { everyDays: 90 }, policy: { ...recovery, of: [recovery.of[0], { type: 'thresh', k: 2, of: [{ type: 'key', key: 'k2' }, { type: 'older', blocks }] }] } });
+    expect(parseModel(at(65535)).ok).toBe(true);
+    expect(parseModel(at(65536)).ok).toBe(false);
+    expect(parseModel(at(0)).ok).toBe(false);
+  });
+});
+
 describe('aviso: PIN que nadie sabe', () => {
   const withDevice = (people: unknown[], artifacts: unknown[] = []) => ({
     ...valid,

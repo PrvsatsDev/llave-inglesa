@@ -8,6 +8,8 @@ export type Fact =
   | { kind: 'secret'; secret: SecretRef }
   | { kind: 'unlocked'; device: Id }
   | { kind: 'sign'; key: Id }
+  /** Las monedas llevan al menos `blocks` bloques sin moverse: vence el timelock de esa rama. */
+  | { kind: 'timelock'; blocks: number }
   | { kind: 'spend' };
 
 export type FactId = string;
@@ -33,6 +35,7 @@ export function factId(f: Fact): FactId {
     case 'secret': return `secret:${secretId(f.secret)}`;
     case 'unlocked': return `unlocked:${f.device}`;
     case 'sign': return `sign:${f.key}`;
+    case 'timelock': return `timelock:${f.blocks}`;
     case 'spend': return 'spend';
   }
 }
@@ -75,13 +78,15 @@ export type RuleId =
   | 'seed-sign'
   /** Firmar cargando la semilla en un dispositivo de firma (uso legítimo seguro). */
   | 'seed-sign-on-device'
+  /** Ha pasado el tiempo del timelock sin que nadie mueva las monedas (`blocks` en `via`). */
+  | 'timelock-expired'
   | 'spend';
 
 export interface Justification {
   rule: RuleId;
   /** Hechos de los que depende (siempre derivados antes: el grafo es acíclico). */
   premises: FactId[];
-  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string; strength?: 'weak' | 'phrase'; bits?: number; tamper?: TamperReason };
+  via?: { location?: Id; person?: Id; item?: Id; device?: Id; origins?: EntropyOrigin[]; advisory?: string; vendor?: string; strength?: 'weak' | 'phrase'; bits?: number; blocks?: number; tamper?: TamperReason };
 }
 
 export interface DerivedFact {

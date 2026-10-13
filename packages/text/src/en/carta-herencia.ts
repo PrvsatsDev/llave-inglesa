@@ -1,9 +1,9 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
-import { flatPolicy, walletOf } from '@llave-inglesa/domain';
+import { flatPolicy, policyTimelocks, walletOf } from '@llave-inglesa/domain';
 import type { InheritanceLetter, LetterPiece } from '@llave-inglesa/engine';
 import type * as es from '../es/carta-herencia.ts';
 import type { Label } from '../tipos.ts';
-import { listText } from './textos.ts';
+import { listText, waitText } from './textos.ts';
 
 /**
  * Texts of the letter for the heirs. Meant for someone who knows nothing about Bitcoin: short sentences, no jargon,
@@ -55,8 +55,12 @@ export const letterPieceText: typeof es.letterPieceText = (p: LetterPiece, label
   const parts = p.provides.map((s) => secretText(s, label));
   if (p.signs.length > 0) parts.push(`signs with ${listText(p.signs.map(label))}${p.needsPin ? '; unlocked with its PIN' : ''}`);
   if (p.hasWallet) parts.push('has the wallet registered');
+  if (p.wait > 0) parts.push(`only works once the bitcoin has gone ${waitText(p.wait)} without moving`);
   return parts.length > 0 ? parts.join('; ') : 'needed';
 };
+
+export const letterWaitNote: typeof es.letterWaitNote = (letter) =>
+  letter.wait > 0 ? `With this you have to wait until the bitcoin has gone ${waitText(letter.wait)} without moving (the steps explain it).` : null;
 
 export const letterMemoryText: typeof es.letterMemoryText = (m, label) => `${label(m.person)} knows ${secretText(m.secret, label)} by heart.`;
 
@@ -86,7 +90,9 @@ export const letterSteps: typeof es.letterSteps = (model: CustodyModel, letter: 
   ];
   if (multisig && withDescriptor) {
     steps.push(
-      'On a computer, install a wallet that supports multisig (for example Sparrow or Nunchuk) and import the descriptor: by scanning its QR code or copying it.',
+      policyTimelocks(model.policy).length > 0
+        ? 'On a computer, install a wallet that supports Miniscript (for example Liana) and import the descriptor: by scanning its QR code or copying it.'
+        : 'On a computer, install a wallet that supports multisig (for example Sparrow or Nunchuk) and import the descriptor: by scanning its QR code or copying it.',
       'Check that the first receive address it shows matches the one on the printed descriptor, if you have it. If it matches, it is the right wallet.',
       'Seed phrases are not typed into the computer: they are loaded onto a signing device (a “hardware wallet”) and you sign with it.',
     );
@@ -103,6 +109,12 @@ export const letterSteps: typeof es.letterSteps = (model: CustodyModel, letter: 
   if (letter.memory.some((m) => m.secret.type === 'passphrase') || letter.stops.some((s) => s.pieces.some((p) => p.provides.some((x) => x.type === 'passphrase')))) {
     steps.push('With the passphrase, type it exactly the same (capital letters, spaces, accents): a single different character opens another, empty wallet.');
   }
+  if (letter.wait > 0) {
+    steps.push(
+      `With what is on the list you have to wait: those keys only work once the bitcoin has gone ${waitText(letter.wait)} without moving (this is what is called a “timelock”). It counts from the last time it was moved; until then, the wallet will not let you send it. Waiting carries no risk.` +
+        (letter.withoutWait ? ' If you do not want to wait, see “Without waiting”, above.' : ''),
+    );
+  }
   steps.push('Before moving everything, send a small amount and check that it arrives.');
   return steps;
 };
@@ -116,6 +128,7 @@ export const LETTER_TEXT: typeof es.LETTER_TEXT = {
     'Never type those words into a website, a phone or a computer, and never take photos of them.',
     'Be wary of anyone who offers to “manage” it for you or to recover it for a fee.',
   ],
+  withoutWait: 'If you do not want to wait for that time to pass, it can also be recovered right away by gathering this instead:',
   spareNote:
     'What is marked “spare” is not needed, but it is good to know it exists in case you cannot reach one of the other pieces.',
   noDescriptor:

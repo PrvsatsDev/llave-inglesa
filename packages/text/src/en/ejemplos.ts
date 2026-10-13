@@ -53,11 +53,22 @@ export const EJEMPLOS: typeof es = {
   'Sin dispositivos que guarden keys: una sola SeedSigner con la que se firma cargando cada frase semilla. Todo pasa por el mismo aparato, y para firmar hay que ir a buscar las placas.':
     'No devices that store keys: a single SeedSigner that signs by loading each seed phrase. Everything goes through the same device, and signing means fetching the plates.',
 
+  'Key de recuperación de la heredera': 'Heir’s recovery key',
+  'Single-sig para el día a día, más una segunda key en casa de la hija que solo vale si las monedas pasan 6 meses sin moverse. El titular las mueve cada 3 meses. Si pierde su key, o fallece, la hija recupera los fondos esperando.':
+    'Single-sig for everyday use, plus a second key at the daughter’s house that only works if the coins go 6 months without moving. The owner moves them every 3 months. If they lose their key, or die, the daughter recovers the funds by waiting.',
+  '2 de 3 que se relaja con el tiempo': '2 of 3 that relaxes over time',
+  'Como el 2 de 3 distribuido, pero si las monedas pasan un año sin moverse basta una sola key. El titular las mueve cada 6 meses. Perder dos keys ya no lo pierde todo: se recupera esperando.':
+    'Like the distributed 2 of 3, but if the coins go a year without moving a single key is enough. The owner moves them every 6 months. Losing two keys no longer loses everything: it is recovered by waiting.',
+  '2 de 3 que se amplía con el tiempo': '2 of 3 that expands over time',
+  'Como el 2 de 3 distribuido, más una cuarta key en el despacho del abogado que solo vale pasado un año sin mover las monedas, y siempre junto a otra: sigue siendo multifirma. El titular las mueve cada 6 meses.':
+    'Like the distributed 2 of 3, plus a fourth key at the lawyer’s office that only works after a year without moving the coins, and always together with another one: it is still multisig. The owner moves them every 6 months.',
+
   // ---------- People ----------
   Yo: 'Me',
   Pareja: 'Partner',
   Hermano: 'Brother',
   Abogado: 'Lawyer',
+  Hija: 'Daughter',
 
   // ---------- Locations ----------
   Casa: 'Home',
@@ -68,11 +79,13 @@ export const EJEMPLOS: typeof es = {
   'Casa de mis padres': 'My parents’ house',
   'Casa padres': 'Parents’ house',
   'Despacho de abogado': 'Law office',
+  'Casa de la hija': 'Daughter’s house',
 
   // ---------- Backups ----------
   'Backup K1': 'K1 backup',
   'Backup K2': 'K2 backup',
   'Backup K3': 'K3 backup',
+  'Backup K4': 'K4 backup',
   'Backup Passphrase': 'Passphrase backup',
   'Placa de metal K1': 'Metal plate K1',
   'Placa de metal K2': 'Metal plate K2',
@@ -81,4 +94,6 @@ export const EJEMPLOS: typeof es = {
   'Descriptor impreso': 'Printed descriptor',
   'Descriptor cf': 'Descriptor (safe)',
   'Descriptor cb': 'Descriptor (bank)',
+  'Descriptor hija': 'Descriptor (daughter)',
+  'Descriptor abogado': 'Descriptor (lawyer)',
 };

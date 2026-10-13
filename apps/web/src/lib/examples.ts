@@ -1,4 +1,4 @@
-import { parseModel, policyKeys, type CustodyModel } from '@llave-inglesa/domain';
+import { parseModel, policyKeys, policyTimelocks, type CustodyModel } from '@llave-inglesa/domain';
 import { EJEMPLOS, idioma, traducirEjemplo, type Idioma } from './text.ts';
 
 /**
@@ -11,8 +11,8 @@ const files = import.meta.glob<unknown>(['../../../../fixtures/*.json', '../../.
 const ORDER = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
 
 /** Sus nombres, en `UI.cabecera.gruposEjemplos`. */
-export type ExampleGroup = 'inicio' | 'single' | 'multi';
-export const EXAMPLE_GROUPS: readonly ExampleGroup[] = ['inicio', 'single', 'multi'];
+export type ExampleGroup = 'inicio' | 'single' | 'multi' | 'timelock';
+export const EXAMPLE_GROUPS: readonly ExampleGroup[] = ['inicio', 'single', 'multi', 'timelock'];
 
 export interface Example {
   id: string;
@@ -26,7 +26,8 @@ const originales: readonly Example[] = Object.entries(files)
     const result = parseModel(json);
     if (!result.ok) throw new Error(`El ejemplo "${id}" no es válido`); // texto-ok: error de desarrollo
     const gallery = path.includes('/referencia/');
-    const group: ExampleGroup = !gallery ? 'inicio' : policyKeys(result.model.policy).length > 1 ? 'multi' : 'single';
+    const { policy } = result.model;
+    const group: ExampleGroup = !gallery ? 'inicio' : policyTimelocks(policy).length > 0 ? 'timelock' : policyKeys(policy).length > 1 ? 'multi' : 'single';
     return { id, group, model: result.model };
   })
   .sort((a, b) => EXAMPLE_GROUPS.indexOf(a.group) - EXAMPLE_GROUPS.indexOf(b.group) || rank(a.id) - rank(b.id) || a.id.localeCompare(b.id));
