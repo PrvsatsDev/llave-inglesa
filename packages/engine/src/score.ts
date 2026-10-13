@@ -1,4 +1,4 @@
-import { catalogModelByName, type Computer, type Device, type Id, type Location, type ModelIndex } from '@llave-inglesa/domain';
+import { BLOCKS_PER_DAY, catalogModelByName, type Computer, type CustodyModel, type Device, type Id, type Location, type ModelIndex } from '@llave-inglesa/domain';
 import type { AttackAtom } from './attacks.ts';
 import type { LossEvent } from './world.ts';
 
@@ -12,7 +12,7 @@ import type { LossEvent } from './world.ts';
  * Esfuerzo y riesgo que supone cada tipo de ataque para el atacante.
  * Más alto = más difícil. Un robo real suma el esfuerzo de todos sus ataques.
  */
-export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce' | 'computer-malware' | 'tampered-device'>, number>> = {
+export const ATTACK_EFFORT: Readonly<Record<Exclude<AttackAtom['type'], 'passphrase-bruteforce' | 'computer-malware' | 'tampered-device' | 'timelock-wait'>, number>> = {
   /** Entrar sin nadie presente: sigiloso, sin confrontación. En sitios protegidos, ver BURGLARY_EFFORT. */
   burglary: 1.5,
   /** Alguien de confianza: ya tiene acceso y conocimiento, pero traicionar a la pareja es mucho más raro que un robo. */
@@ -69,6 +69,21 @@ export function tamperRisk(device: Device): { reason: TamperReason; effort: numb
   if (reasons.length === 0) return null;
   const reason = reasons.reduce((worst, r) => (TAMPERED_DEVICE_EFFORT[r] < TAMPERED_DEVICE_EFFORT[worst] ? r : worst));
   return { reason, effort: TAMPERED_DEVICE_EFFORT[reason] };
+}
+
+/**
+ * Esperar a que venza un timelock sin gastar. Si el titular no renueva antes de que venza (o no se sabe), basta con
+ * tener paciencia; si renueva a tiempo, hay que esperar a que se descuide o deje de poder renovar: raro, como un ataque
+ * sofisticado.
+ */
+export const TIMELOCK_WAIT_EFFORT = {
+  lapsed: 0.5,
+  renewed: 3,
+} as const;
+
+/** ¿El titular mueve las monedas antes de que venza un timelock de `blocks` bloques? Sin indicar, no. */
+export function renewsInTime(model: Pick<CustodyModel, 'renewal'>, blocks: number): boolean {
+  return model.renewal !== undefined && model.renewal.everyDays * BLOCKS_PER_DAY < blocks;
 }
 
 /**
@@ -152,6 +167,8 @@ export function atomEffort(a: AttackAtom, index: ModelIndex): number {
   switch (a.type) {
     case 'passphrase-bruteforce':
       return PASSPHRASE_EFFORT[a.strength];
+    case 'timelock-wait':
+      return renewsInTime(index, a.blocks) ? TIMELOCK_WAIT_EFFORT.renewed : TIMELOCK_WAIT_EFFORT.lapsed;
     case 'computer-malware':
       return COMPUTER_MALWARE_EFFORT[index.computers.get(a.computer)?.use ?? 'daily'];
     case 'tampered-device': {
@@ -295,7 +312,7 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'heir-fragility' | 'no-descriptor'; points: number }[];
+  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'delay' | 'heir-fragility' | 'no-descriptor' | 'renewal'; points: number }[];
   score: number;
 }
 
@@ -409,16 +426,24 @@ export const rarityScore = (rarity: number | null) => (rarity === null ? 100 : M
  */
 export const NO_DESCRIPTOR_PENALTY = { resilience: 15, inheritance: 35 } as const;
 
-export function resilienceBreakdown(minRarity: number | null, combined: number | null, lockoutMinRarity: number | null, noDescriptorCopy = false): ScoreBreakdown {
+export function resilienceBreakdown(
+  minRarity: number | null,
+  combined: number | null,
+  lockoutMinRarity: number | null,
+  noDescriptorCopy = false,
+  delayMinRarity: number | null = null,
+): ScoreBreakdown {
   const base = rarityScore(minRarity);
   const others = base - rarityScore(combined);
   const lockout = lockoutPenalty(lockoutMinRarity);
+  const delay = delayPenalty(delayMinRarity);
   const noDescriptor = noDescriptorCopy ? NO_DESCRIPTOR_PENALTY.resilience : 0;
   const penalties: ScoreBreakdown['penalties'] = [];
   if (others > 0) penalties.push({ reason: 'other-routes', points: others });
   if (lockout > 0) penalties.push({ reason: 'lockout', points: lockout });
+  if (delay > 0) penalties.push({ reason: 'delay', points: delay });
   if (noDescriptor > 0) penalties.push({ reason: 'no-descriptor', points: noDescriptor });
-  return { base, penalties, score: Math.max(0, base - others - lockout - noDescriptor) };
+  return { base, penalties, score: Math.max(0, base - others - lockout - delay - noDescriptor) };
 }
 
 /**
@@ -435,10 +460,29 @@ export function lockoutPenalty(minRarity: number | null): number {
   return LOCKOUT_PENALTY.find((p) => minRarity < p.below)?.points ?? 0;
 }
 
-/** Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura. */
-export function usabilityScore(locations: number | null): number {
-  if (locations === null) return 0;
-  return [100, 100, 75, 50][locations] ?? 30;
+/**
+ * Un retraso: lo que impide gastar ahora pero se recupera esperando a que venza un timelock. No pierde nada y es
+ * para lo que está el timelock, así que resta poco, según lo probable que sea el retraso más probable.
+ */
+export const DELAY_PENALTY: readonly { below: number; points: number }[] = [{ below: 3, points: 2 }];
+
+export function delayPenalty(minRarity: number | null): number {
+  if (minRarity === null) return 0;
+  return DELAY_PENALTY.find((p) => minRarity < p.below)?.points ?? 0;
+}
+
+/** Con timelocks hay que mover las monedas cada cierto tiempo para renovarlos: una firma más, periódica. */
+export const RENEWAL_PENALTY = 10;
+
+/** Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura, menos lo que cuesta renovar los timelocks. */
+export function usabilityBreakdown(locations: number | null, renewal = false): ScoreBreakdown {
+  const base = locations === null ? 0 : ([100, 100, 75, 50][locations] ?? 30);
+  if (locations === null || !renewal) return { base, penalties: [], score: base };
+  return { base, penalties: [{ reason: 'renewal', points: RENEWAL_PENALTY }], score: Math.max(0, base - RENEWAL_PENALTY) };
+}
+
+export function usabilityScore(locations: number | null, renewal = false): number {
+  return usabilityBreakdown(locations, renewal).score;
 }
 
 /**

@@ -16,11 +16,11 @@ export function lossAtoms(world: World): LossEvent[] {
 }
 
 /**
- * La coalición legítima: titulares, herederos y custodios que pueden actuar,
- * juntando lo que saben y las ubicaciones a las que pueden entrar ahora mismo.
+ * La coalición legítima: titulares, herederos y custodios que pueden actuar, juntando lo que saben y las ubicaciones a
+ * las que pueden entrar ahora mismo, con las monedas `elapsed` bloques sin moverse (por defecto, ahora).
  */
-export function legitHoldings(world: World): Holdings {
+export function legitHoldings(world: World, elapsed = 0): Holdings {
   const people = world.model.people.filter((p) => p.role !== 'other' && canAct(world, p.id)).map((p) => p.id);
   const locations = new Set<Id>(people.flatMap((p) => accessibleLocations(world, p)));
-  return { people, locations: [...locations] };
+  return { people, locations: [...locations], elapsed };
 }

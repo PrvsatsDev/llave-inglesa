@@ -6,6 +6,7 @@ import {
   inheritanceLetter,
   ownerDeaths,
   resilienceBreakdown,
+  usabilityBreakdown,
   securityBreakdown,
   simulateInheritance,
   simulateSigning,
@@ -165,13 +166,15 @@ function resilienceScore(a: EngineAnalysis) {
   if (!res.recoverableNow) {
     return { score: res.score, rows: [{ label: T.resiliencia.nadiePuede, points: 0 }], how: [] as string[] };
   }
-  const b = resilienceBreakdown(res.minRarity, res.combinedRarity, res.lockoutMinRarity, res.noDescriptorCopy);
+  const b = resilienceBreakdown(res.minRarity, res.combinedRarity, res.lockoutMinRarity, res.noDescriptorCopy, res.delayMinRarity);
   const label = (reason: string, points: number): Row =>
     reason === 'other-routes'
       ? { label: T.resiliencia.otrasVias(res.cuts.length - 1, round1(res.combinedRarity!)), points: -points }
       : reason === 'no-descriptor'
         ? { label: T.resiliencia.sinDescriptor, points: -points }
-        : { label: T.resiliencia.bloqueo(res.lockoutMinRarity!), points: -points };
+        : reason === 'delay'
+          ? { label: T.resiliencia.retraso(res.delayMinRarity!), points: -points }
+          : { label: T.resiliencia.bloqueo(res.lockoutMinRarity!), points: -points };
   const rows: Row[] = [
     res.minRarity === null
       ? { label: T.resiliencia.sinPerdida(res.searchedUpTo), points: b.base }
@@ -187,9 +190,13 @@ function resilienceScore(a: EngineAnalysis) {
 
 function usabilityScoreRows(a: EngineAnalysis) {
   const n = a.usability.visits;
+  const b = usabilityBreakdown(n, a.usability.renewal);
   return {
     score: a.usability.score,
-    rows: [{ label: n === null ? T.usabilidad.noPueden : T.usabilidad.firmarExige(n), points: a.usability.score }],
+    rows: [
+      { label: n === null ? T.usabilidad.noPueden : T.usabilidad.firmarExige(n), points: b.base },
+      ...b.penalties.map((p) => ({ label: T.usabilidad.renovar, points: -p.points })),
+    ],
     how: T.usabilidad.como(),
   };
 }
@@ -298,6 +305,12 @@ function Inheritance({ model, analysis }: { model: CustodyModel; analysis: Engin
           {inh.status === 'ok' ? T.herencia.yendoA : '.'}
         </p>
         {inh.locations && <Places model={model} ids={inh.locations} />}
+        {inh.withoutWait && (
+          <>
+            <p className={styles.muted}>{T.herencia.sinEsperar(inh.withoutWait.visits)}</p>
+            <Places model={model} ids={inh.withoutWait.locations} />
+          </>
+        )}
         <Button icon={Flame} onClick={() => simulate({ kind: 'loss', events: ownerDeaths(model) }, 'inheritance')}>
           {T.herencia.simular}
         </Button>

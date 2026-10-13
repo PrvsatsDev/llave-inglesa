@@ -17,6 +17,8 @@ export interface ModelIndex {
   readonly locations: ReadonlyMap<Id, Location>;
   /** Keys que aparecen en la política, en orden. */
   readonly policyKeys: readonly Id[];
+  /** Cada cuánto renueva el titular los timelocks (del modelo). */
+  readonly renewal: CustodyModel['renewal'];
   /** Objetos en esa ubicación (no los que alguien lleva encima). */
   itemsAt(location: Id): readonly Item[];
   /** Ordenadores de firma que lleva encima esa persona. */
@@ -42,7 +44,21 @@ export function activeHolds(device: Device): readonly Id[] {
 }
 
 export function policyKeys(policy: Policy): Id[] {
-  return policy.type === 'key' ? [policy.key] : policy.of.flatMap(policyKeys);
+  if (policy.type === 'key') return [policy.key];
+  return policy.type === 'thresh' ? policy.of.flatMap(policyKeys) : [];
+}
+
+/** Duraciones distintas de los timelocks de la política (en bloques), de menor a mayor. */
+export function policyTimelocks(policy: Policy): number[] {
+  const walk = (p: Policy): number[] => (p.type === 'older' ? [p.blocks] : p.type === 'thresh' ? p.of.flatMap(walk) : []);
+  return [...new Set(walk(policy))].sort((a, b) => a - b);
+}
+
+/** ¿Hay alguna rama que se cumpla sin ninguna firma (solo esperando)? Entonces cualquiera podría gastar. */
+export function spendableWithoutKeys(policy: Policy): boolean {
+  if (policy.type === 'key') return false;
+  if (policy.type === 'older') return true;
+  return policy.of.filter(spendableWithoutKeys).length >= policy.k;
 }
 
 export const normalizeLabel = (label: string) => label.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -93,6 +109,7 @@ export function indexModel(model: CustodyModel): ModelIndex {
     people: byId(model.people),
     locations: byId(model.locations),
     policyKeys: policyKeys(model.policy),
+    renewal: model.renewal,
     itemsAt: (location) => itemsByLocation.get(location) ?? [],
     carriedBy: (person) => model.computers.filter((c) => c.carriedBy === person),
     label: (id) => labels.get(id) ?? id,

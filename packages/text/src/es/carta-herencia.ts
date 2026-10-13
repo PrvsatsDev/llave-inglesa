@@ -1,8 +1,8 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
-import { flatPolicy, walletOf } from '@llave-inglesa/domain';
+import { flatPolicy, policyTimelocks, walletOf } from '@llave-inglesa/domain';
 import type { InheritanceLetter, LetterPiece } from '@llave-inglesa/engine';
 import type { Label } from '../tipos.ts';
-import { listText } from './textos.ts';
+import { listText, waitText } from './textos.ts';
 
 /**
  * Textos de la carta para los herederos. Pensada para alguien que no sabe de Bitcoin: frases cortas, sin jerga, y
@@ -54,8 +54,13 @@ export function letterPieceText(p: LetterPiece, label: Label): string {
   const parts = p.provides.map((s) => secretText(s, label));
   if (p.signs.length > 0) parts.push(`firma con ${listText(p.signs.map(label))}${p.needsPin ? '; se desbloquea con su PIN' : ''}`);
   if (p.hasWallet) parts.push('tiene registrada la cartera');
+  if (p.wait > 0) parts.push(`solo sirve cuando los bitcoins llevan ${waitText(p.wait)} sin moverse`);
   return parts.length > 0 ? parts.join('; ') : 'hace falta';
 }
+
+/** Bajo «Qué reunir y dónde», si con eso hay que esperar a que venza un timelock. */
+export const letterWaitNote = (letter: InheritanceLetter) =>
+  letter.wait > 0 ? `Con esto hay que esperar a que los bitcoins lleven ${waitText(letter.wait)} sin moverse (lo explican los pasos).` : null;
 
 export const letterMemoryText = (m: { person: string; secret: SecretRef }, label: Label) =>
   `${label(m.person)} sabe de memoria ${secretText(m.secret, label)}.`;
@@ -86,7 +91,9 @@ export function letterSteps(model: CustodyModel, letter: InheritanceLetter): str
   ];
   if (multisig && withDescriptor) {
     steps.push(
-      'En un ordenador, instala una cartera que admita multisig (por ejemplo Sparrow o Nunchuk) e importa el descriptor: escaneando su QR o copiándolo.',
+      policyTimelocks(model.policy).length > 0
+        ? 'En un ordenador, instala una cartera que admita Miniscript (por ejemplo Liana) e importa el descriptor: escaneando su QR o copiándolo.'
+        : 'En un ordenador, instala una cartera que admita multisig (por ejemplo Sparrow o Nunchuk) e importa el descriptor: escaneando su QR o copiándolo.',
       'Comprueba que la primera dirección de recepción que muestra coincide con la del descriptor impreso, si la tienes. Si coincide, la cartera es la buena.',
       'Las frases semilla no se escriben en el ordenador: se cargan en un dispositivo de firma (una «hardware wallet») y se firma con él.',
     );
@@ -103,6 +110,12 @@ export function letterSteps(model: CustodyModel, letter: InheritanceLetter): str
   if (letter.memory.some((m) => m.secret.type === 'passphrase') || letter.stops.some((s) => s.pieces.some((p) => p.provides.some((x) => x.type === 'passphrase')))) {
     steps.push('Con la passphrase, escríbela exactamente igual (mayúsculas, espacios, tildes): un solo carácter distinto abre otra cartera vacía.');
   }
+  if (letter.wait > 0) {
+    steps.push(
+      `Con lo de la lista hay que esperar: esas llaves solo sirven cuando los bitcoins llevan ${waitText(letter.wait)} sin moverse (es lo que se llama un «timelock»). Cuenta desde la última vez que se movieron; hasta entonces, la cartera no dejará enviarlos. Esperar no tiene ningún riesgo.` +
+        (letter.withoutWait ? ' Si no quieres esperar, mira «Sin esperar», más arriba.' : ''),
+    );
+  }
   steps.push('Antes de mover todo, envía una cantidad pequeña y comprueba que llega.');
   return steps;
 }
@@ -117,6 +130,8 @@ export const LETTER_TEXT = {
     'Nunca escribas esas palabras en una web, en un móvil ni en un ordenador, ni les hagas fotos.',
     'Desconfía de quien se ofrezca a «gestionarlos» por ti o a recuperarlos a cambio de una comisión.',
   ] as readonly string[],
+  /** Entrada de «Sin esperar»: otra forma de recuperarlos sin esperar al timelock. */
+  withoutWait: 'Si no quieres esperar a que pase ese tiempo, también se pueden recuperar ya reuniendo esto otro:',
   /** Aviso bajo «Qué reunir y dónde» cuando hay backups de reserva. */
   spareNote:
     'Lo marcado «de reserva» no hace falta, pero es bueno que sepas que existe por si no llegas a alguna de las otras piezas.',

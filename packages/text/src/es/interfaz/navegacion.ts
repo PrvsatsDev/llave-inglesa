@@ -47,6 +47,7 @@ export const banner = {
     stolen: 'El atacante puede gastar tus fondos',
     safe: 'No le basta para robar',
     recoverable: 'Los fondos siguen siendo recuperables',
+    delay: 'Bloqueados ahora; recuperables cuando venza el timelock',
     lockout: 'Bloqueados hasta el fallecimiento; después, recuperables',
     lost: 'Fondos perdidos para siempre',
   },

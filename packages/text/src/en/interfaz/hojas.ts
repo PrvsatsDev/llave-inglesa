@@ -41,6 +41,7 @@ export const hojaCarta: typeof esCarta = {
   queReunir: 'What to gather and where',
   deReserva: ' (spare)',
   deMemoria: 'By heart',
+  sinEsperar: 'Without waiting',
   pasos: 'Steps',
   unasPalabras: 'A few words',
 };

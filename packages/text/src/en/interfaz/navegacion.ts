@@ -49,6 +49,7 @@ export const banner: typeof esBanner = {
     stolen: 'The attacker can spend your funds',
     safe: 'Not enough to steal',
     recoverable: 'The funds are still recoverable',
+    delay: 'Locked now; recoverable when the timelock expires',
     lockout: 'Locked until the death; recoverable afterwards',
     lost: 'Funds lost forever',
   },

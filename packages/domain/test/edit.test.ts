@@ -41,6 +41,8 @@ import {
 } from '../src/index.ts';
 
 const FIXTURES = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
+/** Ejemplos con timelocks: recuperación de la heredera, 2 de 3 que se relaja y que se amplía. */
+const TIMELOCKS = ['referencia/r13-recuperacion-heredera', 'referencia/r14-2de3-se-relaja', 'referencia/r15-2de3-se-amplia'];
 
 function fixture(name: string): CustodyModel {
   const r = parseModel(JSON.parse(readFileSync(new URL(`../../../fixtures/${name}.json`, import.meta.url), 'utf8')));
@@ -447,11 +449,45 @@ describe('ordenar los ids al exportar', () => {
   });
 });
 
+describe('eliminar una ubicación', () => {
+  it('el móvil que lleva alguien deja de conectarse a los dispositivos que se van con ella', () => {
+    const { model, id } = addComputer(casa, { carriedBy: 'yo' });
+    const devices = model.devices.filter((d) => d.location === 'casa').map((d) => d.id);
+    const connected = setComputerConnects(model, id, devices);
+    const after = removeLocation(connected, 'casa');
+    expect(after.computers.find((c) => c.id === id)?.connects).toEqual([]);
+    expect(errors(after)).toEqual([]);
+  });
+});
+
+describe('políticas con timelocks', () => {
+  const r13 = fixture('referencia/r13-recuperacion-heredera');
+  const r14 = fixture('referencia/r14-2de3-se-relaja');
+  const r15 = fixture('referencia/r15-2de3-se-amplia');
+
+  it('quitar la única key de una rama con espera quita la rama: si no, bastaría con esperar', () => {
+    expect(removeKey(r13, 'k2').policy).toEqual({ type: 'key', key: 'k1' });
+    expect(removeKey(r15, 'k4').policy).toEqual({ type: 'thresh', k: 2, of: [1, 2, 3].map((n) => ({ type: 'key', key: `k${n}` })) });
+  });
+
+  it('quitar una key del multisig que se relaja conserva el timelock', () => {
+    expect(removeKey(r14, 'k1').policy).toEqual({ type: 'thresh', k: 2, of: [{ type: 'key', key: 'k2' }, { type: 'key', key: 'k3' }, { type: 'older', blocks: 52560 }] });
+  });
+
+  it('en una política con ramas o timelocks, una key nueva queda fuera hasta colocarla, y el umbral no se toca', () => {
+    const { model, id } = addKey(r14);
+    expect(model.policy).toEqual(r14.policy);
+    expect(model.keys.some((k) => k.id === id)).toBe(true);
+    expect(setThreshold(r14, 1).policy).toEqual(r14.policy);
+    expect(errors(model)).toEqual([]);
+  });
+});
+
 describe('propiedad: editar nunca rompe el modelo', () => {
   it('cualquier secuencia de operaciones deja un modelo válido', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom(...FIXTURES),
+        fc.constantFrom(...FIXTURES, ...TIMELOCKS),
         fc.array(fc.tuple(fc.nat(ops.length - 1), fc.array(fc.nat(1000), { minLength: 4, maxLength: 4 })), { maxLength: 25 }),
         (name, steps) => {
           let m = fixture(name);

@@ -6,6 +6,7 @@ import {
   COERCION_SURCHARGE,
   COMPUTER_MALWARE_EFFORT,
   DAILY_COMPUTER_PENALTY,
+  DELAY_PENALTY,
   DURESS_SURCHARGE,
   EXPOSURE,
   EXTRA_SITE_SURCHARGE,
@@ -15,9 +16,11 @@ import {
   LOSS_RARITY,
   NO_DESCRIPTOR_PENALTY,
   PASSPHRASE_EFFORT,
+  RENEWAL_PENALTY,
   rarityScore,
   securityBreakdown,
   TAMPERED_DEVICE_EFFORT,
+  TIMELOCK_WAIT_EFFORT,
   usabilityScore,
 } from '@llave-inglesa/engine';
 import type { analisis as es } from '../../es/interfaz/analisis.ts';
@@ -60,7 +63,7 @@ export const analisis: typeof es = {
         .join(' · ');
       const curve = [1, 1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' or more' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
       return [
-        `Every combination of up to ${hasta} attacks that allows spending is searched for. Each attack adds its effort: ${efforts}. Hacking a cloud account costs ${num(CLOUD_BREACH_EFFORT)}. Getting malware onto the signing computer, ${num(COMPUTER_MALWARE_EFFORT.daily)} if it is general-purpose and ${num(COMPUTER_MALWARE_EFFORT.dedicated)} if it is dedicated. A device that may have arrived tampered with gives away its seeds: second-hand or with a broken seal ${num(TAMPERED_DEVICE_EFFORT['second-hand'])}, from an unofficial shop ${num(TAMPERED_DEVICE_EFFORT['unofficial-shop'])}, from an official reseller ${num(TAMPERED_DEVICE_EFFORT['official-reseller'])} (from the manufacturer with the seal intact, or assembled at home, does not count). Breaking into a home safe costs ${num(BURGLARY_EFFORT['home-safe'])} and into a bank safe deposit box ${num(BURGLARY_EFFORT['bank-box'])}; if it is inside another location, both have to be broken into and it only adds what its protection adds over an unprotected house (forcing the safe, +${num(BURGLARY_EFFORT['home-safe'] - BURGLARY_EFFORT.none)}), whatever the protection of the other one. Each additional physical place that has to be raided, after the first, +${num(EXTRA_SITE_SURCHARGE)} (a location inside another is the same place). The wrench attack is paid once per raid: coercing several people at the same place, or taking the same person to another place, is a single raid. Coercing someone where they do not live (if it is known where they live), +${num(COERCION_AWAY_SURCHARGE)}; at a bank box, +${num(COERCION_SURCHARGE['bank-box'])} (they do not add up: the larger one counts). Guessing a passphrase once you have the seed: weak ${num(PASSPHRASE_EFFORT.weak)} · phrase ${num(PASSPHRASE_EFFORT.phrase)} · long random, impossible. If a duress PIN has to be defeated, +${num(DURESS_SURCHARGE)}.`,
+        `Every combination of up to ${hasta} attacks that allows spending is searched for. Each attack adds its effort: ${efforts}. Hacking a cloud account costs ${num(CLOUD_BREACH_EFFORT)}. Getting malware onto the signing computer, ${num(COMPUTER_MALWARE_EFFORT.daily)} if it is general-purpose and ${num(COMPUTER_MALWARE_EFFORT.dedicated)} if it is dedicated. A device that may have arrived tampered with gives away its seeds: second-hand or with a broken seal ${num(TAMPERED_DEVICE_EFFORT['second-hand'])}, from an unofficial shop ${num(TAMPERED_DEVICE_EFFORT['unofficial-shop'])}, from an official reseller ${num(TAMPERED_DEVICE_EFFORT['official-reseller'])} (from the manufacturer with the seal intact, or assembled at home, does not count). Breaking into a home safe costs ${num(BURGLARY_EFFORT['home-safe'])} and into a bank safe deposit box ${num(BURGLARY_EFFORT['bank-box'])}; if it is inside another location, both have to be broken into and it only adds what its protection adds over an unprotected house (forcing the safe, +${num(BURGLARY_EFFORT['home-safe'] - BURGLARY_EFFORT.none)}), whatever the protection of the other one. Each additional physical place that has to be raided, after the first, +${num(EXTRA_SITE_SURCHARGE)} (a location inside another is the same place). The wrench attack is paid once per raid: coercing several people at the same place, or taking the same person to another place, is a single raid. Coercing someone where they do not live (if it is known where they live), +${num(COERCION_AWAY_SURCHARGE)}; at a bank box, +${num(COERCION_SURCHARGE['bank-box'])} (they do not add up: the larger one counts). Guessing a passphrase once you have the seed: weak ${num(PASSPHRASE_EFFORT.weak)} · phrase ${num(PASSPHRASE_EFFORT.phrase)} · long random, impossible. If a duress PIN has to be defeated, +${num(DURESS_SURCHARGE)}. Waiting for a timelock to expire: ${num(TIMELOCK_WAIT_EFFORT.lapsed)} if the owner does not move the coins before it expires (or it does not say how often they do), ${num(TIMELOCK_WAIT_EFFORT.renewed)} if they move them in time (the attacker would have to wait until they slip up or can no longer do it).`,
         `The more effort the cheapest theft requires, the higher the score: ${curve}.`,
         `Having several almost equally cheap routes (up to ${num(EXPOSURE.margin)} more effort) subtracts ${EXPOSURE.penaltyPerExtraRoute} for each extra route, at most ${EXPOSURE.maxPenalty}.`,
         `Signing with a general-purpose computer or phone subtracts ${DAILY_COMPUTER_PENALTY}: its malware can swap the destination or change address, or lead you to sign blindly. It is little because devices show the address and, with the wallet registered, check the change; even so, compare the destination through another channel. A dedicated one (only for signing and carefully set up) subtracts nothing.`,
@@ -73,6 +76,7 @@ export const analisis: typeof es = {
     otrasVias: (n: number, rareza: number) => `${plural(n, 'more route', 'more routes')}: all together they amount to rarity ${num(rareza)}`,
     sinDescriptor: 'No copy of the descriptor at all: if the devices fail, the wallet would have to be rebuilt',
     bloqueo: (rareza: number) => `Most likely temporary lockout: rarity ${num(rareza)}`,
+    retraso: (rareza: number) => `Most likely delay (recovered by waiting for the timelock to expire): rarity ${num(rareza)}`,
     sinPerdida: (hasta: number) => `Survives any combination of up to ${hasta} loss events`,
     perdidaMasProbable: (rareza: number) => `Most likely loss: rarity ${num(rareza)}`,
     como: (hasta: number) => {
@@ -82,6 +86,7 @@ export const analisis: typeof es = {
         `Several loss events at once add up their rarities (like multiplying probabilities). The combinations of up to ${hasta} after which nobody could ever recover the funds are searched for; the rarer the most likely one, the higher the score: ${[1, 2, 3, 4, 5, 6].map((x) => `${x}${x === 6 ? ' or more' : ''} → ${rarityScore(x)}`).join(' · ')}.`,
         'The other routes count too: their probabilities add up, and the score comes from the equivalent rarity of all of them together.',
         `A temporary lockout (funds frozen while someone is incapacitated) loses nothing, but subtracts: ${LOCKOUT_PENALTY.map((p) => `rarity below ${num(p.below)} −${p.points}`).join(' · ')}.`,
+        `With timelocks, whatever prevents spending now but is recovered by waiting for one to expire is a delay: it loses nothing (that is what the timelock is for) and subtracts little: ${DELAY_PENALTY.map((p) => `rarity below ${num(p.below)} −${p.points}`).join(' · ')}.`,
         `A multisig without any copy of the descriptor subtracts ${NO_DESCRIPTOR_PENALTY.resilience}: the seeds give the xpubs, but not how they are combined (script type, k of n, derivation), and rebuilding the wallet that way is hard or, with unusual derivations, almost impossible.`,
       ];
     },
@@ -90,9 +95,11 @@ export const analisis: typeof es = {
   usabilidad: {
     noPueden: 'The owners cannot sign safely',
     firmarExige: (n: number) => `Signing requires going to ${plural(n, ...UBICACIONES)}`,
+    renovar: 'The coins have to be moved every so often to renew the timelock',
     como: () => [
       'How many locations the owners have to visit to sign safely: with signing devices, without typing any seed phrase into a computer.',
       `${scale(usabilityScore, UBICACIONES, 1, 4)}.`,
+      `With timelocks it subtracts ${RENEWAL_PENALTY}: the coins have to be moved before they expire so that the branch with the wait does not open, and that means signing a transaction every so often.`,
     ],
     dondeSeFirma: 'Where signing happens',
     minimoVisitar: 'The least the owners have to visit to sign a transaction:',
@@ -117,6 +124,7 @@ export const analisis: typeof es = {
       'Nobody but the owners can get to the funds. To model inheritance, mark a person as an heir in their panel (Setup › People) and give them access to some location, for example "after the death" of the owner.',
     trasFallecer: 'After the death of the owners,',
     yendoA: ', by going to:',
+    sinEsperar: (n: number) => `Without waiting for the timelock, it can also be recovered by going to ${plural(n, ...UBICACIONES)}:`,
     simular: 'Simulate the death on the map',
     losHerederos: 'The heirs',
     quienesQuedan: 'With everything within their reach, whoever is left',

@@ -1,5 +1,6 @@
 import type { Artifact, Computer, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 import { canLiveAt, canNest } from './validate.ts';
+import { policyKeys } from './model-index.ts';
 
 /**
  * Operaciones de edición: funciones puras `modelo → modelo` que mantienen la
@@ -152,20 +153,29 @@ export function updateMeta(model: CustodyModel, patch: { name?: string; descript
   return { ...model, ...patch };
 }
 
-/** Umbral de la política de primer nivel (M de N). */
+/** Política plana: una key, o un umbral k de n de keys. Las demás (anidadas, con timelocks) no se tocan al añadir keys. */
+const isFlat = (p: Policy) => p.type === 'key' || (p.type === 'thresh' && p.of.every((c) => c.type === 'key'));
+
+/** Umbral de la política de primer nivel (M de N). Solo en una política plana: con ramas o timelocks, no se toca. */
 export function setThreshold(model: CustodyModel, k: number): CustodyModel {
   const p = model.policy;
-  if (p.type !== 'thresh') return model;
+  if (p.type !== 'thresh' || !isFlat(p)) return model;
   return { ...model, policy: { ...p, k: Math.min(Math.max(1, Math.round(k)), p.of.length) } };
 }
 
+/**
+ * La política sin `key`. Una rama que se queda sin ninguna key (solo un timelock) desaparece: cumplirla no exigiría
+ * ninguna firma.
+ */
 function removeFromPolicy(p: Policy, key: Id): Policy | null {
   if (p.type === 'key') return p.key === key ? null : p;
+  if (p.type === 'older') return p;
   const of = p.of.map((c) => removeFromPolicy(c, key)).filter((c): c is Policy => c !== null);
-  if (of.length === 0) return null;
+  if (policyKeys({ type: 'thresh', k: 1, of }).length === 0) return null;
   if (of.length === 1) return of[0]!;
   return { type: 'thresh', k: Math.min(p.k, of.length), of };
 }
+
 
 // ---------- Keys ----------
 
@@ -181,10 +191,13 @@ export function addKey(model: CustodyModel): Created {
     provenance: { sources: [{ kind: 'unknown' }], independentlyVerified: false },
   };
   const leaf: Policy = { type: 'key', key: id };
+  // En una política con ramas o timelocks no hay un sitio obvio: la key queda fuera hasta colocarla.
   const policy: Policy =
     model.policy.type === 'key'
       ? { type: 'thresh', k: 1, of: [model.policy, leaf] }
-      : { ...model.policy, of: [...model.policy.of, leaf] };
+      : model.policy.type === 'thresh' && isFlat(model.policy)
+        ? { ...model.policy, of: [...model.policy.of, leaf] }
+        : model.policy;
   return { model: { ...model, keys: [...model.keys, key], policy }, id };
 }
 
@@ -309,7 +322,10 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
       locations: model.locations.filter((l) => l.id !== id).map((l) => (l.inside === id ? withoutKeys(l, 'inside') : l)),
       devices: model.devices.filter((d) => d.location !== id),
       artifacts: model.artifacts.filter((a) => a.location !== id),
-      computers: model.computers.filter((c) => c.location !== id),
+      // Los ordenadores que quedan (el móvil que lleva alguien) dejan de conectarse a los dispositivos que se van.
+      computers: model.computers
+        .filter((c) => c.location !== id)
+        .map((c) => (c.connects ? { ...c, connects: c.connects.filter((d) => !goneDevices.has(d)) } : c)),
     }),
     (s) => (s.type === 'pin' && goneDevices.has(s.device)) || (s.type === 'password' && goneArtifacts.has(s.artifact)),
   );

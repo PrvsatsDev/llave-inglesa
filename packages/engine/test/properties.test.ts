@@ -38,6 +38,9 @@ const modelArb: fc.Arbitrary<CustodyModel> = fc
       // Protección de cada ubicación y si la segunda está dentro de la primera.
       protections: fc.array(fc.constantFrom(undefined, 'home-safe' as const, 'bank-box' as const), { minLength: nLocs, maxLength: nLocs }),
       nested: fc.boolean(),
+      // Timelock como una opción más del umbral (solo con k ≥ 2: con k = 1 bastaría esperar) y cada cuánto se renueva.
+      timelock: fc.option(fc.integer({ min: 1, max: 3 })),
+      renewal: fc.option(fc.integer({ min: 1, max: 3 })),
     });
   })
   .map((r): CustodyModel => {
@@ -54,7 +57,15 @@ const modelArb: fc.Arbitrary<CustodyModel> = fc
           generatedBy: { vendor: k.vendor },
         },
       })),
-      policy: { type: 'thresh', k: r.k, of: r.keys.map((_, i) => ({ type: 'key' as const, key: `k${i}` })) },
+      policy: {
+        type: 'thresh',
+        k: r.k,
+        of: [
+          ...r.keys.map((_, i) => ({ type: 'key' as const, key: `k${i}` })),
+          ...(r.timelock !== null && r.k >= 2 ? [{ type: 'older' as const, blocks: r.timelock }] : []),
+        ],
+      },
+      ...(r.renewal !== null && { renewal: { everyDays: r.renewal } }),
       devices: r.devices.map((d, i) => ({
         id: `d${i}`,
         label: `D${i}`,
@@ -102,6 +113,23 @@ describe('propiedades del motor', () => {
           const small = derive(world, { people: p1, locations: l1 }, mode);
           const big = derive(world, { people: [...p1, ...p2], locations: [...l1, ...l2] }, mode);
           for (const id of small.facts.keys()) expect(big.facts.has(id)).toBe(true);
+        },
+      ),
+    );
+  });
+
+  it('monotonía en el tiempo: esperar más nunca permite hacer menos', () => {
+    fc.assert(
+      fc.property(
+        modelArb.chain((m) => fc.tuple(fc.constant(m), fc.integer({ min: 0, max: 4 }), fc.integer({ min: 0, max: 4 }))),
+        ([model, e1, e2]) => {
+          const world = createWorld(model);
+          const h = legitHoldings(world);
+          const early = derive(world, { ...h, elapsed: Math.min(e1, e2) }, 'any');
+          const late = derive(world, { ...h, elapsed: Math.max(e1, e2) }, 'any');
+          for (const id of early.facts.keys()) if (!id.startsWith('timelock:')) expect(late.facts.has(id)).toBe(true);
+          if (early.canSpend) expect(late.canSpend).toBe(true);
+          if (late.canSpend) expect(late.wait).toBeLessThanOrEqual(Math.max(e1, e2));
         },
       ),
     );

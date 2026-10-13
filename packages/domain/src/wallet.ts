@@ -19,6 +19,7 @@ export type FlatPolicy = { kind: 'single'; key: Id } | { kind: 'multi'; k: numbe
 export function flatPolicy(model: CustodyModel): FlatPolicy | null {
   const p = model.policy;
   if (p.type === 'key') return { kind: 'single', key: p.key };
+  if (p.type === 'older') return null;
   const keys = p.of.map((c) => (c.type === 'key' ? c.key : null));
   return keys.every((k): k is Id => k !== null) ? { kind: 'multi', k: p.k, keys } : null;
 }

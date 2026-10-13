@@ -32,14 +32,23 @@ export const SecretRefSchema = z.discriminatedUnion('type', [
 export type SecretRef = z.infer<typeof SecretRefSchema>;
 
 /**
- * Política de gasto como árbol (subconjunto de Miniscript).
- * Hoy: `key` y `thresh`. Los timelocks (`after`/`older`) se añadirán como nodos nuevos.
+ * Política de gasto como árbol (subconjunto de Miniscript): `key`, `thresh` (k de n, anidable) y `older`, un timelock
+ * relativo que se cumple cuando las monedas llevan `blocks` bloques sin moverse (144 al día; como mucho 65535, unos
+ * 455 días). Un timelock nunca quita caminos: solo abre ramas nuevas pasado el tiempo.
  */
-export type Policy = { type: 'key'; key: Id } | { type: 'thresh'; k: number; of: Policy[] };
+export type Policy =
+  | { type: 'key'; key: Id }
+  | { type: 'thresh'; k: number; of: Policy[] }
+  | { type: 'older'; blocks: number };
+/** Bloques por día (uno cada diez minutos). */
+export const BLOCKS_PER_DAY = 144;
+/** Máximo de un timelock relativo por bloques (BIP-68: 16 bits). */
+export const MAX_OLDER_BLOCKS = 65535;
 export const PolicySchema: z.ZodType<Policy> = z.lazy(() =>
   z.discriminatedUnion('type', [
     z.object({ type: z.literal('key'), key: IdSchema }),
     z.object({ type: z.literal('thresh'), k: z.number().int().min(1), of: z.array(PolicySchema).min(1) }),
+    z.object({ type: z.literal('older'), blocks: z.number().int().min(1).max(MAX_OLDER_BLOCKS) }),
   ]),
 );
 
@@ -234,6 +243,11 @@ export const CustodyModelSchema = z.object({
   description: z.string().optional(),
   keys: z.array(KeySchema).min(1),
   policy: PolicySchema,
+  /**
+   * Con timelocks: cada cuántos días mueve el titular las monedas para que no venzan (renovar). Sin indicar, lo peor:
+   * no renueva y las ramas con espera acaban abiertas.
+   */
+  renewal: z.object({ everyDays: z.number().int().positive() }).optional(),
   wallet: WalletSchema.optional(),
   devices: z.array(DeviceSchema).default([]),
   artifacts: z.array(ArtifactSchema).default([]),

@@ -1,10 +1,11 @@
-import { noDescriptorCopy, type CustodyModel, type Id } from '@llave-inglesa/domain';
+import { noDescriptorCopy, policyTimelocks, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import { attackAtoms, attackHoldings, withDuress, type AttackAtom } from './attacks.ts';
 import { combinations, minimalCuts } from './cuts.ts';
 import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { explain, type ExplanationNode } from './explain.ts';
 import { factId } from './facts.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
+import { EVENTUALLY } from './policy.ts';
 import { attackEffort, combinedRarity, cutRarity, EXPOSURE, inheritanceBreakdown, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
 import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
 
@@ -80,6 +81,14 @@ export interface ResilienceReport {
   lockouts: LossEvent[][];
   lockoutRarities: number[];
   lockoutMinRarity: number | null;
+  /**
+   * Retrasos: combinaciones que impiden mover los fondos ahora, pero que se recuperan esperando a que venza un timelock
+   * (vacío sin timelocks). Del más probable al menos, con la espera de cada uno en bloques.
+   */
+  delays: LossEvent[][];
+  delayRarities: number[];
+  delayWaits: number[];
+  delayMinRarity: number | null;
 }
 
 export interface InheritanceReport {
@@ -92,6 +101,13 @@ export interface InheritanceReport {
   helpers: Id[];
   /** Ubicaciones mínimas a las que hay que ir, o null si no se recupera. */
   locations: Id[] | null;
+  /** Bloques que tienen que esperar a que venza un timelock por ese camino (0 si ninguno, o si no se recupera). */
+  wait: number;
+  /**
+   * Si ese camino exige esperar: otro sin espera, aunque cueste más visitas (las ubicaciones mínimas y sus visitas), o
+   * null si no lo hay. No puntúa: es la alternativa para quien no quiera esperar.
+   */
+  withoutWait: { locations: Id[]; visits: number } | null;
   /** Viajes: las ubicaciones sin contar las que están dentro de otra de la lista. */
   visits: number | null;
   /**
@@ -117,8 +133,11 @@ export interface Analysis {
   duress: DuressReport[];
   /** ¿Qué combinación de pérdidas deja los fondos inaccesibles para siempre? */
   resilience: ResilienceReport;
-  /** ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? */
-  usability: { score: number; locations: Id[] | null; visits: number | null };
+  /**
+   * ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? `renewal`: con timelocks, hay que
+   * mover las monedas cada cierto tiempo para renovarlos (resta, ver RENEWAL_PENALTY).
+   */
+  usability: { score: number; locations: Id[] | null; visits: number | null; renewal: boolean };
   /** Tras el fallecimiento de los titulares, ¿pueden los herederos recuperar los fondos? */
   inheritance: InheritanceReport;
 }
@@ -141,11 +160,16 @@ export function attackDerivation(world: World, atoms: readonly AttackAtom[]): De
   return derive(world, holdings, 'any');
 }
 
-/** ¿Qué puede hacer la coalición legítima tras estas pérdidas? */
-export function simulateLosses(model: CustodyModel, events: readonly LossEvent[]): Derivation {
+/**
+ * ¿Qué puede hacer la coalición legítima tras estas pérdidas, ahora mismo o con las monedas `elapsed` bloques sin
+ * moverse? Con EVENTUALLY, tras vencer todos los timelocks.
+ */
+export function simulateLosses(model: CustodyModel, events: readonly LossEvent[], elapsed = 0): Derivation {
   const world = createWorld(model, events);
-  return derive(world, legitHoldings(world), 'any');
+  return derive(world, legitHoldings(world, elapsed), 'any');
 }
+
+const timelocksIn = (model: CustodyModel) => policyTimelocks(model.policy).length > 0;
 
 const activeOwners = (world: World) => world.model.people.filter((p) => p.role === 'owner' && canAct(world, p.id)).map((p) => p.id);
 
@@ -170,12 +194,12 @@ export function simulateSigning(model: CustodyModel, locations?: readonly Id[]):
  * a todas las que pueden llegar), con `people` (sin indicar: todos los que pueden actuar).
  * Con los herederos y ayudantes del análisis, explica la puntuación de herencia.
  */
-export function simulateInheritance(model: CustodyModel, locations?: readonly Id[], people?: readonly Id[]): Derivation {
+export function simulateInheritance(model: CustodyModel, locations?: readonly Id[], people?: readonly Id[], elapsed = EVENTUALLY): Derivation {
   const world = createWorld(model, ownerDeaths(model));
-  const legit = legitHoldings(world);
+  const legit = legitHoldings(world, elapsed);
   const who = people ?? legit.people;
   const reachable = new Set(who.flatMap((p) => accessibleLocations(world, p)));
-  return derive(world, { people: who, locations: (locations ?? legit.locations).filter((l) => reachable.has(l)) }, 'any');
+  return derive(world, { people: who, locations: (locations ?? legit.locations).filter((l) => reachable.has(l)), elapsed }, 'any');
 }
 
 /**
@@ -184,17 +208,18 @@ export function simulateInheritance(model: CustodyModel, locations?: readonly Id
  * cada una y se comprueba si los demás se bastan con las ubicaciones a las que aún llegan).
  */
 function inheritanceReport(world: World, maxCutSize: number): InheritanceReport {
-  const legit = legitHoldings(world);
+  // Fallecidos los titulares, nadie renueva: los timelocks acaban venciendo.
+  const legit = legitHoldings(world, EVENTUALLY);
   const role = (id: Id) => world.model.people.find((p) => p.id === id)?.role;
   const heirs = legit.people.filter((p) => role(p) === 'heir');
   // En un multisig, mejor una vía con el descriptor (aunque cueste un viaje más: la facilidad cambia menos que la
   // penalización); si no la hay, reconstruyendo la cartera con las semillas, penalizado.
   const multisig = world.model.policy.type === 'thresh';
   const withConfig = (d: Derivation) => d.canSpend && (!multisig || knowsWallet(d));
-  let locations = legit.people.length > 0 ? minimalLocationSet(world, legit.people, legit.locations, 'any', withConfig) : null;
+  let locations = legit.people.length > 0 ? minimalLocationSet(world, legit.people, legit.locations, 'any', withConfig, EVENTUALLY) : null;
   let rebuild = false;
   if (multisig && legit.people.length > 0 && !locations) {
-    locations = minimalLocationSet(world, legit.people, legit.locations, 'any');
+    locations = minimalLocationSet(world, legit.people, legit.locations, 'any', undefined, EVENTUALLY);
     rebuild = locations !== null;
   }
   const accept = rebuild ? (d: Derivation) => d.canSpend : withConfig;
@@ -204,12 +229,15 @@ function inheritanceReport(world: World, maxCutSize: number): InheritanceReport 
     for (const p of [...helpers]) {
       const people = [...heirs, ...helpers.filter((h) => h !== p)];
       const reachable = new Set(people.flatMap((q) => accessibleLocations(world, q)));
-      if (accept(derive(world, { people, locations: locations.filter((l) => reachable.has(l)) }, 'any'))) helpers = helpers.filter((h) => h !== p);
+      if (accept(derive(world, { people, locations: locations.filter((l) => reachable.has(l)), elapsed: EVENTUALLY }, 'any'))) helpers = helpers.filter((h) => h !== p);
     }
   } else {
     helpers = [];
   }
   const n = visits(world, locations);
+  const wait = locations ? derive(world, { people: [...heirs, ...helpers], locations, elapsed: EVENTUALLY }, 'any').wait : 0;
+  const noWait = wait > 0 ? minimalLocationSet(world, legit.people, legit.locations, 'any', accept, 0) : null;
+  const withoutWait = noWait && { locations: noWait, visits: visits(world, noWait)! };
 
   // Fragilidad: qué más tendría que pasar, ya fallecidos los titulares, para que no lo recuperen.
   let losses: { cut: LossEvent[]; rarity: number }[] = [];
@@ -218,7 +246,7 @@ function inheritanceReport(world: World, maxCutSize: number): InheritanceReport 
     const atoms = lossAtoms(world).filter((e) => !('person' in e && owners.has(e.person)));
     const blocked = (events: LossEvent[]) => {
       const after = createWorld(world.model, [...ownerDeaths(world.model), ...events], world.index);
-      return !derive(after, legitHoldings(after), 'any').canSpend;
+      return !derive(after, legitHoldings(after, EVENTUALLY), 'any').canSpend;
     };
     losses = minimalCuts(atoms, blocked, maxCutSize)
       .map((cut) => ({ cut, rarity: cutRarity(cut, world.index) }))
@@ -227,7 +255,7 @@ function inheritanceReport(world: World, maxCutSize: number): InheritanceReport 
   const lossCombinedRarity = combinedRarity(losses.map((l) => l.rarity));
   return {
     score: inheritanceBreakdown(n, lossCombinedRarity, rebuild).score,
-    status, heirs, helpers, locations, visits: n, rebuild,
+    status, heirs, helpers, locations, wait, withoutWait, visits: n, rebuild,
     losses: losses.map((l) => l.cut),
     lossRarities: losses.map((l) => l.rarity),
     lossCombinedRarity,
@@ -255,6 +283,7 @@ export function minimalLocationSet(
   candidates: readonly Id[],
   mode: SigningMode,
   accept: (d: Derivation) => boolean = (d) => d.canSpend,
+  elapsed = 0,
 ): Id[] | null {
   // Se cuentan visitas: entrar en casa incluye abrir la caja fuerte que hay dentro.
   const visits = candidates.filter((l) => world.index.locations.get(l)?.inside === undefined);
@@ -263,7 +292,7 @@ export function minimalLocationSet(
     for (const combo of combinations(visits.length, size)) {
       const chosen = combo.map((i) => visits[i]!);
       const locations = chosen.flatMap(within);
-      if (accept(derive(world, { people, locations }, mode))) return locations;
+      if (accept(derive(world, { people, locations, elapsed }, mode))) return locations;
     }
   }
   return null;
@@ -288,8 +317,25 @@ export function duressObstacles(world: World, cut: readonly AttackAtom[]): { per
   return (holdings.withheldPins ?? []).filter((w) => knowsPin(w.person, w.device));
 }
 
+/**
+ * Quita los robos que solo se distinguen de otro en esperar más: con dos timelocks, esperar al largo también vale, pero
+ * es la misma vía con más espera.
+ */
+function withoutLongerWaits(cuts: AttackAtom[][]): AttackAtom[][] {
+  const waitOf = (cut: AttackAtom[]) => cut.find((a) => a.type === 'timelock-wait');
+  const rest = (cut: AttackAtom[]) => cut.filter((a) => a.type !== 'timelock-wait').map((a) => JSON.stringify(a)).sort().join('|');
+  return cuts.filter((cut) => {
+    const wait = waitOf(cut);
+    if (wait?.type !== 'timelock-wait') return true;
+    return !cuts.some((other) => {
+      const w = waitOf(other);
+      return w?.type === 'timelock-wait' && w.blocks < wait.blocks && rest(other) === rest(cut);
+    });
+  });
+}
+
 function securityReport(world: World, found: AttackAtom[][], searchedUpTo: number): SecurityReport {
-  const cuts = found
+  const cuts = withoutLongerWaits(found)
     .map((cut) => {
       const beatsDuress = needsDuressPin(world, cut);
       return { cut, beatsDuress, effort: attackEffort(cut, world.index, beatsDuress) };
@@ -351,13 +397,16 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     maxCutSize,
   );
 
-  const recoverable = (events: readonly LossEvent[]) => {
+  const recoverable = (events: readonly LossEvent[], elapsed = 0) => {
     const world = createWorld(model, events, intact.index);
-    return derive(world, legitHoldings(world), 'any').canSpend;
+    return derive(world, legitHoldings(world, elapsed), 'any').canSpend;
   };
-  // Permanente: ni ahora ni cuando las personas incapacitadas acaben falleciendo.
-  const lostForever = (events: LossEvent[]) => !recoverable(events) && !recoverable(eventually(events));
+  // Si nadie puede gastar, nadie puede renovar: los timelocks acaban venciendo. Permanente: ni así ni cuando las
+  // personas incapacitadas acaben falleciendo.
+  const lostForever = (events: LossEvent[]) => !recoverable(events, EVENTUALLY) && !recoverable(eventually(events), EVENTUALLY);
+  const blockedEvenWaiting = (events: LossEvent[]) => !recoverable(events, EVENTUALLY);
   const blockedNow = (events: LossEvent[]) => !recoverable(events);
+  const timelocks = policyTimelocks(model.policy).length > 0;
 
   const recoverableNow = recoverable([]);
   let resilience: ResilienceReport;
@@ -366,13 +415,19 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     const byRarity = (cuts: LossEvent[][]) =>
       cuts.map((cut) => ({ cut, rarity: cutRarity(cut, intact.index) })).sort((a, b) => a.rarity - b.rarity || a.cut.length - b.cut.length);
     const losses = byRarity(minimalCuts(atoms, lostForever, maxCutSize));
-    const lockouts = byRarity(minimalCuts(atoms, blockedNow, maxCutSize).filter((cut) => !lostForever(cut)));
+    const lockouts = byRarity(minimalCuts(atoms, blockedEvenWaiting, maxCutSize).filter((cut) => !lostForever(cut)));
+    const delays = timelocks ? byRarity(minimalCuts(atoms, blockedNow, maxCutSize).filter((cut) => !blockedEvenWaiting(cut))) : [];
+    const delayMinRarity = delays[0]?.rarity ?? null;
+    const waitAfter = (cut: LossEvent[]) => {
+      const world = createWorld(model, cut, intact.index);
+      return derive(world, legitHoldings(world, EVENTUALLY), 'any').wait;
+    };
     const minRarity = losses[0]?.rarity ?? null;
     const combined = combinedRarity(losses.map((l) => l.rarity));
     const lockoutMinRarity = lockouts[0]?.rarity ?? null;
     const noCopy = noDescriptorCopy(model);
     resilience = {
-      score: resilienceBreakdown(minRarity, combined, lockoutMinRarity, noCopy).score,
+      score: resilienceBreakdown(minRarity, combined, lockoutMinRarity, noCopy, delayMinRarity).score,
       recoverableNow,
       noDescriptorCopy: noCopy,
       searchedUpTo: maxCutSize,
@@ -384,11 +439,15 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
       lockouts: lockouts.map((l) => l.cut),
       lockoutRarities: lockouts.map((l) => l.rarity),
       lockoutMinRarity,
+      delays: delays.map((l) => l.cut),
+      delayRarities: delays.map((l) => l.rarity),
+      delayWaits: delays.map((l) => waitAfter(l.cut)),
+      delayMinRarity,
     };
   } else {
     resilience = {
       score: 0, recoverableNow, noDescriptorCopy: noDescriptorCopy(model), searchedUpTo: 0, cuts: [[]], rarities: [0], minRarity: 0, combinedRarity: 0, cheapest: [[]],
-      lockouts: [], lockoutRarities: [], lockoutMinRarity: null,
+      lockouts: [], lockoutRarities: [], lockoutMinRarity: null, delays: [], delayRarities: [], delayWaits: [], delayMinRarity: null,
     };
   }
 
@@ -403,7 +462,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     security,
     duress: duressReports(model, intact, security),
     resilience,
-    usability: { score: usabilityScore(usableVisits), locations: usableWith, visits: usableVisits },
+    usability: { score: usabilityScore(usableVisits, timelocksIn(model)), locations: usableWith, visits: usableVisits, renewal: timelocksIn(model) },
     inheritance,
   };
 }

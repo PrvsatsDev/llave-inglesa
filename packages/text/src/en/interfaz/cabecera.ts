@@ -5,7 +5,7 @@ export const cabecera: typeof es = {
   acercaDe: 'About llave-inglesa',
   documentoAbierto: 'Open document or example',
   origen: { ejemplo: 'example', nuevo: 'new', local: 'saved in this browser' },
-  gruposEjemplos: { inicio: 'Getting started', single: 'Gallery: single-sig', multi: 'Gallery: 2-of-3 multisig' },
+  gruposEjemplos: { inicio: 'Getting started', single: 'Gallery: single-sig', multi: 'Gallery: 2-of-3 multisig', timelock: 'Gallery: with timelocks' },
   sinGuardar: 'Unsaved',
   guardado: 'Saved',
   pistaGuardar: 'Save with Ctrl+S (encrypted, in this browser)',

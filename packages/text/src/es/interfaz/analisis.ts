@@ -6,6 +6,7 @@ import {
   COERCION_SURCHARGE,
   COMPUTER_MALWARE_EFFORT,
   DAILY_COMPUTER_PENALTY,
+  DELAY_PENALTY,
   DURESS_SURCHARGE,
   EXPOSURE,
   EXTRA_SITE_SURCHARGE,
@@ -15,9 +16,11 @@ import {
   LOSS_RARITY,
   NO_DESCRIPTOR_PENALTY,
   PASSPHRASE_EFFORT,
+  RENEWAL_PENALTY,
   rarityScore,
   securityBreakdown,
   TAMPERED_DEVICE_EFFORT,
+  TIMELOCK_WAIT_EFFORT,
   usabilityScore,
 } from '@llave-inglesa/engine';
 import { plural } from '../../tipos.ts';
@@ -59,7 +62,7 @@ export const analisis = {
         .join(' · ');
       const curve = [1, 1.5, 2, 3, 4, 5, 6].map((e) => `${num(e)}${e === 6 ? ' o más' : ''} → ${securityBreakdown(e, 1).base}`).join(' · ');
       return [
-        `Se buscan todas las combinaciones de hasta ${hasta} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Hackear una cuenta en la nube cuesta ${num(CLOUD_BREACH_EFFORT)}. Meter malware en el ordenador de firma, ${num(COMPUTER_MALWARE_EFFORT.daily)} si es de uso general y ${num(COMPUTER_MALWARE_EFFORT.dedicated)} si es dedicado. Un dispositivo que pudo llegar manipulado regala sus semillas: de segunda mano o con el precinto roto ${num(TAMPERED_DEVICE_EFFORT['second-hand'])}, de una tienda no oficial ${num(TAMPERED_DEVICE_EFFORT['unofficial-shop'])}, de un revendedor oficial ${num(TAMPERED_DEVICE_EFFORT['official-reseller'])} (del fabricante con el precinto intacto, o montado en casa, no cuenta). Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma lo que su protección añade sobre una casa sin protección (forzar la caja fuerte, +${num(BURGLARY_EFFORT['home-safe'] - BURGLARY_EFFORT.none)}), tenga la otra la protección que tenga. Cada sitio físico distinto que haya que asaltar, después del primero, +${num(EXTRA_SITE_SURCHARGE)} (una ubicación dentro de otra es el mismo sitio). La llave inglesa se paga una vez por asalto: coaccionar a varias personas en el mismo sitio, o llevar a la misma persona a otro sitio, es un solo asalto. Coaccionar a alguien donde no vive (si consta dónde vive), +${num(COERCION_AWAY_SURCHARGE)}; en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])} (no se suman: cuenta el mayor). Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}.`,
+        `Se buscan todas las combinaciones de hasta ${hasta} ataques que permiten gastar. Cada ataque suma su esfuerzo: ${efforts}. Hackear una cuenta en la nube cuesta ${num(CLOUD_BREACH_EFFORT)}. Meter malware en el ordenador de firma, ${num(COMPUTER_MALWARE_EFFORT.daily)} si es de uso general y ${num(COMPUTER_MALWARE_EFFORT.dedicated)} si es dedicado. Un dispositivo que pudo llegar manipulado regala sus semillas: de segunda mano o con el precinto roto ${num(TAMPERED_DEVICE_EFFORT['second-hand'])}, de una tienda no oficial ${num(TAMPERED_DEVICE_EFFORT['unofficial-shop'])}, de un revendedor oficial ${num(TAMPERED_DEVICE_EFFORT['official-reseller'])} (del fabricante con el precinto intacto, o montado en casa, no cuenta). Entrar en una caja fuerte cuesta ${num(BURGLARY_EFFORT['home-safe'])} y en una caja del banco ${num(BURGLARY_EFFORT['bank-box'])}; si está dentro de otra ubicación, hay que entrar en ambas y solo suma lo que su protección añade sobre una casa sin protección (forzar la caja fuerte, +${num(BURGLARY_EFFORT['home-safe'] - BURGLARY_EFFORT.none)}), tenga la otra la protección que tenga. Cada sitio físico distinto que haya que asaltar, después del primero, +${num(EXTRA_SITE_SURCHARGE)} (una ubicación dentro de otra es el mismo sitio). La llave inglesa se paga una vez por asalto: coaccionar a varias personas en el mismo sitio, o llevar a la misma persona a otro sitio, es un solo asalto. Coaccionar a alguien donde no vive (si consta dónde vive), +${num(COERCION_AWAY_SURCHARGE)}; en una caja del banco, +${num(COERCION_SURCHARGE['bank-box'])} (no se suman: cuenta el mayor). Adivinar una passphrase teniendo la semilla: débil ${num(PASSPHRASE_EFFORT.weak)} · frase ${num(PASSPHRASE_EFFORT.phrase)} · aleatoria larga, imposible. Si hay que vencer un PIN de coacción, +${num(DURESS_SURCHARGE)}. Esperar a que venza un timelock: ${num(TIMELOCK_WAIT_EFFORT.lapsed)} si el titular no mueve las monedas antes de que venza (o no consta cada cuánto lo hace), ${num(TIMELOCK_WAIT_EFFORT.renewed)} si las mueve a tiempo (habría que esperar a que se descuide o deje de poder hacerlo).`,
         `Cuanto más esfuerzo exige el robo más barato, más puntuación: ${curve}.`,
         `Tener varias vías casi igual de baratas (hasta ${num(EXPOSURE.margin)} más de esfuerzo) resta ${EXPOSURE.penaltyPerExtraRoute} por cada vía extra, como mucho ${EXPOSURE.maxPenalty}.`,
         `Firmar con un ordenador o móvil de uso general resta ${DAILY_COMPUTER_PENALTY}: su malware puede cambiar la dirección de destino o la de cambio, o llevarte a firmar a ciegas. Resta poco porque los dispositivos enseñan la dirección y, con la cartera registrada, comprueban el cambio; aun así, compara el destino por otro canal. Uno dedicado (solo para firmar e instalado a conciencia) no resta.`,
@@ -72,6 +75,7 @@ export const analisis = {
     otrasVias: (n: number, rareza: number) => `${plural(n, 'vía más', 'vías más')}: todas juntas equivalen a rareza ${num(rareza)}`,
     sinDescriptor: 'Sin ninguna copia del descriptor: si fallan los dispositivos, habría que reconstruir la cartera',
     bloqueo: (rareza: number) => `Bloqueo temporal más probable: rareza ${num(rareza)}`,
+    retraso: (rareza: number) => `Retraso más probable (se recupera esperando a que venza el timelock): rareza ${num(rareza)}`,
     sinPerdida: (hasta: number) => `Ninguna combinación de hasta ${hasta} desgracias lo pierde todo`,
     perdidaMasProbable: (rareza: number) => `Pérdida más probable: rareza ${num(rareza)}`,
     como: (hasta: number) => {
@@ -81,6 +85,7 @@ export const analisis = {
         `Varias desgracias a la vez suman sus rarezas (como multiplicar probabilidades). Se buscan las combinaciones de hasta ${hasta} tras las que nadie podría recuperar los fondos nunca; cuanto más rara la más probable, más puntuación: ${[1, 2, 3, 4, 5, 6].map((x) => `${x}${x === 6 ? ' o más' : ''} → ${rarityScore(x)}`).join(' · ')}.`,
         'Las demás vías también cuentan: sus probabilidades se suman, y la puntuación sale de la rareza equivalente de todas juntas.',
         `Un bloqueo temporal (fondos inmovilizados mientras alguien está incapacitado) no pierde nada, pero resta: ${LOCKOUT_PENALTY.map((p) => `rareza menor que ${num(p.below)} −${p.points}`).join(' · ')}.`,
+        `Con timelocks, lo que impide gastar ahora pero se recupera esperando a que venza uno es un retraso: no pierde nada (para eso está el timelock) y resta poco: ${DELAY_PENALTY.map((p) => `rareza menor que ${num(p.below)} −${p.points}`).join(' · ')}.`,
         `Un multisig sin ninguna copia del descriptor resta ${NO_DESCRIPTOR_PENALTY.resilience}: con las semillas salen las xpubs, pero no cómo se combinan (tipo de script, k de n, derivación), y reconstruir la cartera así es difícil o, con derivaciones poco habituales, casi imposible.`,
       ];
     },
@@ -89,9 +94,11 @@ export const analisis = {
   usabilidad: {
     noPueden: 'Los titulares no pueden firmar de forma segura',
     firmarExige: (n: number) => `Firmar exige ir a ${plural(n, ...UBICACIONES)}`,
+    renovar: 'Hay que mover las monedas cada cierto tiempo para renovar el timelock',
     como: () => [
       'Cuántas ubicaciones tienen que visitar los titulares para firmar de forma segura: con dispositivos de firma, sin teclear ninguna frase semilla en un ordenador.',
       `${scale(usabilityScore, UBICACIONES, 1, 4)}.`,
+      `Con timelocks resta ${RENEWAL_PENALTY}: hay que mover las monedas antes de que venzan para que la rama con espera no se abra, y eso es firmar una transacción cada cierto tiempo.`,
     ],
     dondeSeFirma: 'Dónde se firma',
     minimoVisitar: 'Lo mínimo que tienen que visitar los titulares para firmar una transacción:',
@@ -116,6 +123,7 @@ export const analisis = {
       'Nadie más que los titulares puede llegar a los fondos. Para modelar la herencia, marca a una persona como heredera en su ficha (Esquema › Personas) y dale acceso a alguna ubicación, por ejemplo "tras fallecer" el titular.',
     trasFallecer: 'Tras el fallecimiento de los titulares,',
     yendoA: ', yendo a:',
+    sinEsperar: (n: number) => `Sin esperar al timelock, también se recupera yendo a ${plural(n, ...UBICACIONES)}:`,
     simular: 'Simular el fallecimiento en el mapa',
     losHerederos: 'Los herederos',
     quienesQuedan: 'Con todo lo que tienen a su alcance, quienes quedan',

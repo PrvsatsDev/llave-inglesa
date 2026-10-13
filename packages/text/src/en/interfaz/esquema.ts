@@ -7,6 +7,7 @@ export const esquema: typeof es = {
   firmasNecesarias: 'Signatures required',
   kDeN: (k: number, n: number) => `${k} of ${n}`,
   pistaFirmas: 'How many keys it takes to spend.',
+  pistaRamas: 'Policy with branches or timelocks: the threshold is not changed here, and a new key stays outside the policy.',
   singleSig: 'Single-sig: one key is enough. Add another to turn it into a multisig.',
   keys: (n: number) => `Keys (${n})`,
   key: 'Key',

@@ -5,6 +5,7 @@ export const esquema = {
   firmasNecesarias: 'Firmas necesarias',
   kDeN: (k: number, n: number) => `${k} de ${n}`,
   pistaFirmas: 'Cuántas keys hacen falta para gastar.',
+  pistaRamas: 'Política con ramas o timelocks: aquí no se cambia el umbral, y una key nueva queda fuera de la política.',
   singleSig: 'Single-sig: basta con una key. Añade otra para convertirlo en multisig.',
   keys: (n: number) => `Keys (${n})`,
   key: 'Key',

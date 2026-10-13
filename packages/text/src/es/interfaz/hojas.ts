@@ -40,6 +40,7 @@ export const hojaCarta = {
   queReunir: 'Qué reunir y dónde',
   deReserva: ' (de reserva)',
   deMemoria: 'De memoria',
+  sinEsperar: 'Sin esperar',
   pasos: 'Pasos',
   unasPalabras: 'Unas palabras',
 };
