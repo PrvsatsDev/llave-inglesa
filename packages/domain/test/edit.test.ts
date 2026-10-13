@@ -33,6 +33,14 @@ import {
   tidyIds,
   isBlankProvenance,
   setThreshold,
+  setPolicyShape,
+  setRenewal,
+  policyShape,
+  convertShape,
+  setShapeBlocks,
+  setShapeSpecialKey,
+  shapeKeys,
+  SHAPE_KINDS,
   uniqueId,
   updateDevice,
   updateKey,
@@ -272,6 +280,16 @@ const ops: Op[] = [
   (m, pick) => removeKey(m, m.keys[pick(m.keys.length)]!.id),
   (m, pick) => updateKey(m, m.keys[pick(m.keys.length)]!.id, { passphrase: pick(2) === 0 }),
   (m, pick) => setThreshold(m, pick(5)),
+  (m, pick) => {
+    const shape = policyShape(m.policy);
+    const next = shape && convertShape(shape, SHAPE_KINDS[pick(SHAPE_KINDS.length)]!);
+    return next ? setPolicyShape(m, setShapeBlocks(next, pick(1000) * 70)) : m;
+  },
+  (m, pick) => {
+    const shape = policyShape(m.policy);
+    return shape ? setPolicyShape(m, setShapeSpecialKey(shape, shapeKeys(shape)[pick(shapeKeys(shape).length)]!)) : m;
+  },
+  (m, pick) => setRenewal(m, pick(3) ? pick(1000) : undefined),
   (m) => addLocation(m).model,
   (m, pick) => removeLocation(m, m.locations[pick(m.locations.length)]!.id),
   (m) => addPerson(m).model,
@@ -474,12 +492,33 @@ describe('políticas con timelocks', () => {
     expect(removeKey(r14, 'k1').policy).toEqual({ type: 'thresh', k: 2, of: [{ type: 'key', key: 'k2' }, { type: 'key', key: 'k3' }, { type: 'older', blocks: 52560 }] });
   });
 
-  it('en una política con ramas o timelocks, una key nueva queda fuera hasta colocarla, y el umbral no se toca', () => {
+  it('en una plantilla, una key nueva entra entre las principales y el umbral respeta la forma', () => {
     const { model, id } = addKey(r14);
-    expect(model.policy).toEqual(r14.policy);
-    expect(model.keys.some((k) => k.id === id)).toBe(true);
+    expect(policyShape(model.policy)).toEqual({ kind: 'decaying', k: 2, keys: ['k1', 'k2', 'k3', id], blocks: 52560 });
+    expect(policyShape(addKey(r13).model.policy)).toMatchObject({ kind: 'inheritance', keys: ['k1', 'k3'], recovery: 'k2' });
+    expect(policyShape(addKey(r15).model.policy)).toMatchObject({ kind: 'expanding', keys: ['k1', 'k2', 'k3', 'k5'], extra: 'k4' });
+    // El decreciente es multisig: con k = 1 bastaría con esperar.
     expect(setThreshold(r14, 1).policy).toEqual(r14.policy);
+    expect(policyShape(setThreshold(r14, 3).policy)).toMatchObject({ kind: 'decaying', k: 3 });
     expect(errors(model)).toEqual([]);
+  });
+
+  it('una política escrita a mano no se toca: la key nueva queda fuera y el umbral no cambia', () => {
+    const hand = { ...r14, policy: { type: 'thresh' as const, k: 1, of: [r14.policy, { type: 'key' as const, key: 'k1' }] } };
+    expect(policyShape(hand.policy)).toBeNull();
+    expect(addKey(hand).model.policy).toEqual(hand.policy);
+    expect(setThreshold(hand, 2).policy).toEqual(hand.policy);
+  });
+
+  it('setPolicyShape rechaza formas con keys repetidas, desconocidas o que faltan', () => {
+    expect(setPolicyShape(r13, { kind: 'inheritance', k: 1, keys: ['k1'], recovery: 'k1', blocks: 100 })).toBe(r13);
+    expect(setPolicyShape(r13, { kind: 'plain', k: 1, keys: ['k9'] })).toBe(r13);
+    expect(setPolicyShape(r13, { kind: 'decaying', k: 2, keys: ['k1'], blocks: 100 })).toBe(r13);
+  });
+
+  it('la renovación se indica en días y se puede dejar sin indicar', () => {
+    expect(setRenewal(r13, 30).renewal).toEqual({ everyDays: 30 });
+    expect('renewal' in setRenewal(r13, undefined)).toBe(false);
   });
 });
 

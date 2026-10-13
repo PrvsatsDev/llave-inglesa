@@ -1,6 +1,7 @@
 import type { Artifact, Computer, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 import { canLiveAt, canNest } from './validate.ts';
 import { policyKeys } from './model-index.ts';
+import { addShapeKey, policyShape, removeShapeKey, setShapeThreshold, shapeKeys, shapePolicy, SHAPE_MIN_KEYS, type PolicyShape } from './shape.ts';
 
 /**
  * Operaciones de edición: funciones puras `modelo → modelo` que mantienen la
@@ -153,14 +154,27 @@ export function updateMeta(model: CustodyModel, patch: { name?: string; descript
   return { ...model, ...patch };
 }
 
-/** Política plana: una key, o un umbral k de n de keys. Las demás (anidadas, con timelocks) no se tocan al añadir keys. */
-const isFlat = (p: Policy) => p.type === 'key' || (p.type === 'thresh' && p.of.every((c) => c.type === 'key'));
-
-/** Umbral de la política de primer nivel (M de N). Solo en una política plana: con ramas o timelocks, no se toca. */
+/** Umbral de la política (M de N), dentro de lo que admite su forma. Una política que no es una plantilla no se toca. */
 export function setThreshold(model: CustodyModel, k: number): CustodyModel {
-  const p = model.policy;
-  if (p.type !== 'thresh' || !isFlat(p)) return model;
-  return { ...model, policy: { ...p, k: Math.min(Math.max(1, Math.round(k)), p.of.length) } };
+  const shape = policyShape(model.policy);
+  return shape ? { ...model, policy: shapePolicy(setShapeThreshold(shape, k)) } : model;
+}
+
+/**
+ * Cambia la política por la de una forma (plantilla). Debe usar cada key del modelo una sola vez, y tantas como pide
+ * la forma; si no, no cambia nada.
+ */
+export function setPolicyShape(model: CustodyModel, shape: PolicyShape): CustodyModel {
+  const keys = shapeKeys(shape);
+  const known = new Set(model.keys.map((k) => k.id));
+  if (keys.length < SHAPE_MIN_KEYS[shape.kind] || new Set(keys).size !== keys.length || !keys.every((k) => known.has(k))) return model;
+  return { ...model, policy: shapePolicy(shape) };
+}
+
+/** Cada cuántos días mueve el titular las monedas (sin indicar: undefined). Se conserva aunque no haya timelocks. */
+export function setRenewal(model: CustodyModel, everyDays: number | undefined): CustodyModel {
+  const { renewal: _, ...rest } = model;
+  return everyDays && everyDays > 0 ? { ...rest, renewal: { everyDays: Math.round(everyDays) } } : rest;
 }
 
 /**
@@ -190,14 +204,10 @@ export function addKey(model: CustodyModel): Created {
     passphrase: false,
     provenance: { sources: [{ kind: 'unknown' }], independentlyVerified: false },
   };
-  const leaf: Policy = { type: 'key', key: id };
-  // En una política con ramas o timelocks no hay un sitio obvio: la key queda fuera hasta colocarla.
-  const policy: Policy =
-    model.policy.type === 'key'
-      ? { type: 'thresh', k: 1, of: [model.policy, leaf] }
-      : model.policy.type === 'thresh' && isFlat(model.policy)
-        ? { ...model.policy, of: [...model.policy.of, leaf] }
-        : model.policy;
+  // Entra entre las keys principales de la plantilla. En una política escrita a mano no hay un sitio obvio: la key
+  // queda fuera hasta colocarla.
+  const shape = policyShape(model.policy);
+  const policy = shape ? shapePolicy(addShapeKey(shape, id)) : model.policy;
   return { model: { ...model, keys: [...model.keys, key], policy }, id };
 }
 
@@ -240,7 +250,9 @@ export function setKeyGeneratedOn(model: CustodyModel, keyId: Id, deviceId: Id):
 const isUnknownVendor = (vendor: string) => ['', 'desconocido'].includes(vendor.trim().toLowerCase());
 
 export function removeKey(model: CustodyModel, id: Id): CustodyModel {
-  const policy = removeFromPolicy(model.policy, id);
+  const shape = policyShape(model.policy);
+  const reshaped = shape && removeShapeKey(shape, id);
+  const policy = shape ? reshaped && shapePolicy(reshaped) : removeFromPolicy(model.policy, id);
   if (!policy || model.keys.length <= 1) return model;
   return stripSecrets(
     {
