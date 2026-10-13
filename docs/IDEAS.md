@@ -43,8 +43,8 @@ ningún backup del descriptor como problema grave.
    1. ~~Modelo y motor con `older`~~ (2026-10-13, en local): ataque «esperar» (0,5 / 3), retrasos (−2), renovación
       (−10 de usabilidad), herencia con espera y tres ejemplos (R13–R15: recuperación de la heredera, 2 de 3 que se
       relaja y que se amplía).
-   2. Plantillas en la interfaz (recuperación con espera, multisig que se relaja, herencia), con la espera en el mapa
-      y en Simular.
+   2. ~~Plantillas en la interfaz~~ (2026-10-13, en local): sencilla, herencia simple, multisig decreciente y
+      ampliable (los nombres de Liana y Nunchuk), con espera en días o meses, renovación y la espera en el mapa.
    3. Descriptor `wsh(miniscript)` (con los vectores de Bitcoin Core; sin Taproot) y qué dispositivos firman Miniscript.
    4. Editor libre del árbol (opcional).
 
