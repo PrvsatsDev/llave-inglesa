@@ -5,3 +5,4 @@ export * from './edit.ts';
 export * from './catalog.ts';
 export * from './wallet.ts';
 export * from './shape.ts';
+export * from './miniscript.ts';

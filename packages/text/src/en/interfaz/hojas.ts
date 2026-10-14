@@ -7,6 +7,8 @@ export const hojaDescriptor: typeof es = {
   generado: (fecha: string) => `Generated on ${fecha}`,
   introMultisig:
     'The public configuration of the wallet: which keys make it up and how many signatures are needed. In a multisig the seeds alone are not enough to recover it: the xpubs of all the keys are needed, and they are here.',
+  introMiniscript:
+    'The public configuration of the wallet: which keys make it up, how many signatures are needed and how long each path has to wait. The seeds alone are not enough to recover it: the xpubs of all the keys and this policy are needed, and they are here. It is imported into a wallet that supports Miniscript, such as Liana.',
   introSingle:
     'The public configuration of the wallet. The seed is enough to recover it, but this sheet says which address type and derivation it uses, to find the funds on the first try.',
   noGasta: 'It does not allow spending, but whoever has it sees the balance and every transaction.',

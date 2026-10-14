@@ -120,7 +120,8 @@ describe('calibración: esquemas de referencia', () => {
       'r11-2de3-sin-herencia': ['bueno', 'aceptable', 'excelente', 'muy mal'],
       'r12-2de3-seedsigner': ['aceptable', 'aceptable', 'bueno', 'bueno'],
       'r13-recuperacion-heredera': ['aceptable', 'bueno', 'excelente', 'bueno'],
-      'r14-2de3-se-relaja': ['bueno', 'bueno', 'excelente', 'bueno'],
+      // Usabilidad: su Passport Prime no firma Miniscript (resta 10, a propósito; ver docs/CALIBRACION.md).
+      'r14-2de3-se-relaja': ['bueno', 'bueno', 'bueno', 'bueno'],
       'r15-2de3-se-amplia': ['bueno', 'bueno', 'excelente', 'bueno'],
     };
     const inBand = (value: number, band: Band | Band[]) => [band].flat().some((b) => scoreBand(value) === ID[b]);

@@ -1,6 +1,7 @@
 import type { DescriptorProblem, ScriptType, XpubProblem } from '@llave-inglesa/bitcoin';
-import type { ImportProblem, Match, WalletProblem, WalletWarning } from '@llave-inglesa/domain';
+import { shapeKeys, type ImportProblem, type Match, type PolicyShape, type WalletProblem, type WalletWarning } from '@llave-inglesa/domain';
 import type { Label } from '../tipos.ts';
+import { waitText } from './textos.ts';
 
 /** Textos del descriptor de la cartera: xpubs, importación y lo que falta para escribirlo. */
 
@@ -42,7 +43,9 @@ export function descriptorProblemText(p: DescriptorProblem): string {
     case 'bad-checksum':
       return 'La suma de control (lo que va tras #) no cuadra: algo se ha copiado mal.';
     case 'unsupported-script':
-      return 'Ese tipo de descriptor todavía no se lee: solo multisig wsh/sh-wsh con (sorted)multi y single-sig wpkh/sh-wpkh (sin Taproot).';
+      return 'Ese tipo de descriptor todavía no se lee: solo multisig wsh/sh-wsh con (sorted)multi, single-sig wpkh/sh-wpkh y Miniscript en wsh (sin Taproot ni sh(wsh(miniscript))).';
+    case 'miniscript-unsafe':
+      return 'Ese Miniscript no es válido o no es seguro, y Bitcoin Core no lo aceptaría: los tipos no encajan, alguna forma de gastar no pide firma, la firma se puede alterar o mezcla timelocks de altura y de tiempo.';
     case 'syntax':
       return 'No se entiende el descriptor: comprueba que está completo.';
     case 'bad-key':
@@ -64,14 +67,33 @@ export function descriptorProblemText(p: DescriptorProblem): string {
 
 export function importProblemText(p: ImportProblem, label: Label): string {
   switch (p.code) {
-    case 'nested-policy':
-      return 'La política de este esquema tiene umbrales anidados: todavía no tiene descriptor.';
+    case 'model-policy':
+      return 'La política de este esquema no es ninguna de las plantillas: no se puede comparar con el descriptor. No se ha cambiado nada.';
+    case 'descriptor-policy':
+      return 'El descriptor no es ninguna de las plantillas (sencilla, herencia simple, multisig decreciente o ampliable) o usa algo que aquí no se modela, como timelocks absolutos (after) o hashes. No se ha cambiado nada.';
+    case 'policy-mismatch':
+      return `El descriptor es ${shapeText(p.descriptor)} y el esquema ${shapeText(p.model)}. Ajusta la política del esquema y vuelve a importarlo.`;
     case 'shape-mismatch': {
       const shape = (s: { k: number; n: number }) => (s.n === 1 ? 'single-sig' : `${s.k} de ${s.n}`);
       return `El descriptor es ${shape(p.descriptor)} y el esquema ${shape(p.model)}. Ajusta las keys o las firmas necesarias del esquema y vuelve a importarlo.`;
     }
     case 'fingerprint-not-found':
       return `El fingerprint de ${label(p.key)} no aparece en el descriptor: o el fingerprint está mal o el descriptor es de otra cartera. No se ha cambiado nada.`;
+  }
+}
+
+/** Una forma de política en una frase, para comparar la del descriptor con la del esquema. */
+function shapeText(s: PolicyShape): string {
+  const kOfN = `${s.k} de ${s.keys.length}`;
+  switch (s.kind) {
+    case 'plain':
+      return s.keys.length === 1 ? 'single-sig' : kOfN;
+    case 'inheritance':
+      return `una herencia simple (${kOfN}, o la de recuperación sola tras ${waitText(s.blocks)})`;
+    case 'decaying':
+      return `un multisig decreciente (${kOfN}, ${s.k - 1} tras ${waitText(s.blocks)})`;
+    case 'expanding':
+      return `un multisig ampliable (${s.k} de ${s.keys.length}, ${s.k} de ${shapeKeys(s).length} tras ${waitText(s.blocks)})`;
   }
 }
 
@@ -83,8 +105,8 @@ export function matchText(m: Match, label: Label): string {
 
 export function walletProblemText(p: WalletProblem, label: Label): string {
   switch (p.code) {
-    case 'nested-policy':
-      return 'La política tiene umbrales anidados: necesita Miniscript, que todavía no se escribe.';
+    case 'no-miniscript':
+      return 'Esta política no se puede escribir en Miniscript de forma segura: repite una key o alguna forma de gastar no pide firma.';
     case 'script-mismatch':
       return 'El tipo de script no encaja con la política (single-sig frente a multisig).';
     case 'too-many-keys':
@@ -111,8 +133,8 @@ const SCRIPT_TECH: Record<ScriptType, string> = {
   'sh-wpkh': 'SegWit envuelto (P2SH-P2WPKH)',
 };
 
-/** "Multisig 2 de 3 · SegWit nativo (P2WSH) · mainnet": la cabecera del PDF del descriptor. */
-export function walletKindText(d: { script: ScriptType; threshold?: number; keys: readonly unknown[] }, network: 'mainnet' | 'testnet'): string {
-  const kind = d.threshold === undefined ? 'Single-sig' : `Multisig ${d.threshold} de ${d.keys.length}`;
+/** "Multisig 2 de 3 · SegWit nativo (P2WSH) · mainnet" (o "Miniscript con 4 keys · …"): la cabecera del PDF del descriptor. */
+export function walletKindText(d: { script: ScriptType; threshold?: number; keys: readonly unknown[]; miniscript?: unknown }, network: 'mainnet' | 'testnet'): string {
+  const kind = d.miniscript ? `Miniscript con ${d.keys.length} keys` : d.threshold === undefined ? 'Single-sig' : `Multisig ${d.threshold} de ${d.keys.length}`;
   return `${kind} · ${SCRIPT_TECH[d.script]} · ${network === 'mainnet' ? 'mainnet' : 'testnet o signet'}`;
 }

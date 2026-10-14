@@ -14,6 +14,7 @@ import {
   inheritanceScore,
   LOCKOUT_PENALTY,
   LOSS_RARITY,
+  MINISCRIPT_DEVICE_PENALTY,
   NO_DESCRIPTOR_PENALTY,
   PASSPHRASE_EFFORT,
   RENEWAL_PENALTY,
@@ -25,7 +26,7 @@ import {
 } from '@llave-inglesa/engine';
 import type { analisis as es } from '../../es/interfaz/analisis.ts';
 import { plural } from '../../tipos.ts';
-import { ATTACK_KIND_TEXT } from '../textos.ts';
+import { ATTACK_KIND_TEXT, listText } from '../textos.ts';
 import { comun } from './comun.ts';
 
 const num = comun.numero;
@@ -96,10 +97,13 @@ export const analisis: typeof es = {
     noPueden: 'The owners cannot sign safely',
     firmarExige: (n: number) => `Signing requires going to ${plural(n, ...UBICACIONES)}`,
     renovar: 'The coins have to be moved every so often to renew the timelock',
+    sinMiniscript: (nombres: readonly string[]) =>
+      `${listText(nombres)} ${nombres.length === 1 ? 'does' : 'do'} not sign this wallet, which needs Miniscript`,
     como: () => [
       'How many locations the owners have to visit to sign safely: with signing devices, without typing any seed phrase into a computer.',
       `${scale(usabilityScore, UBICACIONES, 1, 4)}.`,
       `With timelocks it subtracts ${RENEWAL_PENALTY}: the coins have to be moved before they expire so that the branch with the wait does not open, and that means signing a transaction every so often.`,
+      `If the policy needs Miniscript and some device does not sign it, it subtracts ${MINISCRIPT_DEVICE_PENALTY}: it does not change what can be done (you buy another device and load the seed into it), but it costs.`,
     ],
     dondeSeFirma: 'Where signing happens',
     minimoVisitar: 'The least the owners have to visit to sign a transaction:',

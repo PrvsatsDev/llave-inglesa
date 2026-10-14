@@ -1,10 +1,23 @@
 import { deriveAddress, formatDescriptor, isMultisigScript, looksLikeSeedWords, parseDescriptor, type ScriptType } from '@llave-inglesa/bitcoin';
-import { flatPolicy, importDescriptor, indexModel, setWallet, walletDescriptor, walletOf, type CustodyModel, type Match } from '@llave-inglesa/domain';
+import {
+  flatPolicy,
+  importDescriptor,
+  indexModel,
+  miniscriptSupport,
+  policyShape,
+  setWallet,
+  walletDescriptor,
+  walletOf,
+  type CustodyModel,
+  type Match,
+} from '@llave-inglesa/domain';
+import { devicesWithoutMiniscript } from '@llave-inglesa/engine';
 import { AlertTriangle, Check, Copy, Eye, FileInput, Printer, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   descriptorProblemText,
   importProblemText,
+  listText,
   matchText,
   SCRIPT_TEXT,
   WALLET_TEXT,
@@ -58,7 +71,7 @@ export function WalletSection({ model }: { model: CustodyModel }) {
     <Section
       title={T.titulo}
       action={
-        flat && (
+        (flat || policyShape(model.policy)) && (
           <Button icon={FileInput} onClick={() => setImporting((v) => !v)}>
             {T.importar}
           </Button>
@@ -124,7 +137,12 @@ export function WalletSection({ model }: { model: CustodyModel }) {
           )}
         </>
       )}
-      {!flat && <p className={styles.hint}>{T.anidados}</p>}
+      {!flat && (
+        <>
+          <p className={styles.hint}>{T.miniscript}</p>
+          <MiniscriptDevices model={model} />
+        </>
+      )}
 
       {hasXpubs && (
         <p className={styles.privacy}>
@@ -241,5 +259,28 @@ function ImportReport({ matches, label, onClose }: { matches: Match[]; label: (i
         <p>{T.porOrden}</p>
       )}
     </div>
+  );
+}
+
+/** Con Miniscript: los dispositivos de la cartera que no la firman y los que solo con un firmware experimental. */
+function MiniscriptDevices({ model }: { model: CustodyModel }) {
+  const label = indexModel(model).label;
+  const without = devicesWithoutMiniscript(model);
+  const edge = model.devices.filter((d) => miniscriptSupport(d) === 'edge').map((d) => d.id);
+  return (
+    <>
+      {without.length > 0 && (
+        <p className={styles.warning}>
+          <AlertTriangle size={14} aria-hidden />
+          {T.noFirman(listText(without.map(label)))}
+        </p>
+      )}
+      {edge.length > 0 && (
+        <p className={styles.warning}>
+          <AlertTriangle size={14} aria-hidden />
+          {T.soloEdge(listText(edge.map(label)))}
+        </p>
+      )}
+    </>
   );
 }

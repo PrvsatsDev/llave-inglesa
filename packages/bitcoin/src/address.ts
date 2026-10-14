@@ -3,6 +3,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { bech32 } from '@scure/base';
 import { HDKey } from '@scure/bip32';
 import { isMultisigScript, type Descriptor } from './descriptor.ts';
+import { miniscriptScript } from './miniscript.ts';
 import { base58check, XPUB_VERSION, type Network } from './xpub.ts';
 
 const hash160 = (b: Uint8Array) => ripemd160(sha256(b));
@@ -38,6 +39,7 @@ function multisigScript(k: number, keys: Uint8Array[], sorted: boolean): Uint8Ar
  */
 export function deriveAddress(d: Descriptor, network: Network, branch: 0 | 1 = 0, index = 0): string {
   const keys = d.keys.map((k) => childKey(k.xpub, network, branch, index));
+  if (d.miniscript) return segwitV0(sha256(miniscriptScript(d.miniscript, (i) => keys[i]!)), network);
   if (isMultisigScript(d.script)) {
     const witnessScript = multisigScript(d.threshold!, keys, d.sorted);
     const program = sha256(witnessScript);

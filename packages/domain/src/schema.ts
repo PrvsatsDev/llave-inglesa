@@ -36,9 +36,9 @@ export type SecretRef = z.infer<typeof SecretRefSchema>;
  * relativo que se cumple cuando las monedas llevan `blocks` bloques sin moverse (144 al día; como mucho 65535, unos
  * 455 días). Un timelock nunca quita caminos: solo abre ramas nuevas pasado el tiempo.
  */
-export type Policy =
-  | { type: 'key'; key: Id }
-  | { type: 'thresh'; k: number; of: Policy[] }
+export type Policy<K = Id> =
+  | { type: 'key'; key: K }
+  | { type: 'thresh'; k: number; of: Policy<K>[] }
   | { type: 'older'; blocks: number };
 /** Bloques por día (uno cada diez minutos). */
 export const BLOCKS_PER_DAY = 144;

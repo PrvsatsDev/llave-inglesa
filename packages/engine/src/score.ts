@@ -312,7 +312,7 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'delay' | 'heir-fragility' | 'no-descriptor' | 'renewal'; points: number }[];
+  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'delay' | 'heir-fragility' | 'no-descriptor' | 'renewal' | 'no-miniscript'; points: number }[];
   score: number;
 }
 
@@ -474,15 +474,27 @@ export function delayPenalty(minRarity: number | null): number {
 /** Con timelocks hay que mover las monedas cada cierto tiempo para renovarlos: una firma más, periódica. */
 export const RENEWAL_PENALTY = 10;
 
-/** Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura, menos lo que cuesta renovar los timelocks. */
-export function usabilityBreakdown(locations: number | null, renewal = false): ScoreBreakdown {
+/**
+ * Algún dispositivo de la cartera no firma Miniscript (y la política lo necesita): hay que comprar otro y cargarle la
+ * semilla, o firmar esa key en otro sitio. No cambia qué se puede hacer, solo cuesta.
+ */
+export const MINISCRIPT_DEVICE_PENALTY = 10;
+
+/**
+ * Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura, menos lo que cuesta renovar los
+ * timelocks y tener dispositivos que no firman la cartera (`noMiniscript`).
+ */
+export function usabilityBreakdown(locations: number | null, renewal = false, noMiniscript = false): ScoreBreakdown {
   const base = locations === null ? 0 : ([100, 100, 75, 50][locations] ?? 30);
-  if (locations === null || !renewal) return { base, penalties: [], score: base };
-  return { base, penalties: [{ reason: 'renewal', points: RENEWAL_PENALTY }], score: Math.max(0, base - RENEWAL_PENALTY) };
+  if (locations === null) return { base, penalties: [], score: base };
+  const penalties: ScoreBreakdown['penalties'] = [];
+  if (renewal) penalties.push({ reason: 'renewal', points: RENEWAL_PENALTY });
+  if (noMiniscript) penalties.push({ reason: 'no-miniscript', points: MINISCRIPT_DEVICE_PENALTY });
+  return { base, penalties, score: Math.max(0, base - penalties.reduce((sum, p) => sum + p.points, 0)) };
 }
 
-export function usabilityScore(locations: number | null, renewal = false): number {
-  return usabilityBreakdown(locations, renewal).score;
+export function usabilityScore(locations: number | null, renewal = false, noMiniscript = false): number {
+  return usabilityBreakdown(locations, renewal, noMiniscript).score;
 }
 
 /**

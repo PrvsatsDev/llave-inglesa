@@ -113,3 +113,42 @@ test('la hoja para imprimir lleva QR, descriptor por líneas, keys y direcciones
   const pdf = await page.pdf({ path: 'e2e/.capturas/descriptor.pdf', preferCSSPageSize: true });
   expect(pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1);
 });
+
+test('con espera, el descriptor es Miniscript: se importa por plantilla y avisa de los dispositivos que no lo firman', async ({ page }) => {
+  // R14: «2 de 3, o 1 de 3 tras 1 año» (52560 bloques), con un Passport Prime que no firma Miniscript.
+  const k = (i: number) => `[${keys[i]!.fingerprint}/48h/0h/0h/2h]${keys[i]!.xpub}/<0;1>/*`;
+  const decaying = `wsh(thresh(2,pk(${k(0)}),s:pk(${k(1)}),s:pk(${k(2)}),sln:older(52560)))`;
+  await page.goto('/');
+  await page.getByLabel('Documento abierto o ejemplo').selectOption('r14-2de3-se-relaja');
+  await expect(section(page)).toContainText('se escribe en Miniscript');
+  await section(page).getByRole('button', { name: 'Importar', exact: true }).click();
+  // Otra espera: no se importa y se dice por qué.
+  await page.getByLabel('Descriptor a importar').fill(decaying.replace('52560', '25920'));
+  await page.getByRole('button', { name: 'Importar descriptor' }).click();
+  await expect(page.getByRole('alert')).toContainText('tras 6 meses) y el esquema un multisig decreciente (2 de 3, 1 tras 1 año)');
+  await page.getByLabel('Descriptor a importar').fill(decaying);
+  await page.getByRole('button', { name: 'Importar descriptor' }).click();
+
+  await expect(section(page).getByRole('status')).toContainText('Importado: K1, por orden; K2, por orden; K3, por orden.');
+  await expect(page.getByTestId('descriptor')).toContainText(`wsh(thresh(2,pk([${keys[0]!.fingerprint}/48'/0'/0'/2']`);
+  await expect(page.getByTestId('descriptor')).toContainText('sln:older(52560)))#');
+  await expect(section(page)).toContainText('No firman Miniscript y no pueden firmar esta cartera: Passport Prime.');
+  await section(page).getByText(/No firman Miniscript/).scrollIntoViewIfNeeded();
+  await capture(page, 'descriptor-miniscript');
+
+  await page.getByRole('button', { name: 'Imprimir o guardar en PDF' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Descriptor para imprimir' });
+  await expect(sheet).toContainText('Miniscript con 3 keys · SegWit nativo (P2WSH) · mainnet');
+  await expect(sheet).toContainText('como Liana');
+  await sheet.locator('article').screenshot({ path: 'e2e/.capturas/descriptor-miniscript-hoja.png' });
+  await page.keyboard.press('Escape');
+
+  // La ficha del dispositivo lo explica.
+  await page.locator('.react-flow__node-location', { hasText: 'Casa' }).first().getByText('Passport Prime').first().click();
+  await expect(page.getByText(/no firma Miniscript, y la política de este esquema lo necesita/)).toBeVisible();
+  await page.locator('aside').first().screenshot({ path: 'e2e/.capturas/miniscript-dispositivo.png' });
+
+  await page.getByRole('button', { name: /^Usabilidad/ }).first().click();
+  await expect(page.getByText('Passport Prime no firma esta cartera, que necesita Miniscript')).toBeVisible();
+  await capture(page, 'miniscript-usabilidad');
+});

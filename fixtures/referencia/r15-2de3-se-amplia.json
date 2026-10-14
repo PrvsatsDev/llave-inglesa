@@ -12,7 +12,7 @@
         "sources": [
           {
             "kind": "device-rng",
-            "vendor": "Foundation"
+            "vendor": "Ledger"
           },
           {
             "kind": "dice",
@@ -20,9 +20,8 @@
           }
         ],
         "generatedBy": {
-          "vendor": "Foundation",
-          "model": "Passport Prime",
-          "firmware": "1.1.0"
+          "vendor": "Ledger",
+          "model": "Ledger Flex"
         },
         "independentlyVerified": false
       }
@@ -130,20 +129,16 @@
   "devices": [
     {
       "id": "nuevo-dispositivo",
-      "label": "Passport Prime",
-      "vendor": "Foundation",
-      "model": "Passport Prime",
-      "firmware": "1.1.0",
+      "label": "Ledger Flex",
+      "vendor": "Ledger",
+      "model": "Ledger Flex",
       "kind": "stateful",
       "holds": [
         "k1"
       ],
-      "loads": [
-        "k1"
-      ],
       "pinProtected": true,
       "duressPin": false,
-      "acceptsExternalSeed": true,
+      "acceptsExternalSeed": false,
       "registeredWallet": true,
       "location": "casa"
     },

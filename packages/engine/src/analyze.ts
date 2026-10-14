@@ -5,6 +5,7 @@ import { derive, type Derivation, type SigningMode } from './derive.ts';
 import { explain, type ExplanationNode } from './explain.ts';
 import { factId } from './facts.ts';
 import { legitHoldings, lossAtoms } from './losses.ts';
+import { devicesWithoutMiniscript } from './miniscript.ts';
 import { EVENTUALLY } from './policy.ts';
 import { attackEffort, combinedRarity, cutRarity, EXPOSURE, inheritanceBreakdown, resilienceBreakdown, securityScore, usabilityScore } from './score.ts';
 import { accessibleLocations, canAct, createWorld, eventually, type LossEvent, type World } from './world.ts';
@@ -135,9 +136,10 @@ export interface Analysis {
   resilience: ResilienceReport;
   /**
    * ¿Cuántas ubicaciones tiene que visitar el titular para firmar de forma segura? `renewal`: con timelocks, hay que
-   * mover las monedas cada cierto tiempo para renovarlos (resta, ver RENEWAL_PENALTY).
+   * mover las monedas cada cierto tiempo para renovarlos (resta, ver RENEWAL_PENALTY). `noMiniscript`: dispositivos que
+   * no firman la cartera porque la política necesita Miniscript (resta, ver MINISCRIPT_DEVICE_PENALTY).
    */
-  usability: { score: number; locations: Id[] | null; visits: number | null; renewal: boolean };
+  usability: { score: number; locations: Id[] | null; visits: number | null; renewal: boolean; noMiniscript: Id[] };
   /** Tras el fallecimiento de los titulares, ¿pueden los herederos recuperar los fondos? */
   inheritance: InheritanceReport;
 }
@@ -455,6 +457,7 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
   const ownerLocations = [...new Set(owners.flatMap((p) => accessibleLocations(intact, p)))];
   const usableWith = minimalLocationSet(intact, owners, ownerLocations, 'secure');
   const usableVisits = visits(intact, usableWith);
+  const noMiniscript = devicesWithoutMiniscript(model);
 
   const inheritance = inheritanceReport(createWorld(model, ownerDeaths(model), intact.index), maxCutSize);
 
@@ -462,7 +465,13 @@ export function analyze(model: CustodyModel, options: AnalyzeOptions = {}): Anal
     security,
     duress: duressReports(model, intact, security),
     resilience,
-    usability: { score: usabilityScore(usableVisits, timelocksIn(model)), locations: usableWith, visits: usableVisits, renewal: timelocksIn(model) },
+    usability: {
+      score: usabilityScore(usableVisits, timelocksIn(model), noMiniscript.length > 0),
+      locations: usableWith,
+      visits: usableVisits,
+      renewal: timelocksIn(model),
+      noMiniscript,
+    },
     inheritance,
   };
 }

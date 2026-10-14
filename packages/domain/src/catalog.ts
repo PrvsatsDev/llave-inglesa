@@ -28,6 +28,11 @@ export interface CatalogModel {
   antiExfil: boolean;
   /** Se puede montar en casa con piezas compradas por separado (sin que el fabricante toque el aparato). */
   diy: boolean;
+  /**
+   * Firma carteras Miniscript en P2WSH (las políticas con espera). `since`: firmware mínimo, si se sabe; `edge`: solo
+   * con el firmware experimental Edge (Coldcard), que el fabricante desaconseja para cantidades grandes. Null: no.
+   */
+  miniscript: { since?: string; edge?: true } | null;
   duress: readonly DuressKind[];
   /**
    * Series de firmware conocidas (`from` incluido, `before` excluido). Si se definen,
@@ -51,15 +56,19 @@ const model = (
   registersMultisig: false,
   antiExfil: false,
   diy: false,
+  miniscript: null,
   duress: [],
   ...opts,
 });
 
 const TREZOR = { duress: ['wipe'] } as const; // wipe code
-const LEDGER = { registersMultisig: true, duress: ['decoy'] } as const; // passphrase ligada a un segundo PIN
+// Miniscript con la app de Bitcoin 2.1 (2023): la versión es de la app, no del firmware.
+const LEDGER = { registersMultisig: true, miniscript: {}, duress: ['decoy'] } as const; // passphrase ligada a un segundo PIN
 const COLDCARD = { registersMultisig: true, duress: ['decoy', 'wipe'] } as const; // duress PIN y brick-me PIN
-const JADE = { registersMultisig: true, acceptsExternalSeed: true, antiExfil: true, duress: ['wipe'] } as const;
+const JADE = { registersMultisig: true, acceptsExternalSeed: true, antiExfil: true, miniscript: {}, duress: ['wipe'] } as const;
 /** Coldcard: serie normal y serie Edge (…X / …QX). */
+/** Coldcard: Miniscript solo en la serie Edge, desde la 6.1.0X. */
+const COLDCARD_MINISCRIPT = { since: '6.1.0', edge: true } as const;
 const coldcardLines = (normal: string, normalBefore: string) => [
   { from: normal, before: normalBefore },
   { from: '6.0.0', before: '7.0.0' },
@@ -74,7 +83,7 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
   model('trezor-safe-5', 'Trezor', 'Trezor Safe 5', TREZOR),
   model('trezor-safe-7', 'Trezor', 'Trezor Safe 7', TREZOR),
 
-  model('ledger-nano-s', 'Ledger', 'Ledger Nano S', { ...LEDGER, discontinued: true }),
+  model('ledger-nano-s', 'Ledger', 'Ledger Nano S', { ...LEDGER, miniscript: null, discontinued: true }),
   model('ledger-nano-s-plus', 'Ledger', 'Ledger Nano S Plus', LEDGER),
   model('ledger-nano-x', 'Ledger', 'Ledger Nano X', LEDGER),
   model('ledger-nano-gen5', 'Ledger', 'Ledger Nano Gen5', LEDGER),
@@ -83,14 +92,14 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
 
   model('coldcard-mk2', 'Coinkite', 'Coldcard Mk2', { ...COLDCARD, discontinued: true }),
   model('coldcard-mk3', 'Coinkite', 'Coldcard Mk3', { ...COLDCARD, discontinued: true }),
-  model('coldcard-mk4', 'Coinkite', 'Coldcard Mk4', { ...COLDCARD, acceptsExternalSeed: true, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
-  model('coldcard-mk5', 'Coinkite', 'Coldcard Mk5', { ...COLDCARD, acceptsExternalSeed: true, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
-  model('coldcard-q', 'Coinkite', 'Coldcard Q', { ...COLDCARD, acceptsExternalSeed: true, firmwareLines: coldcardLines('1.0.0', '2.0.0') }),
+  model('coldcard-mk4', 'Coinkite', 'Coldcard Mk4', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
+  model('coldcard-mk5', 'Coinkite', 'Coldcard Mk5', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
+  model('coldcard-q', 'Coinkite', 'Coldcard Q', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, firmwareLines: coldcardLines('1.0.0', '2.0.0') }),
   model('tapsigner', 'Coinkite', 'Tapsigner'),
 
   model('bitbox01', 'BitBox', 'BitBox01', { discontinued: true }),
-  model('bitbox02', 'BitBox', 'BitBox02', { registersMultisig: true, antiExfil: true }),
-  model('bitbox02-nova', 'BitBox', 'BitBox02 Nova', { registersMultisig: true, antiExfil: true }),
+  model('bitbox02', 'BitBox', 'BitBox02', { registersMultisig: true, antiExfil: true, miniscript: {} }),
+  model('bitbox02-nova', 'BitBox', 'BitBox02 Nova', { registersMultisig: true, antiExfil: true, miniscript: {} }),
 
   model('passport', 'Foundation', 'Passport', { registersMultisig: true }),
   model('passport-prime', 'Foundation', 'Passport Prime', { registersMultisig: true }),
@@ -101,8 +110,8 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
   model('bitkey', 'Block', 'Bitkey'),
 
   model('seedsigner', 'SeedSigner', 'SeedSigner', { ...STATELESS, diy: true }),
-  model('krux', 'Krux', 'Krux', { ...STATELESS, diy: true }),
-  model('specter-diy', 'Specter', 'Specter DIY', { ...STATELESS, registersMultisig: true, diy: true }),
+  model('krux', 'Krux', 'Krux', { ...STATELESS, diy: true, miniscript: { since: '25.03.0' } }),
+  model('specter-diy', 'Specter', 'Specter DIY', { ...STATELESS, registersMultisig: true, diy: true, miniscript: { since: '1.5.0' } }),
 
   model('keystone-essential', 'Keystone', 'Keystone Essential', { registersMultisig: true, discontinued: true }),
   model('keystone-pro', 'Keystone', 'Keystone Pro', { registersMultisig: true, discontinued: true }),
@@ -276,3 +285,27 @@ export function advisoriesFor(modelId: string, firmware?: string): AdvisoryMatch
   }
   return matches;
 }
+
+// ---------- Miniscript ----------
+
+/**
+ * Si un dispositivo firma una cartera Miniscript. Se sabe por el catálogo: un modelo que no está en él (escrito a mano)
+ * se da por bueno, porque no hay con qué comprobarlo.
+ * - yes: lo firma (o no se sabe el modelo: `unknown-model`).
+ * - edge: solo con el firmware Edge; con un firmware de la serie normal ya indicado, `old-firmware`.
+ * - unsupported: el modelo no firma Miniscript.
+ * - old-firmware: el firmware indicado es anterior al primero que lo firma.
+ */
+export type MiniscriptSupport = 'yes' | 'unknown-model' | 'edge' | 'unsupported' | 'old-firmware';
+
+export function miniscriptSupport(device: { model?: string; firmware?: string }): MiniscriptSupport {
+  const catalog = catalogModelByName(device.model);
+  if (!catalog) return 'unknown-model';
+  if (!catalog.miniscript) return 'unsupported';
+  const { since, edge } = catalog.miniscript;
+  const version = device.firmware?.trim() ? parseFirmware(device.firmware) : null;
+  if (since && version && compareFirmware(version, parseFirmware(since)!) < 0) return 'old-firmware';
+  return edge ? 'edge' : 'yes';
+}
+
+export const signsMiniscript = (s: MiniscriptSupport) => s !== 'unsupported' && s !== 'old-firmware';

@@ -8,6 +8,7 @@ import {
   inheritanceLetter,
   keyWait,
   EVENTUALLY,
+  MINISCRIPT_DEVICE_PENALTY,
   RENEWAL_PENALTY,
   satisfy,
   simulateAttack,
@@ -186,5 +187,25 @@ describe('2 de 3 que se relaja y que se amplía', () => {
   it('en el que se amplía, la key del abogado sola no basta ni esperando', () => {
     const model = loadFixture('referencia/r15-2de3-se-amplia');
     expect(simulateAttack(model, [{ type: 'insider', person: 'nueva-persona-2' }, { type: 'timelock-wait', blocks: UN_ANO }]).canSpend).toBe(false);
+  });
+});
+
+describe('dispositivos que no firman Miniscript', () => {
+  it('con una política que lo necesita, restan usabilidad; nada más', () => {
+    const model = loadFixture('referencia/r14-2de3-se-relaja');
+    const trezor: CustodyModel = { ...model, devices: model.devices.map((d, i) => (i === 0 ? { ...d, vendor: 'Trezor', model: 'Trezor Safe 5', label: 'Trezor' } : d)) };
+    const ledger: CustodyModel = { ...model, devices: model.devices.map((d, i) => (i === 0 ? { ...d, vendor: 'Ledger', model: 'Ledger Flex', label: 'Ledger' } : d)) };
+    const [t, l] = [analyze(trezor), analyze(ledger)];
+    expect(t.usability.noMiniscript).toEqual([model.devices[0]!.id]);
+    expect(l.usability.noMiniscript).toEqual([]);
+    expect(t.usability.score).toBe(l.usability.score - MINISCRIPT_DEVICE_PENALTY);
+    expect(t.resilience.score).toBe(l.resilience.score);
+    expect(t.inheritance.score).toBe(l.inheritance.score);
+  });
+
+  it('sin Miniscript (política plana) no restan', () => {
+    const model = loadFixture('referencia/r09-2de3-distribuido');
+    const trezor: CustodyModel = { ...model, devices: model.devices.map((d) => ({ ...d, vendor: 'Trezor', model: 'Trezor Safe 5' })) };
+    expect(analyze(trezor).usability.noMiniscript).toEqual([]);
   });
 });
