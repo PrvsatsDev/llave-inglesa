@@ -48,8 +48,14 @@ function mixesTimelocks(x: Type, y: Type): boolean {
   return (has(x, 'g') && has(y, 'h')) || (has(x, 'h') && has(y, 'g')) || (has(x, 'i') && has(y, 'j')) || (has(x, 'j') && has(y, 'i'));
 }
 
+/** ¿Tiene la expresión todas estas propiedades de tipo (p. ej. 'Bdu')? Falso si no es válida. */
+export function miniscriptHas<K>(ms: Miniscript<K>, letters: string): boolean {
+  const t = miniscriptType(ms);
+  return t !== 0 && has(t, letters);
+}
+
 /** Tipo de una expresión: 0 si no es válida. */
-export function miniscriptType<K>(ms: Miniscript<K>): Type {
+function miniscriptType<K>(ms: Miniscript<K>): Type {
   const t = computeType(ms);
   const bases = [...'BVKW'].filter((c) => has(t, c)).length;
   return bases === 1 ? t : 0;

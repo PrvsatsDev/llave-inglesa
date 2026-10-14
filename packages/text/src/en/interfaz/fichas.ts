@@ -275,11 +275,11 @@ export const descriptor: typeof es.descriptor = {
   titulo: 'Wallet descriptor',
   importar: 'Import',
   pistaSinXpubs:
-    'Import the descriptor you already have (Sparrow, Nunchuk, Specter…) or paste the xpub into each key’s panel: you get the descriptor and the first address, to check it matches your wallet. It does not allow spending, but it does reveal your balance.',
+    'Import the descriptor you already have (Sparrow, Nunchuk, Specter, Liana…) or paste the xpub into each key’s panel: you get the descriptor and the first address, to check it matches your wallet. It does not allow spending, but it does reveal your balance.',
   imprimir: 'Print or save as PDF',
   tipoDireccion: 'Address type',
   ordenImporta: 'With multi (not sortedmulti) the order of the keys matters: it is the policy’s order.',
-  anidados: 'The policy has nested thresholds: it needs Miniscript, which is not written yet.',
+  miniscript: 'With a wait (or nested thresholds), the wallet is written in Miniscript: always native SegWit (wsh), with no address type to choose. It needs a wallet that supports it, such as Liana, and devices that sign it.',
   privacidad: 'With the xpubs, this document reveals your balance and all your transactions. Keep it encrypted.',
   descriptor: 'Descriptor',
   testnet: 'testnet',

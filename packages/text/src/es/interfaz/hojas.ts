@@ -5,6 +5,8 @@ export const hojaDescriptor = {
   generado: (fecha: string) => `Generado el ${fecha}`,
   introMultisig:
     'La configuración pública de la cartera: qué keys la forman y cuántas firmas hacen falta. En un multisig las semillas solas no bastan para recuperarla: hacen falta las xpubs de todas las keys, y están aquí.',
+  introMiniscript:
+    'La configuración pública de la cartera: qué keys la forman, cuántas firmas hacen falta y cuánto hay que esperar en cada vía. Las semillas solas no bastan para recuperarla: hacen falta las xpubs de todas las keys y esta política, y están aquí. Se importa en una cartera que admita Miniscript, como Liana.',
   introSingle:
     'La configuración pública de la cartera. Con la semilla basta para recuperarla, pero este papel dice qué tipo de dirección y qué derivación usa, para encontrar los fondos a la primera.',
   noGasta: 'No permite gastar, pero quien lo tenga ve el saldo y todos los movimientos.',

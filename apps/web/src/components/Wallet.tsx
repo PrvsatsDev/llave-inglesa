@@ -1,5 +1,5 @@
 import { deriveAddress, formatDescriptor, isMultisigScript, looksLikeSeedWords, parseDescriptor, type ScriptType } from '@llave-inglesa/bitcoin';
-import { flatPolicy, importDescriptor, indexModel, setWallet, walletDescriptor, walletOf, type CustodyModel, type Match } from '@llave-inglesa/domain';
+import { flatPolicy, importDescriptor, indexModel, policyShape, setWallet, walletDescriptor, walletOf, type CustodyModel, type Match } from '@llave-inglesa/domain';
 import { AlertTriangle, Check, Copy, Eye, FileInput, Printer, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
@@ -58,7 +58,7 @@ export function WalletSection({ model }: { model: CustodyModel }) {
     <Section
       title={T.titulo}
       action={
-        flat && (
+        (flat || policyShape(model.policy)) && (
           <Button icon={FileInput} onClick={() => setImporting((v) => !v)}>
             {T.importar}
           </Button>
@@ -124,7 +124,7 @@ export function WalletSection({ model }: { model: CustodyModel }) {
           )}
         </>
       )}
-      {!flat && <p className={styles.hint}>{T.anidados}</p>}
+      {!flat && <p className={styles.hint}>{T.miniscript}</p>}
 
       {hasXpubs && (
         <p className={styles.privacy}>

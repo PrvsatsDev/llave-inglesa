@@ -274,11 +274,11 @@ export const descriptor = {
   titulo: 'Descriptor de la cartera',
   importar: 'Importar',
   pistaSinXpubs:
-    'Importa el descriptor que ya tienes (Sparrow, Nunchuk, Specter…) o pega la xpub en la ficha de cada key: se obtiene el descriptor y la primera dirección, para comprobar que coincide con tu cartera. No permite gastar, pero sí ver tu saldo.',
+    'Importa el descriptor que ya tienes (Sparrow, Nunchuk, Specter, Liana…) o pega la xpub en la ficha de cada key: se obtiene el descriptor y la primera dirección, para comprobar que coincide con tu cartera. No permite gastar, pero sí ver tu saldo.',
   imprimir: 'Imprimir o guardar en PDF',
   tipoDireccion: 'Tipo de dirección',
   ordenImporta: 'Con multi (no sortedmulti) el orden de las keys importa: es el de la política.',
-  anidados: 'La política tiene umbrales anidados: necesita Miniscript, que todavía no se escribe.',
+  miniscript: 'Con espera (o umbrales anidados), la cartera se escribe en Miniscript: siempre SegWit nativo (wsh), sin elegir tipo de dirección. Hace falta una cartera que lo admita, como Liana, y dispositivos que lo firmen.',
   privacidad: 'Con las xpubs, este documento deja ver tu saldo y todos tus movimientos. Guárdalo cifrado.',
   descriptor: 'Descriptor',
   testnet: 'testnet',

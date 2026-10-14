@@ -1,5 +1,5 @@
 import { deriveAddress, formatDescriptor, type Descriptor, type Network } from '@llave-inglesa/bitcoin';
-import { addArtifact, flatPolicy, indexModel, updateArtifact, type CustodyModel, type SecretRef } from '@llave-inglesa/domain';
+import { addArtifact, indexModel, updateArtifact, walletKeyIds, type CustodyModel, type SecretRef } from '@llave-inglesa/domain';
 import { Check, Plus, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -28,8 +28,7 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
   const matrix = useMemo(() => qrMatrix(text), [text]);
   const addresses = useMemo(() => Array.from({ length: ADDRESSES }, (_, i) => deriveAddress(descriptor, network, 0, i)), [descriptor, network]);
   const label = indexModel(model).label;
-  const flat = flatPolicy(model)!;
-  const ids = flat.kind === 'single' ? [flat.key] : flat.keys;
+  const ids = walletKeyIds(model)!;
   const multisig = descriptor.threshold !== undefined;
   const today = UI.comun.fecha(new Date());
 
@@ -66,9 +65,7 @@ export function DescriptorPrint({ model, descriptor, network, onClose }: { model
         </header>
 
         <p className={styles.intro}>
-          {multisig
-            ? T.introMultisig
-            : T.introSingle}{' '}
+          {descriptor.miniscript ? T.introMiniscript : multisig ? T.introMultisig : T.introSingle}{' '}
           <strong>{T.noGasta}</strong>
         </p>
 
