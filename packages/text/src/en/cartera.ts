@@ -42,7 +42,9 @@ export const descriptorProblemText: typeof es.descriptorProblemText = (p: Descri
     case 'bad-checksum':
       return 'The checksum (what comes after #) does not match: something was copied wrong.';
     case 'unsupported-script':
-      return 'That kind of descriptor cannot be read yet: only wsh/sh-wsh multisig with (sorted)multi and wpkh/sh-wpkh single-sig (no Taproot).';
+      return 'That kind of descriptor cannot be read yet: only wsh/sh-wsh multisig with (sorted)multi, wpkh/sh-wpkh single-sig and Miniscript in wsh (no Taproot or sh(wsh(miniscript))).';
+    case 'miniscript-unsafe':
+      return 'That Miniscript is not valid or not safe, and Bitcoin Core would not accept it: the types do not fit, some way of spending needs no signature, the signature can be altered, or it mixes height and time timelocks.';
     case 'syntax':
       return 'The descriptor cannot be understood: check that it is complete.';
     case 'bad-key':

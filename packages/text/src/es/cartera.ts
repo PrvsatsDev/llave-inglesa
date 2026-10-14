@@ -42,7 +42,9 @@ export function descriptorProblemText(p: DescriptorProblem): string {
     case 'bad-checksum':
       return 'La suma de control (lo que va tras #) no cuadra: algo se ha copiado mal.';
     case 'unsupported-script':
-      return 'Ese tipo de descriptor todavía no se lee: solo multisig wsh/sh-wsh con (sorted)multi y single-sig wpkh/sh-wpkh (sin Taproot).';
+      return 'Ese tipo de descriptor todavía no se lee: solo multisig wsh/sh-wsh con (sorted)multi, single-sig wpkh/sh-wpkh y Miniscript en wsh (sin Taproot ni sh(wsh(miniscript))).';
+    case 'miniscript-unsafe':
+      return 'Ese Miniscript no es válido o no es seguro, y Bitcoin Core no lo aceptaría: los tipos no encajan, alguna forma de gastar no pide firma, la firma se puede alterar o mezcla timelocks de altura y de tiempo.';
     case 'syntax':
       return 'No se entiende el descriptor: comprueba que está completo.';
     case 'bad-key':

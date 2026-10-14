@@ -1,3 +1,4 @@
+import { analyzeMiniscript, mapMiniscriptKeys, miniscriptKeys, miniscriptToString, parseMiniscript, type Miniscript } from './miniscript.ts';
 import { parseXpub, type Network, type XpubProblem } from './xpub.ts';
 
 /**
@@ -28,6 +29,11 @@ export interface Descriptor {
   /** sortedmulti (las claves se ordenan, BIP-67) o multi (el orden escrito importa). Lo habitual es sortedmulti. */
   sorted: boolean;
   keys: DescriptorKey[];
+  /**
+   * Solo wsh: la política en Miniscript, con cada key como su índice en `keys`. Si está, manda sobre `threshold` y
+   * `sorted` (Miniscript no tiene sortedmulti).
+   */
+  miniscript?: Miniscript<number>;
 }
 
 // ---------- Suma de control (BIP-380) ----------
@@ -79,6 +85,10 @@ const keyExpression = (k: DescriptorKey, branch: Branch) => {
 /** El descriptor de la cartera con su suma de control. */
 export function formatDescriptor(d: Descriptor, branch: Branch = 'multipath'): string {
   const keys = d.keys.map((k) => keyExpression(k, branch));
+  if (d.miniscript) {
+    const body = `wsh(${miniscriptToString(d.miniscript, (i) => keys[i]!)})`;
+    return `${body}#${descriptorChecksum(body)}`;
+  }
   const inner = isMultisigScript(d.script) ? `${d.sorted ? 'sortedmulti' : 'multi'}(${d.threshold},${keys.join(',')})` : keys[0]!;
   const body = {
     wsh: `wsh(${inner})`,
@@ -95,8 +105,13 @@ export type DescriptorProblem =
   | { code: 'empty' }
   /** La suma de control no coincide: algo se copió mal. */
   | { code: 'bad-checksum' }
-  /** Taproot, pkh, miniscript…: todavía no se leen. */
+  /** Taproot, pkh, Miniscript dentro de sh(…), fragmentos que no existen…: no se leen. */
   | { code: 'unsupported-script' }
+  /**
+   * Miniscript que Bitcoin Core no aceptaría: tipos que no encajan, una forma de gastar sin firma, firmas que se
+   * pueden alterar, timelocks de altura y de tiempo mezclados…
+   */
+  | { code: 'miniscript-unsafe' }
   | { code: 'syntax' }
   /** La key número `index` (desde 0) no se entiende o no es una xpub válida. */
   | { code: 'bad-key'; index: number; xpub?: XpubProblem }
@@ -136,8 +151,8 @@ function parseKey(text: string, index: number): KeyResult {
 }
 
 /**
- * Lee un descriptor tal como lo exportan Sparrow, Nunchuk, Bitcoin Core o Coldcard: wsh/sh-wsh con (sorted)multi, o
- * wpkh/sh-wpkh. Ignora espacios y saltos de línea. Si trae suma de control, la comprueba.
+ * Lee un descriptor tal como lo exportan Sparrow, Nunchuk, Bitcoin Core, Coldcard o Liana: wsh/sh-wsh con
+ * (sorted)multi, wpkh/sh-wpkh, o wsh con Miniscript. Ignora espacios y saltos de línea. Si trae suma de control, la comprueba.
  */
 export function parseDescriptor(text: string): DescriptorResult {
   const compact = text.replace(/\s+/g, '');
@@ -158,7 +173,7 @@ export function parseDescriptor(text: string): DescriptorResult {
   if (wsh !== null) {
     script = sh !== null ? 'sh-wsh' : 'wsh';
     const multi = unwrap(wsh, 'sortedmulti') ?? unwrap(wsh, 'multi');
-    if (multi === null) return { ok: false, problem: { code: 'unsupported-script' } };
+    if (multi === null) return sh === null ? parseMiniscriptDescriptor(wsh, checksum !== undefined) : { ok: false, problem: { code: 'unsupported-script' } };
     sorted = wsh.startsWith('sortedmulti(');
     const [k, ...keys] = multi.split(',');
     if (!/^\d+$/.test(k ?? '')) return { ok: false, problem: { code: 'syntax' } };
@@ -173,9 +188,16 @@ export function parseDescriptor(text: string): DescriptorResult {
     return { ok: false, problem: { code: /^[a-z_]+\(/.test(body) ? 'unsupported-script' : 'syntax' } };
   }
 
+  const keys = parseKeys(keyTexts);
+  if (!keys.ok) return keys;
+  const descriptor: Descriptor = { script, sorted, keys: keys.keys, ...(threshold !== undefined && { threshold }) };
+  return { ok: true, value: { descriptor, network: keys.network, hadChecksum: checksum !== undefined } };
+}
+
+function parseKeys(texts: readonly string[]): { ok: true; keys: DescriptorKey[]; network: Network } | { ok: false; problem: DescriptorProblem } {
   const keys: DescriptorKey[] = [];
   const networks = new Set<Network>();
-  for (const [i, t] of keyTexts.entries()) {
+  for (const [i, t] of texts.entries()) {
     const r = parseKey(t, i);
     if (!r.ok) return r;
     if (keys.some((k) => k.xpub === r.key.xpub)) return { ok: false, problem: { code: 'duplicate-key', index: i } };
@@ -183,8 +205,22 @@ export function parseDescriptor(text: string): DescriptorResult {
     networks.add(r.network);
   }
   if (networks.size > 1) return { ok: false, problem: { code: 'mixed-networks' } };
-  const descriptor: Descriptor = { script, sorted, keys, ...(threshold !== undefined && { threshold }) };
-  return { ok: true, value: { descriptor, network: [...networks][0]!, hadChecksum: checksum !== undefined } };
+  return { ok: true, keys, network: [...networks][0]! };
+}
+
+/** wsh(miniscript): las keys, en el orden en que aparecen, pasan a ser índices. */
+function parseMiniscriptDescriptor(text: string, hadChecksum: boolean): DescriptorResult {
+  const parsed = parseMiniscript(text);
+  if (!parsed.ok) return { ok: false, problem: { code: parsed.problem.code === 'syntax' ? 'syntax' : 'unsupported-script' } };
+  const keyTexts = miniscriptKeys(parsed.value);
+  if (keyTexts.length === 0) return { ok: false, problem: { code: 'miniscript-unsafe' } };
+  const keys = parseKeys(keyTexts);
+  if (!keys.ok) return keys;
+  let next = 0;
+  const miniscript = mapMiniscriptKeys(parsed.value, () => next++);
+  if (!analyzeMiniscript(miniscript).sane) return { ok: false, problem: { code: 'miniscript-unsafe' } };
+  const descriptor: Descriptor = { script: 'wsh', sorted: false, keys: keys.keys, miniscript };
+  return { ok: true, value: { descriptor, network: keys.network, hadChecksum } };
 }
 
 /** Normaliza una derivación escrita a mano ("m/48h/0h/0h/2h", "48'/0'/0'/2'") al formato de los descriptores, o null. */
