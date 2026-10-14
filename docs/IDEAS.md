@@ -45,7 +45,10 @@ ningún backup del descriptor como problema grave.
       relaja y que se amplía).
    2. ~~Plantillas en la interfaz~~ (2026-10-13, en local): sencilla, herencia simple, multisig decreciente y
       ampliable (los nombres de Liana y Nunchuk), con espera en días o meses, renovación y la espera en el mapa.
-   3. Descriptor `wsh(miniscript)` (con los vectores de Bitcoin Core; sin Taproot) y qué dispositivos firman Miniscript.
+   3. ~~Descriptor `wsh(miniscript)` y qué dispositivos firman Miniscript~~ (2026-10-14, en local): tipos y script con
+      los vectores de Bitcoin Core (sin Taproot), descriptor de las plantillas e importación por plantilla, catálogo
+      con soporte de Miniscript (Coldcard solo con Edge) y −10 de usabilidad si un dispositivo no la firma. Queda: los
+      límites de operaciones y pila de Core, y los descriptores de Liana con `<2;3>`.
    4. Editor libre del árbol (opcional).
 
 ## Aparcado
