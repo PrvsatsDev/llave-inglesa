@@ -79,15 +79,16 @@ Política «K1, o K2 tras 6 meses»; renueva cada 3 meses. *Perder la key del ti
 lo pierde ni lo bloquea: se recupera esperando.*
 
 **R14 · 2 de 3 que se relaja.** R09 con «2 de 3, o 1 de 3 tras 1 año» (*decaying multisig*); renueva cada 6
-meses. *La incapacidad del titular pasa de bloqueo a retraso, y perder dos keys ya no lo pierde todo.*
+meses. *La incapacidad del titular pasa de bloqueo a retraso, y perder dos keys ya no lo pierde todo.* Mantiene el
+Passport Prime de R09 (K1), que no firma Miniscript: resta 10 de usabilidad (desde 2026-10-14), para que se vea.
 
 **R15 · 2 de 3 que se amplía.** R09 más una cuarta key (K4) en el **Despacho de abogado**, con un custodio
 *Abogado*, que solo vale tras **1 año** y siempre junto a otra: «2 de 4 (K1, K2, K3, K4 tras 1 año)»
 (*expanding multisig*); renueva cada 6 meses. *Sigue siendo multifirma: el abogado solo no puede gastar ni
-esperando.*
+esperando.* K1 es un Ledger Flex (hasta 2026-10-14, el Passport Prime de R09), que sí firma Miniscript.
 
 Resultados: R14 y R15 tan seguros como R09 (71) y más resilientes (78 y 79 frente a 72); R13, 55/73/90/82. Los
-tres restan 10 de usabilidad por tener que renovar.
+tres restan 10 de usabilidad por tener que renovar, y R14 otros 10 por el Passport Prime (80).
 
 ## Lo que esperamos
 
@@ -135,7 +136,7 @@ Bandas: **muy mal** < 25 · **flojo** 25–50 · **aceptable** 50–70 · **buen
 | R11 2 de 3 sin plan de herencia | bueno | aceptable | excelente | muy mal |
 | R12 2 de 3 con una SeedSigner | aceptable | aceptable ¹ | bueno | bueno |
 | R13 Key de recuperación de la heredera | aceptable | bueno | excelente | bueno |
-| R14 2 de 3 que se relaja | bueno | bueno | excelente | bueno |
+| R14 2 de 3 que se relaja | bueno | bueno | bueno ³ | bueno |
 | R15 2 de 3 que se amplía | bueno | bueno | excelente | bueno |
 
 ¹ Revisadas en el diagnóstico conjunto, tras ver los resultados: en todas, el motor acierta y la banda
@@ -151,6 +152,10 @@ verificar de forma independiente (la parte del RNG es secreta, no se puede recal
 aún desconocido del RNG de Trezor es una vía más (esfuerzo 3). En R03 y R04 cae en el margen de las casi
 igual de baratas y resta 2: seguridad 51 → 49, en el borde entre *flojo* y *aceptable*. Es un matiz que la
 galería debe enseñar: los dados solo protegen del todo si se generan solo con ellos y se verifican.
+
+³ **Dispositivo que no firma la cartera (fase 3 del punto 9).** Con espera, la cartera es Miniscript, y el
+Passport Prime de K1 no lo firma: resta 10 de usabilidad (90 → 80). Se deja a propósito en R14, y R15 cambia
+a un Ledger Flex, para que la galería enseñe los dos casos.
 
 Las bandas son un test (`packages/engine/test/calibracion.test.ts`): cada esquema de la galería debe
 caer en la suya en las cuatro métricas.

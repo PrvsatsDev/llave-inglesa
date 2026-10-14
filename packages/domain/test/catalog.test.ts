@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { ADVISORIES, HARDWARE_MODELS, advisoriesFor, catalogModelByName, compareFirmware, findModel, parseFirmware } from '../src/index.ts';
+import { ADVISORIES, HARDWARE_MODELS, advisoriesFor, catalogModelByName, compareFirmware, findModel, miniscriptSupport, parseFirmware } from '../src/index.ts';
 
 const ids = (matches: ReturnType<typeof advisoriesFor>) => matches.map((m) => m.advisory.id);
 
@@ -116,5 +116,29 @@ describe('advisoriesFor', () => {
     expect(advisoriesFor('jade', '1.0.23')).toEqual([]);
     expect(ids(advisoriesFor('jade-plus', '1.0.36'))).toEqual(['jade-register-descriptor-2025']);
     expect(advisoriesFor('jade', '1.0.37')).toEqual([]);
+  });
+});
+
+describe('quién firma Miniscript', () => {
+  it('según el modelo y, si se indica, el firmware', () => {
+    expect(miniscriptSupport({ model: 'Ledger Flex' })).toBe('yes');
+    expect(miniscriptSupport({ model: 'Trezor Safe 5', firmware: '2.10.0' })).toBe('unsupported');
+    expect(miniscriptSupport({ model: 'Passport Prime' })).toBe('unsupported');
+    expect(miniscriptSupport({ model: 'Krux', firmware: '24.11.0' })).toBe('old-firmware');
+    expect(miniscriptSupport({ model: 'Krux', firmware: '25.03.0' })).toBe('yes');
+    // Un modelo escrito a mano no se puede comprobar: se da por bueno.
+    expect(miniscriptSupport({ model: 'Mi firmador casero' })).toBe('unknown-model');
+  });
+
+  it('Coldcard: solo con el firmware Edge', () => {
+    expect(miniscriptSupport({ model: 'Coldcard Mk4' })).toBe('edge');
+    expect(miniscriptSupport({ model: 'Coldcard Mk4', firmware: '6.3.5X' })).toBe('edge');
+    expect(miniscriptSupport({ model: 'Coldcard Mk4', firmware: '5.6.0' })).toBe('old-firmware');
+    expect(miniscriptSupport({ model: 'Coldcard Q', firmware: '1.5.0Q' })).toBe('old-firmware');
+    expect(miniscriptSupport({ model: 'Coldcard Q', firmware: '6.3.5QX' })).toBe('edge');
+  });
+
+  it('los firmware mínimos del catálogo son versiones completas', () => {
+    for (const m of HARDWARE_MODELS) if (m.miniscript?.since) expect(parseFirmware(m.miniscript.since)).not.toBeNull();
   });
 });

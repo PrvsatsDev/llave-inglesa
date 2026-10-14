@@ -88,7 +88,7 @@ export function MetricAnalysis({ model, metric }: { model: CustodyModel; metric:
     case 'usability':
       return (
         <>
-          <Score {...usabilityScoreRows(analysis)} />
+          <Score {...usabilityScoreRows(model, analysis)} />
           <Usability model={model} analysis={analysis} />
         </>
       );
@@ -188,14 +188,18 @@ function resilienceScore(a: EngineAnalysis) {
   };
 }
 
-function usabilityScoreRows(a: EngineAnalysis) {
+function usabilityScoreRows(model: CustodyModel, a: EngineAnalysis) {
   const n = a.usability.visits;
-  const b = usabilityBreakdown(n, a.usability.renewal);
+  const b = usabilityBreakdown(n, a.usability.renewal, a.usability.noMiniscript.length > 0);
+  const label = indexModel(model).label;
   return {
     score: a.usability.score,
     rows: [
       { label: n === null ? T.usabilidad.noPueden : T.usabilidad.firmarExige(n), points: b.base },
-      ...b.penalties.map((p) => ({ label: T.usabilidad.renovar, points: -p.points })),
+      ...b.penalties.map((p) => ({
+        label: p.reason === 'no-miniscript' ? T.usabilidad.sinMiniscript(a.usability.noMiniscript.map(label)) : T.usabilidad.renovar,
+        points: -p.points,
+      })),
     ],
     how: T.usabilidad.como(),
   };

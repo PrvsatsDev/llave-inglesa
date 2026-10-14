@@ -14,6 +14,7 @@ import {
   inheritanceScore,
   LOCKOUT_PENALTY,
   LOSS_RARITY,
+  MINISCRIPT_DEVICE_PENALTY,
   NO_DESCRIPTOR_PENALTY,
   PASSPHRASE_EFFORT,
   RENEWAL_PENALTY,
@@ -24,7 +25,7 @@ import {
   usabilityScore,
 } from '@llave-inglesa/engine';
 import { plural } from '../../tipos.ts';
-import { ATTACK_KIND_TEXT } from '../textos.ts';
+import { ATTACK_KIND_TEXT, listText } from '../textos.ts';
 import { comun } from './comun.ts';
 
 const num = comun.numero;
@@ -95,10 +96,13 @@ export const analisis = {
     noPueden: 'Los titulares no pueden firmar de forma segura',
     firmarExige: (n: number) => `Firmar exige ir a ${plural(n, ...UBICACIONES)}`,
     renovar: 'Hay que mover las monedas cada cierto tiempo para renovar el timelock',
+    sinMiniscript: (nombres: readonly string[]) =>
+      `${listText(nombres)} no ${nombres.length === 1 ? 'firma' : 'firman'} esta cartera, que necesita Miniscript`,
     como: () => [
       'Cuántas ubicaciones tienen que visitar los titulares para firmar de forma segura: con dispositivos de firma, sin teclear ninguna frase semilla en un ordenador.',
       `${scale(usabilityScore, UBICACIONES, 1, 4)}.`,
       `Con timelocks resta ${RENEWAL_PENALTY}: hay que mover las monedas antes de que venzan para que la rama con espera no se abra, y eso es firmar una transacción cada cierto tiempo.`,
+      `Si la política necesita Miniscript y algún dispositivo no lo firma, resta ${MINISCRIPT_DEVICE_PENALTY}: no cambia qué se puede hacer (se compra otro dispositivo y se le carga la semilla), pero cuesta.`,
     ],
     dondeSeFirma: 'Dónde se firma',
     minimoVisitar: 'Lo mínimo que tienen que visitar los titulares para firmar una transacción:',

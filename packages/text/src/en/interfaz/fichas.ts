@@ -68,6 +68,9 @@ export const hardware: typeof es.hardware = {
   registraMultisig: 'registers multisig',
   montable: 'can be assembled at home',
   noRegistraMultisig: 'does not register multisig',
+  firmaMiniscript: (desde?: string) => (desde ? `signs Miniscript from firmware ${desde}` : 'signs Miniscript'),
+  miniscriptEdge: 'signs Miniscript only with the Edge firmware',
+  noFirmaMiniscript: 'does not sign Miniscript',
   segunCatalogo: (fecha: string, rasgos: readonly string[]) => `According to the catalog (${fecha}): ${rasgos.join(' · ')}.`,
   fuente: 'Source',
 };
@@ -108,6 +111,15 @@ export const dispositivo: typeof es.dispositivo = {
   pistaSemillasExternas: 'Can temporarily load another seed to sign with it.',
   multisigRegistrado: 'Multisig registered',
   pistaMultisig: 'Stores the wallet configuration, and therefore all the xpubs.',
+  miniscript: {
+    unsupported:
+      'This model does not sign Miniscript, and this setup’s policy needs it: it cannot sign this wallet. Its seed would have to be loaded into another device that does. It lowers usability.',
+    'old-firmware': (desde: string) =>
+      `It signs Miniscript from firmware ${desde}: with this one it cannot sign this wallet, which needs it. Update it. Meanwhile, it lowers usability.`,
+    edgeSinVersion:
+      'It signs Miniscript, which this wallet needs, only with the Edge firmware. Enter the version to check: with the regular series it cannot sign it.',
+    edge: 'With the Edge firmware it signs Miniscript, but Coinkite advises against it for large amounts: it is experimental.',
+  },
   procedencia: 'Origin',
   montaje: 'Assembly',
   montajes: { unset: 'Not specified', self: 'Assembled at home', bought: 'Bought assembled' },
@@ -281,6 +293,8 @@ export const descriptor: typeof es.descriptor = {
   ordenImporta: 'With multi (not sortedmulti) the order of the keys matters: it is the policy’s order.',
   miniscript: 'With a wait (or nested thresholds), the wallet is written in Miniscript: always native SegWit (wsh), with no address type to choose. It needs a wallet that supports it, such as Liana, and devices that sign it.',
   privacidad: 'With the xpubs, this document reveals your balance and all your transactions. Keep it encrypted.',
+  noFirman: (nombres: string) => `They do not sign Miniscript and cannot sign this wallet: ${nombres}.`,
+  soloEdge: (nombres: string) => `They only sign it with the Edge firmware, which is experimental: ${nombres}.`,
   descriptor: 'Descriptor',
   testnet: 'testnet',
   copiarDescriptor: 'Copy the descriptor',

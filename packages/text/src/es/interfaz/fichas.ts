@@ -66,6 +66,9 @@ export const hardware = {
   registraMultisig: 'registra multisig',
   montable: 'se puede montar en casa',
   noRegistraMultisig: 'no registra multisig',
+  firmaMiniscript: (desde?: string) => (desde ? `firma Miniscript desde el firmware ${desde}` : 'firma Miniscript'),
+  miniscriptEdge: 'firma Miniscript solo con el firmware Edge',
+  noFirmaMiniscript: 'no firma Miniscript',
   segunCatalogo: (fecha: string, rasgos: readonly string[]) => `Según el catálogo (${fecha}): ${rasgos.join(' · ')}.`,
   fuente: 'Fuente',
 };
@@ -106,6 +109,15 @@ export const dispositivo = {
   pistaSemillasExternas: 'Puede cargar temporalmente otra semilla para firmar con ella.',
   multisigRegistrado: 'Multisig registrado',
   pistaMultisig: 'Guarda la configuración del wallet, y por tanto todas las xpubs.',
+  miniscript: {
+    unsupported:
+      'Este modelo no firma Miniscript, y la política de este esquema lo necesita: con él no se puede firmar esta cartera. Habría que cargar su semilla en otro dispositivo que sí lo firme. Resta usabilidad.',
+    'old-firmware': (desde: string) =>
+      `Firma Miniscript desde el firmware ${desde}: con este no puede firmar esta cartera, que lo necesita. Actualízalo. Mientras, resta usabilidad.`,
+    edgeSinVersion:
+      'Firma Miniscript, que esta cartera necesita, solo con el firmware Edge. Indica la versión para comprobarlo: con la serie normal no puede firmarla.',
+    edge: 'Con el firmware Edge firma Miniscript, pero Coinkite lo desaconseja para cantidades grandes: es experimental.',
+  },
   procedencia: 'Procedencia',
   montaje: 'Montaje',
   montajes: { unset: 'Sin indicar', self: 'Montado en casa', bought: 'Comprado montado' },
@@ -280,6 +292,8 @@ export const descriptor = {
   ordenImporta: 'Con multi (no sortedmulti) el orden de las keys importa: es el de la política.',
   miniscript: 'Con espera (o umbrales anidados), la cartera se escribe en Miniscript: siempre SegWit nativo (wsh), sin elegir tipo de dirección. Hace falta una cartera que lo admita, como Liana, y dispositivos que lo firmen.',
   privacidad: 'Con las xpubs, este documento deja ver tu saldo y todos tus movimientos. Guárdalo cifrado.',
+  noFirman: (nombres: string) => `No firman Miniscript y no pueden firmar esta cartera: ${nombres}.`,
+  soloEdge: (nombres: string) => `Solo la firman con el firmware Edge, experimental: ${nombres}.`,
   descriptor: 'Descriptor',
   testnet: 'testnet',
   copiarDescriptor: 'Copiar el descriptor',

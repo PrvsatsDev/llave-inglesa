@@ -1,6 +1,6 @@
-import { advisoriesFor, catalogModelByName, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, flatPolicy, miniscriptSupport, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
 import { tamperRisk } from '@llave-inglesa/engine';
-import { Camera, Cpu } from 'lucide-react';
+import { AlertTriangle, Camera, Cpu } from 'lucide-react';
 import { TAMPER_REASON_TEXT, UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
@@ -81,6 +81,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
         </Field>
         {catalog && <p className={styles.hint}>{catalogFeatures(catalog)}</p>}
         <AdvisoryList matches={advisories} />
+        {!flatPolicy(model) && <MiniscriptNote device={device} catalog={catalog} />}
         <Field label={UI.campos.ubicacion}>
           {(fid) => (
             <Select id={fid} value={device.location} options={model.locations.map((l) => ({ value: l.id, label: l.name }))} onChange={(location) => patch({ location })} />
@@ -211,5 +212,27 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
         onClick={() => void removeElement({ kind: 'device', id })}
       />
     </>
+  );
+}
+
+/** Con una política que necesita Miniscript: si este dispositivo puede firmarla. */
+function MiniscriptNote({ device, catalog }: { device: Device; catalog: CatalogModel | undefined }) {
+  const support = miniscriptSupport(device);
+  const M = T.miniscript;
+  const text =
+    support === 'unsupported'
+      ? M.unsupported
+      : support === 'old-firmware'
+        ? M['old-firmware'](catalog!.miniscript!.since!)
+        : support === 'edge'
+          ? device.firmware?.trim()
+            ? M.edge
+            : M.edgeSinVersion
+          : null;
+  if (!text) return null;
+  return (
+    <p className={styles.warningHint}>
+      <AlertTriangle size={12} aria-hidden /> {text}
+    </p>
   );
 }
