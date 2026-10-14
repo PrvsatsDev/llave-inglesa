@@ -49,7 +49,11 @@ ningún backup del descriptor como problema grave.
       los vectores de Bitcoin Core (sin Taproot), descriptor de las plantillas e importación por plantilla, catálogo
       con soporte de Miniscript (Coldcard solo con Edge) y −10 de usabilidad si un dispositivo no la firma. Queda: los
       límites de operaciones y pila de Core, y los descriptores de Liana con `<2;3>`.
-   4. Editor libre del árbol (opcional).
+   4. Pendiente para el 2026-10-15 (hacer todo lo que sea viable):
+      - Editor libre del árbol de la política (`key`, `thresh`, `older`), para lo que no cabe en las plantillas.
+      - Límites de Bitcoin Core en `wsh(miniscript)`: operaciones no push (201), elementos en pila y tamaño del
+        script, para no dar un descriptor que la red rechace (cobra sentido con el editor libre).
+      - Importar los descriptores de Liana que repiten una xpub con otra rama de derivación (`<0;1>` y `<2;3>`).
 
 ## Aparcado
 
