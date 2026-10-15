@@ -132,7 +132,7 @@ Por eso conviene que cada key pase por dispositivos distintos, o que tengan **an
 
 ## 5. Casos guiados
 
-Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa. Ninguno pretende ser el esquema de nadie: sirven como ejemplos para descubrir todas las variables que pueden afectar a un plan. Trabaja el tuyo.
+Quince esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa. Ninguno pretende ser el esquema de nadie: sirven como ejemplos para descubrir todas las variables que pueden afectar a un plan. Trabaja el tuyo.
 
 **1. Papel en el cajón.** Un Trezor en casa y la frase semilla en un papel, en el mismo sitio.
 
@@ -178,6 +178,12 @@ Seguridad **71** (bueno), resiliencia **72** (bueno), usabilidad **100** (excele
 
 **10. Con custodio.** La tercera placa la guarda un abogado en su despacho. Con una sola key no puede robar, y su copia aleja más las desgracias: resiliencia **75** (bueno).
 
+**11. Con espera (timelock).** Una key puede valer solo si las monedas llevan un tiempo sin moverse. El 2 de 3 distribuido que se relaja deja gastar con una sola key si pasa un año sin moverlas, y el titular las mueve cada 6 meses para que esa vía no llegue a abrirse.
+
+> ▶ En la app, con el ejemplo «2 de 3 que se relaja con el tiempo»: *Si el titular queda incapacitado*.
+
+En el 2 de 3 normal eso bloquea los fondos, y su resiliencia es **72** (bueno); aquí solo los retrasa un año y sube a **78** (bueno), con la misma seguridad, **71** (bueno): para usar esa vía, un ladrón tendría que esperar un año sin que las muevas. El precio es acordarse de moverlas, y que no todos los dispositivos firman Miniscript: usabilidad **80** (bueno). La galería tiene dos más: una key de recuperación en casa de la hija, que vale sola tras 6 meses y da herencia **82** (bueno), y el 2 de 3 que se amplía con una cuarta key en el despacho del abogado, con resiliencia **79** (bueno).
+
 > 💡 Nada de esto es «la respuesta»: es un mapa de compromisos. Abre el que se parezca al tuyo, cambia una cosa cada vez y mira qué nota sube y cuál baja.
 
 <a id="montar"></a>
@@ -186,15 +192,15 @@ Seguridad **71** (bueno), resiliencia **72** (bueno), usabilidad **100** (excele
 
 Empieza con **Archivo → Nuevo esquema** o, mejor, abre el ejemplo que más se parezca al tuyo y cámbialo. Todo se edita en la pestaña **Esquema** o pulsando cualquier elemento del mapa; Ctrl+Z deshace.
 
-- **Política**: cuántas keys hacen falta para gastar (1 de 1, 2 de 3…). **+ Key** añade otra. En cada key: si lleva passphrase y cómo es (nunca cuál), y su procedencia: con qué entropía y en qué dispositivo se generó. Ahí se detectan los fallos de entropía publicados.
+- **Política**: cuántas keys hacen falta para gastar (1 de 1, 2 de 3…) y, si quieres, una **espera**: herencia simple, multisig decreciente o multisig ampliable (los nombres de Liana), en días o meses, y cada cuántos días mueves las monedas para que la espera no venza. Lo que no cabe en esas formas se monta con **Personalizada (árbol libre)**: grupos que piden k de sus partes (keys, esperas u otros grupos), con un resumen en llano de las formas de gastar. **+ Key** añade otra key. En cada key: si lleva passphrase y cómo es (nunca cuál), y su procedencia: con qué entropía y en qué dispositivo se generó. Ahí se detectan los fallos de entropía publicados.
 - **Ubicaciones**: casa, banco, una nube, un portátil… Las físicas pueden ser caja fuerte o caja del banco, y estar dentro de otra (la caja fuerte dentro de casa). En cada una, quién puede entrar: siempre, solo tras el fallecimiento de alguien, o si queda incapacitado.
-- **Dispositivos y backups**: con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN, si tiene PIN de coacción y su procedencia: dónde lo compraste, si el precinto estaba intacto o si lo montaste tú (segunda mano o precinto roto restan mucho). En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…
+- **Dispositivos y backups**: con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware (y si firma Miniscript, que hace falta con una espera), qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN, si tiene PIN de coacción y su procedencia: dónde lo compraste, si el precinto estaba intacto o si lo montaste tú (segunda mano o precinto roto restan mucho). En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…
 - **Ordenador de firma**: el ordenador o móvil con la cartera (Sparrow, Nunchuk…), con el + de su ubicación o, si es un móvil, desde la persona que lo lleva encima. Guarda el descriptor: quien llegue a él lo tiene, y para la recuperación es una copia poco fiable. Si es de uso general resta algo de seguridad (su malware puede cambiar direcciones); uno dedicado, no.
 - **Personas**: titular, heredero, custodio…, qué saben de memoria (un PIN, una passphrase) y dónde viven. Lo que sabe alguien puede revelarlo bajo coacción, y se pierde si lo olvida, fallece o queda incapacitado. Coaccionar a alguien lejos de su casa exige llevarle allí y cuesta algo más; si no indicas dónde vive, se supone lo peor.
 
 Cuando el esquema esté como quieres, puedes ponerlo por escrito. Nada de esto lleva secretos, y es opcional:
 
-- **Descriptor de la cartera** (Esquema, bajo las keys): **Importar** y pega el descriptor que ya tienes (Sparrow, Nunchuk, Specter…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.
+- **Descriptor de la cartera** (Esquema, bajo las keys): **Importar** y pega el descriptor que ya tienes (Sparrow, Nunchuk, Specter…), o pega la xpub en la ficha de cada key. Con una espera es un descriptor Miniscript, como los de Liana; si su política no es la del esquema, puedes usar la del descriptor. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien (Liana muestra primero la segunda). Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.
 - **Imprimir o guardar en PDF**: una hoja con el descriptor, su QR, las keys y las primeras direcciones. Al imprimirla, añádela al esquema donde la vayas a guardar: es un backup más. En un multisig, que no haya ninguna copia del descriptor resta resiliencia, y que los herederos no lleguen a ninguna resta mucha herencia.
 - **Carta para los herederos** (Análisis › Herencia): qué reunir y dónde, a quién acudir y los pasos, en palabras sencillas y con solo lo que necesitan. Los nombres reales y un mensaje personal se escriben al vuelo y no se guardan. Imprímela en una impresora tuya sin red, nunca en una copistería.
 
@@ -217,6 +223,7 @@ No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y
 - **Llave inglesa**: obligar a alguien por la fuerza a firmar o a revelar lo que sabe. Da nombre a la herramienta.
 - **Esfuerzo**: lo que le cuesta un ataque al atacante (riesgo, tiempo, dinero). Los de una misma vía se suman.
 - **Rareza**: lo improbable que es una desgracia, en órdenes de magnitud. Las que tienen que coincidir se suman.
+- **Timelock (espera)**: condición de la política que solo se cumple cuando las monedas llevan un tiempo sin moverse. Moverlas lo reinicia (**renovar**). Las esperas se escriben en **Miniscript**, el lenguaje de políticas que entienden Liana, Nunchuk o Bitcoin Core.
 - **Bloqueo temporal**: los fondos quedan inmovilizados mientras alguien está incapacitado, pero se recuperan cuando heredan.
 - **Custodio**: alguien de confianza que guarda algo (una placa, un descriptor) sin ser titular ni heredero.
 - **Entropía**: el azar con el que se genera la frase semilla (el generador del dispositivo, dados, una moneda…). **Verificar** es recalcularla en otra herramienta para comprobar que sale de ese azar.
@@ -236,7 +243,8 @@ Un modelo siempre simplifica. Estos son los atajos conscientes de llave-inglesa:
 - Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.
 - El ordenador o móvil de firma solo tiene dos extremos (de uso general o dedicado), y su malware se supone capaz de sacar la semilla de un dispositivo conectado con un fallo publicado. No cuenta la contraseña del ordenador ni de la cartera.
 - El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.
-- Todavía no hay timelocks (herencia con espera, claves de recuperación con retraso).
+- Las esperas son relativas (desde el último movimiento de las monedas): no hay fechas absolutas, ni Taproot. Cada cuánto las mueves es un dato que das tú: no se comprueba.
+- Un dispositivo que no firma Miniscript solo resta usabilidad: siempre se puede firmar con otro cargando la frase semilla.
 - Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.
 
 <a id="verificar"></a>

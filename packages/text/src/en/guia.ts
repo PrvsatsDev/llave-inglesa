@@ -24,6 +24,9 @@ const DISTRIBUIDO = 'r09-2de3-distribuido';
 const CUSTODIO = 'r10-2de3-custodio';
 const SIN_HERENCIA = 'r11-2de3-sin-herencia';
 const SEEDSIGNER = 'r12-2de3-seedsigner';
+const HEREDERA = 'r13-recuperacion-heredera';
+const SE_RELAJA = 'r14-2de3-se-relaja';
+const SE_AMPLIA = 'r15-2de3-se-amplia';
 
 export const GUIA: typeof es = [
   {
@@ -386,7 +389,7 @@ export const GUIA: typeof es = [
       {
         tipo: 'parrafo',
         texto: [
-          'Twelve typical setups, from the most common to the most careful. They are all in the selector at the top, in the gallery. Each step fixes something from the previous one… and almost always makes something else worse. None of them is meant to be anyone’s setup: they are examples to discover all the variables that can affect a plan. Work on yours.',
+          'Fifteen typical setups, from the most common to the most careful. They are all in the selector at the top, in the gallery. Each step fixes something from the previous one… and almost always makes something else worse. None of them is meant to be anyone’s setup: they are examples to discover all the variables that can affect a plan. Work on yours.',
         ],
       },
       { tipo: 'parrafo', texto: [n('1. Paper in the drawer.'), ' A Trezor at home and the seed phrase on paper, in the same place.'] },
@@ -561,6 +564,37 @@ export const GUIA: typeof es = [
         ],
       },
       {
+        tipo: 'parrafo',
+        texto: [
+          n('11. With a waiting period (timelock).'),
+          ' A key can be valid only once the coins have gone unmoved for a while. The distributed 2 of 3 that relaxes lets you spend with a single key if the coins go a year without moving, and the owner moves them every 6 months so that this path never opens.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: SE_RELAJA,
+        escenario: { kind: 'loss', events: [{ type: 'incapacity', person: 'yo' }] },
+        texto: 'If the owner becomes incapacitated',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'In the plain 2 of 3 that locks the funds, and its resilience is ',
+          cifra(DISTRIBUIDO, 'resilience'),
+          '; here it only delays them by a year and it rises to ',
+          cifra(SE_RELAJA, 'resilience'),
+          ', with the same security, ',
+          cifra(SE_RELAJA, 'security'),
+          ': to use that path, a thief would have to wait a year without you moving the coins. The price is remembering to move them, and that not every device signs Miniscript: usability ',
+          cifra(SE_RELAJA, 'usability'),
+          '. The gallery has two more: a recovery key at the daughter’s home, valid on its own after 6 months, with inheritance ',
+          cifra(HEREDERA, 'inheritance'),
+          ', and the 2 of 3 that expands with a fourth key at the lawyer’s office, with resilience ',
+          cifra(SE_AMPLIA, 'resilience'),
+          '.',
+        ],
+      },
+      {
         tipo: 'nota',
         texto: [
           'None of this is “the answer”: it is a map of trade-offs. Open the one that looks most like yours, change one thing at a time, and see which score goes up and which goes down.',
@@ -588,9 +622,13 @@ export const GUIA: typeof es = [
         items: [
           [
             n('Policy'),
-            ': how many keys it takes to spend (1 of 1, 2 of 3…). ',
+            ': how many keys it takes to spend (1 of 1, 2 of 3…) and, if you want, a ',
+            n('waiting period'),
+            ': simple inheritance, decaying multisig or expanding multisig (Liana’s names), in days or months, and how often you move the coins so that the wait never runs out. Whatever those shapes cannot express is built with ',
+            n('Custom (free tree)'),
+            ': groups that need k of their parts (keys, waiting periods or other groups), with a plain summary of the ways to spend. ',
             n('+ Key'),
-            ' adds another one. On each key: whether it has a passphrase and what it is like (never what it is), and its origin: with what entropy and on which device it was generated. That is where published entropy flaws are detected.',
+            ' adds another key. On each key: whether it has a passphrase and what it is like (never what it is), and its origin: with what entropy and on which device it was generated. That is where published entropy flaws are detected.',
           ],
           [
             n('Locations'),
@@ -598,7 +636,7 @@ export const GUIA: typeof es = [
           ],
           [
             n('Devices and backups'),
-            ': with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware, which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, whether it has a duress PIN, and its origin: where you bought it, whether the seal was intact or whether you assembled it yourself (second-hand or a broken seal take a lot off). For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…',
+            ': with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware (and whether it signs Miniscript, which a waiting period needs), which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, whether it has a duress PIN, and its origin: where you bought it, whether the seal was intact or whether you assembled it yourself (second-hand or a broken seal take a lot off). For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…',
           ],
           [
             n('Signing computer'),
@@ -621,7 +659,7 @@ export const GUIA: typeof es = [
             n('Wallet descriptor'),
             ' (Setup, below the keys): ',
             n('Import'),
-            ' and paste the descriptor you already have (Sparrow, Nunchuk, Specter…), or paste the xpub on the panel of each key. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right. With the xpubs, the document reveals your balance: keep it encrypted.',
+            ' and paste the descriptor you already have (Sparrow, Nunchuk, Specter…), or paste the xpub on the panel of each key. With a waiting period it is a Miniscript descriptor, like Liana’s; if its policy is not the setup’s, you can use the descriptor’s. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right (Liana shows the second one first). With the xpubs, the document reveals your balance: keep it encrypted.',
           ],
           [
             n('Print or save as PDF'),
@@ -675,6 +713,7 @@ export const GUIA: typeof es = [
           [n('Wrench attack'), ': forcing someone to sign or to reveal what they know. The tool is named after it (llave inglesa is Spanish for wrench).'],
           [n('Effort'), ': what an attack costs the attacker (risk, time, money). Those on the same route add up.'],
           [n('Rarity'), ': how unlikely a loss event is, in orders of magnitude. Those that have to coincide add up.'],
+          [n('Timelock (waiting period)'), ': a condition of the policy that is only met once the coins have gone unmoved for a while. Moving them resets it (', n('renewing'), '). Waiting periods are written in ', n('Miniscript'), ', the policy language that Liana, Nunchuk and Bitcoin Core understand.'],
           [n('Temporary lockout'), ': the funds are frozen while someone is incapacitated, but are recovered when the heirs inherit.'],
           [n('Custodian'), ': someone trusted who keeps something (a plate, a descriptor) without being an owner or an heir.'],
           [n('Entropy'), ': the randomness with which the seed phrase is generated (the device’s generator, dice, a coin…). ', n('Verifying'), ' means recomputing it in another tool to check that it comes from that randomness.'],
@@ -703,7 +742,8 @@ export const GUIA: typeof es = [
           ['Each person lives in a single place and is assumed to be there: schedules (being at work) are not taken into account. If you do not set where they live, they can be coerced anywhere at no extra cost.'],
           ['The signing computer or phone only has two extremes (general-purpose or dedicated), and its malware is assumed able to get the seed out of a connected device with a published flaw. The password of the computer or the wallet does not count.'],
           ['The catalog of devices and their known flaws does not update itself: each version ships its own, with its date.'],
-          ['There are no timelocks yet (inheritance with a waiting period, delayed recovery keys).'],
+          ['Waiting periods are relative (counted from the last time the coins moved): there are no absolute dates, and no Taproot. How often you move the coins is something you state: it is not checked.'],
+          ['A device that does not sign Miniscript only costs usability: you can always sign with another one by loading the seed phrase.'],
           ['With many devices and locations the analysis takes a few seconds: it is exhaustive.'],
         ],
       },
