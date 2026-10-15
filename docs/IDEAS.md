@@ -50,7 +50,8 @@ ningún backup del descriptor como problema grave.
       con soporte de Miniscript (Coldcard solo con Edge) y −10 de usabilidad si un dispositivo no la firma. Queda: los
       límites de operaciones y pila de Core, y los descriptores de Liana con `<2;3>`.
    4. Pendiente para el 2026-10-15 (hacer todo lo que sea viable):
-      - Editor libre del árbol de la política (`key`, `thresh`, `older`), para lo que no cabe en las plantillas.
+      - ~~Editor libre del árbol de la política (`key`, `thresh`, `older`), para lo que no cabe en las plantillas~~
+        (2026-10-15): forma «Personalizada (árbol libre)».
       - ~~Límites de Bitcoin Core en `wsh(miniscript)`~~ (2026-10-15): 201 operaciones y 100 elementos en el
         witness, como `IsSane` de Core y con sus vectores.
       - ~~Importar los descriptores de Liana que repiten una xpub con otra rama de derivación (`<0;1>` y `<2;3>`)~~

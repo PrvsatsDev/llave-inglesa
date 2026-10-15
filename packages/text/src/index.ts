@@ -46,6 +46,7 @@ export const {
   policyText,
   waitText,
   provenanceText,
+  spendStageText,
   ruleText,
   secretText,
   walletKindText,

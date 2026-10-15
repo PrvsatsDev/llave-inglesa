@@ -73,3 +73,104 @@ export function keyWait(policy: Policy, key: Id): number | null {
     }
   }
 }
+
+/** Las keys de un grupo de firmas: `k` cualesquiera de `keys` (todas si k = keys.length). */
+export interface SpendGroup {
+  k: number;
+  keys: Id[];
+}
+
+/** Lo que basta para gastar cuando las monedas llevan `wait` bloques sin moverse: cualquiera de los grupos. */
+export interface SpendStage {
+  wait: number;
+  groups: SpendGroup[];
+}
+
+interface Path {
+  keys: Id[];
+  wait: number;
+}
+
+const subset = (a: readonly Id[], b: readonly Id[]) => a.every((k) => b.includes(k));
+
+/** Quita los caminos repetidos y los que piden más keys y más espera que otro. */
+function minimal(paths: readonly Path[]): Path[] {
+  const out: Path[] = [];
+  paths.forEach((p, i) => {
+    const dominated = paths.some((q, j) => j !== i && q.wait <= p.wait && subset(q.keys, p.keys) && (q.wait < p.wait || q.keys.length < p.keys.length || j < i));
+    if (!dominated) out.push(p);
+  });
+  return out;
+}
+
+class TooMany extends Error {}
+
+function paths(policy: Policy, limit: number): Path[] {
+  switch (policy.type) {
+    case 'key':
+      return [{ keys: [policy.key], wait: 0 }];
+    case 'older':
+      return [{ keys: [], wait: policy.blocks }];
+    case 'thresh': {
+      const children = policy.of.map((c) => paths(c, limit));
+      const found: Path[] = [];
+      const pick = (from: number, left: number, acc: Path) => {
+        if (left === 0) {
+          found.push(acc);
+          if (found.length > limit) throw new TooMany();
+          return;
+        }
+        for (let i = from; i <= children.length - left; i++) {
+          for (const p of children[i]!) {
+            pick(i + 1, left - 1, { keys: [...new Set([...acc.keys, ...p.keys])], wait: Math.max(acc.wait, p.wait) });
+          }
+        }
+      };
+      pick(0, policy.k, { keys: [], wait: 0 });
+      return minimal(found);
+    }
+  }
+}
+
+const choose = (n: number, k: number): number => (k === 0 ? 1 : (choose(n - 1, k - 1) * n) / k);
+
+/** Los conjuntos de keys como grupos: los del mismo tamaño que son todas las combinaciones de sus keys, en uno. */
+function groupsOf(sets: readonly Id[][], order: readonly Id[]): SpendGroup[] {
+  const sorted = (keys: Iterable<Id>) => [...keys].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  const sizes = [...new Set(sets.map((s) => s.length))].sort((a, b) => b - a);
+  return sizes.flatMap((k) => {
+    const same = sets.filter((s) => s.length === k);
+    const keys = sorted(new Set(same.flat()));
+    return same.length === choose(keys.length, k) ? [{ k, keys }] : same.map((s) => ({ k, keys: sorted(s) }));
+  });
+}
+
+/**
+ * Las formas de gastar, por etapas: qué basta sin esperar y qué más basta según pasa el tiempo sin mover las monedas
+ * (solo las etapas que cambian algo). Null si hay demasiadas combinaciones para enumerarlas (más de `limit`).
+ */
+export function spendStages(policy: Policy, limit = 256): SpendStage[] | null {
+  let all: Path[];
+  try {
+    all = paths(policy, limit);
+  } catch (e) {
+    if (e instanceof TooMany) return null;
+    throw e;
+  }
+  const order: Id[] = [];
+  const walk = (p: Policy): void => {
+    if (p.type === 'key') order.includes(p.key) || order.push(p.key);
+    else if (p.type === 'thresh') p.of.forEach(walk);
+  };
+  walk(policy);
+  const stages: SpendStage[] = [];
+  let previous = '';
+  for (const wait of [...new Set(all.map((p) => p.wait))].sort((a, b) => a - b)) {
+    const sets = minimal(all.filter((p) => p.wait <= wait).map((p) => ({ keys: p.keys, wait: 0 }))).map((p) => p.keys);
+    const groups = groupsOf(sets, order);
+    const id = JSON.stringify(groups);
+    if (id !== previous) stages.push({ wait, groups });
+    previous = id;
+  }
+  return stages;
+}

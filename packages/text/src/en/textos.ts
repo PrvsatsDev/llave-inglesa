@@ -2,7 +2,7 @@ import { ADVISORIES, BLOCKS_PER_DAY, UNKNOWN_VENDOR, itemPlace } from '@llave-in
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import type * as es from '../es/textos.ts';
 import { plural, type Label } from '../tipos.ts';
-import type { AttackAtom, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AttackAtom, SpendStage, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * English texts for everything the domain and the engine produce. Same shape as es/textos.ts.
@@ -43,6 +43,21 @@ export const policyText: typeof es.policyText = (policy: Policy, label: Label, n
 
 /** A vendor as shown: the model's «Desconocido» (`UNKNOWN_VENDOR`) is a stored value, shown translated. */
 export const vendorText: typeof es.vendorText = (vendor) => (vendor.trim().toLowerCase() === UNKNOWN_VENDOR.toLowerCase() ? 'Unknown' : vendor);
+
+const joinWith = (names: readonly string[], last: string) =>
+  names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} ${last} ${names.at(-1)}`;
+
+export const spendStageText: typeof es.spendStageText = (stage: SpendStage, label: Label) => {
+  const when = stage.wait === 0 ? 'Any time' : `Once unmoved for ${waitText(stage.wait)}`;
+  const keys = stage.groups.map(({ k, keys }) => {
+    const names = keys.map(label);
+    if (names.length === 1 && stage.groups.length > 1) return `${names[0]} alone`;
+    if (k === names.length) return joinWith(names, 'and');
+    if (k === 1) return joinWith(names, 'or');
+    return `any ${k} of ${joinWith(names, 'and')}`;
+  });
+  return { when, keys: keys.join(', or ') };
+};
 
 function sourceText(s: EntropySource): string {
   const count = 'count' in s && s.count ? ` ×${s.count}` : '';

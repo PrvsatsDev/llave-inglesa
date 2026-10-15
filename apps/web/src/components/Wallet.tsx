@@ -1,10 +1,10 @@
-import { deriveAddress, formatDescriptor, isMultisigScript, looksLikeSeedWords, parseDescriptor, type ScriptType } from '@llave-inglesa/bitcoin';
+import { deriveAddress, formatDescriptor, isMultisigScript, looksLikeSeedWords, parseDescriptor, type ParsedDescriptor, type ScriptType } from '@llave-inglesa/bitcoin';
 import {
+  adoptDescriptorPolicy,
   flatPolicy,
   importDescriptor,
   indexModel,
   miniscriptSupport,
-  policyShape,
   setWallet,
   walletDescriptor,
   walletOf,
@@ -12,7 +12,7 @@ import {
   type Match,
 } from '@llave-inglesa/domain';
 import { devicesWithoutMiniscript } from '@llave-inglesa/engine';
-import { AlertTriangle, Check, Copy, Eye, FileInput, Printer, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Eye, FileInput, GitBranch, Printer, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   descriptorProblemText,
@@ -71,11 +71,9 @@ export function WalletSection({ model }: { model: CustodyModel }) {
     <Section
       title={T.titulo}
       action={
-        (flat || policyShape(model.policy)) && (
-          <Button icon={FileInput} onClick={() => setImporting((v) => !v)}>
-            {T.importar}
-          </Button>
-        )
+        <Button icon={FileInput} onClick={() => setImporting((v) => !v)}>
+          {T.importar}
+        </Button>
       }
     >
       {importing && (
@@ -186,6 +184,8 @@ function Descriptor({ descriptor, address, testnet }: { descriptor: string; addr
 function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImport(next: CustodyModel, matches: Match[]): void; onCancel(): void }) {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Un descriptor bien leído pero con otra política: se puede usar la suya.
+  const [other, setOther] = useState<ParsedDescriptor | null>(null);
   const label = indexModel(model).label;
 
   const submit = () => {
@@ -204,9 +204,17 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
     const r = importDescriptor(model, parsed.value);
     if (!r.ok) {
       setError(importProblemText(r.problem, label));
+      if (r.problem.code === 'policy-mismatch') setOther(parsed.value);
       return;
     }
     onImport(r.model, r.matches);
+  };
+
+  const adopt = () => {
+    const r = other && adoptDescriptorPolicy(model, other);
+    if (!r) return;
+    if (r.ok) onImport(r.model, r.matches);
+    else setError(importProblemText(r.problem, label));
   };
 
   return (
@@ -222,6 +230,7 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
         onChange={(e) => {
           setText(e.target.value);
           setError(null);
+          setOther(null);
         }}
       />
       {error && (
@@ -235,6 +244,11 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
         <Button variant="primary" icon={FileInput} onClick={submit} disabled={text.trim() === ''}>
           {T.importarDescriptor}
         </Button>
+        {other && (
+          <Button icon={GitBranch} onClick={adopt}>
+            {T.usarSuPolitica}
+          </Button>
+        )}
         <Button icon={X} onClick={onCancel}>
           {UI.comun.cancelar}
         </Button>

@@ -1,7 +1,7 @@
 import { ADVISORIES, BLOCKS_PER_DAY, itemPlace } from '@llave-inglesa/domain';
 import type { AdvisoryKind, AdvisoryMatch, EntropySource, Mitigation, Issue, Key, ModelIndex, Person, Policy, SecretRef } from '@llave-inglesa/domain';
 import { plural, type Label } from '../tipos.ts';
-import type { AttackAtom, TamperReason, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
+import type { AttackAtom, SpendStage, TamperReason, DuressReport, ScoreBand, EntropyOrigin, Fact, InheritanceReport, Justification, LossEvent } from '@llave-inglesa/engine';
 
 /**
  * Textos en español de todo lo que producen el dominio y el motor.
@@ -44,6 +44,22 @@ export function policyText(policy: Policy, label: Label, nested = false): string
   }
   if (k === 1) return of.map((p) => policyText(p, label, true)).join(', o ');
   return `${k} de ${of.length} (${of.map((p) => policyText(p, label, true)).join(', ')})`;
+}
+
+const joinWith = (names: readonly string[], last: string) =>
+  names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} ${last} ${names.at(-1)}`;
+
+/** Una etapa de las formas de gastar: cuándo («En cualquier momento») y con qué keys («K1 y K2, o K3»). */
+export function spendStageText(stage: SpendStage, label: Label): { when: string; keys: string } {
+  const when = stage.wait === 0 ? 'En cualquier momento' : `Si llevan ${waitText(stage.wait)} sin moverse`;
+  const keys = stage.groups.map(({ k, keys }) => {
+    const names = keys.map(label);
+    if (names.length === 1 && stage.groups.length > 1) return `${names[0]} sola`;
+    if (k === names.length) return joinWith(names, 'y');
+    if (k === 1) return joinWith(names, 'o');
+    return `${k} cualesquiera de ${joinWith(names, 'y')}`;
+  });
+  return { when, keys: keys.join(', o ') };
 }
 
 function sourceText(s: EntropySource): string {
