@@ -1,7 +1,7 @@
 import { analyzeMiniscript, miniscriptToString } from '@llave-inglesa/bitcoin';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { convertShape, miniscriptPolicy, policyMiniscript, policyShape, SHAPE_KINDS, SHAPE_MIN_KEYS, shapePolicy, type Policy, type PolicyShape } from '../src/index.ts';
+import { convertShape, keyUseId, miniscriptPolicy, policyMiniscript, policyShape, samePolicy, withPairs, SHAPE_KINDS, SHAPE_MIN_KEYS, shapePolicy, type Policy, type PolicyShape } from '../src/index.ts';
 
 const text = (shape: PolicyShape) => {
   const ms = policyMiniscript(shapePolicy(shape));
@@ -61,11 +61,30 @@ describe('política → Miniscript', () => {
       fc.property(policies, fc.subarray(KEYS), fc.integer({ min: 0, max: 400 }), (policy, keys, age) => {
         const ms = policyMiniscript(policy);
         if (!ms) return;
-        expect(analyzeMiniscript(ms).sane).toBe(true);
+        // Una key repetida en otra rama lleva otro par de derivación: son claves distintas.
+        expect(analyzeMiniscript(withPairs(ms), keyUseId).sane).toBe(true);
         const lifted = miniscriptPolicy(ms)!;
         expect(spends(lifted, new Set(keys), age)).toBe(spends(policy, new Set(keys), age));
       }),
       { numRuns: 500 },
     );
+  });
+});
+
+describe('comparar políticas', () => {
+  const k = (key: string): Policy => ({ type: 'key', key });
+  const t = (n: number, ...of: Policy[]): Policy => ({ type: 'thresh', k: n, of });
+  it('da igual el orden y cómo se agrupen las «todas» y las «una de»', () => {
+    expect(samePolicy(t(2, k('a'), k('b')), t(2, k('b'), k('a')))).toBe(true);
+    expect(samePolicy(t(3, k('a'), k('b'), { type: 'older', blocks: 5 }), t(2, t(2, k('b'), k('a')), { type: 'older', blocks: 5 }))).toBe(true);
+    expect(samePolicy(t(1, k('a'), t(1, k('b'), k('c'))), t(1, k('c'), k('b'), k('a')))).toBe(true);
+    expect(samePolicy(t(1, k('a')), k('a'))).toBe(true);
+  });
+  it('pero no el umbral, las keys ni la espera', () => {
+    expect(samePolicy(t(2, k('a'), k('b'), k('c')), t(1, k('a'), k('b'), k('c')))).toBe(false);
+    expect(samePolicy(t(2, k('a'), k('b')), t(2, k('a'), k('c')))).toBe(false);
+    expect(samePolicy(t(2, k('a'), { type: 'older', blocks: 5 }), t(2, k('a'), { type: 'older', blocks: 6 }))).toBe(false);
+    // 2 de (a, b, c) no es «a y (b o c)».
+    expect(samePolicy(t(2, k('a'), k('b'), k('c')), t(2, k('a'), t(1, k('b'), k('c'))))).toBe(false);
   });
 });

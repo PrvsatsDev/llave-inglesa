@@ -297,3 +297,149 @@
   flex: none;
   margin-top: 2px;
 }
+
+/* Árbol libre de la política: grupos anidados con sus hijos. */
+.tree {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cada grupo anidado es una tarjeta: su fondo se suma al del grupo que lo contiene, así que se aclara con la
+   profundidad, y una línea separa su cabecera de sus partes. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.group > .groupHeader {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Una espera es una condición como un subgrupo: va en una tarjeta igual a la suya. */
+.waitCard {
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.tree > .group {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.tree > .group > .groupHeader {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.groupHeader,
+.leaf,
+.addRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.groupHeader {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.groupHeader > span:first-child {
+  flex: none;
+}
+
+.leaf > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.children {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.addRow {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.addButton {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.addButton:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.removeButton {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.removeButton:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.removeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Formas de gastar del árbol libre, en llano. */
+.stages {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.stagesTitle {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.stages ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.stages strong {
+  font-weight: 600;
+}

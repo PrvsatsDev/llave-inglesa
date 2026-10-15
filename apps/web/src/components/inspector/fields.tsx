@@ -78,8 +78,10 @@ export function TextInput({ id, value, onChange, placeholder, optional = false }
  * Número entero entre `min` y `max`. Mientras se escribe no se corrige: solo se aplica cuando es válido, y al salir
  * vuelve a lo que hay en el modelo. Vacío es `undefined` (sin indicar) si es `optional`.
  */
-export function NumberInput({ id, value, min, max, onChange, optional = false, placeholder }: {
+export function NumberInput({ id, value, min, max, onChange, optional = false, placeholder, label }: {
   id?: string;
+  /** Nombre accesible, si no hay un <label> que lo dé. */
+  label?: string;
   value: number | undefined;
   min: number;
   max: number;
@@ -97,6 +99,7 @@ export function NumberInput({ id, value, min, max, onChange, optional = false, p
   return (
     <input
       id={id}
+      aria-label={label}
       className={`${styles.input} ${invalid ? styles.invalid : ''}`}
       type="number"
       inputMode="numeric"
@@ -119,10 +122,17 @@ export function TextArea({ id, value, onChange, placeholder }: { id?: string; va
   return <textarea id={id} className={styles.textarea} value={value} rows={3} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />;
 }
 
-export function Select<T extends string>({ id, value, options, onChange }: { id?: string; value: T; options: readonly { value: T; label: string; disabled?: boolean }[]; onChange(v: T): void }) {
+export function Select<T extends string>({ id, value, options, onChange, label }: {
+  id?: string;
+  value: T;
+  options: readonly { value: T; label: string; disabled?: boolean }[];
+  onChange(v: T): void;
+  /** Nombre accesible, si no hay un <label> que lo dé. */
+  label?: string;
+}) {
   return (
     <span className={styles.selectWrap}>
-      <select id={id} className={styles.select} value={value} onChange={(e) => onChange(e.target.value as T)}>
+      <select id={id} className={styles.select} value={value} aria-label={label} onChange={(e) => onChange(e.target.value as T)}>
         {options.map((o) => (
           <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}

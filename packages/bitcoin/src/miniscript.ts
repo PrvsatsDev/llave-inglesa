@@ -28,6 +28,10 @@ const BINARY = new Set<string>(['and_v', 'and_b', 'or_b', 'or_c', 'or_d', 'or_i'
 export const MAX_MULTI_KEYS = 20;
 /** Tamaño máximo de un witness script (regla de estandaridad). */
 export const MAX_WSH_SCRIPT_SIZE = 3600;
+/** Operaciones no push por script, contando las claves de cada CHECKMULTISIG que se ejecuta (consenso). */
+export const MAX_OPS_PER_SCRIPT = 201;
+/** Elementos del witness en P2WSH, sin contar el script (regla de estandaridad). */
+export const MAX_WSH_STACK_ITEMS = 100;
 /** older(n) con este bit cuenta tiempo (unidades de 512 s) en vez de bloques (BIP-68). */
 export const SEQUENCE_TYPE_FLAG = 1 << 22;
 const LOCKTIME_THRESHOLD = 500_000_000;
@@ -251,15 +255,27 @@ export interface MiniscriptAnalysis {
   /** Mezcla timelocks por altura y por tiempo en una misma rama (alguna forma de gastar no se puede cumplir). */
   timelockMix: boolean;
   duplicateKeys: boolean;
-  /** Lo que exige Bitcoin Core para aceptar un descriptor: todo lo anterior en orden. */
+  /** Bytes del witness script. */
+  scriptSize: number;
+  /** Operaciones que ejecuta la forma de gastar más cara (null si no se puede gastar). */
+  ops: number | null;
+  /** Elementos del witness de la forma de gastar que más necesita (null si no se puede gastar). */
+  stackItems: number | null;
+  /** Ninguna forma de gastar pasa de MAX_OPS_PER_SCRIPT ni de MAX_WSH_STACK_ITEMS. */
+  withinLimits: boolean;
+  /** Lo que exige Bitcoin Core para aceptar un descriptor (IsSane): todo lo anterior en orden. */
   sane: boolean;
 }
 
 /** Comprueba una expresión. Las keys se comparan con `keyId` (por defecto, tal cual). */
 export function analyzeMiniscript<K>(ms: Miniscript<K>, keyId: (k: K) => unknown = (k) => k): MiniscriptAnalysis {
   const t = miniscriptType(ms);
-  const valid = t !== 0 && miniscriptScript(ms, () => new Uint8Array(33)).length <= MAX_WSH_SCRIPT_SIZE;
+  const scriptSize = miniscriptScript(ms, () => new Uint8Array(33)).length;
+  const valid = t !== 0 && scriptSize <= MAX_WSH_SCRIPT_SIZE;
   const ids = miniscriptKeys(ms).map(keyId);
+  const { ops, stack } = limits(ms);
+  const opsCount = ops.sat === null ? null : ops.count + ops.sat;
+  const stackItems = stack.sat === null ? null : stack.sat.netdiff + (has(t, 'V') ? 0 : 1);
   const a = {
     valid,
     topLevel: valid && has(t, 'B'),
@@ -267,8 +283,152 @@ export function analyzeMiniscript<K>(ms: Miniscript<K>, keyId: (k: K) => unknown
     needsSignature: valid && has(t, 's'),
     timelockMix: valid && !has(t, 'k'),
     duplicateKeys: new Set(ids).size !== ids.length,
+    scriptSize,
+    ops: opsCount,
+    stackItems,
+    withinLimits: (opsCount ?? 0) <= MAX_OPS_PER_SCRIPT && (stackItems ?? 0) <= MAX_WSH_STACK_ITEMS,
   };
-  return { ...a, sane: a.topLevel && a.nonMalleable && a.needsSignature && !a.timelockMix && !a.duplicateKeys };
+  return { ...a, sane: a.topLevel && a.withinLimits && a.nonMalleable && a.needsSignature && !a.timelockMix && !a.duplicateKeys };
+}
+
+// ---------- Límites ----------
+
+/*
+ * Lo que cuesta ejecutar cada forma de gastar, como en Bitcoin Core (CalcOps y CalcStackSize de miniscript.h): para
+ * satisfacer (sat) y para descartar (dsat). Null = no hay forma (p. ej., descartar un `v:`); `|` se queda con la peor
+ * de las dos formas y `+` las encadena.
+ */
+type Most = number | null;
+const plus = (a: Most, b: Most): Most => (a === null || b === null ? null : a + b);
+const worst = (a: Most, b: Most): Most => (a === null ? b : b === null ? a : Math.max(a, b));
+interface Ops {
+  /** Operaciones fijas del script. */
+  count: number;
+  /** Las que se añaden al ejecutarlo: las claves de cada CHECKMULTISIG que se ejecuta. */
+  sat: Most;
+  dsat: Most;
+}
+
+/** Efecto en la pila: cuántos elementos quita en total (netdiff) y cuántos más que al final llega a tener (exec). */
+type Stack = { netdiff: number; exec: number } | null;
+const S = (netdiff: number, exec: number): Stack => ({ netdiff, exec });
+const seq = (...parts: Stack[]): Stack =>
+  parts.reduce((a, b) => a && b && { netdiff: a.netdiff + b.netdiff, exec: Math.max(b.exec, b.netdiff + a.exec) });
+const either = (a: Stack, b: Stack): Stack => (!a ? b : !b ? a : { netdiff: Math.max(a.netdiff, b.netdiff), exec: Math.max(a.exec, b.exec) });
+const PUSH = S(-1, 0);
+const NOP = S(0, 0);
+const POP = S(1, 1); // IF, NOTIF, VERIFY, CHECKSIG, EQUAL y las binarias (BOOLAND, ADD…): quitan uno.
+const EQUALVERIFY = S(2, 2);
+const ifdup = (nonzero: boolean) => S(nonzero ? -1 : 0, 0);
+type Pair = { sat: Stack; dsat: Stack };
+const both = (x: Stack): Pair => ({ sat: x, dsat: x });
+
+function limits<K>(ms: Miniscript<K>): { ops: Ops; stack: Pair } {
+  const subs = miniscriptChildren(ms).map(limits);
+  const [x, y, z] = subs;
+  switch (ms.f) {
+    case '0':
+      return { ops: { count: 0, sat: null, dsat: 0 }, stack: { sat: null, dsat: PUSH } };
+    case '1':
+      return { ops: { count: 0, sat: 0, dsat: null }, stack: { sat: PUSH, dsat: null } };
+    case 'pk_k':
+      return { ops: { count: 0, sat: 0, dsat: 0 }, stack: both(PUSH) };
+    case 'pk_h':
+      return { ops: { count: 3, sat: 0, dsat: 0 }, stack: both(seq(PUSH, NOP, PUSH, EQUALVERIFY)) };
+    case 'older':
+    case 'after':
+      return { ops: { count: 1, sat: 0, dsat: null }, stack: { sat: seq(PUSH, NOP), dsat: null } };
+    case 'sha256':
+    case 'hash256':
+    case 'ripemd160':
+    case 'hash160':
+      return { ops: { count: 4, sat: 0, dsat: null }, stack: { sat: seq(PUSH, PUSH, EQUALVERIFY, NOP, PUSH, POP), dsat: null } };
+    case 'multi':
+      // Empieza con k + 1 elementos (un 0 y las firmas), llega a n + k + 3 al empujar las claves, k y n, y acaba con 1.
+      return { ops: { count: 1, sat: ms.keys.length, dsat: ms.keys.length }, stack: both(S(ms.k, ms.k + ms.keys.length + 2)) };
+    case 'a':
+    case 's':
+    case 'n':
+      return { ops: { ...x!.ops, count: x!.ops.count + (ms.f === 'a' ? 2 : 1) }, stack: x!.stack };
+    case 'c':
+      return { ops: { ...x!.ops, count: x!.ops.count + 1 }, stack: { sat: seq(x!.stack.sat, POP), dsat: seq(x!.stack.dsat, POP) } };
+    case 'd':
+      return { ops: { count: x!.ops.count + 3, sat: x!.ops.sat, dsat: 0 }, stack: { sat: seq(PUSH, POP, x!.stack.sat), dsat: seq(PUSH, POP) } };
+    case 'j':
+      return { ops: { count: x!.ops.count + 4, sat: x!.ops.sat, dsat: 0 }, stack: { sat: seq(PUSH, NOP, POP, x!.stack.sat), dsat: seq(PUSH, NOP, POP) } };
+    case 'v':
+      return {
+        ops: { count: x!.ops.count + (miniscriptHas(ms.x, 'x') ? 1 : 0), sat: x!.ops.sat, dsat: null },
+        stack: { sat: seq(x!.stack.sat, POP), dsat: null },
+      };
+    case 'and_v':
+      return { ops: { count: x!.ops.count + y!.ops.count, sat: plus(x!.ops.sat, y!.ops.sat), dsat: null }, stack: { sat: seq(x!.stack.sat, y!.stack.sat), dsat: null } };
+    case 'and_b':
+      return {
+        ops: { count: 1 + x!.ops.count + y!.ops.count, sat: plus(x!.ops.sat, y!.ops.sat), dsat: plus(x!.ops.dsat, y!.ops.dsat) },
+        stack: { sat: seq(x!.stack.sat, y!.stack.sat, POP), dsat: seq(x!.stack.dsat, y!.stack.dsat, POP) },
+      };
+    case 'or_b':
+      return {
+        ops: {
+          count: 1 + x!.ops.count + y!.ops.count,
+          sat: worst(plus(x!.ops.sat, y!.ops.dsat), plus(y!.ops.sat, x!.ops.dsat)),
+          dsat: plus(x!.ops.dsat, y!.ops.dsat),
+        },
+        stack: {
+          sat: seq(either(seq(x!.stack.sat, y!.stack.dsat), seq(x!.stack.dsat, y!.stack.sat)), POP),
+          dsat: seq(x!.stack.dsat, y!.stack.dsat, POP),
+        },
+      };
+    case 'or_d':
+      return {
+        ops: { count: 3 + x!.ops.count + y!.ops.count, sat: worst(x!.ops.sat, plus(y!.ops.sat, x!.ops.dsat)), dsat: plus(x!.ops.dsat, y!.ops.dsat) },
+        stack: {
+          sat: either(seq(x!.stack.sat, ifdup(true), POP), seq(x!.stack.dsat, ifdup(false), POP, y!.stack.sat)),
+          dsat: seq(x!.stack.dsat, ifdup(false), POP, y!.stack.dsat),
+        },
+      };
+    case 'or_c':
+      return {
+        ops: { count: 2 + x!.ops.count + y!.ops.count, sat: worst(x!.ops.sat, plus(y!.ops.sat, x!.ops.dsat)), dsat: null },
+        stack: { sat: either(seq(x!.stack.sat, POP), seq(x!.stack.dsat, POP, y!.stack.sat)), dsat: null },
+      };
+    case 'or_i':
+      return {
+        ops: { count: 3 + x!.ops.count + y!.ops.count, sat: worst(x!.ops.sat, y!.ops.sat), dsat: worst(x!.ops.dsat, y!.ops.dsat) },
+        stack: { sat: seq(POP, either(x!.stack.sat, y!.stack.sat)), dsat: seq(POP, either(x!.stack.dsat, y!.stack.dsat)) },
+      };
+    case 'andor':
+      return {
+        ops: {
+          count: 3 + x!.ops.count + y!.ops.count + z!.ops.count,
+          sat: worst(plus(y!.ops.sat, x!.ops.sat), plus(x!.ops.dsat, z!.ops.sat)),
+          dsat: plus(x!.ops.dsat, z!.ops.dsat),
+        },
+        stack: {
+          sat: either(seq(x!.stack.sat, POP, y!.stack.sat), seq(x!.stack.dsat, POP, z!.stack.sat)),
+          dsat: seq(x!.stack.dsat, POP, z!.stack.dsat),
+        },
+      };
+    case 'thresh': {
+      // sats[j]: lo peor entre las formas que satisfacen j de los hijos vistos hasta ahora.
+      let count = 0;
+      let ops: Most[] = [0];
+      let stack: Stack[] = [NOP];
+      subs.forEach((sub, i) => {
+        count += sub.ops.count + 1;
+        const add = i > 0 ? POP : NOP;
+        ops = [...ops, null].map((_, j) => worst(j < ops.length ? plus(ops[j]!, sub.ops.dsat) : null, j > 0 ? plus(ops[j - 1]!, sub.ops.sat) : null));
+        stack = [...stack, null].map((_, j) =>
+          seq(either(j < stack.length ? seq(stack[j]!, sub.stack.dsat) : null, j > 0 ? seq(stack[j - 1]!, sub.stack.sat) : null), add),
+        );
+      });
+      return {
+        ops: { count, sat: ops[ms.k] ?? null, dsat: ops[0]! },
+        stack: { sat: seq(stack[ms.k] ?? null, PUSH, POP), dsat: seq(stack[0]!, PUSH, POP) },
+      };
+    }
+  }
 }
 
 /** Las keys en el orden en que aparecen. */

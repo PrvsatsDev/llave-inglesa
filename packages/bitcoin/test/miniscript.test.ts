@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { bech32 } from '@scure/base';
+import { HDKey } from '@scure/bip32';
 import { analyzeMiniscript, deriveAddress, formatDescriptor, miniscriptScript, miniscriptToString, parseDescriptor, parseMiniscript } from '../src/index.ts';
 import vectors from './vectors/core-miniscript.json' with { type: 'json' };
 
@@ -21,6 +23,7 @@ describe('Miniscript: vectores de Bitcoin Core (P2WSH)', () => {
       expect(a.nonMalleable).toBe(t.nonMalleable);
       expect(a.needsSignature).toBe(t.needsSig);
       expect(a.timelockMix).toBe(t.timelockMix);
+      if ('ops' in t) expect([a.ops, a.stackItems]).toEqual([t.ops, t.stack]);
       if (t.script) expect(toHex(miniscriptScript(parsed.value, hex))).toBe(t.script);
       // Se escribe igual que se leyó (con las mismas abreviaturas) y se vuelve a leer igual.
       const again = parseMiniscript(miniscriptToString(parsed.value, (k) => k));
@@ -35,6 +38,23 @@ describe('Miniscript: lectura', () => {
     expect(parseMiniscript('x:pk(A)')).toEqual({ ok: false, problem: { code: 'syntax' } });
     expect(parseMiniscript('older(01)')).toEqual({ ok: false, problem: { code: 'syntax' } });
     expect(parseMiniscript('multi_a(1,A)')).toEqual({ ok: false, problem: { code: 'unknown-fragment', name: 'multi_a' } });
+  });
+
+  it('cuenta las operaciones y la pila como Core: CHECKMULTISIG cuesta sus claves y pide k firmas y un 0', () => {
+    const p = parseMiniscript('multi(1,A,B,C)');
+    expect(p.ok && analyzeMiniscript(p.value)).toMatchObject({ ops: 4, stackItems: 2, withinLimits: true });
+  });
+
+  it('no da por seguro un script que pasa de 201 operaciones o de 100 elementos en el witness', () => {
+    const chain = (n: number, part: (i: number) => string) => `${Array.from({ length: n }, (_, i) => `and_v(${part(i)},`).join('')}pk(Z)${')'.repeat(n)}`;
+    // Cada v:older cuesta 2 operaciones (CSV y VERIFY) y nada en la pila.
+    const ok = parseMiniscript(chain(100, () => 'v:older(1)'));
+    const tooMany = parseMiniscript(chain(101, () => 'v:older(1)'));
+    expect(ok.ok && analyzeMiniscript(ok.value)).toMatchObject({ ops: 201, stackItems: 1, sane: true });
+    expect(tooMany.ok && analyzeMiniscript(tooMany.value)).toMatchObject({ ops: 203, withinLimits: false, sane: false });
+    // Cada v:pkh pide firma y clave: 50 de ellas y la última firma son 101 elementos.
+    const big = parseMiniscript(chain(50, (i) => `v:pkh(K${i})`));
+    expect(big.ok && analyzeMiniscript(big.value)).toMatchObject({ stackItems: 101, withinLimits: false, sane: false });
   });
 
   it('marca las keys repetidas como no seguras', () => {
@@ -76,3 +96,32 @@ describe('descriptor wsh(miniscript)', () => {
     expect(parseDescriptor(`wsh(and_v(v:pk(${key}),pk(${key})))`)).toEqual({ ok: false, problem: { code: 'duplicate-key', index: 1 } });
   });
 });
+
+describe('una xpub en varias ramas (<2;3>, como Liana)', () => {
+  const node = HDKey.fromMasterSeed(new Uint8Array(32).fill(9));
+  const A = node.derive("m/48'/0'/0'/2'").publicExtendedKey;
+  const B = HDKey.fromMasterSeed(new Uint8Array(32).fill(8)).derive("m/48'/0'/0'/2'").publicExtendedKey;
+  const reused = `wsh(or_d(pk(${A}/<0;1>/*),and_v(v:pkh(${A}/<2;3>/*),older(10))))`;
+
+  it('lee cada aparición con su par, la escribe igual y deriva la segunda por las ramas 2 y 3', () => {
+    const r = parseDescriptor(reused);
+    if (!r.ok) throw new Error(r.problem.code);
+    expect(r.value.descriptor.keys.map((k) => k.multipath)).toEqual([undefined, 1]);
+    expect(formatDescriptor(r.value.descriptor).split('#')[0]).toBe(reused);
+    expect(formatDescriptor(r.value.descriptor, 1)).toContain(`${A}/3/*`);
+    const account = HDKey.fromExtendedKey(A);
+    for (const branch of [0, 1] as const) {
+      const keys = [account.deriveChild(branch).deriveChild(4).publicKey!, account.deriveChild(2 + branch).deriveChild(4).publicKey!];
+      const script = miniscriptScript(r.value.descriptor.miniscript!, (i) => keys[i]!);
+      expect(deriveAddress(r.value.descriptor, 'mainnet', branch, 4)).toBe(bech32.encode('bc', [0, ...bech32.toWords(sha256(script))]));
+    }
+  });
+
+  it('no admite la misma xpub en el mismo par, ni pares raros, ni otros pares fuera de Miniscript', () => {
+    expect(parseDescriptor(reused.replace('<2;3>', '<0;1>'))).toEqual({ ok: false, problem: { code: 'duplicate-key', index: 1 } });
+    expect(parseDescriptor(reused.replace('<2;3>', '<1;2>'))).toEqual({ ok: false, problem: { code: 'unsupported-suffix', index: 1 } });
+    expect(parseDescriptor(`wsh(multi(2,${A}/<2;3>/*,${B}/<0;1>/*))`)).toEqual({ ok: false, problem: { code: 'unsupported-suffix', index: 0 } });
+    expect(parseDescriptor(`wsh(multi(2,${A}/<0;1>/*,${A}/<2;3>/*))`)).toEqual({ ok: false, problem: { code: 'unsupported-suffix', index: 1 } });
+  });
+});
+

@@ -63,6 +63,14 @@ describe('timelocks', () => {
     expect(codes({ ...two, policy: { type: 'thresh', k: 2, of: [{ type: 'key', key: 'k1' }, { type: 'key', key: 'k2' }, older] } })).not.toContain('spendable-without-keys');
   });
 
+  it('una key puede firmar en varias ramas, pero no dos veces en el mismo grupo', () => {
+    const k1 = { type: 'key', key: 'k1' };
+    const k2 = { type: 'key', key: 'k2' };
+    const reused = { type: 'thresh', k: 1, of: [{ type: 'thresh', k: 2, of: [k1, k2] }, { type: 'thresh', k: 2, of: [k1, older] }] };
+    expect(codes({ ...two, policy: reused, renewal: { everyDays: 90 } })).not.toContain('key-repeated-in-policy');
+    expect(codes({ ...two, policy: { type: 'thresh', k: 2, of: [k1, k1, k2] } })).toContain('key-repeated-in-policy');
+  });
+
   it('sin indicar cada cuánto se renueva, avisa', () => {
     expect(codes({ ...two, policy: recovery })).toContain('renewal-unset');
     expect(codes({ ...two, policy: recovery, renewal: { everyDays: 90 } })).not.toContain('renewal-unset');

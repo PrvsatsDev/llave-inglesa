@@ -305,6 +305,7 @@ export const descriptor = {
   ejemplo: 'wsh(sortedmulti(2,[a1b2c3d4/48h/0h/0h/2h]xpub…/<0;1>/*,…))#…',
   soloPublico: 'Solo la parte pública: xpubs, fingerprints y derivaciones. Nunca palabras ni claves privadas.',
   importarDescriptor: 'Importar descriptor',
+  usarSuPolitica: 'Usar la política del descriptor',
   importado: (emparejadas: readonly string[]) => `Importado: ${emparejadas.join('; ')}.`,
   porOrden:
     'Las emparejadas por orden pueden no ser la key que crees: comprueba en la ficha de cada una que el fingerprint es el de su dispositivo o su backup, o corrige los nombres.',

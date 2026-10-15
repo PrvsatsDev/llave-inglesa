@@ -45,7 +45,14 @@ import {
   updateDevice,
   updateKey,
   updatePerson,
+  addPolicyChild,
+  removePolicyNode,
+  setPolicyGroupThreshold,
+  setPolicyKey,
+  setPolicyBlocks,
+  policyRoot,
   type CustodyModel,
+  type Policy,
 } from '../src/index.ts';
 
 const FIXTURES = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
@@ -275,6 +282,12 @@ describe('mover objetos entre ubicaciones', () => {
 
 /** Operación aleatoria sobre ids que existen en el modelo actual. */
 type Op = (m: CustodyModel, pick: (n: number) => number) => CustodyModel;
+/** Todos los caminos del árbol de la política (vista con la raíz como grupo). */
+const treePaths = (policy: Policy): number[][] => {
+  const walk = (p: Policy, path: number[]): number[][] => [path, ...(p.type === 'thresh' ? p.of.flatMap((c, i) => walk(c, [...path, i])) : [])];
+  return walk(policyRoot(policy), []);
+};
+
 const ops: Op[] = [
   (m) => addKey(m).model,
   (m, pick) => removeKey(m, m.keys[pick(m.keys.length)]!.id),
@@ -290,6 +303,25 @@ const ops: Op[] = [
     return shape ? setPolicyShape(m, setShapeSpecialKey(shape, shapeKeys(shape)[pick(shapeKeys(shape).length)]!)) : m;
   },
   (m, pick) => setRenewal(m, pick(3) ? pick(1000) : undefined),
+  // Editor libre del árbol: una operación cualquiera en un nodo cualquiera.
+  (m, pick) => {
+    const paths = treePaths(m.policy);
+    const path = paths[pick(paths.length)]!;
+    switch (pick(6)) {
+      case 0:
+        return addPolicyChild(m, path, (['key', 'older', 'group'] as const)[pick(3)]!);
+      case 1:
+        return removePolicyNode(m, path);
+      case 2:
+        return setPolicyGroupThreshold(m, path, pick(5));
+      case 3:
+        return setPolicyKey(m, path, m.keys[pick(m.keys.length)]!.id);
+      case 4:
+        return setPolicyBlocks(m, path, pick(1000) * 70);
+      default:
+        return m;
+    }
+  },
   (m) => addLocation(m).model,
   (m, pick) => removeLocation(m, m.locations[pick(m.locations.length)]!.id),
   (m) => addPerson(m).model,
@@ -547,3 +579,61 @@ describe('propiedad: editar nunca rompe el modelo', () => {
     );
   });
 });
+
+describe('editor libre del árbol', () => {
+  const key = (k: string): Policy => ({ type: 'key', key: k });
+  const t = (k: number, ...of: Policy[]): Policy => ({ type: 'thresh', k, of });
+  const wait = (blocks = 25920): Policy => ({ type: 'older', blocks });
+  const single = { ...casa, policy: key('k1') };
+
+  it('una espera nueva es una condición más: «K1» pasa a «K1 tras esperar», y un 2 de 2 a decreciente', () => {
+    expect(addPolicyChild(single, [], 'older').policy).toEqual(t(2, key('k1'), wait()));
+    expect(addPolicyChild({ ...casa, policy: t(2, key('k1'), key('k2')) }, [], 'older').policy).toEqual(t(3, key('k1'), key('k2'), wait()));
+  });
+
+  it('una key nueva es la primera que no está en el grupo; si están todas, se crea', () => {
+    expect(addPolicyChild(single, [], 'key').policy).toEqual(t(1, key('k1'), key('k2')));
+    const all = addPolicyChild(casa, [], 'key');
+    expect(all.keys.map((k) => k.id)).toEqual(['k1', 'k2', 'k3', 'k4']);
+    expect(all.policy).toEqual(t(2, key('k1'), key('k2'), key('k3'), key('k4')));
+    // Un grupo nuevo empieza con una key: «K1, o (K2)».
+    expect(addPolicyChild(single, [], 'group').policy).toEqual(t(1, key('k1'), t(1, key('k2'))));
+  });
+
+  it('se construye la herencia simple: K1, o K2 tras esperar', () => {
+    let m = addPolicyChild(single, [], 'group');
+    m = addPolicyChild(m, [1], 'older');
+    expect(m.policy).toEqual(t(1, key('k1'), t(2, key('k2'), wait())));
+    expect(policyShape(m.policy)).toMatchObject({ kind: 'inheritance', keys: ['k1'], recovery: 'k2' });
+    expect(errors(m)).toEqual([]);
+  });
+
+  it('nunca deja gastar sin firmar ni repite una key en un grupo', () => {
+    const inheritance = { ...casa, policy: t(1, key('k1'), t(2, key('k2'), wait())) };
+    // Bajar a 1 el «K2 y esperar» o quitar K2 dejaría gastar solo esperando: quitar K2 quita la rama entera.
+    expect(setPolicyGroupThreshold(inheritance, [1], 1)).toBe(inheritance);
+    expect(removePolicyNode(inheritance, [1, 0]).policy).toEqual(key('k1'));
+    // K1 sola tras esperar no se puede quitar: quedaría la espera sola.
+    const late = { ...casa, policy: t(2, key('k1'), wait()) };
+    expect(removePolicyNode(late, [0])).toBe(late);
+    expect(setPolicyKey(casa, [0], 'k2')).toBe(casa);
+    expect(setPolicyKey(casa, [0], 'nadie')).toBe(casa);
+    expect(removePolicyNode(casa, [])).toBe(casa);
+  });
+
+  it('quitar una key respeta las ramas que ya se cumplían esperando dentro de otra que pide firma', () => {
+    // K1, y además K2 o esperar: el grupo de dentro se cumple esperando, pero la raíz pide K1.
+    const m = { ...casa, policy: t(2, key('k3'), key('k1'), t(1, key('k2'), wait())) };
+    expect(errors(m)).toEqual([]);
+    expect(removeKey(m, 'k3').policy).toEqual(t(2, key('k1'), t(1, key('k2'), wait())));
+    // Sin K1 ya no hay firma obligatoria: no se puede quitar.
+    expect(removeKey(removeKey(m, 'k3'), 'k1').policy).toEqual(t(2, key('k1'), t(1, key('k2'), wait())));
+  });
+
+  it('la espera se cambia en su hoja y se queda entre 1 y el máximo', () => {
+    const m = addPolicyChild(single, [], 'older');
+    expect(setPolicyBlocks(m, [1], 99_999).policy).toEqual(t(2, key('k1'), wait(65535)));
+    expect(setPolicyBlocks(m, [1], 0).policy).toEqual(t(2, key('k1'), wait(1)));
+  });
+});
+
