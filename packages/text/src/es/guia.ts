@@ -24,6 +24,9 @@ const DISTRIBUIDO = 'r09-2de3-distribuido';
 const CUSTODIO = 'r10-2de3-custodio';
 const SIN_HERENCIA = 'r11-2de3-sin-herencia';
 const SEEDSIGNER = 'r12-2de3-seedsigner';
+const HEREDERA = 'r13-recuperacion-heredera';
+const SE_RELAJA = 'r14-2de3-se-relaja';
+const SE_AMPLIA = 'r15-2de3-se-amplia';
 
 export const GUIA: readonly Capitulo[] = [
   {
@@ -386,7 +389,7 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'parrafo',
         texto: [
-          'Doce esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa. Ninguno pretende ser el esquema de nadie: sirven como ejemplos para descubrir todas las variables que pueden afectar a un plan. Trabaja el tuyo.',
+          'Quince esquemas típicos, de lo más habitual a lo más cuidado. Están todos en el selector de arriba, en la galería. Cada paso arregla algo del anterior… y casi siempre empeora otra cosa. Ninguno pretende ser el esquema de nadie: sirven como ejemplos para descubrir todas las variables que pueden afectar a un plan. Trabaja el tuyo.',
         ],
       },
       { tipo: 'parrafo', texto: [n('1. Papel en el cajón.'), ' Un Trezor en casa y la frase semilla en un papel, en el mismo sitio.'] },
@@ -561,6 +564,37 @@ export const GUIA: readonly Capitulo[] = [
         ],
       },
       {
+        tipo: 'parrafo',
+        texto: [
+          n('11. Con espera (timelock).'),
+          ' Una key puede valer solo si las monedas llevan un tiempo sin moverse. El 2 de 3 distribuido que se relaja deja gastar con una sola key si pasa un año sin moverlas, y el titular las mueve cada 6 meses para que esa vía no llegue a abrirse.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: SE_RELAJA,
+        escenario: { kind: 'loss', events: [{ type: 'incapacity', person: 'yo' }] },
+        texto: 'Si el titular queda incapacitado',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'En el 2 de 3 normal eso bloquea los fondos, y su resiliencia es ',
+          cifra(DISTRIBUIDO, 'resilience'),
+          '; aquí solo los retrasa un año y sube a ',
+          cifra(SE_RELAJA, 'resilience'),
+          ', con la misma seguridad, ',
+          cifra(SE_RELAJA, 'security'),
+          ': para usar esa vía, un ladrón tendría que esperar un año sin que las muevas. El precio es acordarse de moverlas, y que no todos los dispositivos firman Miniscript: usabilidad ',
+          cifra(SE_RELAJA, 'usability'),
+          '. La galería tiene dos más: una key de recuperación en casa de la hija, que vale sola tras 6 meses y da herencia ',
+          cifra(HEREDERA, 'inheritance'),
+          ', y el 2 de 3 que se amplía con una cuarta key en el despacho del abogado, con resiliencia ',
+          cifra(SE_AMPLIA, 'resilience'),
+          '.',
+        ],
+      },
+      {
         tipo: 'nota',
         texto: [
           'Nada de esto es «la respuesta»: es un mapa de compromisos. Abre el que se parezca al tuyo, cambia una cosa cada vez y mira qué nota sube y cuál baja.',
@@ -588,9 +622,13 @@ export const GUIA: readonly Capitulo[] = [
         items: [
           [
             n('Política'),
-            ': cuántas keys hacen falta para gastar (1 de 1, 2 de 3…). ',
+            ': cuántas keys hacen falta para gastar (1 de 1, 2 de 3…) y, si quieres, una ',
+            n('espera'),
+            ': herencia simple, multisig decreciente o multisig ampliable (los nombres de Liana), en días o meses, y cada cuántos días mueves las monedas para que la espera no venza. Lo que no cabe en esas formas se monta con ',
+            n('Personalizada (árbol libre)'),
+            ': grupos que piden k de sus partes (keys, esperas u otros grupos), con un resumen en llano de las formas de gastar. ',
             n('+ Key'),
-            ' añade otra. En cada key: si lleva passphrase y cómo es (nunca cuál), y su procedencia: con qué entropía y en qué dispositivo se generó. Ahí se detectan los fallos de entropía publicados.',
+            ' añade otra key. En cada key: si lleva passphrase y cómo es (nunca cuál), y su procedencia: con qué entropía y en qué dispositivo se generó. Ahí se detectan los fallos de entropía publicados.',
           ],
           [
             n('Ubicaciones'),
@@ -598,7 +636,7 @@ export const GUIA: readonly Capitulo[] = [
           ],
           [
             n('Dispositivos y backups'),
-            ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware, qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN, si tiene PIN de coacción y su procedencia: dónde lo compraste, si el precinto estaba intacto o si lo montaste tú (segunda mano o precinto roto restan mucho). En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
+            ': con el + de cada ubicación. En los dispositivos, el modelo (del catálogo: rellena lo que sabe y avisa de fallos conocidos), el firmware (y si firma Miniscript, que hace falta con una espera), qué keys guarda, con qué keys firma (si se le carga la frase semilla), el PIN, si tiene PIN de coacción y su procedencia: dónde lo compraste, si el precinto estaba intacto o si lo montaste tú (segunda mano o precinto roto restan mucho). En los backups, el soporte (papel, acero…) y qué contienen: la frase semilla de una key, una passphrase, un PIN, el descriptor…',
           ],
           [
             n('Ordenador de firma'),
@@ -623,7 +661,7 @@ export const GUIA: readonly Capitulo[] = [
             n('Descriptor de la cartera'),
             ' (Esquema, bajo las keys): ',
             n('Importar'),
-            ' y pega el descriptor que ya tienes (Sparrow, Nunchuk, Specter…), o pega la xpub en la ficha de cada key. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien. Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.',
+            ' y pega el descriptor que ya tienes (Sparrow, Nunchuk, Specter…), o pega la xpub en la ficha de cada key. Con una espera es un descriptor Miniscript, como los de Liana; si su política no es la del esquema, puedes usar la del descriptor. Te da el descriptor y la primera dirección de recepción: compárala con la de tu cartera y, si coincide, está bien (Liana muestra primero la segunda). Con las xpubs, el documento deja ver tu saldo: guárdalo cifrado.',
           ],
           [
             n('Imprimir o guardar en PDF'),
@@ -677,6 +715,7 @@ export const GUIA: readonly Capitulo[] = [
           [n('Llave inglesa'), ': obligar a alguien por la fuerza a firmar o a revelar lo que sabe. Da nombre a la herramienta.'],
           [n('Esfuerzo'), ': lo que le cuesta un ataque al atacante (riesgo, tiempo, dinero). Los de una misma vía se suman.'],
           [n('Rareza'), ': lo improbable que es una desgracia, en órdenes de magnitud. Las que tienen que coincidir se suman.'],
+          [n('Timelock (espera)'), ': condición de la política que solo se cumple cuando las monedas llevan un tiempo sin moverse. Moverlas lo reinicia (', n('renovar'), '). Las esperas se escriben en ', n('Miniscript'), ', el lenguaje de políticas que entienden Liana, Nunchuk o Bitcoin Core.'],
           [n('Bloqueo temporal'), ': los fondos quedan inmovilizados mientras alguien está incapacitado, pero se recuperan cuando heredan.'],
           [n('Custodio'), ': alguien de confianza que guarda algo (una placa, un descriptor) sin ser titular ni heredero.'],
           [n('Entropía'), ': el azar con el que se genera la frase semilla (el generador del dispositivo, dados, una moneda…). ', n('Verificar'), ' es recalcularla en otra herramienta para comprobar que sale de ese azar.'],
@@ -705,7 +744,8 @@ export const GUIA: readonly Capitulo[] = [
           ['Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.'],
           ['El ordenador o móvil de firma solo tiene dos extremos (de uso general o dedicado), y su malware se supone capaz de sacar la semilla de un dispositivo conectado con un fallo publicado. No cuenta la contraseña del ordenador ni de la cartera.'],
           ['El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.'],
-          ['Todavía no hay timelocks (herencia con espera, claves de recuperación con retraso).'],
+          ['Las esperas son relativas (desde el último movimiento de las monedas): no hay fechas absolutas, ni Taproot. Cada cuánto las mueves es un dato que das tú: no se comprueba.'],
+          ['Un dispositivo que no firma Miniscript solo resta usabilidad: siempre se puede firmar con otro cargando la frase semilla.'],
           ['Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.'],
         ],
       },

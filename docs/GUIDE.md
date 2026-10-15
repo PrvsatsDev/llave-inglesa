@@ -132,7 +132,7 @@ That is why it is worth having each key go through different devices, or having 
 
 ## 5. Guided cases
 
-Twelve typical setups, from the most common to the most careful. They are all in the selector at the top, in the gallery. Each step fixes something from the previous one… and almost always makes something else worse. None of them is meant to be anyone’s setup: they are examples to discover all the variables that can affect a plan. Work on yours.
+Fifteen typical setups, from the most common to the most careful. They are all in the selector at the top, in the gallery. Each step fixes something from the previous one… and almost always makes something else worse. None of them is meant to be anyone’s setup: they are examples to discover all the variables that can affect a plan. Work on yours.
 
 **1. Paper in the drawer.** A Trezor at home and the seed phrase on paper, in the same place.
 
@@ -178,6 +178,12 @@ Security **71** (good), resilience **72** (good), usability **100** (excellent),
 
 **10. With a custodian.** A lawyer keeps the third plate in their office. With a single key they cannot steal, and their copy pushes loss events further away: resilience **75** (good).
 
+**11. With a waiting period (timelock).** A key can be valid only once the coins have gone unmoved for a while. The distributed 2 of 3 that relaxes lets you spend with a single key if the coins go a year without moving, and the owner moves them every 6 months so that this path never opens.
+
+> ▶ In the app, with the example “2 of 3 that relaxes over time”: *If the owner becomes incapacitated*.
+
+In the plain 2 of 3 that locks the funds, and its resilience is **72** (good); here it only delays them by a year and it rises to **78** (good), with the same security, **71** (good): to use that path, a thief would have to wait a year without you moving the coins. The price is remembering to move them, and that not every device signs Miniscript: usability **80** (good). The gallery has two more: a recovery key at the daughter’s home, valid on its own after 6 months, with inheritance **82** (good), and the 2 of 3 that expands with a fourth key at the lawyer’s office, with resilience **79** (good).
+
 > 💡 None of this is “the answer”: it is a map of trade-offs. Open the one that looks most like yours, change one thing at a time, and see which score goes up and which goes down.
 
 <a id="montar"></a>
@@ -186,15 +192,15 @@ Security **71** (good), resilience **72** (good), usability **100** (excellent),
 
 Start with **File → New setup** or, better, open the example that looks most like yours and change it. Everything is edited in the **Setup** tab or by clicking any item on the map; Ctrl+Z undoes.
 
-- **Policy**: how many keys it takes to spend (1 of 1, 2 of 3…). **+ Key** adds another one. On each key: whether it has a passphrase and what it is like (never what it is), and its origin: with what entropy and on which device it was generated. That is where published entropy flaws are detected.
+- **Policy**: how many keys it takes to spend (1 of 1, 2 of 3…) and, if you want, a **waiting period**: simple inheritance, decaying multisig or expanding multisig (Liana’s names), in days or months, and how often you move the coins so that the wait never runs out. Whatever those shapes cannot express is built with **Custom (free tree)**: groups that need k of their parts (keys, waiting periods or other groups), with a plain summary of the ways to spend. **+ Key** adds another key. On each key: whether it has a passphrase and what it is like (never what it is), and its origin: with what entropy and on which device it was generated. That is where published entropy flaws are detected.
 - **Locations**: home, a bank, a cloud, a laptop… Physical ones can be a home safe or a bank box, and be inside another one (the safe inside the house). For each one, who can get in: always, only after someone’s death, or if they become incapacitated.
-- **Devices and backups**: with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware, which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, whether it has a duress PIN, and its origin: where you bought it, whether the seal was intact or whether you assembled it yourself (second-hand or a broken seal take a lot off). For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…
+- **Devices and backups**: with the + of each location. For devices, the model (from the catalog: it fills in what it knows and warns about known flaws), the firmware (and whether it signs Miniscript, which a waiting period needs), which keys it stores, which keys it signs with (if the seed phrase is loaded onto it), the PIN, whether it has a duress PIN, and its origin: where you bought it, whether the seal was intact or whether you assembled it yourself (second-hand or a broken seal take a lot off). For backups, the medium (paper, steel…) and what they contain: the seed phrase of a key, a passphrase, a PIN, the descriptor…
 - **Signing computer**: the computer or phone with the wallet (Sparrow, Nunchuk…), with the + of its location or, if it is a phone, from the person who carries it. It holds the descriptor: whoever gets to it has it, and for recovery it is an unreliable copy. A general-purpose one takes some security off (its malware can swap addresses); a dedicated one does not.
 - **People**: owner, heir, custodian…, what they know by heart (a PIN, a passphrase) and where they live. What someone knows they can reveal under coercion, and it is lost if they forget it, die, or become incapacitated. Coercing someone away from home means taking them there and costs a bit more; if you do not set where they live, the worst is assumed.
 
 Once the setup is the way you want it, you can put it in writing. None of this contains secrets, and it is optional:
 
-- **Wallet descriptor** (Setup, below the keys): **Import** and paste the descriptor you already have (Sparrow, Nunchuk, Specter…), or paste the xpub on the panel of each key. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right. With the xpubs, the document reveals your balance: keep it encrypted.
+- **Wallet descriptor** (Setup, below the keys): **Import** and paste the descriptor you already have (Sparrow, Nunchuk, Specter…), or paste the xpub on the panel of each key. With a waiting period it is a Miniscript descriptor, like Liana’s; if its policy is not the setup’s, you can use the descriptor’s. It gives you the descriptor and the first receive address: compare it with the one in your wallet and, if it matches, it is right (Liana shows the second one first). With the xpubs, the document reveals your balance: keep it encrypted.
 - **Print or save as PDF**: a sheet with the descriptor, its QR code, the keys, and the first addresses. When you print it, add it to the setup where you are going to keep it: it is one more backup. In a multisig, having no copy of the descriptor subtracts resilience, and the heirs not reaching any copy subtracts a lot of inheritance.
 - **Letter for the heirs** (Analysis › Inheritance): what to gather and where, whom to turn to, and the steps, in plain words and with only what they need. Real names and a personal message are typed in on the fly and not saved. Print it on a printer of your own that is offline, never at a print shop.
 
@@ -217,6 +223,7 @@ It does not have to be perfect the first time: build the essentials, look at the
 - **Wrench attack**: forcing someone to sign or to reveal what they know. The tool is named after it (llave inglesa is Spanish for wrench).
 - **Effort**: what an attack costs the attacker (risk, time, money). Those on the same route add up.
 - **Rarity**: how unlikely a loss event is, in orders of magnitude. Those that have to coincide add up.
+- **Timelock (waiting period)**: a condition of the policy that is only met once the coins have gone unmoved for a while. Moving them resets it (**renewing**). Waiting periods are written in **Miniscript**, the policy language that Liana, Nunchuk and Bitcoin Core understand.
 - **Temporary lockout**: the funds are frozen while someone is incapacitated, but are recovered when the heirs inherit.
 - **Custodian**: someone trusted who keeps something (a plate, a descriptor) without being an owner or an heir.
 - **Entropy**: the randomness with which the seed phrase is generated (the device’s generator, dice, a coin…). **Verifying** means recomputing it in another tool to check that it comes from that randomness.
@@ -236,7 +243,8 @@ A model always simplifies. These are the deliberate shortcuts of llave-inglesa:
 - Each person lives in a single place and is assumed to be there: schedules (being at work) are not taken into account. If you do not set where they live, they can be coerced anywhere at no extra cost.
 - The signing computer or phone only has two extremes (general-purpose or dedicated), and its malware is assumed able to get the seed out of a connected device with a published flaw. The password of the computer or the wallet does not count.
 - The catalog of devices and their known flaws does not update itself: each version ships its own, with its date.
-- There are no timelocks yet (inheritance with a waiting period, delayed recovery keys).
+- Waiting periods are relative (counted from the last time the coins moved): there are no absolute dates, and no Taproot. How often you move the coins is something you state: it is not checked.
+- A device that does not sign Miniscript only costs usability: you can always sign with another one by loading the seed phrase.
 - With many devices and locations the analysis takes a few seconds: it is exhaustive.
 
 <a id="verificar"></a>
