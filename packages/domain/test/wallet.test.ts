@@ -115,7 +115,7 @@ describe('descriptor a partir del esquema', () => {
     expect(noOrigin).toMatchObject({ ok: true, warnings: [{ code: 'missing-origin', keys: ['k3'] }] });
     // Una rama que se gasta sin firmar: no hay Miniscript seguro que lo escriba.
     const unsigned = { ...r.model, policy: { type: 'thresh' as const, k: 1, of: [r.model.policy, { type: 'older' as const, blocks: 10 }] } };
-    expect(walletDescriptor(unsigned)).toEqual({ ok: false, problems: [{ code: 'no-miniscript' }] });
+    expect(walletDescriptor(unsigned)).toEqual({ ok: false, problems: [{ code: 'no-miniscript', reason: 'unsigned' }] });
   });
 
   it('con espera, escribe wsh(miniscript) aunque se hubiera elegido otro tipo de script', () => {

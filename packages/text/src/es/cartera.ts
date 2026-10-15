@@ -1,10 +1,12 @@
 import type { DescriptorProblem, ScriptType, XpubProblem } from '@llave-inglesa/bitcoin';
 import {
   mapPolicyKeys,
+  policyKeys,
   policyShape,
   shapeKeys,
   type ImportProblem,
   type Match,
+  type MiniscriptReason,
   type Policy,
   type PolicyShape,
   type WalletProblem,
@@ -80,7 +82,9 @@ export function importProblemText(p: ImportProblem, label: Label): string {
     case 'descriptor-policy':
       return 'El descriptor usa algo que aquí no se modela, como timelocks absolutos (after), esperas por tiempo o hashes. No se ha cambiado nada.';
     case 'policy-mismatch': {
-      const descriptor = mapPolicyKeys(p.descriptor, (i) => `#${i + 1}`);
+      // Cada xpub distinta, por orden: #1, #2… (una que se repite con <2;3> es la misma).
+      const order = [...policyKeys(p.descriptor)].sort((x, y) => x - y);
+      const descriptor = mapPolicyKeys(p.descriptor, (i) => `#${order.indexOf(i) + 1}`);
       return `El descriptor es ${describePolicy(descriptor, (k) => k)} y el esquema ${describePolicy(p.model, label)}. Puedes usar la política del descriptor o ajustar la del esquema.`;
     }
     case 'fingerprint-not-found':
@@ -114,10 +118,19 @@ export function matchText(m: Match, label: Label): string {
   return `${label(m.key)}, ${MATCH_TEXT[m.by]}`;
 }
 
+/** Por qué una política no se escribe en Miniscript (tras «no se puede escribir…: »). */
+export const MINISCRIPT_REASON: Record<MiniscriptReason, string> = {
+  unsigned: 'alguna forma de gastar no pide ninguna firma',
+  'script-size': 'el script pasaría de 3600 bytes, el máximo que la red acepta',
+  ops: 'alguna forma de gastar ejecutaría más de 201 operaciones, el máximo de Bitcoin',
+  stack: 'alguna forma de gastar necesitaría más de 100 elementos en el witness, el máximo que la red acepta',
+  other: 'Bitcoin Core no lo aceptaría (la firma se podría alterar o mezcla timelocks)',
+};
+
 export function walletProblemText(p: WalletProblem, label: Label): string {
   switch (p.code) {
     case 'no-miniscript':
-      return 'Esta política no se puede escribir en Miniscript de forma segura: repite una key o alguna forma de gastar no pide firma.';
+      return `Esta política no se puede escribir en Miniscript de forma segura: ${MINISCRIPT_REASON[p.reason]}.`;
     case 'script-mismatch':
       return 'El tipo de script no encaja con la política (single-sig frente a multisig).';
     case 'too-many-keys':

@@ -2,6 +2,8 @@ import {
   analyzeMiniscript,
   mapMiniscriptKeys,
   MAX_MULTI_KEYS,
+  MAX_OPS_PER_SCRIPT,
+  MAX_WSH_SCRIPT_SIZE,
   miniscriptHas,
   miniscriptToString,
   parseMiniscript,
@@ -20,6 +22,22 @@ import { MAX_OLDER_BLOCKS, type Id, type Policy } from './schema.ts';
 export function policyMiniscript(policy: Policy): Miniscript<Id> | null {
   const ms = compile(policy);
   return analyzeMiniscript(withPairs(ms), keyUseId).sane ? ms : null;
+}
+
+/**
+ * Por qué una política no se puede escribir en Miniscript de forma segura: una forma de gastar no pide firma, el
+ * script pasa de 3600 bytes, la forma de gastar más cara pasa de 201 operaciones o de 100 elementos en el witness, u
+ * otra regla de Core (maleable, p. ej.). Null si se puede.
+ */
+export type MiniscriptReason = 'unsigned' | 'script-size' | 'ops' | 'stack' | 'other';
+
+export function policyMiniscriptReason(policy: Policy): MiniscriptReason | null {
+  const a = analyzeMiniscript(withPairs(compile(policy)), keyUseId);
+  if (a.sane) return null;
+  if (a.scriptSize > MAX_WSH_SCRIPT_SIZE) return 'script-size';
+  if (a.valid && !a.needsSignature) return 'unsigned';
+  if (a.valid && !a.withinLimits) return (a.ops ?? 0) > MAX_OPS_PER_SCRIPT ? 'ops' : 'stack';
+  return 'other';
 }
 
 /**

@@ -12,7 +12,18 @@ import {
   type ParsedDescriptor,
   type ScriptType,
 } from '@llave-inglesa/bitcoin';
-import { keyUseId, keyUsesText, miniscriptPolicy, parseKeyUses, policyMiniscript, samePolicy, withPairs, type KeyUse } from './miniscript.ts';
+import {
+  keyUseId,
+  keyUsesText,
+  miniscriptPolicy,
+  parseKeyUses,
+  policyMiniscript,
+  policyMiniscriptReason,
+  samePolicy,
+  withPairs,
+  type KeyUse,
+  type MiniscriptReason,
+} from './miniscript.ts';
 import { addKey } from './edit.ts';
 import { mapPolicyKeys, policyKeys } from './model-index.ts';
 import type { CustodyModel, Id, Key, Policy, Wallet } from './schema.ts';
@@ -69,8 +80,8 @@ export function walletKeyIds(model: CustodyModel): Id[] | null {
 }
 
 export type WalletProblem =
-  /** La política no se puede escribir en Miniscript de forma segura: repite una key, una rama no pide firma… */
-  | { code: 'no-miniscript' }
+  /** La política no se puede escribir en Miniscript de forma segura: una rama no pide firma, es demasiado grande… */
+  | { code: 'no-miniscript'; reason: MiniscriptReason }
   /** Un script single-sig con una política multisig, o al revés. */
   | { code: 'script-mismatch' }
   | { code: 'too-many-keys' }
@@ -93,7 +104,7 @@ export type WalletDescriptorResult =
 export function walletDescriptor(model: CustodyModel): WalletDescriptorResult {
   const flat = flatPolicy(model);
   const miniscript = flat ? null : walletMiniscript(model);
-  if (!flat && !miniscript) return { ok: false, problems: [{ code: 'no-miniscript' }] };
+  if (!flat && !miniscript) return { ok: false, problems: [{ code: 'no-miniscript', reason: policyMiniscriptReason(model.policy) ?? 'other' }] };
   const wallet = walletOf(model);
   const problems: WalletProblem[] = [];
   const ids = walletKeyIds(model)!;

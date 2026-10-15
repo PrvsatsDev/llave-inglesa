@@ -6,3 +6,4 @@ export * from './catalog.ts';
 export * from './wallet.ts';
 export * from './shape.ts';
 export * from './miniscript.ts';
+export * from './policy-edit.ts';

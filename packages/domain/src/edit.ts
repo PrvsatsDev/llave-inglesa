@@ -1,6 +1,6 @@
 import type { Artifact, Computer, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
 import { canLiveAt, canNest } from './validate.ts';
-import { policyKeys } from './model-index.ts';
+import { spendableWithoutKeys } from './model-index.ts';
 import { addShapeKey, policyShape, removeShapeKey, setShapeThreshold, shapeKeys, shapePolicy, SHAPE_MIN_KEYS, type PolicyShape } from './shape.ts';
 
 /**
@@ -181,22 +181,30 @@ export function setRenewal(model: CustodyModel, everyDays: number | undefined): 
 }
 
 /**
- * La política sin `key`. Una rama que se queda sin ninguna key (solo un timelock) desaparece: cumplirla no exigiría
- * ninguna firma.
+ * La política sin `key`. Una rama que se queda sin ninguna key, o que al quitarla se podría cumplir solo esperando,
+ * desaparece: cumplirla no exigiría ninguna firma.
  */
 function removeFromPolicy(p: Policy, key: Id): Policy | null {
   if (p.type === 'key') return p.key === key ? null : p;
   if (p.type === 'older') return p;
   const of = p.of.map((c) => removeFromPolicy(c, key)).filter((c): c is Policy => c !== null);
-  if (policyKeys({ type: 'thresh', k: 1, of }).length === 0) return null;
-  if (of.length === 1) return of[0]!;
-  return { type: 'thresh', k: Math.min(p.k, of.length), of };
+  const next: Policy = of.length === 1 ? of[0]! : { type: 'thresh', k: Math.min(p.k, of.length), of };
+  return of.length === 0 || (spendableWithoutKeys(next) && !spendableWithoutKeys(p)) ? null : next;
 }
 
 
 // ---------- Keys ----------
 
 export function addKey(model: CustodyModel): Created {
+  const { model: next, id } = addKeyOutsidePolicy(model);
+  // Entra entre las keys principales de la plantilla. En un árbol libre no hay un sitio obvio: la key queda fuera
+  // hasta colocarla.
+  const shape = policyShape(model.policy);
+  return { model: shape ? { ...next, policy: shapePolicy(addShapeKey(shape, id)) } : next, id };
+}
+
+/** Una key nueva (K4, K5…) sin tocar la política. */
+export function addKeyOutsidePolicy(model: CustodyModel): Created {
   const labels = new Set(model.keys.map((k) => k.label));
   let n = model.keys.length + 1;
   while (labels.has(`K${n}`)) n++;
@@ -207,11 +215,7 @@ export function addKey(model: CustodyModel): Created {
     passphrase: false,
     provenance: { sources: [{ kind: 'unknown' }], independentlyVerified: false },
   };
-  // Entra entre las keys principales de la plantilla. En una política escrita a mano no hay un sitio obvio: la key
-  // queda fuera hasta colocarla.
-  const shape = policyShape(model.policy);
-  const policy = shape ? shapePolicy(addShapeKey(shape, id)) : model.policy;
-  return { model: { ...model, keys: [...model.keys, key], policy }, id };
+  return { model: { ...model, keys: [...model.keys, key] }, id };
 }
 
 /** Desactivar la passphrase conserva quién la sabe o dónde está apuntada (queda latente). */

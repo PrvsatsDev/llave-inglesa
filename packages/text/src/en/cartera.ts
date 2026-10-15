@@ -1,10 +1,12 @@
 import type { DescriptorProblem, ScriptType, XpubProblem } from '@llave-inglesa/bitcoin';
 import {
   mapPolicyKeys,
+  policyKeys,
   policyShape,
   shapeKeys,
   type ImportProblem,
   type Match,
+  type MiniscriptReason,
   type Policy,
   type PolicyShape,
   type WalletProblem,
@@ -79,7 +81,9 @@ export const importProblemText: typeof es.importProblemText = (p: ImportProblem,
     case 'descriptor-policy':
       return 'The descriptor uses something not modelled here, such as absolute timelocks (after), time-based waits or hashes. Nothing has been changed.';
     case 'policy-mismatch': {
-      const descriptor = mapPolicyKeys(p.descriptor, (i) => `#${i + 1}`);
+      // Cada xpub distinta, por orden: #1, #2… (una que se repite con <2;3> es la misma).
+      const order = [...policyKeys(p.descriptor)].sort((x, y) => x - y);
+      const descriptor = mapPolicyKeys(p.descriptor, (i) => `#${order.indexOf(i) + 1}`);
       return `The descriptor is ${describePolicy(descriptor, (k) => k)} and the setup is ${describePolicy(p.model, label)}. You can use the descriptor’s policy or adjust the setup’s.`;
     }
     case 'fingerprint-not-found':
@@ -111,10 +115,18 @@ const MATCH_TEXT: Record<Match['by'], string> = { xpub: 'by its xpub', fingerpri
 
 export const matchText: typeof es.matchText = (m: Match, label: Label) => `${label(m.key)}, ${MATCH_TEXT[m.by]}`;
 
+export const MINISCRIPT_REASON: typeof es.MINISCRIPT_REASON = {
+  unsigned: 'some way of spending needs no signature at all',
+  'script-size': 'the script would exceed 3600 bytes, the most the network accepts',
+  ops: 'some way of spending would execute more than 201 operations, the Bitcoin maximum',
+  stack: 'some way of spending would need more than 100 witness elements, the most the network accepts',
+  other: 'Bitcoin Core would not accept it (the signature could be altered or it mixes timelocks)',
+};
+
 export const walletProblemText: typeof es.walletProblemText = (p: WalletProblem, label: Label) => {
   switch (p.code) {
     case 'no-miniscript':
-      return 'This policy cannot be written safely in Miniscript: it repeats a key or some way of spending needs no signature.';
+      return `This policy cannot be written safely in Miniscript: ${MINISCRIPT_REASON[p.reason]}.`;
     case 'script-mismatch':
       return 'The script type does not fit the policy (single-sig versus multisig).';
     case 'too-many-keys':
