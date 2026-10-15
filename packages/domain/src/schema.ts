@@ -233,6 +233,12 @@ export const WalletSchema = z.object({
   script: z.enum(['wsh', 'sh-wsh', 'wpkh', 'sh-wpkh']),
   /** sortedmulti (claves ordenadas, BIP-67) o multi (el orden de la política importa). */
   sorted: z.boolean().default(true),
+  /**
+   * Cómo estaba escrito el Miniscript del descriptor importado, con cada key por su id y, si no es el primero, su par
+   * de ramas (`or_d(pk(k1),and_v(v:pkh(k1/1),older(4320)))`). Mientras la política sea la misma, el descriptor se
+   * escribe así, para dar las mismas direcciones que la cartera de la que vino.
+   */
+  miniscript: z.string().optional(),
 });
 export type Wallet = z.infer<typeof WalletSchema>;
 

@@ -286,7 +286,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'pin-unknown': 'A device has a PIN that nobody knows and is not written down: it cannot be used to sign',
   'duplicate-label': 'Several items have the same name: they cannot be told apart in the lists',
   'threshold-out-of-range': 'The policy threshold is greater than the number of keys',
-  'key-repeated-in-policy': 'A key appears twice in the policy',
+  'key-repeated-in-policy': 'A key appears twice in the same group of the policy',
   'key-not-in-policy': 'A key does not take part in the policy',
   'spendable-without-keys': 'A branch of the policy is met just by waiting, with no signature: after that time, anyone could spend the funds',
   'renewal-unset': 'The policy has a timelock and it does not say how often you move the coins to renew it: it is assumed you do not, and the branch with the wait ends up open',

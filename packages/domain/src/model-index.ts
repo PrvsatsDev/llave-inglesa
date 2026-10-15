@@ -43,10 +43,15 @@ export function activeHolds(device: Device): readonly Id[] {
   return device.kind === 'stateful' ? device.holds : [];
 }
 
-export function policyKeys(policy: Policy): Id[] {
-  if (policy.type === 'key') return [policy.key];
-  return policy.type === 'thresh' ? policy.of.flatMap(policyKeys) : [];
+/** Las keys de la política, una vez cada una (una key puede firmar en varias ramas), en el orden en que aparecen. */
+export function policyKeys<K = Id>(policy: Policy<K>): K[] {
+  const walk = (p: Policy<K>): K[] => (p.type === 'key' ? [p.key] : p.type === 'thresh' ? p.of.flatMap(walk) : []);
+  return [...new Set(walk(policy))];
 }
+
+/** La misma política con otras keys. */
+export const mapPolicyKeys = <K, L>(p: Policy<K>, f: (k: K) => L): Policy<L> =>
+  p.type === 'key' ? { type: 'key', key: f(p.key) } : p.type === 'older' ? p : { type: 'thresh', k: p.k, of: p.of.map((c) => mapPolicyKeys(c, f)) };
 
 /** Duraciones distintas de los timelocks de la política (en bloques), de menor a mayor. */
 export function policyTimelocks(policy: Policy): number[] {

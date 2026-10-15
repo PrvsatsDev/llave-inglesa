@@ -1,4 +1,13 @@
-import { analyzeMiniscript, MAX_MULTI_KEYS, miniscriptHas, SEQUENCE_TYPE_FLAG, type Miniscript } from '@llave-inglesa/bitcoin';
+import {
+  analyzeMiniscript,
+  mapMiniscriptKeys,
+  MAX_MULTI_KEYS,
+  miniscriptHas,
+  miniscriptToString,
+  parseMiniscript,
+  SEQUENCE_TYPE_FLAG,
+  type Miniscript,
+} from '@llave-inglesa/bitcoin';
 import { MAX_OLDER_BLOCKS, type Id, type Policy } from './schema.ts';
 
 /**
@@ -10,7 +19,43 @@ import { MAX_OLDER_BLOCKS, type Id, type Policy } from './schema.ts';
  */
 export function policyMiniscript(policy: Policy): Miniscript<Id> | null {
   const ms = compile(policy);
-  return analyzeMiniscript(ms).sane ? ms : null;
+  return analyzeMiniscript(withPairs(ms), keyUseId).sane ? ms : null;
+}
+
+/**
+ * Una aparición de una key en el Miniscript: la key y su par de ramas de derivación (0 = `<0;1>`, 1 = `<2;3>`…). Una
+ * key que firma en varias ramas aparece varias veces, cada una con su par, para que las claves del script sean
+ * distintas.
+ */
+export type KeyUse = { key: Id; pair: number };
+export const keyUseId = (u: KeyUse) => `${u.key}/${u.pair}`;
+
+/** Cada aparición de una key con su par, por orden: la primera vez `<0;1>`, la segunda `<2;3>`… (como Liana). */
+export function withPairs(ms: Miniscript<Id>): Miniscript<KeyUse> {
+  const seen = new Map<Id, number>();
+  return mapMiniscriptKeys(ms, (key) => {
+    const pair = seen.get(key) ?? 0;
+    seen.set(key, pair + 1);
+    return { key, pair };
+  });
+}
+
+/** El Miniscript como texto, con cada key por su id (`k1`) o, fuera del primer par, con él (`k1/1`). */
+export function keyUsesText(ms: Miniscript<KeyUse>): string {
+  return miniscriptToString(ms, (u) => (u.pair === 0 ? u.key : `${u.key}/${u.pair}`));
+}
+
+/** Lee lo que escribe keyUsesText, o null. */
+export function parseKeyUses(text: string): Miniscript<KeyUse> | null {
+  const parsed = parseMiniscript(text);
+  if (!parsed.ok) return null;
+  let ok = true;
+  const ms = mapMiniscriptKeys(parsed.value, (t): KeyUse => {
+    const m = /^([A-Za-z0-9_-]+)(?:\/(\d{1,4}))?$/.exec(t);
+    if (!m) ok = false;
+    return { key: m?.[1] ?? '', pair: Number(m?.[2] ?? 0) };
+  });
+  return ok ? ms : null;
 }
 
 const B = miniscriptHas;
@@ -56,6 +101,27 @@ function toBdu(x: Miniscript<Id>): Miniscript<Id> {
 
 /** W: s: si consume un solo elemento de la pila, a: si no. */
 const toW = (x: Miniscript<Id>): Miniscript<Id> => (B(x, 'o') ? { f: 's', x } : { f: 'a', x });
+
+// ---------- Comparar políticas ----------
+
+/**
+ * ¿Dicen lo mismo dos políticas? Da igual el orden de los hijos y cómo se agrupen las «todas» y las «una de»
+ * (`K1 y (K2 y espera)` es `K1, K2 y espera`).
+ */
+export function samePolicy<K>(a: Policy<K>, b: Policy<K>): boolean {
+  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+}
+
+function normalize<K>(p: Policy<K>): Policy<K> {
+  if (p.type !== 'thresh') return p;
+  const of = p.of.map(normalize);
+  if (of.length === 1) return of[0]!;
+  const family = (q: { k: number; of: readonly unknown[] }) => (q.k === q.of.length ? 'all' : q.k === 1 ? 'any' : null);
+  const own = family({ k: p.k, of });
+  const flat = own ? of.flatMap((c) => (c.type === 'thresh' && family(c) === own ? c.of : [c])) : of;
+  const sorted = [...flat].sort((x, y) => (JSON.stringify(x) < JSON.stringify(y) ? -1 : 1));
+  return { type: 'thresh', k: own === 'all' ? sorted.length : p.k, of: sorted };
+}
 
 // ---------- Del Miniscript a la política ----------
 

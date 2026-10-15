@@ -26,7 +26,7 @@ export function satisfy(policy: Policy, available: ReadonlySet<Id>, elapsed = 0)
         .sort((a, b) => a.wait - b.wait || a.keys.length - b.keys.length);
       if (solutions.length < policy.k) return null;
       const chosen = solutions.slice(0, policy.k);
-      return { keys: chosen.flatMap((s) => s.keys), wait: Math.max(...chosen.map((s) => s.wait)) };
+      return { keys: [...new Set(chosen.flatMap((s) => s.keys))], wait: Math.max(...chosen.map((s) => s.wait)) };
     }
   }
 }

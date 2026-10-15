@@ -20,6 +20,12 @@ export interface DescriptorKey {
   path?: string;
   /** xpub o tpub, ya normalizada. */
   xpub: string;
+  /**
+   * Par de ramas de recepción y cambio: 0 (sin indicar) es `<0;1>`, 1 es `<2;3>`, 2 es `<4;5>`… Solo en Miniscript,
+   * donde una misma xpub puede firmar en varias ramas de la política (así lo escribe Liana): cada vez que aparece
+   * lleva su par, para que las claves del script sean distintas.
+   */
+  multipath?: number;
 }
 
 export interface Descriptor {
@@ -77,9 +83,13 @@ export function descriptorChecksum(body: string): string | null {
 /** Rama de derivación: <0;1> (recepción y cambio en uno, BIP-389), 0 (recepción) o 1 (cambio). */
 export type Branch = 'multipath' | 0 | 1;
 
+/** El paso de derivación de la rama (recepción o cambio) de una key: 0 o 1, o 2 o 3 en su segundo par… */
+export const branchIndex = (k: DescriptorKey, branch: 0 | 1) => 2 * (k.multipath ?? 0) + branch;
+
 const keyExpression = (k: DescriptorKey, branch: Branch) => {
   const origin = k.fingerprint ? `[${k.fingerprint}${k.path ? `/${k.path}` : ''}]` : '';
-  return `${origin}${k.xpub}/${branch === 'multipath' ? '<0;1>' : branch}/*`;
+  const step = branch === 'multipath' ? `<${branchIndex(k, 0)};${branchIndex(k, 1)}>` : branchIndex(k, branch);
+  return `${origin}${k.xpub}/${step}/*`;
 };
 
 /** El descriptor de la cartera con su suma de control. */
@@ -132,21 +142,33 @@ const unwrap = (s: string, name: string) => (s.startsWith(`${name}(`) && s.endsW
 const KEY = /^(?:\[([0-9a-fA-F]{8})((?:\/\d+['hH]?)*)\])?([1-9A-HJ-NP-Za-km-z]+)(\/.*)?$/;
 /** Una clave privada extendida al principio de una key (no en medio de una xpub, donde "…xprv…" puede salir por azar). */
 const PRIVATE_KEY = /(^|[\](,])[xyzYZtuvUV]prv/;
-const SUFFIXES = new Set(['/<0;1>/*', '/0/*', '/1/*']);
+/** `/<a;a+1>/*` (a par) o `/n/*`: recepción y cambio juntos, o una sola rama. */
+const SUFFIX = /^\/(?:<(\d{1,9});(\d{1,9})>|(\d{1,9}))\/\*$/;
+
+/** El par de ramas de un sufijo (0 para `<0;1>`, `/0/*` y `/1/*`; 1 para `<2;3>`…), o null si no se admite. */
+function suffixPair(suffix: string): number | null {
+  const m = SUFFIX.exec(suffix);
+  if (!m) return null;
+  const [, a, b, single] = m;
+  if (single !== undefined) return Math.floor(Number(single) / 2);
+  return Number(a) % 2 === 0 && Number(b) === Number(a) + 1 ? Number(a) / 2 : null;
+}
 
 type KeyResult = { ok: true; key: DescriptorKey; network: Network } | { ok: false; problem: DescriptorProblem };
 
-function parseKey(text: string, index: number): KeyResult {
+function parseKey(text: string, index: number, pairs: boolean): KeyResult {
   if (PRIVATE_KEY.test(text)) return { ok: false, problem: { code: 'private-key' } };
   const m = KEY.exec(text);
   if (!m) return { ok: false, problem: { code: 'bad-key', index } };
   const [, fingerprint, path, xpubText, suffix] = m;
-  if (suffix === undefined || !SUFFIXES.has(suffix)) return { ok: false, problem: { code: 'unsupported-suffix', index } };
+  const pair = suffix === undefined ? null : suffixPair(suffix);
+  if (pair === null || (pair > 0 && !pairs)) return { ok: false, problem: { code: 'unsupported-suffix', index } };
   const xpub = parseXpub(xpubText!);
   if (!xpub.ok) return { ok: false, problem: xpub.problem === 'private' ? { code: 'private-key' } : { code: 'bad-key', index, xpub: xpub.problem } };
   const key: DescriptorKey = { xpub: xpub.value.xpub };
   if (fingerprint) key.fingerprint = fingerprint.toLowerCase();
   if (path) key.path = path.slice(1).replace(/[hH]/g, "'");
+  if (pair > 0) key.multipath = pair;
   return { ok: true, key, network: xpub.value.network };
 }
 
@@ -188,19 +210,24 @@ export function parseDescriptor(text: string): DescriptorResult {
     return { ok: false, problem: { code: /^[a-z_]+\(/.test(body) ? 'unsupported-script' : 'syntax' } };
   }
 
-  const keys = parseKeys(keyTexts);
+  const keys = parseKeys(keyTexts, false);
   if (!keys.ok) return keys;
   const descriptor: Descriptor = { script, sorted, keys: keys.keys, ...(threshold !== undefined && { threshold }) };
   return { ok: true, value: { descriptor, network: keys.network, hadChecksum: checksum !== undefined } };
 }
 
-function parseKeys(texts: readonly string[]): { ok: true; keys: DescriptorKey[]; network: Network } | { ok: false; problem: DescriptorProblem } {
+/**
+ * Las keys de un descriptor. Con `pairs` (Miniscript), una xpub puede repetirse si cada vez lleva su par de ramas
+ * (`<0;1>`, `<2;3>`…); si no, cada xpub va una sola vez.
+ */
+function parseKeys(texts: readonly string[], pairs: boolean): { ok: true; keys: DescriptorKey[]; network: Network } | { ok: false; problem: DescriptorProblem } {
   const keys: DescriptorKey[] = [];
   const networks = new Set<Network>();
   for (const [i, t] of texts.entries()) {
-    const r = parseKey(t, i);
+    const r = parseKey(t, i, pairs);
     if (!r.ok) return r;
-    if (keys.some((k) => k.xpub === r.key.xpub)) return { ok: false, problem: { code: 'duplicate-key', index: i } };
+    const pair = r.key.multipath ?? 0;
+    if (keys.some((k) => k.xpub === r.key.xpub && (!pairs || (k.multipath ?? 0) === pair))) return { ok: false, problem: { code: 'duplicate-key', index: i } };
     keys.push(r.key);
     networks.add(r.network);
   }
@@ -214,7 +241,7 @@ function parseMiniscriptDescriptor(text: string, hadChecksum: boolean): Descript
   if (!parsed.ok) return { ok: false, problem: { code: parsed.problem.code === 'syntax' ? 'syntax' : 'unsupported-script' } };
   const keyTexts = miniscriptKeys(parsed.value);
   if (keyTexts.length === 0) return { ok: false, problem: { code: 'miniscript-unsafe' } };
-  const keys = parseKeys(keyTexts);
+  const keys = parseKeys(keyTexts, true);
   if (!keys.ok) return keys;
   let next = 0;
   const miniscript = mapMiniscriptKeys(parsed.value, () => next++);

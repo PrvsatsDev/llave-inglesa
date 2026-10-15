@@ -53,7 +53,9 @@ ningún backup del descriptor como problema grave.
       - Editor libre del árbol de la política (`key`, `thresh`, `older`), para lo que no cabe en las plantillas.
       - ~~Límites de Bitcoin Core en `wsh(miniscript)`~~ (2026-10-15): 201 operaciones y 100 elementos en el
         witness, como `IsSane` de Core y con sus vectores.
-      - Importar los descriptores de Liana que repiten una xpub con otra rama de derivación (`<0;1>` y `<2;3>`).
+      - ~~Importar los descriptores de Liana que repiten una xpub con otra rama de derivación (`<0;1>` y `<2;3>`)~~
+        (2026-10-15): keys en varias ramas, importación de cualquier árbol (con «usar la política del descriptor») y
+        el Miniscript importado se escribe tal cual.
 
 ## Aparcado
 

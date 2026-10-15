@@ -289,7 +289,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'pin-unknown': 'Hay un dispositivo con PIN que nadie sabe ni está apuntado: no sirve para firmar',
   'duplicate-label': 'Hay varios elementos con el mismo nombre: no se distinguirán en las listas',
   'threshold-out-of-range': 'El umbral de la política es mayor que el número de keys',
-  'key-repeated-in-policy': 'Una key aparece dos veces en la política',
+  'key-repeated-in-policy': 'Una key aparece dos veces en el mismo grupo de la política',
   'key-not-in-policy': 'Hay una key que no participa en la política',
   'spendable-without-keys': 'Una rama de la política se cumple solo esperando, sin ninguna firma: pasado ese tiempo, cualquiera podría gastar los fondos',
   'renewal-unset': 'La política tiene un timelock y no consta cada cuánto mueves las monedas para renovarlo: se supone que no lo renuevas y que la rama con espera acaba abierta',

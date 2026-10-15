@@ -3,14 +3,17 @@ import { formatDescriptor, parseDescriptor, type Descriptor } from '@llave-ingle
 import { HDKey } from '@scure/bip32';
 import { describe, expect, it } from 'vitest';
 import {
+  adoptDescriptorPolicy,
   CustodyModelSchema,
   importDescriptor,
+  samePolicy,
   parseModel,
   setWallet,
   updateKey,
   walletDescriptor,
   walletOf,
   type CustodyModel,
+  type Policy,
 } from '../src/index.ts';
 
 function fixture(name: string): CustodyModel {
@@ -84,9 +87,13 @@ describe('descriptor a partir del esquema', () => {
   it('si el descriptor tiene otra forma no toca el esquema y lo explica', () => {
     expect(importDescriptor(fixture('todo-en-casa'), parse({ ...twoOfThree, threshold: 3 }))).toEqual({
       ok: false,
-      problem: { code: 'shape-mismatch', descriptor: { k: 3, n: 3 }, model: { k: 2, n: 3 } },
+      problem: {
+        code: 'policy-mismatch',
+        descriptor: { type: 'thresh', k: 3, of: [0, 1, 2].map((key) => ({ type: 'key', key })) },
+        model: fixture('todo-en-casa').policy,
+      },
     });
-    expect(importDescriptor(fixture('singlesig-passphrase'), parse(twoOfThree))).toMatchObject({ ok: false, problem: { code: 'shape-mismatch' } });
+    expect(importDescriptor(fixture('singlesig-passphrase'), parse(twoOfThree))).toMatchObject({ ok: false, problem: { code: 'policy-mismatch' } });
   });
 
   it('single-sig envuelto (sh-wpkh) se guarda como tipo de script', () => {
@@ -106,8 +113,9 @@ describe('descriptor a partir del esquema', () => {
     });
     const noOrigin = walletDescriptor(updateKey(r.model, 'k3', { derivation: undefined }));
     expect(noOrigin).toMatchObject({ ok: true, warnings: [{ code: 'missing-origin', keys: ['k3'] }] });
-    const nested = { ...r.model, policy: { type: 'thresh' as const, k: 1, of: [r.model.policy, { type: 'key' as const, key: 'k1' }] } };
-    expect(walletDescriptor(nested)).toEqual({ ok: false, problems: [{ code: 'no-miniscript' }] });
+    // Una rama que se gasta sin firmar: no hay Miniscript seguro que lo escriba.
+    const unsigned = { ...r.model, policy: { type: 'thresh' as const, k: 1, of: [r.model.policy, { type: 'older' as const, blocks: 10 }] } };
+    expect(walletDescriptor(unsigned)).toEqual({ ok: false, problems: [{ code: 'no-miniscript' }] });
   });
 
   it('con espera, escribe wsh(miniscript) aunque se hubiera elegido otro tipo de script', () => {
@@ -173,20 +181,94 @@ describe('descriptor con Miniscript', () => {
     expect(importDescriptor(empty('referencia/r15-2de3-se-amplia'), parse(r14))).toMatchObject({ ok: false, problem: { code: 'policy-mismatch' } });
     expect(importDescriptor(empty('todo-en-casa'), parse(r14))).toMatchObject({
       ok: false,
-      problem: { code: 'policy-mismatch', descriptor: { kind: 'decaying', k: 2 }, model: { kind: 'plain', k: 2 } },
+      problem: { code: 'policy-mismatch', descriptor: { type: 'thresh', k: 2 }, model: { type: 'thresh', k: 2 } },
     });
     const longer = { ...r14, miniscript: JSON.parse(JSON.stringify(r14.miniscript).replace('52560', '52561')) };
     expect(importDescriptor(empty('referencia/r14-2de3-se-relaja'), parse(longer))).toMatchObject({ ok: false, problem: { code: 'policy-mismatch' } });
     // Un multisig clásico en un esquema con espera.
     expect(importDescriptor(empty('referencia/r14-2de3-se-relaja'), parse(twoOfThree))).toMatchObject({
       ok: false,
-      problem: { code: 'policy-mismatch', descriptor: { kind: 'plain', k: 2 }, model: { kind: 'decaying' } },
+      problem: { code: 'policy-mismatch' },
     });
   });
 
-  it('un Miniscript que no es ninguna plantilla no se importa', () => {
+  it('un Miniscript con lo que no se modela (after) no se importa', () => {
     const parsed = parseDescriptor(`wsh(and_v(v:pk(${a.xpub}/<0;1>/*),after(800000)))`);
     if (!parsed.ok) throw new Error(parsed.problem.code);
     expect(importDescriptor(empty('referencia/r13-recuperacion-heredera'), parsed.value)).toEqual({ ok: false, problem: { code: 'descriptor-policy' } });
+  });
+});
+
+describe('Miniscript libre, keys repetidas y Liana', () => {
+  const R = account(5);
+  const key = (k: string): Policy => ({ type: 'key', key: k });
+  const older = (blocks: number): Policy => ({ type: 'older', blocks });
+  const thresh = (k: number, ...of: Policy[]): Policy => ({ type: 'thresh', k, of });
+  /** Tres keys sin nada y la política dada. */
+  const base = (policy: Policy): CustodyModel => {
+    let model = fixture('todo-en-casa');
+    for (const k of model.keys) model = updateKey(model, k.id, { xpub: undefined, fingerprint: undefined, derivation: undefined });
+    return { ...model, policy };
+  };
+  const fill = (model: CustodyModel, xs = [a, b, c]) =>
+    xs.reduce((m, x, i) => updateKey(m, `k${i + 1}`, { xpub: x.xpub, fingerprint: x.fingerprint, derivation: x.path }), model);
+  const text = (model: CustodyModel) => {
+    const r = walletDescriptor(model);
+    if (!r.ok) throw new Error(r.problems[0]!.code);
+    return formatDescriptor(r.descriptor);
+  };
+  const parsed = (s: string) => {
+    const r = parseDescriptor(s);
+    if (!r.ok) throw new Error(r.problem.code);
+    return r.value;
+  };
+
+  // K1 y K2 ya, o K1 sola tras la espera: K1 firma en dos ramas.
+  const reused = thresh(1, thresh(2, key('k1'), key('k2')), thresh(2, key('k1'), older(4320)));
+
+  it('una key que firma en dos ramas lleva <0;1> la primera vez y <2;3> la segunda', () => {
+    const out = text(fill(base(reused)));
+    expect(out).toContain(`${a.xpub}/<0;1>/*`);
+    expect(out).toContain(`${a.xpub}/<2;3>/*`);
+    expect(out).not.toContain(`${b.xpub}/<2;3>/*`);
+    // Se vuelve a importar en el mismo esquema sin xpubs y da lo mismo.
+    const r = importDescriptor(base(reused), parsed(out));
+    if (!r.ok) throw new Error(r.problem.code);
+    expect(text(r.model)).toBe(out);
+    expect(r.matches.map((m) => m.key)).toEqual(['k1', 'k2']);
+  });
+
+  it('el Miniscript importado se escribe tal cual mientras la política sea la misma (mismas direcciones)', () => {
+    // Otra cartera lo escribió con or_i y con la espera primero: la misma política, otro script.
+    const origin = (x: typeof a) => `[${x.fingerprint}/48'/0'/0'/2']${x.xpub}`;
+    const foreign = `wsh(or_i(and_v(v:older(4320),pkh(${origin(a)}/<2;3>/*)),and_v(v:pk(${origin(a)}/<0;1>/*),pk(${origin(b)}/<0;1>/*))))`;
+    const r = importDescriptor(base(reused), parsed(foreign));
+    if (!r.ok) throw new Error(r.problem.code);
+    expect(text(r.model).split('#')[0]).toBe(foreign);
+    expect(CustodyModelSchema.safeParse(r.model).success).toBe(true);
+    // Si la política cambia, el guardado ya no vale y se escribe con las formas de aquí.
+    const changed = { ...r.model, policy: thresh(1, thresh(2, key('k1'), key('k2')), thresh(2, key('k1'), older(8640))) };
+    expect(text(changed)).toContain('or_d(');
+  });
+
+  it('empareja por el papel de cada key en el árbol, aunque el descriptor las traiga en otro orden', () => {
+    // 2 de K1, K2, o K3 tras la espera; el descriptor nombra primero la de recuperación.
+    const tree = thresh(1, thresh(2, key('k1'), key('k2')), thresh(2, key('k3'), older(100)));
+    const foreign = `wsh(or_i(and_v(v:pkh(${R.xpub}/<0;1>/*),older(100)),multi(2,${a.xpub}/<0;1>/*,${b.xpub}/<0;1>/*)))`;
+    const r = importDescriptor(base(tree), parsed(foreign));
+    if (!r.ok) throw new Error(r.problem.code);
+    expect(r.model.keys.find((k) => k.id === 'k3')!.xpub).toBe(R.xpub);
+    expect(r.model.keys.find((k) => k.id === 'k1')!.xpub).toBe(a.xpub);
+  });
+
+  it('usar la política del descriptor la cambia, crea las keys que faltan y lo importa', () => {
+    const tree = `wsh(or_d(multi(2,${a.xpub}/<0;1>/*,${b.xpub}/<0;1>/*,${c.xpub}/<0;1>/*),and_v(v:pkh(${R.xpub}/<0;1>/*),older(4320))))`;
+    const model = fixture('todo-en-casa');
+    expect(importDescriptor(model, parsed(tree))).toMatchObject({ ok: false, problem: { code: 'policy-mismatch' } });
+    const r = adoptDescriptorPolicy(model, parsed(tree));
+    if (!r?.ok) throw new Error();
+    expect(r.model.keys.map((k) => k.id)).toEqual(['k1', 'k2', 'k3', 'k4']);
+    expect(samePolicy(r.model.policy, thresh(1, thresh(2, key('k1'), key('k2'), key('k3')), thresh(2, key('k4'), older(4320))))).toBe(true);
+    expect(text(r.model).split('#')[0]).toBe(tree);
   });
 });

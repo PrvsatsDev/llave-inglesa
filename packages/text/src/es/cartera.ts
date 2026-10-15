@@ -1,7 +1,17 @@
 import type { DescriptorProblem, ScriptType, XpubProblem } from '@llave-inglesa/bitcoin';
-import { shapeKeys, type ImportProblem, type Match, type PolicyShape, type WalletProblem, type WalletWarning } from '@llave-inglesa/domain';
+import {
+  mapPolicyKeys,
+  policyShape,
+  shapeKeys,
+  type ImportProblem,
+  type Match,
+  type Policy,
+  type PolicyShape,
+  type WalletProblem,
+  type WalletWarning,
+} from '@llave-inglesa/domain';
 import type { Label } from '../tipos.ts';
-import { waitText } from './textos.ts';
+import { policyText, waitText } from './textos.ts';
 
 /** Textos del descriptor de la cartera: xpubs, importación y lo que falta para escribirlo. */
 
@@ -53,7 +63,7 @@ export function descriptorProblemText(p: DescriptorProblem): string {
     case 'private-key':
       return 'El descriptor lleva una clave privada: permite gastar. No lo pegues aquí ni en ningún sitio conectado; no se ha guardado nada.';
     case 'unsupported-suffix':
-      return `${ordinal(p.index)[0]!.toUpperCase()}${ordinal(p.index).slice(1)} no termina en /<0;1>/*, /0/* o /1/*: esa forma de derivar no se lee.`;
+      return `${ordinal(p.index)[0]!.toUpperCase()}${ordinal(p.index).slice(1)} no termina en /<0;1>/*, /0/* o /1/* (en Miniscript, también /<2;3>/*, /<4;5>/*…): esa forma de derivar no se lee.`;
     case 'duplicate-key':
       return `${ordinal(p.index)[0]!.toUpperCase()}${ordinal(p.index).slice(1)} repite la xpub de otra.`;
     case 'mixed-networks':
@@ -67,22 +77,23 @@ export function descriptorProblemText(p: DescriptorProblem): string {
 
 export function importProblemText(p: ImportProblem, label: Label): string {
   switch (p.code) {
-    case 'model-policy':
-      return 'La política de este esquema no es ninguna de las plantillas: no se puede comparar con el descriptor. No se ha cambiado nada.';
     case 'descriptor-policy':
-      return 'El descriptor no es ninguna de las plantillas (sencilla, herencia simple, multisig decreciente o ampliable) o usa algo que aquí no se modela, como timelocks absolutos (after) o hashes. No se ha cambiado nada.';
-    case 'policy-mismatch':
-      return `El descriptor es ${shapeText(p.descriptor)} y el esquema ${shapeText(p.model)}. Ajusta la política del esquema y vuelve a importarlo.`;
-    case 'shape-mismatch': {
-      const shape = (s: { k: number; n: number }) => (s.n === 1 ? 'single-sig' : `${s.k} de ${s.n}`);
-      return `El descriptor es ${shape(p.descriptor)} y el esquema ${shape(p.model)}. Ajusta las keys o las firmas necesarias del esquema y vuelve a importarlo.`;
+      return 'El descriptor usa algo que aquí no se modela, como timelocks absolutos (after), esperas por tiempo o hashes. No se ha cambiado nada.';
+    case 'policy-mismatch': {
+      const descriptor = mapPolicyKeys(p.descriptor, (i) => `#${i + 1}`);
+      return `El descriptor es ${describePolicy(descriptor, (k) => k)} y el esquema ${describePolicy(p.model, label)}. Puedes usar la política del descriptor o ajustar la del esquema.`;
     }
     case 'fingerprint-not-found':
       return `El fingerprint de ${label(p.key)} no aparece en el descriptor: o el fingerprint está mal o el descriptor es de otra cartera. No se ha cambiado nada.`;
   }
 }
 
-/** Una forma de política en una frase, para comparar la del descriptor con la del esquema. */
+/** Una política en una frase, para comparar la del descriptor con la del esquema: por su plantilla, si es una. */
+function describePolicy(p: Policy, label: Label): string {
+  const shape = policyShape(p);
+  return shape ? shapeText(shape) : policyText(p, label);
+}
+
 function shapeText(s: PolicyShape): string {
   const kOfN = `${s.k} de ${s.keys.length}`;
   switch (s.kind) {

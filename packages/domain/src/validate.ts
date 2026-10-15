@@ -105,17 +105,25 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     }
   };
 
+  // Una key puede firmar en varias ramas (en Miniscript, cada vez con su par de derivación), pero no dos veces en el
+  // mismo grupo: con una sola semilla, «2 de K1, K1 y K2» no tiene sentido.
   const used: Id[] = [];
   const walk = (p: Policy, path: (string | number)[]) => {
     if (p.type === 'key') {
       ref(keys, p.key, [...path, 'key']);
-      if (used.includes(p.key)) report('error', 'key-repeated-in-policy', path, p.key);
       used.push(p.key);
       return;
     }
     if (p.type === 'older') return;
     if (p.k > p.of.length) report('error', 'threshold-out-of-range', [...path, 'k']);
-    p.of.forEach((child, i) => walk(child, [...path, 'of', i]));
+    const siblings: Id[] = [];
+    p.of.forEach((child, i) => {
+      if (child.type === 'key') {
+        if (siblings.includes(child.key)) report('error', 'key-repeated-in-policy', [...path, 'of', i], child.key);
+        siblings.push(child.key);
+      }
+      walk(child, [...path, 'of', i]);
+    });
   };
   walk(model.policy, ['policy']);
   if (spendableWithoutKeys(model.policy)) report('error', 'spendable-without-keys', ['policy']);

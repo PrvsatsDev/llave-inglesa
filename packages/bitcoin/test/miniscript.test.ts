@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { bech32 } from '@scure/base';
+import { HDKey } from '@scure/bip32';
 import { analyzeMiniscript, deriveAddress, formatDescriptor, miniscriptScript, miniscriptToString, parseDescriptor, parseMiniscript } from '../src/index.ts';
 import vectors from './vectors/core-miniscript.json' with { type: 'json' };
 
@@ -94,3 +96,32 @@ describe('descriptor wsh(miniscript)', () => {
     expect(parseDescriptor(`wsh(and_v(v:pk(${key}),pk(${key})))`)).toEqual({ ok: false, problem: { code: 'duplicate-key', index: 1 } });
   });
 });
+
+describe('una xpub en varias ramas (<2;3>, como Liana)', () => {
+  const node = HDKey.fromMasterSeed(new Uint8Array(32).fill(9));
+  const A = node.derive("m/48'/0'/0'/2'").publicExtendedKey;
+  const B = HDKey.fromMasterSeed(new Uint8Array(32).fill(8)).derive("m/48'/0'/0'/2'").publicExtendedKey;
+  const reused = `wsh(or_d(pk(${A}/<0;1>/*),and_v(v:pkh(${A}/<2;3>/*),older(10))))`;
+
+  it('lee cada aparición con su par, la escribe igual y deriva la segunda por las ramas 2 y 3', () => {
+    const r = parseDescriptor(reused);
+    if (!r.ok) throw new Error(r.problem.code);
+    expect(r.value.descriptor.keys.map((k) => k.multipath)).toEqual([undefined, 1]);
+    expect(formatDescriptor(r.value.descriptor).split('#')[0]).toBe(reused);
+    expect(formatDescriptor(r.value.descriptor, 1)).toContain(`${A}/3/*`);
+    const account = HDKey.fromExtendedKey(A);
+    for (const branch of [0, 1] as const) {
+      const keys = [account.deriveChild(branch).deriveChild(4).publicKey!, account.deriveChild(2 + branch).deriveChild(4).publicKey!];
+      const script = miniscriptScript(r.value.descriptor.miniscript!, (i) => keys[i]!);
+      expect(deriveAddress(r.value.descriptor, 'mainnet', branch, 4)).toBe(bech32.encode('bc', [0, ...bech32.toWords(sha256(script))]));
+    }
+  });
+
+  it('no admite la misma xpub en el mismo par, ni pares raros, ni otros pares fuera de Miniscript', () => {
+    expect(parseDescriptor(reused.replace('<2;3>', '<0;1>'))).toEqual({ ok: false, problem: { code: 'duplicate-key', index: 1 } });
+    expect(parseDescriptor(reused.replace('<2;3>', '<1;2>'))).toEqual({ ok: false, problem: { code: 'unsupported-suffix', index: 1 } });
+    expect(parseDescriptor(`wsh(multi(2,${A}/<2;3>/*,${B}/<0;1>/*))`)).toEqual({ ok: false, problem: { code: 'unsupported-suffix', index: 0 } });
+    expect(parseDescriptor(`wsh(multi(2,${A}/<0;1>/*,${A}/<2;3>/*))`)).toEqual({ ok: false, problem: { code: 'unsupported-suffix', index: 1 } });
+  });
+});
+
