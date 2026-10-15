@@ -9,7 +9,7 @@
 
 **Pon a prueba la custodia de tus bitcoins antes de que lo haga otro.**
 
-llave-inglesa es un simulador de esquemas de custodia Bitcoin (single-sig, passphrase, multisig).
+llave-inglesa es un simulador de esquemas de custodia Bitcoin (single-sig, passphrase, multisig y timelocks).
 Describes qué keys, dispositivos y backups tienes, dónde están y quién sabe qué, y la herramienta
 calcula:
 
@@ -77,7 +77,8 @@ fixtures/         Esquemas de ejemplo y la galería de calibración, usados tamb
 ```
 
 El motor no produce texto: devuelve estructuras y cada interfaz decide cómo contarlas. La
-política de gasto es un árbol tipo Miniscript, preparada para añadir timelocks.
+política de gasto es un árbol tipo Miniscript (keys, umbrales y esperas relativas), que se escribe como descriptor
+`wsh(miniscript)` comprobado con los vectores de Bitcoin Core.
 
 ```sh
 npm run check        # typecheck + tests unitarios y de propiedades (fast-check)
