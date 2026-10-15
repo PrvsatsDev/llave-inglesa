@@ -21,6 +21,7 @@ describe('Miniscript: vectores de Bitcoin Core (P2WSH)', () => {
       expect(a.nonMalleable).toBe(t.nonMalleable);
       expect(a.needsSignature).toBe(t.needsSig);
       expect(a.timelockMix).toBe(t.timelockMix);
+      if ('ops' in t) expect([a.ops, a.stackItems]).toEqual([t.ops, t.stack]);
       if (t.script) expect(toHex(miniscriptScript(parsed.value, hex))).toBe(t.script);
       // Se escribe igual que se leyó (con las mismas abreviaturas) y se vuelve a leer igual.
       const again = parseMiniscript(miniscriptToString(parsed.value, (k) => k));
@@ -35,6 +36,23 @@ describe('Miniscript: lectura', () => {
     expect(parseMiniscript('x:pk(A)')).toEqual({ ok: false, problem: { code: 'syntax' } });
     expect(parseMiniscript('older(01)')).toEqual({ ok: false, problem: { code: 'syntax' } });
     expect(parseMiniscript('multi_a(1,A)')).toEqual({ ok: false, problem: { code: 'unknown-fragment', name: 'multi_a' } });
+  });
+
+  it('cuenta las operaciones y la pila como Core: CHECKMULTISIG cuesta sus claves y pide k firmas y un 0', () => {
+    const p = parseMiniscript('multi(1,A,B,C)');
+    expect(p.ok && analyzeMiniscript(p.value)).toMatchObject({ ops: 4, stackItems: 2, withinLimits: true });
+  });
+
+  it('no da por seguro un script que pasa de 201 operaciones o de 100 elementos en el witness', () => {
+    const chain = (n: number, part: (i: number) => string) => `${Array.from({ length: n }, (_, i) => `and_v(${part(i)},`).join('')}pk(Z)${')'.repeat(n)}`;
+    // Cada v:older cuesta 2 operaciones (CSV y VERIFY) y nada en la pila.
+    const ok = parseMiniscript(chain(100, () => 'v:older(1)'));
+    const tooMany = parseMiniscript(chain(101, () => 'v:older(1)'));
+    expect(ok.ok && analyzeMiniscript(ok.value)).toMatchObject({ ops: 201, stackItems: 1, sane: true });
+    expect(tooMany.ok && analyzeMiniscript(tooMany.value)).toMatchObject({ ops: 203, withinLimits: false, sane: false });
+    // Cada v:pkh pide firma y clave: 50 de ellas y la última firma son 101 elementos.
+    const big = parseMiniscript(chain(50, (i) => `v:pkh(K${i})`));
+    expect(big.ok && analyzeMiniscript(big.value)).toMatchObject({ stackItems: 101, withinLimits: false, sane: false });
   });
 
   it('marca las keys repetidas como no seguras', () => {
