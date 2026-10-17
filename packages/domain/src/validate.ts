@@ -1,3 +1,4 @@
+import { MAX_MINISCRIPT_DEPTH } from '@llave-inglesa/bitcoin';
 import { normalizeLabel, policyTimelocks, repeated, spendableWithoutKeys } from './model-index.ts';
 import { CustodyModelSchema, type CustodyModel, type Id, type Policy, type SecretRef } from './schema.ts';
 
@@ -25,7 +26,9 @@ export type IssueCode =
   | 'protection-not-physical'
   | 'invalid-nesting'
   | 'invalid-home'
-  | 'invalid-computer-place';
+  | 'invalid-computer-place'
+  /** Documento anidado más allá de MAX_DEPTH (un fichero hecho para colgar la app): ni se valida. */
+  | 'too-deep';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -42,8 +45,29 @@ export type ParseResult =
   | { ok: true; model: CustodyModel; warnings: Issue[] }
   | { ok: false; issues: Issue[] };
 
+/**
+ * Anidamiento máximo de un documento, para que uno hecho a propósito no agote la pila al validarlo o analizarlo
+ * (los dos son recursivos). Cada nivel de la política suma dos (el `thresh` y su lista) y un fragmento de Miniscript
+ * da como mucho dos niveles (`andor`): así cabe la política de cualquier descriptor que se pueda importar. En el
+ * límite (300 `thresh` anidados) basta una pila de 600 KB; la de un navegador ronda los 1000.
+ */
+export const MAX_DEPTH = 4 * MAX_MINISCRIPT_DEPTH + 10;
+
+/** Sin recursión: lo que se mide puede ser justo lo que agotaría la pila. */
+function depthExceeds(input: unknown, max: number): boolean {
+  const pending: [unknown, number][] = [[input, 0]];
+  for (let item = pending.pop(); item; item = pending.pop()) {
+    const [value, depth] = item;
+    if (typeof value !== 'object' || value === null) continue;
+    if (depth >= max) return true;
+    for (const child of Object.values(value)) pending.push([child, depth + 1]);
+  }
+  return false;
+}
+
 /** Valida un documento arbitrario (p. ej. JSON importado) y lo normaliza. */
 export function parseModel(input: unknown): ParseResult {
+  if (depthExceeds(input, MAX_DEPTH)) return { ok: false, issues: [{ severity: 'error', code: 'too-deep', path: [] }] };
   const parsed = CustodyModelSchema.safeParse(input);
   if (!parsed.success) {
     return {

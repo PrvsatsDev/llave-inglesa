@@ -516,7 +516,9 @@ function render<K>(ms: Miniscript<K>, key: (k: K) => string, wrapped: boolean): 
 export type MiniscriptProblem =
   | { code: 'syntax' }
   /** Un fragmento que no existe o que no se admite en P2WSH (multi_a, p. ej.). */
-  | { code: 'unknown-fragment'; name: string };
+  | { code: 'unknown-fragment'; name: string }
+  /** Anida más de MAX_MINISCRIPT_DEPTH fragmentos. */
+  | { code: 'too-deep' };
 
 export type MiniscriptParseResult = { ok: true; value: Miniscript<string> } | { ok: false; problem: MiniscriptProblem };
 
@@ -560,14 +562,23 @@ export function parseMiniscript(text: string): MiniscriptParseResult {
   }
 }
 
-function parseExpr(text: string): Miniscript<string> {
+/**
+ * Anidamiento máximo que se lee. Ningún esquema real se acerca (los de Liana no pasan de diez), pero Core sí acepta
+ * una cadena de cien `and_v` (la de 201 operaciones). Sin límite, un texto anidado miles de veces agotaría la pila,
+ * aquí y en todo lo que recorre el árbol después: con una pila de 400 KB, como la de un worker modesto, se leen 800.
+ */
+export const MAX_MINISCRIPT_DEPTH = 150;
+
+function parseExpr(text: string, depth = 0): Miniscript<string> {
+  if (depth > MAX_MINISCRIPT_DEPTH) throw new ParseError({ code: 'too-deep' });
+  const sub = (t: string) => parseExpr(t, depth + 1);
   const open = text.indexOf('(');
   const head = open < 0 ? text : text.slice(0, open);
   const colon = head.indexOf(':');
   if (colon >= 0) {
     const wrappers = head.slice(0, colon);
     if (wrappers === '' || !/^[asctdvjnlu]+$/.test(wrappers)) throw syntax();
-    let inner = parseExpr(text.slice(colon + 1));
+    let inner = sub(text.slice(colon + 1));
     for (const c of [...wrappers].reverse()) {
       if (c === 't') inner = { f: 'and_v', x: inner, y: { f: '1' } };
       else if (c === 'l') inner = { f: 'or_i', x: { f: '0' }, y: inner };
@@ -616,17 +627,17 @@ function parseExpr(text: string): Miniscript<string> {
       return { f: 'multi', k: parseNumber(args[0]!), keys: args.slice(1).map(key) };
     case 'thresh':
       if (args.length < 2) throw syntax();
-      return { f: 'thresh', k: parseNumber(args[0]!), subs: args.slice(1).map(parseExpr) };
+      return { f: 'thresh', k: parseNumber(args[0]!), subs: args.slice(1).map(sub) };
     case 'andor':
       arity(3);
-      return { f: 'andor', x: parseExpr(args[0]!), y: parseExpr(args[1]!), z: parseExpr(args[2]!) };
+      return { f: 'andor', x: sub(args[0]!), y: sub(args[1]!), z: sub(args[2]!) };
     case 'and_n':
       arity(2);
-      return { f: 'andor', x: parseExpr(args[0]!), y: parseExpr(args[1]!), z: { f: '0' } };
+      return { f: 'andor', x: sub(args[0]!), y: sub(args[1]!), z: { f: '0' } };
   }
   if (BINARY.has(name)) {
     arity(2);
-    return { f: name as 'and_v', x: parseExpr(args[0]!), y: parseExpr(args[1]!) };
+    return { f: name as 'and_v', x: sub(args[0]!), y: sub(args[1]!) };
   }
   if (WRAPPERS.has(name)) throw syntax();
   throw new ParseError({ code: 'unknown-fragment', name });

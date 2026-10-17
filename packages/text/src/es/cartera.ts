@@ -1,4 +1,4 @@
-import type { DescriptorProblem, ScriptType, XpubProblem } from '@llave-inglesa/bitcoin';
+import { MAX_MINISCRIPT_DEPTH, type DescriptorProblem, type ScriptType, type XpubProblem } from '@llave-inglesa/bitcoin';
 import {
   mapPolicyKeys,
   policyKeys,
@@ -58,6 +58,8 @@ export function descriptorProblemText(p: DescriptorProblem): string {
       return 'Ese tipo de descriptor todavía no se lee: solo multisig wsh/sh-wsh con (sorted)multi, single-sig wpkh/sh-wpkh y Miniscript en wsh (sin Taproot ni sh(wsh(miniscript))).';
     case 'miniscript-unsafe':
       return 'Ese Miniscript no es válido o no es seguro, y Bitcoin Core no lo aceptaría: los tipos no encajan, alguna forma de gastar no pide firma, la firma se puede alterar o mezcla timelocks de altura y de tiempo.';
+    case 'too-deep':
+      return `Ese Miniscript anida más de ${MAX_MINISCRIPT_DEPTH} niveles: no se lee (ningún esquema real llega a tanto).`;
     case 'syntax':
       return 'No se entiende el descriptor: comprueba que está completo.';
     case 'bad-key':

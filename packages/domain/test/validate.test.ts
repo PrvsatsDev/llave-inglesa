@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { indexModel, parseModel } from '../src/index.ts';
+import { indexModel, MAX_DEPTH, parseModel } from '../src/index.ts';
 
 const valid = {
   format: 'llave-inglesa',
@@ -40,6 +40,17 @@ describe('parseModel', () => {
 
   it('exige un titular', () => {
     expect(codes({ ...valid, people: [{ id: 'yo', name: 'Yo', role: 'heir' }] })).toContain('no-owner');
+  });
+
+  it('rechaza un documento anidado sin fin (un fichero hecho para colgar la app) sin agotar la pila', () => {
+    const nest = (levels: number) => {
+      let policy: unknown = { type: 'key', key: 'k1' };
+      for (let i = 0; i < levels; i++) policy = { type: 'thresh', k: 1, of: [policy] };
+      return { ...valid, policy };
+    };
+    expect(parseModel(nest(MAX_DEPTH / 2 - 5)).ok).toBe(true);
+    expect(codes(nest(MAX_DEPTH / 2))).toEqual(['too-deep']);
+    expect(codes(nest(100_000))).toEqual(['too-deep']);
   });
 
   it('acepta sin avisos las referencias latentes (desactivadas)', () => {
