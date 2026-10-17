@@ -122,6 +122,8 @@ export type DescriptorProblem =
    * pueden alterar, timelocks de altura y de tiempo mezclados…
    */
   | { code: 'miniscript-unsafe' }
+  /** Miniscript anidado más de MAX_MINISCRIPT_DEPTH niveles. */
+  | { code: 'too-deep' }
   | { code: 'syntax' }
   /** La key número `index` (desde 0) no se entiende o no es una xpub válida. */
   | { code: 'bad-key'; index: number; xpub?: XpubProblem }
@@ -238,7 +240,10 @@ function parseKeys(texts: readonly string[], pairs: boolean): { ok: true; keys: 
 /** wsh(miniscript): las keys, en el orden en que aparecen, pasan a ser índices. */
 function parseMiniscriptDescriptor(text: string, hadChecksum: boolean): DescriptorResult {
   const parsed = parseMiniscript(text);
-  if (!parsed.ok) return { ok: false, problem: { code: parsed.problem.code === 'syntax' ? 'syntax' : 'unsupported-script' } };
+  if (!parsed.ok) {
+    const { code } = parsed.problem;
+    return { ok: false, problem: { code: code === 'syntax' || code === 'too-deep' ? code : 'unsupported-script' } };
+  }
   const keyTexts = miniscriptKeys(parsed.value);
   if (keyTexts.length === 0) return { ok: false, problem: { code: 'miniscript-unsafe' } };
   const keys = parseKeys(keyTexts, true);

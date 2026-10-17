@@ -761,6 +761,10 @@ export const GUIA: readonly Capitulo[] = [
         items: [
           [n('Sin red'), ': la política de seguridad del contenido de la página prohíbe cualquier petición. No hay cuentas, ni analítica, ni recursos de terceros.'],
           [
+            n('Tu navegador'),
+            ': esa política no frena lo que el navegador hace por su cuenta. La página le pide que no la traduzca y que no pase lo que escribes por el corrector ni el autocompletado, porque los dos pueden enviarlo a un servidor. Pero una extensión (Grammarly, un gestor de contraseñas, un asistente de IA) puede leer toda la página: úsala en un perfil sin extensiones. Lo que copias, como el descriptor, queda en el historial del portapapeles, que algunos sistemas sincronizan con la nube.',
+          ],
+          [
             n('Cifrado'),
             ': tu esquema se guarda en el navegador o en un fichero .llave cifrado con AES-256-GCM y una clave que sale de tu contraseña (PBKDF2). Sin la contraseña no hay forma de abrirlo, ni para ti.',
           ],

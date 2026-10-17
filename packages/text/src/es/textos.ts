@@ -317,6 +317,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'invalid-nesting': 'Una ubicación está dentro de otra de forma no válida (ambas físicas y un solo nivel)',
   'invalid-home': 'Alguien vive en un sitio donde no se puede vivir (tiene que ser una ubicación física, ni dentro de otra ni una caja del banco)',
   'invalid-computer-place': 'Un ordenador de firma tiene que estar guardado en una ubicación o llevarlo una persona (una de las dos)',
+  'too-deep': 'El documento está anidado más de lo que puede ser un esquema real: no se abre',
 };
 
 export function issueText(issue: Issue, label: Label): string {

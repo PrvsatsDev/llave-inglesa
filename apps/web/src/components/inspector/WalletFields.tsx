@@ -1,6 +1,7 @@
 import { looksLikeSeedWords, normalizePath, parseXpub } from '@llave-inglesa/bitcoin';
 import { XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { PRIVADO } from '../../lib/privacidad.ts';
 import { UI, WALLET_TEXT, xpubProblemText } from '../../lib/text.ts';
 import { Field } from './fields.tsx';
 import styles from './fields.module.css';
@@ -43,7 +44,7 @@ export function PathField({ value, onChange }: { value: string | undefined; onCh
             className={`${styles.input} ${message ? styles.invalid : ''}`}
             value={text}
             placeholder={T.pistaDerivacion}
-            spellCheck={false}
+            {...PRIVADO}
             onChange={(e) => {
               const t = e.target.value;
               setText(t);
@@ -97,8 +98,7 @@ export function XpubField({ value, onChange }: { value: string | undefined; onCh
             value={text}
             rows={3}
             placeholder={T.pistaXpub}
-            spellCheck={false}
-            autoComplete="off"
+            {...PRIVADO}
             onChange={(e) => change(e.target.value)}
           />
           {message &&

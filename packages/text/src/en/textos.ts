@@ -313,6 +313,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'invalid-nesting': 'A location is inside another in an invalid way (both must be physical, one level only)',
   'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',
   'invalid-computer-place': 'A signing computer must be kept in a location or carried by a person (one of the two)',
+  'too-deep': 'The document is nested deeper than any real setup could be: it will not be opened',
 };
 
 export const issueText: typeof es.issueText = (issue: Issue, label: Label) => {

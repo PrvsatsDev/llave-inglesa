@@ -11,7 +11,7 @@ import {
   type Envelope,
   type VaultKey,
 } from '@llave-inglesa/vault';
-import { UI } from '../lib/text.ts';
+import { issueText, UI } from '../lib/text.ts';
 import { alertDialog, askPassword, confirmDialog, welcomeDialog } from '../store/dialog.ts';
 import { useLayout } from '../store/layout.ts';
 import { useNavigation } from '../store/navigation.ts';
@@ -91,7 +91,7 @@ export async function confirmDiscard(): Promise<boolean> {
 function reportInvalid(result: Extract<ParseResult, { ok: false }>) {
   return alertDialog(T.invalido.titulo, [
     T.invalido.intro,
-    ...result.issues.slice(0, 5).map((i) => `• ${i.path.join('.') || T.invalido.raiz}: ${i.detail ?? i.code}`),
+    ...result.issues.slice(0, 5).map((i) => `• ${i.path.join('.') || T.invalido.raiz}: ${i.detail ?? issueText(i, (id) => id)}`),
   ]);
 }
 
@@ -215,6 +215,15 @@ export function rescueDownload() {
 /** Abre un fichero .llave (cifrado) o .json (en claro). */
 export async function importFile(file: File) {
   if (!(await confirmDiscard())) return;
+  try {
+    await openFile(file);
+  } catch {
+    // Un fichero dañado o hecho a propósito (p. ej. una sal que no es base64) no debe fallar en silencio.
+    await alertDialog(T.noSePuedeAbrir.titulo, [T.noSePuedeAbrir.noEsquema]);
+  }
+}
+
+async function openFile(file: File) {
   const read = readDocument(await file.text());
   if (read.kind === 'invalid') {
     await alertDialog(T.noSePuedeAbrir.titulo, [read.reason === 'not-json' ? T.noSePuedeAbrir.noJson : T.noSePuedeAbrir.noEsquema]);

@@ -252,6 +252,7 @@ A model always simplifies. These are the deliberate shortcuts of llave-inglesa:
 ## 9. Privacy and verification
 
 - **No network**: the page’s content security policy forbids any request. There are no accounts, no analytics, and no third-party resources.
+- **Your browser**: that policy does not stop what the browser does on its own. The page asks it not to translate it and not to run what you type through the spell checker or autofill, because both can send it to a server. But an extension (Grammarly, a password manager, an AI assistant) can read the whole page: use it in a profile without extensions. What you copy, such as the descriptor, stays in the clipboard history, which some systems sync to the cloud.
 - **Encryption**: your setup is stored in the browser or in a .llave file encrypted with AES-256-GCM and a key derived from your password (PBKDF2). Without the password there is no way to open it, not even for you.
 - **Offline**: each version is also published as a zip to use on your computer without internet.
 - **Verifiable**: the code is open and the build is reproducible. Rebuilding a version gives exactly the same files that are published, and they can be compared with the website file by file.

@@ -3,6 +3,7 @@ import { ChevronDown, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { secretBadge } from '../../graph/build.ts';
 import { SecretBadge } from '../../graph/SecretBadge.tsx';
+import { PRIVADO } from '../../lib/privacidad.ts';
 import { sameSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
 import styles from './fields.module.css';
@@ -69,7 +70,7 @@ export function TextInput({ id, value, onChange, placeholder, optional = false }
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      spellCheck={false}
+      {...PRIVADO}
     />
   );
 }
@@ -119,7 +120,7 @@ export function NumberInput({ id, value, min, max, onChange, optional = false, p
 }
 
 export function TextArea({ id, value, onChange, placeholder }: { id?: string; value: string; onChange(v: string): void; placeholder?: string }) {
-  return <textarea id={id} className={styles.textarea} value={value} rows={3} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />;
+  return <textarea id={id} className={styles.textarea} value={value} rows={3} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} {...PRIVADO} />;
 }
 
 export function Select<T extends string>({ id, value, options, onChange, label }: {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bech32 } from '@scure/base';
 import { HDKey } from '@scure/bip32';
-import { analyzeMiniscript, deriveAddress, formatDescriptor, miniscriptScript, miniscriptToString, parseDescriptor, parseMiniscript } from '../src/index.ts';
+import { analyzeMiniscript, deriveAddress, formatDescriptor, MAX_MINISCRIPT_DEPTH, miniscriptScript, miniscriptToString, parseDescriptor, parseMiniscript } from '../src/index.ts';
 import vectors from './vectors/core-miniscript.json' with { type: 'json' };
 
 const hex = (s: string) => Uint8Array.from(s.match(/../g)!.map((b) => Number.parseInt(b, 16)));
@@ -38,6 +38,15 @@ describe('Miniscript: lectura', () => {
     expect(parseMiniscript('x:pk(A)')).toEqual({ ok: false, problem: { code: 'syntax' } });
     expect(parseMiniscript('older(01)')).toEqual({ ok: false, problem: { code: 'syntax' } });
     expect(parseMiniscript('multi_a(1,A)')).toEqual({ ok: false, problem: { code: 'unknown-fragment', name: 'multi_a' } });
+  });
+
+  it('no lee lo anidado más de la cuenta, sin agotar la pila aunque sean miles de niveles', () => {
+    const nest = (n: number) => 'and_v(v:older(1),'.repeat(n) + 'pk(A)' + ')'.repeat(n);
+    expect(parseMiniscript(nest(MAX_MINISCRIPT_DEPTH / 2)).ok).toBe(true);
+    expect(parseMiniscript(nest(MAX_MINISCRIPT_DEPTH))).toEqual({ ok: false, problem: { code: 'too-deep' } });
+    expect(parseMiniscript(nest(50_000))).toEqual({ ok: false, problem: { code: 'too-deep' } });
+    expect(parseMiniscript(`${'v:'.repeat(50_000)}pk(A)`)).toEqual({ ok: false, problem: { code: 'too-deep' } });
+    expect(parseDescriptor(`wsh(${nest(50_000)})`)).toEqual({ ok: false, problem: { code: 'too-deep' } });
   });
 
   it('cuenta las operaciones y la pila como Core: CHECKMULTISIG cuesta sus claves y pide k firmas y un 0', () => {

@@ -14,6 +14,7 @@ import {
 import { devicesWithoutMiniscript } from '@llave-inglesa/engine';
 import { AlertTriangle, Check, Copy, Eye, FileInput, GitBranch, Printer, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { PRIVADO } from '../lib/privacidad.ts';
 import {
   descriptorProblemText,
   importProblemText,
@@ -225,8 +226,7 @@ function ImportForm({ model, onImport, onCancel }: { model: CustodyModel; onImpo
         rows={5}
         aria-label={T.aImportar}
         placeholder={T.ejemplo}
-        spellCheck={false}
-        autoComplete="off"
+        {...PRIVADO}
         onChange={(e) => {
           setText(e.target.value);
           setError(null);

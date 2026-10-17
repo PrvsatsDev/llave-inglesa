@@ -3,6 +3,7 @@ import type { InheritanceLetter } from '@llave-inglesa/engine';
 import { AlertTriangle, Printer, X } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { PRIVADO } from '../lib/privacidad.ts';
 import {
   LETTER_TEXT,
   letterGreeting,
@@ -55,8 +56,7 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
         className={styles.input}
         value={names[id] ?? ''}
         placeholder={index.label(id)}
-        autoComplete="off"
-        spellCheck={false}
+        {...PRIVADO}
         aria-label={T.nombreReal(index.label(id))}
         onChange={(e) => setNames((n) => ({ ...n, [id]: e.target.value }))}
       />
@@ -99,7 +99,7 @@ export function InheritanceLetterSheet({ model, letter, onClose }: { model: Cust
           className={styles.input}
           rows={4}
           value={message}
-          autoComplete="off"
+          {...PRIVADO}
           placeholder={T.pistaMensaje}
           onChange={(e) => setMessage(e.target.value)}
         />
