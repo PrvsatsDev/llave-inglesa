@@ -69,7 +69,8 @@ Monorepo con npm workspaces y TypeScript estricto.
 packages/domain   Esquema del documento (zod = tipos + validación), integridad y operaciones de edición puras
 packages/engine   Motor puro y determinista: inferencia con justificaciones, ataques, desgracias,
                   conjuntos mínimos de corte (árbol de fallos) y puntuaciones (parámetros en score.ts)
-packages/text     Todos los textos en español, compartidos por la web y la CLI
+packages/text     Todos los textos, en español e inglés, compartidos por la web y la CLI
+packages/bitcoin  Bitcoin puro: xpubs (SLIP-132), descriptores con checksum (BIP-380), Miniscript y direcciones
 packages/vault    Cifrado de documentos (AES-256-GCM + PBKDF2) y lectura de ficheros
 apps/web          React + React Flow + zustand; el motor corre en un Web Worker
 apps/cli          Informe en terminal
