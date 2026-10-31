@@ -20,6 +20,10 @@ export interface LetterPiece {
   provides: SecretRef[];
   /** Keys que se firman con este dispositivo. */
   signs: Id[];
+  /** FROST: shares de las que este dispositivo firma su parte (solo si alguna). */
+  signsShares?: { key: Id; share: number }[];
+  /** FROST: keys de las que este móvil u ordenador es el coordinador emparejado (solo si alguna). */
+  coordinates?: Id[];
   /** El dispositivo se desbloquea con su PIN (que estará en otra pieza o en la memoria de alguien). */
   needsPin: boolean;
   /** El dispositivo tiene registrada la cartera: da las xpubs de todas las keys. */
@@ -106,7 +110,7 @@ export function inheritanceLetter(model: CustodyModel, inheritance: InheritanceR
   /** Un backup que no se usa pero al que llegan: lo que contiene, tal cual, y cuánto hay que esperar para que sirva. */
   const spare = (item: Id): LetterPiece => {
     const provides = (model.artifacts.find((a) => a.id === item)?.contents ?? []).filter((c) => isActiveSecret(model, c));
-    const waits = provides.flatMap((c) => (c.type === 'seed' ? [keyWait(model.policy, c.key)] : [])).filter((w): w is number => w !== null);
+    const waits = provides.flatMap((c) => (c.type === 'seed' || c.type === 'share' ? [keyWait(model.policy, c.key)] : [])).filter((w): w is number => w !== null);
     return { item, kind: 'artifact', needed: false, provides, signs: [], needsPin: false, hasWallet: false, wait: waits.length ? Math.min(...waits) : 0 };
   };
 
@@ -158,10 +162,23 @@ function piece(model: CustodyModel, facts: readonly DerivedFact[], item: Id): Le
       : [],
   );
   const signs = facts.flatMap((f) => (f.fact.kind === 'sign' && f.justification.via?.device === item ? [f.fact.key] : []));
+  const signsShares = facts.flatMap((f) => (f.fact.kind === 'share-sign' && f.justification.via?.device === item ? [{ key: f.fact.key, share: f.fact.share }] : []));
+  const coordinates = facts.flatMap((f) => (f.fact.kind === 'coordinator' && f.justification.rule === 'paired-coordinator' && f.justification.via?.item === item ? [f.fact.key] : []));
   const hasWallet = facts.some((f) => f.justification.rule === 'device-wallet' && f.justification.via?.device === item);
   const unlocked = facts.some((f) => f.fact.kind === 'unlocked' && f.fact.device === item && f.justification.premises.includes(itemFact));
   const kind = device ? 'device' : model.computers.some((c) => c.id === item) ? 'computer' : 'artifact';
-  return { item, kind, needed: true, provides, signs, needsPin: unlocked && device?.pinProtected === true, hasWallet, wait: 0 };
+  return {
+    item,
+    kind,
+    needed: true,
+    provides,
+    signs,
+    ...(signsShares.length > 0 && { signsShares }),
+    ...(coordinates.length > 0 && { coordinates }),
+    needsPin: unlocked && device?.pinProtected === true,
+    hasWallet,
+    wait: 0,
+  };
 }
 
 /** Ubicaciones físicas a las que llega algún heredero tras el fallecimiento; primero las que solo se abren entonces. */

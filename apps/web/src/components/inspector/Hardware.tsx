@@ -117,6 +117,9 @@ export function catalogFeatures(m: CatalogModel): string {
     m.duress.length > 0 ? T.conCoaccion(m.duress.map((d) => T.coaccion[d])) : T.sinCoaccion,
     m.registersMultisig ? T.registraMultisig : T.noRegistraMultisig,
     m.miniscript ? (m.miniscript.edge ? T.miniscriptEdge : T.firmaMiniscript(m.miniscript.since)) : T.noFirmaMiniscript,
+    m.taproot?.singleSig ? (m.taproot.singleSig.edge ? T.taprootEdge : T.firmaTaproot(m.taproot.singleSig.since)) : T.noFirmaTaproot,
+    m.frost ? T.frost : null,
+    m.pin ? null : T.sinPin,
     m.diy ? T.montable : null,
   ].filter((f) => f !== null);
   return T.segunCatalogo(CATALOG_DATE, features);

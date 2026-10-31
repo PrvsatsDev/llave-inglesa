@@ -51,8 +51,20 @@ import {
   setPolicyKey,
   setPolicyBlocks,
   policyRoot,
+  splitKey,
+  unsplitKey,
+  setSplitScheme,
+  addShare,
+  removeShare,
+  setShareThreshold,
+  setKeyCoordinators,
+  setDeviceShares,
+  updateArtifact,
+  frostBlockers,
+  withDocumentVersion,
   type CustodyModel,
   type Policy,
+  type SecretRef,
 } from '../src/index.ts';
 
 const FIXTURES = ['todo-en-casa', 'distribuido-2de3', 'singlesig-passphrase'];
@@ -363,6 +375,35 @@ const ops: Op[] = [
     return setComputerConnects(m, m.computers[pick(m.computers.length)]!.id, pick(3) ? ids : undefined);
   },
   (m, pick) => (m.devices.length ? setKeyGeneratedOn(m, m.keys[pick(m.keys.length)]!.id, m.devices[pick(m.devices.length)]!.id) : m),
+  // Keys repartidas.
+  (m, pick) => splitKey(m, m.keys[pick(m.keys.length)]!.id, pick(2) ? 'frost' : 'shamir', pick(6), pick(6)),
+  (m, pick) => unsplitKey(m, m.keys[pick(m.keys.length)]!.id),
+  (m, pick) => setSplitScheme(m, m.keys[pick(m.keys.length)]!.id, pick(2) ? 'frost' : 'shamir'),
+  (m, pick) => addShare(m, m.keys[pick(m.keys.length)]!.id).model,
+  (m, pick) => {
+    const k = m.keys[pick(m.keys.length)]!;
+    return k.split ? removeShare(m, k.id, k.split.shares[pick(k.split.shares.length)]!) : m;
+  },
+  (m, pick) => setShareThreshold(m, m.keys[pick(m.keys.length)]!.id, pick(6)),
+  (m, pick) => setKeyCoordinators(m, m.keys[pick(m.keys.length)]!.id, pick(3) ? m.computers.filter(() => pick(2) === 0).map((c) => c.id) : undefined),
+  (m, pick) => {
+    if (!m.devices.length) return m;
+    const shares = m.keys.flatMap((k) => (k.split?.shares ?? []).filter(() => pick(3) === 0).map((share) => ({ key: k.id, share })));
+    return setDeviceShares(m, m.devices[pick(m.devices.length)]!.id, shares);
+  },
+  // Contenidos, memorias y dispositivos a mano, con lo que haya (también semillas de keys FROST, que se ignoran).
+  (m, pick) => {
+    if (!m.artifacts.length) return m;
+    const k = m.keys[pick(m.keys.length)]!;
+    const s: SecretRef = k.split && pick(2) ? { type: 'share', key: k.id, share: k.split.shares[pick(k.split.shares.length)]! } : { type: 'seed', key: k.id };
+    return updateArtifact(m, m.artifacts[pick(m.artifacts.length)]!.id, { contents: [s] });
+  },
+  (m, pick) => {
+    const k = m.keys[pick(m.keys.length)]!;
+    const s: SecretRef = k.split && pick(2) ? { type: 'share', key: k.id, share: k.split.shares[pick(k.split.shares.length)]! } : { type: 'seed', key: k.id };
+    return updatePerson(m, m.people[pick(m.people.length)]!.id, { knows: [s] });
+  },
+  (m, pick) => updateKey(m, m.keys[pick(m.keys.length)]!.id, { passphrase: pick(2) === 0 }),
 ];
 
 describe('ordenador de firma', () => {
@@ -560,14 +601,38 @@ describe('políticas con timelocks', () => {
   });
 });
 
+/** FROST 2 de 3: tres dispositivos con una share cada uno, un móvil emparejado y una tarjeta de backup. */
+function frostBase(): CustodyModel {
+  let m = splitKey(blankModel(), 'k1', 'frost', 2, 3);
+  m = addLocation(m, 'Banco').model;
+  for (let i = 1; i <= 3; i++) {
+    const d = addDevice(m, m.locations[i % 2]!.id).model;
+    m = setDeviceShares(d, d.devices.at(-1)!.id, [{ key: 'k1', share: i }]);
+  }
+  const phone = addComputer(m, { carriedBy: 'yo' });
+  m = setKeyCoordinators(phone.model, 'k1', [phone.id]);
+  const card = addArtifact(m, 'casa');
+  return card.model;
+}
+
+/** Shamir 2 de 3 de K2 en todo-en-casa: las shares en tres backups. */
+function shamirBase(): CustodyModel {
+  let m = splitKey(casa, 'k2', 'shamir', 2, 3);
+  for (let i = 1; i <= 3; i++) {
+    const a = addArtifact(m, 'casa');
+    m = updateArtifact(a.model, a.id, { contents: [{ type: 'share', key: 'k2', share: i }] });
+  }
+  return m;
+}
+
 describe('propiedad: editar nunca rompe el modelo', () => {
   it('cualquier secuencia de operaciones deja un modelo válido', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom(...FIXTURES, ...TIMELOCKS),
+        fc.constantFrom(...FIXTURES, ...TIMELOCKS, 'blank', 'frost', 'shamir'),
         fc.array(fc.tuple(fc.nat(ops.length - 1), fc.array(fc.nat(1000), { minLength: 4, maxLength: 4 })), { maxLength: 25 }),
         (name, steps) => {
-          let m = fixture(name);
+          let m = name === 'blank' ? blankModel() : name === 'frost' ? frostBase() : name === 'shamir' ? shamirBase() : fixture(name);
           for (const [op, seeds] of steps) {
             let i = 0;
             m = ops[op]!(m, (n) => seeds[i++ % seeds.length]! % n);
@@ -637,3 +702,104 @@ describe('editor libre del árbol', () => {
   });
 });
 
+
+describe('keys repartidas (FROST, Shamir)', () => {
+  const blank = blankModel();
+  const frost = splitKey(blank, 'k1', 'frost', 2, 3);
+
+  it('repartir una key: n shares numeradas, k ajustado a 1…n', () => {
+    expect(frost.keys[0]!.split).toEqual({ scheme: 'frost', k: 2, shares: [1, 2, 3] });
+    expect(splitKey(blank, 'k1', 'shamir', 9, 3).keys[0]!.split).toEqual({ scheme: 'shamir', k: 3, shares: [1, 2, 3] });
+    expect(splitKey(frost, 'k1', 'shamir', 1, 2)).toBe(frost);
+  });
+
+  it('a FROST solo sin semilla escrita, sin dispositivo que la guarde entera y sin passphrase: no se quita nada solo', () => {
+    expect(frostBlockers(casa, 'k1').map((b) => b.type)).toEqual(['seed-written', 'held-by']);
+    expect(splitKey(casa, 'k1', 'frost', 2, 3)).toBe(casa);
+    // Shamir sí: la semilla existe y el dispositivo la guarda.
+    expect(splitKey(casa, 'k1', 'shamir', 2, 3).keys[0]!.split?.scheme).toBe('shamir');
+  });
+
+  it('quitar una share la quita de backups, memorias y dispositivos; el umbral baja si se pasa', () => {
+    let m = addDevice(frost, 'casa').model;
+    const device = m.devices[0]!.id;
+    m = setDeviceShares(m, device, [{ key: 'k1', share: 2 }, { key: 'k1', share: 3 }]);
+    m = updatePerson(m, 'yo', { knows: [{ type: 'share', key: 'k1', share: 2 }] });
+    m = removeShare(setShareThreshold(m, 'k1', 3), 'k1', 2);
+    expect(m.keys[0]!.split).toEqual({ scheme: 'frost', k: 2, shares: [1, 3] });
+    expect(m.devices[0]!.shares).toEqual([{ key: 'k1', share: 3 }]);
+    expect(m.people[0]!.knows).toEqual([]);
+    expect(errors(m)).toEqual([]);
+  });
+
+  it('volver a key normal limpia todas sus shares; con una key FROST no se escribe su semilla', () => {
+    let m = addArtifact(frost, 'casa').model;
+    expect(m.artifacts[0]!.contents).toEqual([{ type: 'share', key: 'k1', share: 1 }]);
+    expect(updateArtifact(m, m.artifacts[0]!.id, { contents: [{ type: 'seed', key: 'k1' }] })).toBe(m);
+    m = unsplitKey(m, 'k1');
+    expect(m.keys[0]!.split).toBeUndefined();
+    expect(m.artifacts).toEqual([]);
+  });
+
+  it('un dispositivo solo guarda shares de keys FROST que existen, y nunca la key FROST entera', () => {
+    let m = addDevice(frost, 'casa').model;
+    const device = m.devices[0]!.id;
+    m = setDeviceShares(m, device, [{ key: 'k1', share: 7 }, { key: 'k1', share: 1 }, { key: 'k1', share: 1 }]);
+    expect(m.devices[0]!.shares).toEqual([{ key: 'k1', share: 1 }]);
+    expect(updateDevice(m, device, { holds: ['k1'] }).devices[0]!.holds).toEqual([]);
+    expect(updateKey(m, 'k1', { passphrase: true }).keys[0]!.passphrase).toBe(false);
+  });
+
+  it('los móviles emparejados se limpian al eliminar el ordenador o a quien lo lleva', () => {
+    let m = addComputer(frost, { carriedBy: 'yo' }).model;
+    const phone = m.computers[0]!.id;
+    m = setKeyCoordinators(m, 'k1', [phone, 'no-existe']);
+    expect(m.keys[0]!.split?.coordinators).toEqual([phone]);
+    expect(removeComputer(m, phone).keys[0]!.split?.coordinators).toEqual([]);
+    const other = addPerson(m, 'Otra', 'owner');
+    const moved = setComputerPlace(other.model, phone, { carriedBy: other.id });
+    expect(removePerson(moved, other.id).keys[0]!.split?.coordinators).toEqual([]);
+  });
+
+  it('la integridad detecta lo que no puede ser', () => {
+    const codes = (m: unknown) => {
+      const r = parseModel(m);
+      return r.ok ? r.warnings.map((i) => i.code) : r.issues.map((i) => i.code);
+    };
+    const key = { ...frost.keys[0]!, split: { scheme: 'frost' as const, k: 4, shares: [1, 2, 2] } };
+    expect(codes({ ...frost, keys: [key] })).toEqual(expect.arrayContaining(['share-threshold-out-of-range', 'duplicate-share']));
+    expect(codes({ ...frost, artifacts: [{ id: 'a', label: 'A', medium: 'paper', contents: [{ type: 'seed', key: 'k1' }], location: 'casa' }] })).toContain('frost-seed');
+    expect(codes({ ...frost, artifacts: [{ id: 'a', label: 'A', medium: 'paper', contents: [{ type: 'share', key: 'k1', share: 9 }], location: 'casa' }] })).toContain('unknown-share');
+    const dev = { id: 'd', label: 'D', vendor: 'Frostsnap', kind: 'stateful', holds: ['k1'], location: 'casa' };
+    expect(codes({ ...frost, devices: [dev] })).toContain('frost-key-on-device');
+    const shamir = splitKey(blank, 'k1', 'shamir', 2, 3);
+    expect(codes({ ...shamir, devices: [{ ...dev, holds: [], shares: [{ key: 'k1', share: 1 }] }] })).toContain('device-share-not-frost');
+  });
+
+  it('avisa si no hay shares suficientes, si están juntas o si son de un solo fabricante', () => {
+    const backup = (share: number, location = 'casa') => ({ id: `a${share}`, label: `A${share}`, medium: 'metal' as const, contents: [{ type: 'share' as const, key: 'k1', share }], lockedBy: [], location });
+    const warnings = (m: CustodyModel) => checkIntegrity(m).map((i) => i.code);
+    expect(warnings({ ...frost, artifacts: [backup(1)] })).toContain('shares-below-threshold');
+    expect(warnings({ ...frost, artifacts: [backup(1), backup(2)] })).toContain('shares-together');
+    const two = addLocation({ ...frost, artifacts: [backup(1), backup(2)] }, 'Banco');
+    const apart = { ...two.model, artifacts: [backup(1), backup(2, two.id)] };
+    expect(warnings(apart)).not.toContain('shares-together');
+    let m = addDevice(apart, 'casa').model;
+    m = addDevice(m, two.id).model;
+    m = m.devices.reduce((acc, d, i) => setDeviceShares(updateDevice(acc, d.id, { vendor: 'Frostsnap' }), d.id, [{ key: 'k1', share: i + 1 }]), m);
+    expect(warnings(m)).toContain('shares-single-vendor');
+  });
+});
+
+describe('versión del documento', () => {
+  it('1 si no usa nada nuevo; 2 con keys repartidas o cartera Taproot', () => {
+    expect(withDocumentVersion(casa)).toBe(casa);
+    expect(withDocumentVersion(splitKey(blankModel(), 'k1', 'shamir', 2, 3)).version).toBe(2);
+    expect(withDocumentVersion({ ...casa, wallet: { script: 'tr', sorted: true } }).version).toBe(2);
+    expect(withDocumentVersion({ ...casa, version: 2 }).version).toBe(1);
+  });
+
+  it('una versión que no existe no se lee', () => {
+    expect(parseModel({ ...casa, version: 3 }).ok).toBe(false);
+  });
+});

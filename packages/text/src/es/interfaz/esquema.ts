@@ -46,6 +46,8 @@ export const esquema = {
   conPassphrase: (fuerza: string) => `+ passphrase ${fuerza}`,
   sinIndicar: 'sin indicar',
   xpub: 'xpub',
+  repartida: (esquema: 'frost' | 'shamir', k: number, n: number) => `${esquema === 'frost' ? 'FROST' : 'Shamir'} ${k} de ${n}`,
+  pistaRepartida: 'Key repartida en shares: bastan las indicadas',
   pistaXpub: 'Tiene su xpub: entra en el descriptor',
   verificada: 'verificada',
   pistaVerificada: 'Derivación verificada con una herramienta independiente',

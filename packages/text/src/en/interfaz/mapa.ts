@@ -5,6 +5,7 @@ export const mapa: typeof es = {
   soportes: { paper: 'paper', metal: 'metal', washers: 'washers', digital: 'digital', other: 'other medium' },
   cifrado: 'encrypted',
   guardaKeys: 'stores keys',
+  guardaShares: 'stores shares',
   sinEstado: 'stateless',
   usosOrdenador: { daily: 'general-purpose', dedicated: 'dedicated' },
   conCartera: 'with the wallet',
@@ -31,6 +32,7 @@ export const mapa: typeof es = {
   keyAqui: (key: string) => `${key} is here`,
   sabeDeMemoria: 'Knows by heart',
   viveEn: 'Lives at',
+  etiquetaShare: (key: string, share: number) => `${key}·${share}`,
   insignias: {
     pin: 'PIN',
     pistaPin: (dispositivo: string) => `PIN of ${dispositivo}`,
@@ -38,8 +40,8 @@ export const mapa: typeof es = {
     pistaContrasena: (backup: string) => `Password of ${backup}`,
     descriptor: 'descriptor',
     pistaDescriptor: 'Wallet descriptor: policy and all the xpubs',
-    prefijo: { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ' },
-    pistas: { holds: 'Key stored on the device', seed: 'Seed phrase', passphrase: 'Passphrase', xpub: 'Extended public key' },
+    prefijo: { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ', share: '' },
+    pistas: { holds: 'Key stored on the device', seed: 'Seed phrase', passphrase: 'Passphrase', xpub: 'Extended public key', share: 'Share' },
     pistaKey: (que: string, key: string) => `${que}: ${key}`,
   },
 };

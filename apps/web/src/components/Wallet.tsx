@@ -6,12 +6,13 @@ import {
   indexModel,
   miniscriptSupport,
   setWallet,
+  taprootSupport,
   walletDescriptor,
   walletOf,
   type CustodyModel,
   type Match,
 } from '@llave-inglesa/domain';
-import { devicesWithoutMiniscript } from '@llave-inglesa/engine';
+import { devicesWithoutMiniscript, devicesWithoutTaproot } from '@llave-inglesa/engine';
 import { AlertTriangle, Check, Copy, Eye, FileInput, GitBranch, Printer, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { PRIVADO } from '../lib/privacidad.ts';
@@ -66,7 +67,9 @@ export function WalletSection({ model }: { model: CustodyModel }) {
   const wallet = walletOf(model);
   const hasXpubs = model.keys.some((k) => k.xpub !== undefined);
 
-  const scripts: readonly ScriptType[] = flat?.kind === 'single' ? ['wpkh', 'sh-wpkh'] : ['wsh', 'sh-wsh'];
+  const scripts: readonly ScriptType[] = flat?.kind === 'single' ? ['wpkh', 'sh-wpkh', 'tr'] : ['wsh', 'sh-wsh'];
+  // Una key FROST sola: Taproot, sin elegir.
+  const frost = flat?.kind === 'single' && model.keys.some((k) => k.id === flat.key && k.split?.scheme === 'frost');
 
   return (
     <Section
@@ -122,7 +125,8 @@ export function WalletSection({ model }: { model: CustodyModel }) {
           </p>
         ))}
 
-      {flat && (
+      {frost && <p className={styles.hint}>{T.frost}</p>}
+      {flat && !frost && (
         <>
           <p className={styles.fieldTitle}>{T.tipoDireccion}</p>
           <Segmented
@@ -134,6 +138,12 @@ export function WalletSection({ model }: { model: CustodyModel }) {
           {isMultisigScript(wallet.script) && !wallet.sorted && (
             <p className={styles.hint}>{T.ordenImporta}</p>
           )}
+        </>
+      )}
+      {wallet.script === 'tr' && flat && (
+        <>
+          <TaprootDevices model={model} />
+          <p className={styles.hint}>{T.cuantico}</p>
         </>
       )}
       {!flat && (
@@ -273,6 +283,29 @@ function ImportReport({ matches, label, onClose }: { matches: Match[]; label: (i
         <p>{T.porOrden}</p>
       )}
     </div>
+  );
+}
+
+/** Con Taproot: los dispositivos de la cartera que no la firman y los que solo con un firmware experimental. */
+function TaprootDevices({ model }: { model: CustodyModel }) {
+  const label = indexModel(model).label;
+  const without = devicesWithoutTaproot(model) ?? [];
+  const edge = model.devices.filter((d) => !without.includes(d.id) && taprootSupport(d) === 'edge').map((d) => d.id);
+  return (
+    <>
+      {without.length > 0 && (
+        <p className={styles.warning}>
+          <AlertTriangle size={14} aria-hidden />
+          {T.noFirmanTaproot(listText(without.map(label)))}
+        </p>
+      )}
+      {edge.length > 0 && (
+        <p className={styles.warning}>
+          <AlertTriangle size={14} aria-hidden />
+          {T.taprootEdge(listText(edge.map(label)))}
+        </p>
+      )}
+    </>
   );
 }
 

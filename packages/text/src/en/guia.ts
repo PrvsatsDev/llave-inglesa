@@ -27,6 +27,8 @@ const SEEDSIGNER = 'r12-2de3-seedsigner';
 const HEREDERA = 'r13-recuperacion-heredera';
 const SE_RELAJA = 'r14-2de3-se-relaja';
 const SE_AMPLIA = 'r15-2de3-se-amplia';
+const FROSTSNAP = 'r16-frostsnap-2de3';
+const SHAMIR = 'r17-shamir-trezor';
 
 export const GUIA: typeof es = [
   {
@@ -603,6 +605,100 @@ export const GUIA: typeof es = [
     ],
   },
   {
+    id: 'repartidas',
+    titulo: 'Split keys: Shamir and FROST',
+    resumen: 'A key whose secret is in several parts: what changes compared with a seed phrase and with a multisig.',
+    bloques: [
+      {
+        tipo: 'parrafo',
+        texto: [
+          'A split key does not have a seed phrase, but several parts (',
+          n('shares'),
+          ') of which a few are enough: 2 of 3, for example. There are two very different ways to do it, and the difference is where the parts are:',
+        ],
+      },
+      {
+        tipo: 'lista',
+        items: [
+          [n('Shamir'), ' (SLIP-39 on Trezor, SSKR on Keystone or Passport): the seed exists and the device stores it whole; the shares are only its backup and are put together when recovering.'],
+          [n('FROST'), ' (Frostsnap): the shares are generated among all the devices and never put together; each one stores its own and enough of them sign together. There is no seed: on chain it is a single Taproot key, with no descriptor to keep.'],
+          [n('Multisig'), ': several whole keys, each with its seed phrase, and a descriptor that ties them together (', cap('casos', 'Guided cases'), ').'],
+        ],
+      },
+      { tipo: 'parrafo', texto: [n('Trezor with Shamir.'), ' A Trezor at home and its backup in three metal shares: in the home safe, in the bank and in the parents’ house.'] },
+      { tipo: 'ejemplo', ejemplo: SHAMIR, texto: 'Open the Trezor with Shamir' },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Compared with two plates with the whole seed phrase (security ',
+          cifra(ACERO_BANCO, 'security'),
+          '), a stolen share no longer gives anything: security ',
+          cifra(SHAMIR, 'security'),
+          ', with similar resilience (',
+          cifra(SHAMIR, 'resilience'),
+          ' versus ',
+          cifra(ACERO_BANCO, 'resilience'),
+          '). What does not change is the Trezor: it stores the whole key, so a flaw in its generator or its firmware exposes it just as before.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [n('Frostsnap 2 of 3.'), ' Three Frostsnap devices, at home, at the office and at the parents’ house, each with its backup card next to it, and the paired phone carried along.'],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: FROSTSNAP,
+        escenario: { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] },
+        texto: 'The wrench attack at home',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'In the distributed 2 of 3, with the devices at home, that was enough. Not here: at home there is only one share (the device’s and its card’s are the same one), and although the phone unlocks that device, another one is missing.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: FROSTSNAP,
+        escenario: { kind: 'attack', atoms: [{ type: 'burglary', location: 'casa' }, { type: 'burglary', location: 'oficina' }] },
+        texto: 'Two burglaries: at home and at the office',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'With two devices it is: Frostsnap devices have no PIN, and with as many as are needed a new phone gets paired. With fewer, a stolen device is useless, because its share is encrypted with a key that the paired phone keeps. The backup cards, on the other hand, are the share in the clear.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Security ',
+          cifra(FROSTSNAP, 'security'),
+          ', somewhat less than the distributed 2 of 3 (',
+          cifra(DISTRIBUIDO, 'security'),
+          '): the cheapest theft is not in any house but in Frostsnap’s generator, because all the shares come from devices and an app from the same manufacturer. Its anti-exfil stops a tampered device, not a malicious manufacturer, who would control both ends: the tool explains it, but does not count it as one more attack. Signing requires going to two places (usability ',
+          cifra(FROSTSNAP, 'usability'),
+          ') and the cards are paper: two fires take two shares (resilience ',
+          cifra(FROSTSNAP, 'resilience'),
+          ').',
+        ],
+      },
+      {
+        tipo: 'nota',
+        texto: [
+          'Recovering a FROST key needs, today, the Frostsnap app and blank devices to load the cards into. If it did not exist, with as many cards as are needed, some open tools (frostsnap-thaw or frost_backup) rebuild a key that can be imported into Sparrow or Bitcoin Core. The letter for the heirs explains it.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('Taproot and the quantum computer.'),
+          ' In Taproot (a FROST key always is; a single-sig, if you choose it) the public key is visible on chain from the moment the bitcoin is received, not only when it is spent. Today this is no risk, and the tool does not count it as an attack; but a quantum computer able to break these keys could spend any Taproot output.',
+        ],
+      },
+    ],
+  },
+  {
     id: 'montar',
     titulo: 'Building your setup',
     resumen: 'From a blank setup to yours: keys, locations, devices, backups, people, and saving it encrypted.',
@@ -717,6 +813,9 @@ export const GUIA: typeof es = [
           [n('Temporary lockout'), ': the funds are frozen while someone is incapacitated, but are recovered when the heirs inherit.'],
           [n('Custodian'), ': someone trusted who keeps something (a plate, a descriptor) without being an owner or an heir.'],
           [n('Entropy'), ': the randomness with which the seed phrase is generated (the device’s generator, dice, a coin…). ', n('Verifying'), ' means recomputing it in another tool to check that it comes from that randomness.'],
+          [n('Split key'), ': a key whose secret is in several ', n('shares'), ', of which a few are enough. With ', n('Shamir'), ' the seed exists and the shares are its backup; with ', n('FROST'), ' there is no seed and each device signs with its own (', cap('repartidas', 'Split keys'), ').'],
+          [n('Coordinator'), ': in FROST, the paired phone or computer that asks the devices to sign (in Frostsnap, it also decrypts their shares).'],
+          [n('Taproot'), ': the newest address type (bc1p…). A FROST key only exists in Taproot.'],
         ],
       },
     ],
@@ -742,7 +841,8 @@ export const GUIA: typeof es = [
           ['Each person lives in a single place and is assumed to be there: schedules (being at work) are not taken into account. If you do not set where they live, they can be coerced anywhere at no extra cost.'],
           ['The signing computer or phone only has two extremes (general-purpose or dedicated), and its malware is assumed able to get the seed out of a connected device with a published flaw. The password of the computer or the wallet does not count.'],
           ['The catalog of devices and their known flaws does not update itself: each version ships its own, with its date.'],
-          ['Waiting periods are relative (counted from the last time the coins moved): there are no absolute dates, and no Taproot. How often you move the coins is something you state: it is not checked.'],
+          ['Waiting periods are relative (counted from the last time the coins moved): there are no absolute dates. How often you move the coins is something you state: it is not checked.'],
+          ['Taproot, only with one key and no script tree. Split keys: single-group Shamir (without SLIP-39 groups) and up to 16 shares, and a FROST key only as the whole policy. A stolen phone is taken as unlocked (its lock screen does not count), and Frostsnap’s anti-exfil is taken as good even though its app is from the same manufacturer.'],
           ['A device that does not sign Miniscript only costs usability: you can always sign with another one by loading the seed phrase.'],
           ['With many devices and locations the analysis takes a few seconds: it is exhaustive.'],
         ],

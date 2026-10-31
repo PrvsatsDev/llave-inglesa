@@ -1,5 +1,5 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
-import { flatPolicy, policyTimelocks, walletOf } from '@llave-inglesa/domain';
+import { flatPolicy, policyKeys, policyTimelocks, walletOf } from '@llave-inglesa/domain';
 import type { InheritanceLetter, LetterPiece } from '@llave-inglesa/engine';
 import type * as es from '../es/carta-herencia.ts';
 import type { Label } from '../tipos.ts';
@@ -47,6 +47,8 @@ const secretText = (s: SecretRef, label: Label): string => {
       return `the password of ${label(s.artifact)}`;
     case 'descriptor':
       return 'the wallet descriptor (the public list of its keys, without which it cannot be rebuilt)';
+    case 'share':
+      return `share ${s.share} of ${label(s.key)} (one of the parts its secret was split into)`;
   }
 };
 
@@ -54,6 +56,8 @@ const secretText = (s: SecretRef, label: Label): string => {
 export const letterPieceText: typeof es.letterPieceText = (p: LetterPiece, label: Label) => {
   const parts = p.provides.map((s) => secretText(s, label));
   if (p.signs.length > 0) parts.push(`signs with ${listText(p.signs.map(label))}${p.needsPin ? '; unlocked with its PIN' : ''}`);
+  if (p.signsShares) parts.push(`signs its part of ${listText(p.signsShares.map((s) => `${label(s.key)} (share ${s.share})`))}${p.needsPin ? '; unlocked with its PIN' : ''}`);
+  if (p.coordinates) parts.push(`has the app paired with ${listText(p.coordinates.map(label))}: with it the devices are asked to sign`);
   if (p.hasWallet) parts.push('has the wallet registered');
   if (p.wait > 0) parts.push(`only works once the bitcoin has gone ${waitText(p.wait)} without moving`);
   return parts.length > 0 ? parts.join('; ') : 'needed';
@@ -69,6 +73,7 @@ const SCRIPT_PLAIN = {
   'sh-wsh': 'Wrapped SegWit (P2SH-P2WSH, addresses 3…)',
   wpkh: 'Native SegWit (P2WPKH, addresses bc1q…)',
   'sh-wpkh': 'Wrapped SegWit (P2SH-P2WPKH, addresses 3…)',
+  tr: 'Taproot (P2TR, addresses bc1p…)',
 } as const;
 
 /** Public data to rebuild a multisig without a descriptor: type, k of n and derivation (if known). */
@@ -101,7 +106,7 @@ export const letterSteps: typeof es.letterSteps = (model: CustodyModel, letter: 
       `There is no copy of the descriptor: the wallet is rebuilt from the seed phrases of all its keys, which is why all of them are needed. This is the hardest part; here it really is worth having someone who knows help you. The data to rebuild it: ${rebuildData(model)}.`,
       'Each seed phrase is loaded onto a signing device (a “hardware wallet”), never onto the computer; with them, a wallet that supports multisig (for example Sparrow or Nunchuk) puts the wallet together.',
     );
-  } else {
+  } else if (!singleSplit(model)) {
     steps.push(
       'Load the seed phrase onto a signing device (a “hardware wallet”), never onto a computer or a phone, and connect it to its app to see the balance.',
     );
@@ -115,9 +120,38 @@ export const letterSteps: typeof es.letterSteps = (model: CustodyModel, letter: 
         (letter.withoutWait ? ' If you do not want to wait, see “Without waiting”, above.' : ''),
     );
   }
+  steps.push(...splitSteps(model));
   steps.push('Before moving everything, send a small amount and check that it arrives.');
   return steps;
 };
+
+const singleSplit = (model: CustodyModel) => {
+  const p = model.policy;
+  return p.type === 'key' && model.keys.some((k) => k.id === p.key && k.split !== undefined);
+};
+
+/** Steps of the split keys in the policy: how their shares are put together. */
+function splitSteps(model: CustodyModel): string[] {
+  const keys = policyKeys(model.policy).flatMap((id) => model.keys.filter((k) => k.id === id && k.split));
+  const of = (scheme: 'frost' | 'shamir') => keys.filter((k) => k.split!.scheme === scheme);
+  const names = (ks: typeof keys) => listText(ks.map((k) => k.label));
+  const steps: string[] = [];
+  const frost = of('frost');
+  if (frost.length > 0) {
+    steps.push(
+      `${names(frost)} ${frost.length === 1 ? 'is' : 'are'} split across several Frostsnap devices (FROST): none of them has the whole key, and the ones needed sign together. Install the Frostsnap app on a phone or a computer; if you have the phone that already used it, open it there. If not, connect as many devices as are needed to the app and it will get paired with them.`,
+      'Frostsnap backup cards are loaded into new (“blank”) Frostsnap devices, never into a computer or a phone.',
+      'If one day the Frostsnap app did not exist: with as many cards as are needed, some open tools (frostsnap-thaw or frost_backup) rebuild a key that can be imported into Sparrow or Bitcoin Core. It has to be done on a safe, offline computer; here it is worth having someone who knows help you.',
+    );
+  }
+  const shamir = of('shamir');
+  if (shamir.length > 0) {
+    steps.push(
+      `The seed phrase of ${names(shamir)} is split into several parts (“shares”, with the SLIP-39 or SSKR standard): not all of them are needed, only the ones on the list. They are put together on a signing device that supports that format (SLIP-39: Trezor; SSKR: Keystone or Passport), typing them into it when restoring, never into a computer.`,
+    );
+  }
+  return steps;
+}
 
 /** Fixed sentences of the letter and of the panel that prepares it. */
 export const LETTER_TEXT: typeof es.LETTER_TEXT = {

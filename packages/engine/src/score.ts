@@ -312,7 +312,7 @@ function interpolate(curve: readonly (readonly [number, number])[], x: number): 
 /** Desglose de una puntuación: una base y lo que se le resta, para poder enseñar de dónde sale. */
 export interface ScoreBreakdown {
   base: number;
-  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'delay' | 'heir-fragility' | 'no-descriptor' | 'renewal' | 'no-miniscript'; points: number }[];
+  penalties: { reason: 'exposure' | 'daily-computer' | 'other-routes' | 'lockout' | 'delay' | 'heir-fragility' | 'no-descriptor' | 'renewal' | 'no-miniscript' | 'no-taproot'; points: number }[];
   score: number;
 }
 
@@ -480,21 +480,25 @@ export const RENEWAL_PENALTY = 10;
  */
 export const MINISCRIPT_DEVICE_PENALTY = 10;
 
+/** Lo mismo con una cartera Taproot: algún dispositivo suyo no la firma. */
+export const TAPROOT_DEVICE_PENALTY = MINISCRIPT_DEVICE_PENALTY;
+
 /**
  * Usabilidad: cuántas ubicaciones hay que visitar para firmar de forma segura, menos lo que cuesta renovar los
- * timelocks y tener dispositivos que no firman la cartera (`noMiniscript`).
+ * timelocks y tener dispositivos que no firman la cartera (`noMiniscript`, `noTaproot`).
  */
-export function usabilityBreakdown(locations: number | null, renewal = false, noMiniscript = false): ScoreBreakdown {
+export function usabilityBreakdown(locations: number | null, renewal = false, noMiniscript = false, noTaproot = false): ScoreBreakdown {
   const base = locations === null ? 0 : ([100, 100, 75, 50][locations] ?? 30);
   if (locations === null) return { base, penalties: [], score: base };
   const penalties: ScoreBreakdown['penalties'] = [];
   if (renewal) penalties.push({ reason: 'renewal', points: RENEWAL_PENALTY });
   if (noMiniscript) penalties.push({ reason: 'no-miniscript', points: MINISCRIPT_DEVICE_PENALTY });
+  if (noTaproot) penalties.push({ reason: 'no-taproot', points: TAPROOT_DEVICE_PENALTY });
   return { base, penalties, score: Math.max(0, base - penalties.reduce((sum, p) => sum + p.points, 0)) };
 }
 
-export function usabilityScore(locations: number | null, renewal = false, noMiniscript = false): number {
-  return usabilityBreakdown(locations, renewal, noMiniscript).score;
+export function usabilityScore(locations: number | null, renewal = false, noMiniscript = false, noTaproot = false): number {
+  return usabilityBreakdown(locations, renewal, noMiniscript, noTaproot).score;
 }
 
 /**

@@ -36,7 +36,13 @@ export interface Holdings {
   elapsed?: number;
 }
 
-export type CompromisedSeed =
+/**
+ * Una semilla obtenida sin acceso físico, o (con `share`) solo esa share de una key FROST: lo que filtra o regala un
+ * dispositivo que guarda shares y no la key entera.
+ */
+export type CompromisedSeed = CompromisedSecret & { share?: number };
+
+type CompromisedSecret =
   | { key: Id; origins: EntropyOrigin[] }
   /** Fallo publicado: de entropía (sin nada más) o de extracción física (teniendo `device`). */
   | { key: Id; advisory: string; device?: Id }
@@ -102,7 +108,7 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
     }
   }
   for (const c of holdings.compromisedSeeds ?? []) {
-    const seed = secret({ type: 'seed', key: c.key });
+    const seed = secret(c.share === undefined ? { type: 'seed', key: c.key } : { type: 'share', key: c.key, share: c.share });
     if ('origins' in c) add(seed, { rule: 'entropy-compromise', premises: [], via: { origins: c.origins } });
     else if ('firmware' in c) add(seed, { rule: 'malicious-firmware', premises: [], via: { vendor: c.firmware } });
     else if ('ownBits' in c) add(seed, { rule: 'weak-own-entropy', premises: [], via: { bits: c.ownBits } });
@@ -129,6 +135,13 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       const seedId = factId(secret({ type: 'seed', key: g.key }));
       if (!facts.has(seedId)) continue;
       add(secret({ type: 'passphrase', key: g.key }), { rule: 'passphrase-bruteforce', premises: [seedId], via: { strength: g.strength } });
+    }
+
+    // Keys repartidas: con k shares distintas, el secreto completo.
+    for (const key of index.splitKeys) {
+      const split = key.split!;
+      const shares = split.shares.map((share) => factId(secret({ type: 'share', key: key.id, share }))).filter((id) => facts.has(id));
+      if (shares.length >= split.k) add(secret({ type: 'seed', key: key.id }), { rule: 'combine-shares', premises: shares.slice(0, split.k) });
     }
 
     for (const a of model.artifacts) {
@@ -175,6 +188,47 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       }
     }
 
+    // Keys FROST: coordinador, partes de cada share y la firma que sale de juntar k.
+    for (const key of index.splitKeys) {
+      const split = key.split!;
+      if (split.scheme !== 'frost') continue;
+      const coordinatorId = factId({ kind: 'coordinator', key: key.id });
+      for (const c of split.coordinators ?? []) {
+        const itemId = factId({ kind: 'item', item: c });
+        if (facts.has(itemId)) add({ kind: 'coordinator', key: key.id }, { rule: 'paired-coordinator', premises: [itemId], via: { item: c } });
+        else if (holdings.infectedComputers?.includes(c)) add({ kind: 'coordinator', key: key.id }, { rule: 'coordinator-malware', premises: [], via: { item: c } });
+      }
+      // Dispositivos desbloqueados con cada share (el primero que la tenga).
+      const byShare = new Map<number, FactId>();
+      for (const d of model.devices) {
+        const unlockedId = factId({ kind: 'unlocked', device: d.id });
+        if (d.kind !== 'stateful' || !facts.has(unlockedId)) continue;
+        for (const s of d.shares ?? []) if (s.key === key.id && split.shares.includes(s.share) && !byShare.has(s.share)) byShare.set(s.share, unlockedId);
+      }
+      if (byShare.size >= split.k) add({ kind: 'coordinator', key: key.id }, { rule: 'pair-coordinator', premises: [...new Set([...byShare.values()].slice(0, split.k))] });
+      // Sin coordinadores indicados, la share del dispositivo no está protegida (ante la duda, lo peor).
+      const protectedShares = split.coordinators !== undefined;
+      if (protectedShares && facts.has(coordinatorId)) add(xpub(key.id), { rule: 'coordinator-xpub', premises: [coordinatorId] });
+      for (const d of model.devices) {
+        const unlockedId = factId({ kind: 'unlocked', device: d.id });
+        if (d.kind !== 'stateful' || !facts.has(unlockedId)) continue;
+        if (protectedShares && !facts.has(coordinatorId)) continue;
+        for (const s of d.shares ?? []) {
+          if (s.key !== key.id || !split.shares.includes(s.share)) continue;
+          add({ kind: 'share-sign', key: key.id, share: s.share }, { rule: 'device-share', premises: protectedShares ? [unlockedId, coordinatorId] : [unlockedId], via: { device: d.id } });
+          if (!protectedShares) add(xpub(key.id), { rule: 'device-xpub', premises: [unlockedId], via: { device: d.id } });
+        }
+      }
+      if (mode === 'any') {
+        for (const share of split.shares) {
+          const shareId = factId(secret({ type: 'share', key: key.id, share }));
+          if (facts.has(shareId)) add({ kind: 'share-sign', key: key.id, share }, { rule: 'share-software', premises: [shareId] });
+        }
+      }
+      const parts = split.shares.map((share) => factId({ kind: 'share-sign', key: key.id, share })).filter((id) => facts.has(id));
+      if (parts.length >= split.k) add({ kind: 'sign', key: key.id }, { rule: 'frost-sign', premises: parts.slice(0, split.k) });
+    }
+
     const seedSigners = model.devices.filter((d) => has({ kind: 'unlocked', device: d.id }));
     for (const key of index.keys.keys()) {
       const seedId = factId(secret({ type: 'seed', key }));
@@ -186,6 +240,8 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       if (mode === 'any') {
         add({ kind: 'sign', key }, { rule: 'seed-sign', premises });
       } else {
+        // El secreto de una key FROST nunca se carga en un dispositivo de firma: no es una semilla BIP-39.
+        if (index.keys.get(key)?.split?.scheme === 'frost') continue;
         const signer = seedSigners.find((d) => canLoadSeed(d, key));
         if (!signer) continue;
         const device = signer.id;

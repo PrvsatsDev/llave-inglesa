@@ -48,6 +48,8 @@ export const esquema: typeof es = {
   conPassphrase: (fuerza: string) => `+ ${fuerza} passphrase`,
   sinIndicar: 'unspecified',
   xpub: 'xpub',
+  repartida: (esquema: 'frost' | 'shamir', k: number, n: number) => `${esquema === 'frost' ? 'FROST' : 'Shamir'} ${k} of ${n}`,
+  pistaRepartida: 'Key split into shares: the ones shown are enough',
   pistaXpub: 'Has its xpub: it goes into the descriptor',
   verificada: 'verified',
   pistaVerificada: 'Derivation verified with an independent tool',

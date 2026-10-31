@@ -15,6 +15,7 @@ import {
   LOCKOUT_PENALTY,
   LOSS_RARITY,
   MINISCRIPT_DEVICE_PENALTY,
+  TAPROOT_DEVICE_PENALTY,
   NO_DESCRIPTOR_PENALTY,
   PASSPHRASE_EFFORT,
   RENEWAL_PENALTY,
@@ -99,11 +100,14 @@ export const analisis: typeof es = {
     renovar: 'The coins have to be moved every so often to renew the timelock',
     sinMiniscript: (nombres: readonly string[]) =>
       `${listText(nombres)} ${nombres.length === 1 ? 'does' : 'do'} not sign this wallet, which needs Miniscript`,
-    como: () => [
+    sinTaproot: (nombres: readonly string[]) =>
+      `${listText(nombres)} ${nombres.length === 1 ? 'does' : 'do'} not sign this Taproot wallet (or not with its firmware)`,
+    como: (taproot = false) => [
       'How many locations the owners have to visit to sign safely: with signing devices, without typing any seed phrase into a computer.',
       `${scale(usabilityScore, UBICACIONES, 1, 4)}.`,
       `With timelocks it subtracts ${RENEWAL_PENALTY}: the coins have to be moved before they expire so that the branch with the wait does not open, and that means signing a transaction every so often.`,
       `If the policy needs Miniscript and some device does not sign it, it subtracts ${MINISCRIPT_DEVICE_PENALTY}: it does not change what can be done (you buy another device and load the seed into it), but it costs.`,
+      ...(taproot ? [`With a Taproot wallet, if some device does not sign it, it subtracts ${TAPROOT_DEVICE_PENALTY} for the same reason.`] : []),
     ],
     dondeSeFirma: 'Where signing happens',
     minimoVisitar: 'The least the owners have to visit to sign a transaction:',

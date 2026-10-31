@@ -101,6 +101,23 @@ describe('descriptor a partir del esquema', () => {
     expect(r.ok && r.model.wallet).toEqual({ script: 'sh-wpkh', sorted: true });
   });
 
+  it('Taproot con una sola key (tr): se importa, se guarda como tipo de script y se vuelve a escribir igual', () => {
+    const tr: Descriptor = { script: 'tr', sorted: true, keys: [{ ...a, path: "86'/0'/0'" }] };
+    const r = importDescriptor(fixture('singlesig-passphrase'), parse(tr));
+    if (!r.ok) throw new Error();
+    expect(r.model.wallet).toEqual({ script: 'tr', sorted: true });
+    const back = walletDescriptor(r.model);
+    expect(back.ok && formatDescriptor(back.descriptor)).toBe(formatDescriptor(tr));
+    // Con un multisig, tr es de una sola key: no encaja.
+    const multi = importDescriptor(fixture('todo-en-casa'), parse(twoOfThree));
+    if (!multi.ok) throw new Error();
+    expect(walletDescriptor(setWallet(multi.model, { script: 'tr', sorted: true }))).toEqual({ ok: false, problems: [{ code: 'script-mismatch' }] });
+  });
+
+  it('single-sig sigue saliendo wpkh por defecto (tr solo si se elige)', () => {
+    expect(walletOf({ ...fixture('singlesig-passphrase'), wallet: undefined })).toEqual({ script: 'wpkh', sorted: true });
+  });
+
   it('avisa de lo que impide escribirlo', () => {
     const r = importDescriptor(fixture('todo-en-casa'), parse(twoOfThree));
     if (!r.ok) throw new Error();

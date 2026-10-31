@@ -19,6 +19,7 @@ export const marco: typeof es = {
     key: 'the key itself (seed phrase or memorized)',
     passphrase: 'passphrase',
     xpub: 'xpub only',
+    share: 'a share of a split key (K1·2: number 2 of K1)',
     pin: 'PIN-protected',
     memoria: 'knows it by heart',
     siempre: 'always has access',

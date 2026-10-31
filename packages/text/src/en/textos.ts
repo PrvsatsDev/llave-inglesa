@@ -237,6 +237,7 @@ export const secretText: typeof es.secretText = (s: SecretRef, label: Label) => 
     case 'pin': return `PIN of ${label(s.device)}`;
     case 'password': return `password of ${label(s.artifact)}`;
     case 'descriptor': return 'wallet descriptor';
+    case 'share': return `share ${s.share} of ${label(s.key)}`;
   }
 };
 
@@ -248,9 +249,13 @@ export const factText: typeof es.factText = (f: Fact, index: ModelIndex) => {
       if (item.kind === 'computer' && item.value.carriedBy) return `${item.value.label} (carried by ${index.label(item.value.carriedBy)})`;
       return `${item.value.label} (${index.label(itemPlace(item))})`;
     }
-    case 'secret': return secretText(f.secret, index.label);
+    case 'secret':
+      if (f.secret.type === 'seed' && index.keys.get(f.secret.key)?.split?.scheme === 'frost') return `full secret of ${index.label(f.secret.key)}`;
+      return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} unlocked`;
     case 'sign': return `signature with ${index.label(f.key)}`;
+    case 'share-sign': return `signs the part of share ${f.share} of ${index.label(f.key)}`;
+    case 'coordinator': return `coordinator of ${index.label(f.key)} (decrypts its shares and asks them to sign)`;
     case 'timelock': return `The ${waitText(f.blocks)} timelock expires`;
     case 'spend': return 'Can spend the funds';
   }
@@ -278,6 +283,14 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'passphrase-bruteforce': return `guessed by brute force from the seed (${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']} passphrase)`;
     case 'physical-extraction': return `extracted from the hardware of ${name(v.device)} despite the PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'written there';
+    case 'combine-shares': return 'putting together enough shares';
+    case 'paired-coordinator': return `${name(v.item)} is paired with the key`;
+    case 'coordinator-malware': return `the malware on ${name(v.item)}, paired with the key, uses its key`;
+    case 'pair-coordinator': return 'with as many devices as are needed a new phone gets paired';
+    case 'device-share': return `${name(v.device)} signs it`;
+    case 'share-software': return 'loading the share into software or a blank device';
+    case 'frost-sign': return 'putting together the parts of enough shares (FROST)';
+    case 'coordinator-xpub': return 'the coordinator knows it';
     case 'descriptor-xpubs': return 'included in the descriptor';
     case 'unlock-device': return '';
     case 'device-sign': return 'the device signs';
@@ -314,6 +327,17 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',
   'invalid-computer-place': 'A signing computer must be kept in a location or carried by a person (one of the two)',
   'too-deep': 'The document is nested deeper than any real setup could be: it will not be opened',
+  'share-threshold-out-of-range': 'A split key needs more shares than it has',
+  'duplicate-share': 'A split key has two shares with the same number',
+  'unknown-share': 'Something refers to a share that does not exist',
+  'frost-seed': 'There is a seed phrase of a FROST key, and in FROST there is none: each device holds only its share and the full secret is never put together',
+  'frost-passphrase': 'A FROST key cannot have a passphrase',
+  'frost-key-on-device': 'A device holds or loads a whole FROST key, and in FROST each device holds only its share',
+  'device-share-not-frost': 'A device holds shares of a key that is not FROST: with Shamir, the device holds the whole key and the shares are its backup',
+  'shares-together': 'One location has as many shares as are enough: whoever gets in there has the whole key, the split does not split anything',
+  'shares-below-threshold': 'There are fewer shares (on devices, backups or in memory) than are needed: the key can be neither used nor recovered',
+  'shares-on-non-frost-device': 'A device holds FROST shares and, according to the catalog, its model does not support them',
+  'shares-single-vendor': 'All the shares of this FROST key are on devices from a single manufacturer: a malicious firmware of theirs, or their app, reaches all of them at once',
 };
 
 export const issueText: typeof es.issueText = (issue: Issue, label: Label) => {

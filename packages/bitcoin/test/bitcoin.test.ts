@@ -11,6 +11,7 @@ import {
   normalizePath,
   parseDescriptor,
   parseXpub,
+  taprootOutputKey,
   type Descriptor,
   type ScriptType,
 } from '../src/index.ts';
@@ -118,7 +119,8 @@ describe('descriptores', () => {
     };
     expect(problem('')).toEqual({ code: 'empty' });
     expect(problem(good.slice(0, -1) + (good.endsWith('q') ? 'p' : 'q'))).toEqual({ code: 'bad-checksum' });
-    expect(problem(`tr(${keys3[0]!.xpub}/0/*)`)).toEqual({ code: 'unsupported-script' });
+    expect(problem(`tr(${keys3[0]!.xpub}/0/*,pk(${keys3[1]!.xpub}/0/*))`)).toEqual({ code: 'unsupported-script' });
+    expect(problem(`sh(tr(${keys3[0]!.xpub}/0/*))`)).toEqual({ code: 'unsupported-script' });
     expect(problem(`wsh(sortedmulti(4,${keys3.map((k) => k.xpub + '/0/*').join(',')}))`)).toEqual({ code: 'threshold' });
     expect(problem(`wpkh(${keys3[0]!.xpub}/0/1)`)).toEqual({ code: 'unsupported-suffix', index: 0 });
     expect(problem(`wpkh(${keys3[0]!.xpub.slice(0, -1)}/0/*)`)).toEqual({ code: 'bad-key', index: 0, xpub: 'invalid' });
@@ -135,6 +137,7 @@ describe('direcciones (contrastadas con @scure/btc-signer)', () => {
     const pubkeys = d.keys.map((k) => HDKey.fromExtendedKey(k.xpub, versions).deriveChild(branch).deriveChild(index).publicKey!);
     if (d.script === 'wpkh') return btc.p2wpkh(pubkeys[0]!, net).address;
     if (d.script === 'sh-wpkh') return btc.p2sh(btc.p2wpkh(pubkeys[0]!, net), net).address;
+    if (d.script === 'tr') return btc.p2tr(pubkeys[0]!.slice(1), undefined, net).address;
     const sorted = d.sorted ? [...pubkeys].sort((a, b) => Buffer.compare(a, b)) : pubkeys;
     const wsh = btc.p2wsh(btc.p2ms(d.threshold!, sorted), net);
     return d.script === 'wsh' ? wsh.address : btc.p2sh(wsh, net).address;
@@ -149,7 +152,7 @@ describe('direcciones (contrastadas con @scure/btc-signer)', () => {
     fc.assert(
       fc.property(
         fc.uniqueArray(fc.integer({ min: 0, max: 1000 }), { minLength: 1, maxLength: 5 }),
-        fc.constantFrom<ScriptType>('wsh', 'sh-wsh', 'wpkh', 'sh-wpkh'),
+        fc.constantFrom<ScriptType>('wsh', 'sh-wsh', 'wpkh', 'sh-wpkh', 'tr'),
         fc.boolean(),
         fc.boolean(),
         fc.constantFrom<0 | 1>(0, 1),
@@ -167,5 +170,38 @@ describe('direcciones (contrastadas con @scure/btc-signer)', () => {
       ),
       { numRuns: 60 },
     );
+  });
+});
+
+describe('Taproot con una sola key (tr, BIP-86)', () => {
+  // Vectores de BIP-86: «abandon abandon … about», cuenta 0 de mainnet.
+  const bip86: Descriptor = {
+    script: 'tr',
+    sorted: true,
+    keys: [{ fingerprint: '73c5da0a', path: "86'/0'/0'", xpub: 'xpub6BgBgsespWvERF3LHQu6CnqdvfEvtMcQjYrcRzx53QJjSxarj2afYWcLteoGVky7D3UKDP9QyrLprQ3VCECoY49yfdDEHGCtMMj92pReUsQ' }],
+  };
+
+  it('da las direcciones de los vectores de BIP-86', () => {
+    expect(deriveAddress(bip86, 'mainnet', 0, 0)).toBe('bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr');
+    expect(deriveAddress(bip86, 'mainnet', 0, 1)).toBe('bc1p4qhjn9zdvkux4e44uhx8tc55attvtyu358kutcqkudyccelu0was9fqzwh');
+    expect(deriveAddress(bip86, 'mainnet', 1, 0)).toBe('bc1p3qkhfews2uk44qtvauqyr2ttdsw7svhkl9nkm9s9c3x4ax5h60wqwruhk7');
+  });
+
+  it('la clave de salida es la interna ajustada (vector de BIP-86)', () => {
+    const internal = Buffer.from('cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115', 'hex');
+    expect(Buffer.from(taprootOutputKey(internal)).toString('hex')).toBe('a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c');
+  });
+
+  it('escribe tr(KEY) con origen, rama <0;1> y suma de control, y lo lee igual', () => {
+    const text = formatDescriptor(bip86);
+    expect(text.split('#')[0]).toBe(`tr([73c5da0a/86'/0'/0']${bip86.keys[0]!.xpub}/<0;1>/*)`);
+    const back = parseDescriptor(text);
+    expect(back.ok && back.value).toEqual({ descriptor: bip86, network: 'mainnet', hadChecksum: true });
+  });
+
+  it('lee el descriptor que exporta Frostsnap (ruta propia, sin endurecer)', () => {
+    const { xpub } = accountXpub(7);
+    const r = parseDescriptor(`tr([12345678/0/0]${xpub}/<0;1>/*)`);
+    expect(r.ok && r.value.descriptor).toEqual({ script: 'tr', sorted: true, keys: [{ fingerprint: '12345678', path: '0/0', xpub }] });
   });
 });

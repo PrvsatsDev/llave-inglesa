@@ -8,6 +8,10 @@ export type Fact =
   | { kind: 'secret'; secret: SecretRef }
   | { kind: 'unlocked'; device: Id }
   | { kind: 'sign'; key: Id }
+  /** Key FROST: se puede firmar la parte de la share número `share` (falta juntar k partes). */
+  | { kind: 'share-sign'; key: Id; share: number }
+  /** Key FROST: se tiene un coordinador, la clave con la que sus dispositivos descifran su share y aceptan pedir firmas. */
+  | { kind: 'coordinator'; key: Id }
   /** Las monedas llevan al menos `blocks` bloques sin moverse: vence el timelock de esa rama. */
   | { kind: 'timelock'; blocks: number }
   | { kind: 'spend' };
@@ -26,6 +30,8 @@ export function secretId(s: SecretRef): string {
       return `password:${s.artifact}`;
     case 'descriptor':
       return 'descriptor';
+    case 'share':
+      return `share:${s.key}/${s.share}`;
   }
 }
 
@@ -35,6 +41,8 @@ export function factId(f: Fact): FactId {
     case 'secret': return `secret:${secretId(f.secret)}`;
     case 'unlocked': return `unlocked:${f.device}`;
     case 'sign': return `sign:${f.key}`;
+    case 'share-sign': return `share-sign:${f.key}/${f.share}`;
+    case 'coordinator': return `coordinator:${f.key}`;
     case 'timelock': return `timelock:${f.blocks}`;
     case 'spend': return 'spend';
   }
@@ -67,6 +75,25 @@ export type RuleId =
   | 'malicious-firmware'
   /** Passphrase adivinada por fuerza bruta a partir de la semilla. */
   | 'passphrase-bruteforce'
+  /**
+   * Key repartida: con k shares distintas se reconstruye el secreto completo (`seed:K`). En Shamir es la semilla; en
+   * FROST, el secreto que nunca existió junto (herramientas como frostsnap-thaw lo reconstruyen).
+   */
+  | 'combine-shares'
+  /** FROST: un móvil u ordenador emparejado con la key, en la mano (`item`). */
+  | 'paired-coordinator'
+  /** FROST: el malware de un móvil u ordenador emparejado usa su clave (`item`). */
+  | 'coordinator-malware'
+  /** FROST: con k dispositivos de la key (shares distintas) se empareja un coordinador nuevo. */
+  | 'pair-coordinator'
+  /** FROST: el dispositivo firma la parte de su share (con un coordinador, si la key los tiene). */
+  | 'device-share'
+  /** FROST, solo en modo `any`: la share en claro (un backup) firma su parte en software o en un dispositivo en blanco. */
+  | 'share-software'
+  /** FROST: k partes de shares distintas forman la firma de la key. */
+  | 'frost-sign'
+  /** FROST: el coordinador conoce la xpub de la key (los dispositivos no la guardan). */
+  | 'coordinator-xpub'
   | 'read-artifact'
   | 'descriptor-xpubs'
   | 'unlock-device'

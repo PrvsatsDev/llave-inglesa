@@ -6,10 +6,23 @@
  * el catálogo sola: `CATALOG_DATE` indica hasta cuándo está al día.
  */
 
-export const CATALOG_DATE = '2026-09-30';
+export const CATALOG_DATE = '2026-10-31';
 
 /** Comportamiento ante un PIN de coacción: abre otro wallet (señuelo) o borra/inutiliza el dispositivo. */
 export type DuressKind = 'decoy' | 'wipe';
+
+/**
+ * Matices de un modelo que no cambian el análisis pero hay que contar (los textos, en packages/text):
+ * - same-vendor-coordinator: su anti-exfil cuenta con la aleatoriedad que pone la app del móvil, que es del mismo
+ *   fabricante; un fabricante malicioso controla los dos extremos.
+ */
+export type CatalogNote = 'same-vendor-coordinator';
+
+/** Desde qué firmware se admite algo (`since`, si se sabe) y si solo con el firmware experimental Edge (Coldcard). */
+export interface FirmwareSupport {
+  since?: string;
+  edge?: true;
+}
 
 export interface CatalogModel {
   id: string;
@@ -28,11 +41,23 @@ export interface CatalogModel {
   antiExfil: boolean;
   /** Se puede montar en casa con piezas compradas por separado (sin que el fabricante toque el aparato). */
   diy: boolean;
+  /** Se protege con PIN. Frostsnap no: lo protege el bloqueo del móvil emparejado. */
+  pin: boolean;
+  /** Guarda shares de keys FROST (y solo eso: no guarda semillas). */
+  frost: boolean;
+  notes: readonly CatalogNote[];
   /**
    * Firma carteras Miniscript en P2WSH (las políticas con espera). `since`: firmware mínimo, si se sabe; `edge`: solo
    * con el firmware experimental Edge (Coldcard), que el fabricante desaconseja para cantidades grandes. Null: no.
    */
-  miniscript: { since?: string; edge?: true } | null;
+  miniscript: FirmwareSupport | null;
+  /**
+   * Firma carteras Taproot: `singleSig`, una sola key sin árbol de scripts (`tr(KEY)`, BIP-86); `miniscript`, Miniscript
+   * en las hojas de tapscript. Lo que no está, no lo firma. `antiExfil`: su anti-exfil también protege las firmas
+   * Schnorr de Taproot (en muchos modelos solo existe para las de SegWit: BitBox02, p. ej., lo dice así). Sin él, con
+   * una cartera Taproot el anti-exfil del modelo no cuenta. Null: Taproot, nada.
+   */
+  taproot: { singleSig?: FirmwareSupport; miniscript?: FirmwareSupport; antiExfil?: true } | null;
   duress: readonly DuressKind[];
   /**
    * Series de firmware conocidas (`from` incluido, `before` excluido). Si se definen,
@@ -56,19 +81,28 @@ const model = (
   registersMultisig: false,
   antiExfil: false,
   diy: false,
+  pin: true,
+  frost: false,
+  notes: [],
   miniscript: null,
+  taproot: null,
   duress: [],
   ...opts,
 });
 
-const TREZOR = { duress: ['wipe'] } as const; // wipe code
+// Taproot (single-sig) desde diciembre de 2021: 2.4.3 (Model T) y 1.10.4 (Model One); los Safe, siempre.
+const TREZOR = { duress: ['wipe'], taproot: { singleSig: {} } } as const; // wipe code
 // Miniscript con la app de Bitcoin 2.1 (2023): la versión es de la app, no del firmware.
-const LEDGER = { registersMultisig: true, miniscript: {}, duress: ['decoy'] } as const; // passphrase ligada a un segundo PIN
+// Taproot single-sig con la app 2.0; Miniscript en tapscript con la app 2.2.0 (2024). Como arriba, versiones de la app.
+const LEDGER = { registersMultisig: true, miniscript: {}, taproot: { singleSig: {}, miniscript: {} }, duress: ['decoy'] } as const; // passphrase ligada a un segundo PIN
 const COLDCARD = { registersMultisig: true, duress: ['decoy', 'wipe'] } as const; // duress PIN y brick-me PIN
-const JADE = { registersMultisig: true, acceptsExternalSeed: true, antiExfil: true, miniscript: {}, duress: ['wipe'] } as const;
+// Taproot single-sig (BIP-86) desde la 1.0.34 (marzo de 2025); su anti-exfil no dice nada de Schnorr.
+const JADE = { registersMultisig: true, acceptsExternalSeed: true, antiExfil: true, miniscript: {}, taproot: { singleSig: { since: '1.0.34' } }, duress: ['wipe'] } as const;
 /** Coldcard: serie normal y serie Edge (…X / …QX). */
 /** Coldcard: Miniscript solo en la serie Edge, desde la 6.1.0X. */
 const COLDCARD_MINISCRIPT = { since: '6.1.0', edge: true } as const;
+/** Coldcard: Taproot también solo en Edge (la serie normal, hasta la 5.6, no lo firma): 6.0.0X y Miniscript en tapscript en la 6.1.0X. */
+const COLDCARD_TAPROOT = { singleSig: { since: '6.0.0', edge: true }, miniscript: COLDCARD_MINISCRIPT } as const;
 const coldcardLines = (normal: string, normalBefore: string) => [
   { from: normal, before: normalBefore },
   { from: '6.0.0', before: '7.0.0' },
@@ -77,13 +111,13 @@ const coldcardLines = (normal: string, normalBefore: string) => [
 const STATELESS = { kind: 'stateless', acceptsExternalSeed: true } as const;
 
 export const HARDWARE_MODELS: readonly CatalogModel[] = [
-  model('trezor-one', 'Trezor', 'Trezor Model One', { ...TREZOR, discontinued: true }),
-  model('trezor-model-t', 'Trezor', 'Trezor Model T', { ...TREZOR, discontinued: true }),
+  model('trezor-one', 'Trezor', 'Trezor Model One', { ...TREZOR, discontinued: true, taproot: { singleSig: { since: '1.10.4' } } }),
+  model('trezor-model-t', 'Trezor', 'Trezor Model T', { ...TREZOR, discontinued: true, taproot: { singleSig: { since: '2.4.3' } } }),
   model('trezor-safe-3', 'Trezor', 'Trezor Safe 3', TREZOR),
   model('trezor-safe-5', 'Trezor', 'Trezor Safe 5', TREZOR),
   model('trezor-safe-7', 'Trezor', 'Trezor Safe 7', TREZOR),
 
-  model('ledger-nano-s', 'Ledger', 'Ledger Nano S', { ...LEDGER, miniscript: null, discontinued: true }),
+  model('ledger-nano-s', 'Ledger', 'Ledger Nano S', { ...LEDGER, miniscript: null, taproot: { singleSig: {} }, discontinued: true }),
   model('ledger-nano-s-plus', 'Ledger', 'Ledger Nano S Plus', LEDGER),
   model('ledger-nano-x', 'Ledger', 'Ledger Nano X', LEDGER),
   model('ledger-nano-gen5', 'Ledger', 'Ledger Nano Gen5', LEDGER),
@@ -92,16 +126,17 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
 
   model('coldcard-mk2', 'Coinkite', 'Coldcard Mk2', { ...COLDCARD, discontinued: true }),
   model('coldcard-mk3', 'Coinkite', 'Coldcard Mk3', { ...COLDCARD, discontinued: true }),
-  model('coldcard-mk4', 'Coinkite', 'Coldcard Mk4', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
-  model('coldcard-mk5', 'Coinkite', 'Coldcard Mk5', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
-  model('coldcard-q', 'Coinkite', 'Coldcard Q', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, firmwareLines: coldcardLines('1.0.0', '2.0.0') }),
+  model('coldcard-mk4', 'Coinkite', 'Coldcard Mk4', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, taproot: COLDCARD_TAPROOT, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
+  model('coldcard-mk5', 'Coinkite', 'Coldcard Mk5', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, taproot: COLDCARD_TAPROOT, firmwareLines: coldcardLines('5.0.0', '6.0.0') }),
+  model('coldcard-q', 'Coinkite', 'Coldcard Q', { ...COLDCARD, acceptsExternalSeed: true, miniscript: COLDCARD_MINISCRIPT, taproot: COLDCARD_TAPROOT, firmwareLines: coldcardLines('1.0.0', '2.0.0') }),
   model('tapsigner', 'Coinkite', 'Tapsigner'),
 
   model('bitbox01', 'BitBox', 'BitBox01', { discontinued: true }),
-  model('bitbox02', 'BitBox', 'BitBox02', { registersMultisig: true, antiExfil: true, miniscript: {} }),
-  model('bitbox02-nova', 'BitBox', 'BitBox02 Nova', { registersMultisig: true, antiExfil: true, miniscript: {} }),
+  // Taproot single-sig desde la 9.10.0, sin anti-klepto («no soportado para Taproot por usar firmas Schnorr»).
+  model('bitbox02', 'BitBox', 'BitBox02', { registersMultisig: true, antiExfil: true, miniscript: {}, taproot: { singleSig: { since: '9.10.0' } } }),
+  model('bitbox02-nova', 'BitBox', 'BitBox02 Nova', { registersMultisig: true, antiExfil: true, miniscript: {}, taproot: { singleSig: {} } }),
 
-  model('passport', 'Foundation', 'Passport', { registersMultisig: true }),
+  model('passport', 'Foundation', 'Passport', { registersMultisig: true, taproot: { singleSig: { since: '2.3.0' } } }),
   model('passport-prime', 'Foundation', 'Passport Prime', { registersMultisig: true }),
 
   model('jade', 'Blockstream', 'Jade', JADE),
@@ -109,13 +144,26 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
 
   model('bitkey', 'Block', 'Bitkey'),
 
-  model('seedsigner', 'SeedSigner', 'SeedSigner', { ...STATELESS, diy: true }),
-  model('krux', 'Krux', 'Krux', { ...STATELESS, diy: true, miniscript: { since: '25.03.0' } }),
-  model('specter-diy', 'Specter', 'Specter DIY', { ...STATELESS, registersMultisig: true, diy: true, miniscript: { since: '1.5.0' } }),
+  model('seedsigner', 'SeedSigner', 'SeedSigner', { ...STATELESS, diy: true, taproot: { singleSig: { since: '0.6.0' } } }),
+  model('krux', 'Krux', 'Krux', { ...STATELESS, diy: true, miniscript: { since: '25.03.0' }, taproot: { singleSig: { since: '25.03.0' }, miniscript: { since: '25.03.0' } } }),
+  // Taproot single-sig estable desde la 1.8.0 (experimental en la 1.6.0); Miniscript en tapscript desde la 1.9.0.
+  model('specter-diy', 'Specter', 'Specter DIY', { ...STATELESS, registersMultisig: true, diy: true, miniscript: { since: '1.5.0' }, taproot: { singleSig: { since: '1.8.0' }, miniscript: { since: '1.9.0' } } }),
 
   model('keystone-essential', 'Keystone', 'Keystone Essential', { registersMultisig: true, discontinued: true }),
   model('keystone-pro', 'Keystone', 'Keystone Pro', { registersMultisig: true, discontinued: true }),
-  model('keystone-3-pro', 'Keystone', 'Keystone 3 Pro', { registersMultisig: true }),
+  // Taproot desde la 1.3.0 (firmware solo Bitcoin), y de momento solo con Sparrow.
+  // Frostsnap: FROST con DKG, sin PIN ni secure element (el móvil emparejado guarda la clave que descifra cada share),
+  // anti-exfil en cada firma con la aleatoriedad del móvil (anti-klepto), firmware firmado y reproducible. Solo
+  // Taproot con una sola key; no firma hojas de tapscript.
+  model('frostsnap', 'Frostsnap', 'Frostsnap', {
+    antiExfil: true,
+    taproot: { singleSig: {}, antiExfil: true },
+    pin: false,
+    frost: true,
+    notes: ['same-vendor-coordinator'],
+  }),
+
+  model('keystone-3-pro', 'Keystone', 'Keystone 3 Pro', { registersMultisig: true, taproot: { singleSig: { since: '1.3.0' } } }),
 ];
 
 /**
@@ -298,14 +346,19 @@ export function advisoriesFor(modelId: string, firmware?: string): AdvisoryMatch
  */
 export type MiniscriptSupport = 'yes' | 'unknown-model' | 'edge' | 'unsupported' | 'old-firmware';
 
-export function miniscriptSupport(device: { model?: string; firmware?: string }): MiniscriptSupport {
+function firmwareSupport(device: { model?: string; firmware?: string }, of: (c: CatalogModel) => FirmwareSupport | null | undefined): MiniscriptSupport {
   const catalog = catalogModelByName(device.model);
   if (!catalog) return 'unknown-model';
-  if (!catalog.miniscript) return 'unsupported';
-  const { since, edge } = catalog.miniscript;
+  const support = of(catalog);
+  if (!support) return 'unsupported';
   const version = device.firmware?.trim() ? parseFirmware(device.firmware) : null;
-  if (since && version && compareFirmware(version, parseFirmware(since)!) < 0) return 'old-firmware';
-  return edge ? 'edge' : 'yes';
+  if (support.since && version && compareFirmware(version, parseFirmware(support.since)!) < 0) return 'old-firmware';
+  return support.edge ? 'edge' : 'yes';
 }
 
+export const miniscriptSupport = (device: { model?: string; firmware?: string }) => firmwareSupport(device, (c) => c.miniscript);
+
 export const signsMiniscript = (s: MiniscriptSupport) => s !== 'unsupported' && s !== 'old-firmware';
+
+/** Lo mismo que `miniscriptSupport`, para Taproot con una sola key (`tr(KEY)`). */
+export const taprootSupport = (device: { model?: string; firmware?: string }) => firmwareSupport(device, (c) => c.taproot?.singleSig);

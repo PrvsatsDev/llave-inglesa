@@ -17,6 +17,7 @@ export const marco = {
     key: 'la key en sí (frase semilla o en memoria)',
     passphrase: 'passphrase',
     xpub: 'solo xpub',
+    share: 'una share de una key repartida (K1·2: la 2 de K1)',
     pin: 'protegido por PIN',
     memoria: 'lo sabe de memoria',
     siempre: 'accede siempre',

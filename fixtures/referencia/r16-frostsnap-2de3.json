@@ -1,0 +1,236 @@
+{
+  "format": "llave-inglesa",
+  "version": 2,
+  "name": "Frostsnap 2 de 3",
+  "description": "Una sola key FROST repartida en tres Frostsnap (casa, oficina y casa de los padres), cada uno con su tarjeta de backup al lado, y el móvil emparejado encima. Sin semilla ni descriptor que guardar.",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "fingerprint": "3e916f32",
+      "derivation": "0/0",
+      "xpub": "xpub6BCW7gWfhTp2qVrJNTAeaucniBvuUTzsYoh6p4SZgr1D38BSGUtn3wppVja8GQuqtdfWgvLoZsmarDC3CmY4R1PgMW6P2hrm9VPAqRYrYkt",
+      "passphrase": false,
+      "split": {
+        "scheme": "frost",
+        "k": 2,
+        "shares": [
+          1,
+          2,
+          3
+        ],
+        "coordinators": [
+          "movil"
+        ]
+      },
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Frostsnap",
+            "model": "Frostsnap"
+          },
+          {
+            "kind": "software-rng",
+            "vendor": "Frostsnap"
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Frostsnap",
+          "model": "Frostsnap"
+        },
+        "independentlyVerified": false
+      }
+    }
+  ],
+  "policy": {
+    "type": "key",
+    "key": "k1"
+  },
+  "wallet": {
+    "script": "tr",
+    "sorted": true
+  },
+  "devices": [
+    {
+      "id": "frostsnap-1",
+      "label": "Frostsnap 1",
+      "vendor": "Frostsnap",
+      "model": "Frostsnap",
+      "kind": "stateful",
+      "holds": [],
+      "shares": [
+        {
+          "key": "k1",
+          "share": 1
+        }
+      ],
+      "pinProtected": false,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": false,
+      "location": "casa"
+    },
+    {
+      "id": "frostsnap-2",
+      "label": "Frostsnap 2",
+      "vendor": "Frostsnap",
+      "model": "Frostsnap",
+      "kind": "stateful",
+      "holds": [],
+      "shares": [
+        {
+          "key": "k1",
+          "share": 2
+        }
+      ],
+      "pinProtected": false,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": false,
+      "location": "oficina"
+    },
+    {
+      "id": "frostsnap-3",
+      "label": "Frostsnap 3",
+      "vendor": "Frostsnap",
+      "model": "Frostsnap",
+      "kind": "stateful",
+      "holds": [],
+      "shares": [
+        {
+          "key": "k1",
+          "share": 3
+        }
+      ],
+      "pinProtected": false,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": false,
+      "location": "padres"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "tarjeta-1",
+      "label": "Tarjeta 1",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "share",
+          "key": "k1",
+          "share": 1
+        }
+      ],
+      "lockedBy": [],
+      "location": "casa"
+    },
+    {
+      "id": "tarjeta-2",
+      "label": "Tarjeta 2",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "share",
+          "key": "k1",
+          "share": 2
+        }
+      ],
+      "lockedBy": [],
+      "location": "oficina"
+    },
+    {
+      "id": "tarjeta-3",
+      "label": "Tarjeta 3",
+      "medium": "paper",
+      "contents": [
+        {
+          "type": "share",
+          "key": "k1",
+          "share": 3
+        }
+      ],
+      "lockedBy": [],
+      "location": "padres"
+    }
+  ],
+  "computers": [
+    {
+      "id": "movil",
+      "label": "Móvil",
+      "use": "daily",
+      "wallet": true,
+      "carriedBy": "yo"
+    }
+  ],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": [],
+      "livesAt": "casa"
+    },
+    {
+      "id": "pareja",
+      "name": "Pareja",
+      "role": "heir",
+      "knows": [],
+      "livesAt": "casa"
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "pareja",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "oficina",
+      "name": "Oficina",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "padres",
+      "name": "Casa padres",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "pareja",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    }
+  ]
+}

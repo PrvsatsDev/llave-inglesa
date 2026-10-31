@@ -241,6 +241,7 @@ export function secretText(s: SecretRef, label: Label): string {
     case 'pin': return `PIN de ${label(s.device)}`;
     case 'password': return `contraseña de ${label(s.artifact)}`;
     case 'descriptor': return 'descriptor del wallet';
+    case 'share': return `share ${s.share} de ${label(s.key)}`;
   }
 }
 
@@ -252,9 +253,14 @@ export function factText(f: Fact, index: ModelIndex): string {
       if (item.kind === 'computer' && item.value.carriedBy) return `${item.value.label} (lo lleva ${index.label(item.value.carriedBy)})`;
       return `${item.value.label} (${index.label(itemPlace(item))})`;
     }
-    case 'secret': return secretText(f.secret, index.label);
+    case 'secret':
+      // En FROST no hay semilla: el hecho es el secreto completo, reconstruido juntando shares.
+      if (f.secret.type === 'seed' && index.keys.get(f.secret.key)?.split?.scheme === 'frost') return `secreto completo de ${index.label(f.secret.key)}`;
+      return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} desbloqueado`;
     case 'sign': return `firma con ${index.label(f.key)}`;
+    case 'share-sign': return `firma la parte de la share ${f.share} de ${index.label(f.key)}`;
+    case 'coordinator': return `coordinador de ${index.label(f.key)} (descifra sus shares y les pide firmar)`;
     case 'timelock': return `Vence el timelock de ${waitText(f.blocks)}`;
     case 'spend': return 'Puede gastar los fondos';
   }
@@ -282,6 +288,14 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'passphrase-bruteforce': return `adivinada por fuerza bruta a partir de la semilla (passphrase ${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']})`;
     case 'physical-extraction': return `extraída del hardware de ${name(v.device)} pese al PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
+    case 'combine-shares': return 'juntando las shares que bastan';
+    case 'paired-coordinator': return `${name(v.item)} está emparejado con la key`;
+    case 'coordinator-malware': return `el malware de ${name(v.item)}, emparejado con la key, usa su clave`;
+    case 'pair-coordinator': return 'con tantos dispositivos como bastan se empareja un móvil nuevo';
+    case 'device-share': return `la firma ${name(v.device)}`;
+    case 'share-software': return 'cargando la share en software o en un dispositivo en blanco';
+    case 'frost-sign': return 'juntando las partes de las shares que bastan (FROST)';
+    case 'coordinator-xpub': return 'la conoce el coordinador';
     case 'descriptor-xpubs': return 'incluida en el descriptor';
     case 'unlock-device': return '';
     case 'device-sign': return 'firma el dispositivo';
@@ -318,6 +332,17 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'invalid-home': 'Alguien vive en un sitio donde no se puede vivir (tiene que ser una ubicación física, ni dentro de otra ni una caja del banco)',
   'invalid-computer-place': 'Un ordenador de firma tiene que estar guardado en una ubicación o llevarlo una persona (una de las dos)',
   'too-deep': 'El documento está anidado más de lo que puede ser un esquema real: no se abre',
+  'share-threshold-out-of-range': 'Una key repartida pide más shares de las que tiene',
+  'duplicate-share': 'Una key repartida tiene dos shares con el mismo número',
+  'unknown-share': 'Algo hace referencia a una share que no existe',
+  'frost-seed': 'Hay una frase semilla de una key FROST, y en FROST no existe: cada dispositivo guarda solo su share y el secreto completo nunca se junta',
+  'frost-passphrase': 'Una key FROST no puede llevar passphrase',
+  'frost-key-on-device': 'Un dispositivo guarda o carga entera una key FROST, y en FROST cada dispositivo guarda solo su share',
+  'device-share-not-frost': 'Un dispositivo guarda shares de una key que no es FROST: con Shamir, el dispositivo guarda la key entera y las shares son su backup',
+  'shares-together': 'Hay en una misma ubicación tantas shares como bastan: quien entre ahí tiene la key entera, el reparto no reparte',
+  'shares-below-threshold': 'Hay menos shares (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar ni recuperar',
+  'shares-on-non-frost-device': 'Un dispositivo guarda shares FROST y, según el catálogo, su modelo no las admite',
+  'shares-single-vendor': 'Todas las shares de esta key FROST están en dispositivos de un solo fabricante: un firmware malicioso suyo, o su app, alcanzan a todas a la vez',
 };
 
 export function issueText(issue: Issue, label: Label): string {

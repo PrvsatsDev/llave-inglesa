@@ -96,4 +96,15 @@ export const EJEMPLOS: typeof es = {
   'Descriptor cb': 'Descriptor (bank)',
   'Descriptor hija': 'Descriptor (daughter)',
   'Descriptor abogado': 'Descriptor (lawyer)',
+  'Frostsnap 2 de 3': 'Frostsnap 2 of 3',
+  'Una sola key FROST repartida en tres Frostsnap (casa, oficina y casa de los padres), cada uno con su tarjeta de backup al lado, y el móvil emparejado encima. Sin semilla ni descriptor que guardar.':
+    'A single FROST key split across three Frostsnap devices (home, office and the parents’ house), each with its backup card next to it, and the paired phone carried along. No seed nor descriptor to keep.',
+  Oficina: 'Office',
+  Móvil: 'Phone',
+  'Tarjeta 1': 'Card 1',
+  'Tarjeta 2': 'Card 2',
+  'Tarjeta 3': 'Card 3',
+  'Trezor con Shamir 2 de 3': 'Trezor with Shamir 2 of 3',
+  'Single-sig en un Trezor Safe 5 con el backup repartido en tres shares SLIP-39 de metal: una en la caja fuerte, otra en el banco y otra en casa de los padres. Basta con dos para recuperarla.':
+    'Single-sig on a Trezor Safe 5 with the backup split into three metal SLIP-39 shares: one in the home safe, another in the bank and another in the parents’ house. Two are enough to recover it.',
 };

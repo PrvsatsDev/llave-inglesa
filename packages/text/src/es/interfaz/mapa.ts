@@ -3,6 +3,7 @@ export const mapa = {
   soportes: { paper: 'papel', metal: 'metal', washers: 'arandelas', digital: 'digital', other: 'otro soporte' },
   cifrado: 'cifrado',
   guardaKeys: 'guarda keys',
+  guardaShares: 'guarda shares',
   sinEstado: 'sin estado',
   usosOrdenador: { daily: 'uso general', dedicated: 'dedicado' },
   conCartera: 'con la cartera',
@@ -31,6 +32,8 @@ export const mapa = {
   keyAqui: (key: string) => `${key} está aquí`,
   sabeDeMemoria: 'Sabe de memoria',
   viveEn: 'Vive en',
+  /** Una share de una key repartida, con su número: «K1·2». */
+  etiquetaShare: (key: string, share: number) => `${key}·${share}`,
   insignias: {
     pin: 'PIN',
     pistaPin: (dispositivo: string) => `PIN de ${dispositivo}`,
@@ -38,8 +41,8 @@ export const mapa = {
     pistaContrasena: (backup: string) => `Contraseña de ${backup}`,
     descriptor: 'descriptor',
     pistaDescriptor: 'Descriptor del wallet: política y todas las xpubs',
-    prefijo: { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ' },
-    pistas: { holds: 'Key guardada en el dispositivo', seed: 'Frase semilla', passphrase: 'Passphrase', xpub: 'Clave pública extendida' },
+    prefijo: { holds: '', seed: '', passphrase: 'pass ', xpub: 'xpub ', share: '' },
+    pistas: { holds: 'Key guardada en el dispositivo', seed: 'Frase semilla', passphrase: 'Passphrase', xpub: 'Clave pública extendida', share: 'Share' },
     pistaKey: (que: string, key: string) => `${que} de ${key}`,
   },
 };

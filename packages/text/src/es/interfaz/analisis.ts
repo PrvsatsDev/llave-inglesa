@@ -15,6 +15,7 @@ import {
   LOCKOUT_PENALTY,
   LOSS_RARITY,
   MINISCRIPT_DEVICE_PENALTY,
+  TAPROOT_DEVICE_PENALTY,
   NO_DESCRIPTOR_PENALTY,
   PASSPHRASE_EFFORT,
   RENEWAL_PENALTY,
@@ -98,11 +99,15 @@ export const analisis = {
     renovar: 'Hay que mover las monedas cada cierto tiempo para renovar el timelock',
     sinMiniscript: (nombres: readonly string[]) =>
       `${listText(nombres)} no ${nombres.length === 1 ? 'firma' : 'firman'} esta cartera, que necesita Miniscript`,
-    como: () => [
+    sinTaproot: (nombres: readonly string[]) =>
+      `${listText(nombres)} no ${nombres.length === 1 ? 'firma' : 'firman'} esta cartera Taproot (o no con su firmware)`,
+    /** `taproot`: la cartera es Taproot (solo entonces se explica su resta). */
+    como: (taproot = false) => [
       'Cuántas ubicaciones tienen que visitar los titulares para firmar de forma segura: con dispositivos de firma, sin teclear ninguna frase semilla en un ordenador.',
       `${scale(usabilityScore, UBICACIONES, 1, 4)}.`,
       `Con timelocks resta ${RENEWAL_PENALTY}: hay que mover las monedas antes de que venzan para que la rama con espera no se abra, y eso es firmar una transacción cada cierto tiempo.`,
       `Si la política necesita Miniscript y algún dispositivo no lo firma, resta ${MINISCRIPT_DEVICE_PENALTY}: no cambia qué se puede hacer (se compra otro dispositivo y se le carga la semilla), pero cuesta.`,
+      ...(taproot ? [`Con una cartera Taproot, si algún dispositivo no la firma, resta ${TAPROOT_DEVICE_PENALTY} por lo mismo.`] : []),
     ],
     dondeSeFirma: 'Dónde se firma',
     minimoVisitar: 'Lo mínimo que tienen que visitar los titulares para firmar una transacción:',

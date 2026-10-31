@@ -11,10 +11,11 @@ calculates in this version. [Versión en español](GUIA.md).
 3. [How to read the scores](#notas): What each of the four scores measures, with examples that go from one end to the other.
 4. [Simulate](#simular): Try attacks and loss events, combine them, and read on the map what would happen and why.
 5. [Guided cases](#casos): From the seed phrase on paper to a distributed multisig: what fails at each step and what fixes it.
-6. [Building your setup](#montar): From a blank setup to yours: keys, locations, devices, backups, people, and saving it encrypted.
-7. [Concepts](#conceptos): The words the tool uses, one line each.
-8. [Known limits](#limites): What the engine simplifies or does not take into account, so you can read the scores with judgment.
-9. [Privacy and verification](#verificar): What leaves your computer (nothing), how your setup is stored, and how to check that the app is what it claims to be.
+6. [Split keys: Shamir and FROST](#repartidas): A key whose secret is in several parts: what changes compared with a seed phrase and with a multisig.
+7. [Building your setup](#montar): From a blank setup to yours: keys, locations, devices, backups, people, and saving it encrypted.
+8. [Concepts](#conceptos): The words the tool uses, one line each.
+9. [Known limits](#limites): What the engine simplifies or does not take into account, so you can read the scores with judgment.
+10. [Privacy and verification](#verificar): What leaves your computer (nothing), how your setup is stored, and how to check that the app is what it claims to be.
 
 <a id="que-es"></a>
 
@@ -186,9 +187,41 @@ In the plain 2 of 3 that locks the funds, and its resilience is **72** (good); h
 
 > 💡 None of this is “the answer”: it is a map of trade-offs. Open the one that looks most like yours, change one thing at a time, and see which score goes up and which goes down.
 
+<a id="repartidas"></a>
+
+## 6. Split keys: Shamir and FROST
+
+A split key does not have a seed phrase, but several parts (**shares**) of which a few are enough: 2 of 3, for example. There are two very different ways to do it, and the difference is where the parts are:
+
+- **Shamir** (SLIP-39 on Trezor, SSKR on Keystone or Passport): the seed exists and the device stores it whole; the shares are only its backup and are put together when recovering.
+- **FROST** (Frostsnap): the shares are generated among all the devices and never put together; each one stores its own and enough of them sign together. There is no seed: on chain it is a single Taproot key, with no descriptor to keep.
+- **Multisig**: several whole keys, each with its seed phrase, and a descriptor that ties them together ([Guided cases](#casos)).
+
+**Trezor with Shamir.** A Trezor at home and its backup in three metal shares: in the home safe, in the bank and in the parents’ house.
+
+> ▶ In the app: open the example “Trezor with Shamir 2 of 3”.
+
+Compared with two plates with the whole seed phrase (security **49** (weak)), a stolen share no longer gives anything: security **61** (fair), with similar resilience (**70** (good) versus **77** (good)). What does not change is the Trezor: it stores the whole key, so a flaw in its generator or its firmware exposes it just as before.
+
+**Frostsnap 2 of 3.** Three Frostsnap devices, at home, at the office and at the parents’ house, each with its backup card next to it, and the paired phone carried along.
+
+> ▶ In the app, with the example “Frostsnap 2 of 3”: *The wrench attack at home*.
+
+In the distributed 2 of 3, with the devices at home, that was enough. Not here: at home there is only one share (the device’s and its card’s are the same one), and although the phone unlocks that device, another one is missing.
+
+> ▶ In the app, with the example “Frostsnap 2 of 3”: *Two burglaries: at home and at the office*.
+
+With two devices it is: Frostsnap devices have no PIN, and with as many as are needed a new phone gets paired. With fewer, a stolen device is useless, because its share is encrypted with a key that the paired phone keeps. The backup cards, on the other hand, are the share in the clear.
+
+Security **63** (fair), somewhat less than the distributed 2 of 3 (**71** (good)): the cheapest theft is not in any house but in Frostsnap’s generator, because all the shares come from devices and an app from the same manufacturer. Its anti-exfil stops a tampered device, not a malicious manufacturer, who would control both ends: the tool explains it, but does not count it as one more attack. Signing requires going to two places (usability **75** (good)) and the cards are paper: two fires take two shares (resilience **61** (fair)).
+
+> 💡 Recovering a FROST key needs, today, the Frostsnap app and blank devices to load the cards into. If it did not exist, with as many cards as are needed, some open tools (frostsnap-thaw or frost_backup) rebuild a key that can be imported into Sparrow or Bitcoin Core. The letter for the heirs explains it.
+
+**Taproot and the quantum computer.** In Taproot (a FROST key always is; a single-sig, if you choose it) the public key is visible on chain from the moment the bitcoin is received, not only when it is spent. Today this is no risk, and the tool does not count it as an attack; but a quantum computer able to break these keys could spend any Taproot output.
+
 <a id="montar"></a>
 
-## 6. Building your setup
+## 7. Building your setup
 
 Start with **File → New setup** or, better, open the example that looks most like yours and change it. Everything is edited in the **Setup** tab or by clicking any item on the map; Ctrl+Z undoes.
 
@@ -212,7 +245,7 @@ It does not have to be perfect the first time: build the essentials, look at the
 
 <a id="conceptos"></a>
 
-## 7. Concepts
+## 8. Concepts
 
 - **Key**: each of the keys that can sign (K1, K2…). Its **seed phrase** is the words that recover it.
 - **Passphrase**: an extra word or phrase that, together with the seed phrase, gives a different key. Without it, the seed phrase alone does not sign.
@@ -227,10 +260,13 @@ It does not have to be perfect the first time: build the essentials, look at the
 - **Temporary lockout**: the funds are frozen while someone is incapacitated, but are recovered when the heirs inherit.
 - **Custodian**: someone trusted who keeps something (a plate, a descriptor) without being an owner or an heir.
 - **Entropy**: the randomness with which the seed phrase is generated (the device’s generator, dice, a coin…). **Verifying** means recomputing it in another tool to check that it comes from that randomness.
+- **Split key**: a key whose secret is in several **shares**, of which a few are enough. With **Shamir** the seed exists and the shares are its backup; with **FROST** there is no seed and each device signs with its own ([Split keys](#repartidas)).
+- **Coordinator**: in FROST, the paired phone or computer that asks the devices to sign (in Frostsnap, it also decrypts their shares).
+- **Taproot**: the newest address type (bc1p…). A FROST key only exists in Taproot.
 
 <a id="limites"></a>
 
-## 8. Known limits
+## 9. Known limits
 
 A model always simplifies. These are the deliberate shortcuts of llave-inglesa:
 
@@ -243,13 +279,14 @@ A model always simplifies. These are the deliberate shortcuts of llave-inglesa:
 - Each person lives in a single place and is assumed to be there: schedules (being at work) are not taken into account. If you do not set where they live, they can be coerced anywhere at no extra cost.
 - The signing computer or phone only has two extremes (general-purpose or dedicated), and its malware is assumed able to get the seed out of a connected device with a published flaw. The password of the computer or the wallet does not count.
 - The catalog of devices and their known flaws does not update itself: each version ships its own, with its date.
-- Waiting periods are relative (counted from the last time the coins moved): there are no absolute dates, and no Taproot. How often you move the coins is something you state: it is not checked.
+- Waiting periods are relative (counted from the last time the coins moved): there are no absolute dates. How often you move the coins is something you state: it is not checked.
+- Taproot, only with one key and no script tree. Split keys: single-group Shamir (without SLIP-39 groups) and up to 16 shares, and a FROST key only as the whole policy. A stolen phone is taken as unlocked (its lock screen does not count), and Frostsnap’s anti-exfil is taken as good even though its app is from the same manufacturer.
 - A device that does not sign Miniscript only costs usability: you can always sign with another one by loading the seed phrase.
 - With many devices and locations the analysis takes a few seconds: it is exhaustive.
 
 <a id="verificar"></a>
 
-## 9. Privacy and verification
+## 10. Privacy and verification
 
 - **No network**: the page’s content security policy forbids any request. There are no accounts, no analytics, and no third-party resources.
 - **Your browser**: that policy does not stop what the browser does on its own. The page asks it not to translate it and not to run what you type through the spell checker or autofill, because both can send it to a server. But an extension (Grammarly, a password manager, an AI assistant) can read the whole page: use it in a profile without extensions. What you copy, such as the descriptor, stays in the clipboard history, which some systems sync to the cloud.

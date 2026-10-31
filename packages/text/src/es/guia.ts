@@ -27,6 +27,8 @@ const SEEDSIGNER = 'r12-2de3-seedsigner';
 const HEREDERA = 'r13-recuperacion-heredera';
 const SE_RELAJA = 'r14-2de3-se-relaja';
 const SE_AMPLIA = 'r15-2de3-se-amplia';
+const FROSTSNAP = 'r16-frostsnap-2de3';
+const SHAMIR = 'r17-shamir-trezor';
 
 export const GUIA: readonly Capitulo[] = [
   {
@@ -603,6 +605,100 @@ export const GUIA: readonly Capitulo[] = [
     ],
   },
   {
+    id: 'repartidas',
+    titulo: 'Keys repartidas: Shamir y FROST',
+    resumen: 'Una key cuyo secreto está en varias partes: qué cambia frente a una frase semilla y frente a un multisig.',
+    bloques: [
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Una key repartida no tiene una frase semilla, sino varias partes (',
+          n('shares'),
+          ') de las que bastan unas cuantas: 2 de 3, por ejemplo. Hay dos formas muy distintas de hacerlo, y la diferencia está en dónde están las partes:',
+        ],
+      },
+      {
+        tipo: 'lista',
+        items: [
+          [n('Shamir'), ' (SLIP-39 en Trezor, SSKR en Keystone o Passport): la semilla existe y el dispositivo la guarda entera; las shares son solo su backup y se juntan al recuperar.'],
+          [n('FROST'), ' (Frostsnap): las shares se generan entre todos los dispositivos y nunca se juntan; cada uno guarda la suya y firman juntos los que bastan. No hay semilla: en la cadena es una sola key Taproot, sin descriptor que guardar.'],
+          [n('Multisig'), ': varias keys enteras, cada una con su frase semilla, y un descriptor que las une (', cap('casos', 'Casos guiados'), ').'],
+        ],
+      },
+      { tipo: 'parrafo', texto: [n('Trezor con Shamir.'), ' Un Trezor en casa y su backup en tres shares de metal: en la caja fuerte, en el banco y en casa de los padres.'] },
+      { tipo: 'ejemplo', ejemplo: SHAMIR, texto: 'Abrir el Trezor con Shamir' },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Frente a dos placas con la frase semilla entera (seguridad ',
+          cifra(ACERO_BANCO, 'security'),
+          '), una share robada ya no da nada: seguridad ',
+          cifra(SHAMIR, 'security'),
+          ', con una resiliencia parecida (',
+          cifra(SHAMIR, 'resilience'),
+          ' frente a ',
+          cifra(ACERO_BANCO, 'resilience'),
+          '). Lo que no cambia es el Trezor: guarda la key entera, así que un fallo de su generador o de su firmware la expone igual que antes.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [n('Frostsnap 2 de 3.'), ' Tres Frostsnap, en casa, en la oficina y en casa de los padres, cada uno con su tarjeta de backup al lado, y el móvil emparejado encima.'],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: FROSTSNAP,
+        escenario: { kind: 'attack', atoms: [{ type: 'coercion', person: 'yo', location: 'casa' }] },
+        texto: 'La llave inglesa en casa',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'En el 2 de 3 distribuido, con los dispositivos en casa, eso bastaba. Aquí no: en casa solo hay una share (la del dispositivo y la de su tarjeta son la misma), y aunque el móvil desbloquea ese dispositivo, falta otra.',
+        ],
+      },
+      {
+        tipo: 'simular',
+        ejemplo: FROSTSNAP,
+        escenario: { kind: 'attack', atoms: [{ type: 'burglary', location: 'casa' }, { type: 'burglary', location: 'oficina' }] },
+        texto: 'Dos intrusiones: en casa y en la oficina',
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Con dos dispositivos sí: los Frostsnap no tienen PIN, y con tantos como bastan se empareja un móvil nuevo. Con menos, un dispositivo robado no sirve de nada, porque su share va cifrada con una clave que guarda el móvil emparejado. Las tarjetas de backup, en cambio, son la share en claro.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          'Seguridad ',
+          cifra(FROSTSNAP, 'security'),
+          ', algo menos que el 2 de 3 distribuido (',
+          cifra(DISTRIBUIDO, 'security'),
+          '): el robo más barato no está en ninguna casa, sino en el generador de Frostsnap, porque todas las shares salen de dispositivos y de una app del mismo fabricante. Su anti-exfil frena a un dispositivo manipulado, no a un fabricante malicioso, que controlaría los dos extremos: la herramienta lo explica, pero no lo cuenta como un ataque más. Firmar exige ir a dos sitios (usabilidad ',
+          cifra(FROSTSNAP, 'usability'),
+          ') y las tarjetas son de papel: dos incendios se llevan dos shares (resiliencia ',
+          cifra(FROSTSNAP, 'resilience'),
+          ').',
+        ],
+      },
+      {
+        tipo: 'nota',
+        texto: [
+          'Recuperar una key FROST necesita hoy la app de Frostsnap y dispositivos en blanco donde cargar las tarjetas. Si no existiera, con tantas tarjetas como bastan, unas herramientas abiertas (frostsnap-thaw o frost_backup) reconstruyen una clave que se importa en Sparrow o Bitcoin Core. La carta para los herederos lo explica.',
+        ],
+      },
+      {
+        tipo: 'parrafo',
+        texto: [
+          n('Taproot y el ordenador cuántico.'),
+          ' En Taproot (una key FROST siempre lo es; un single-sig, si lo eliges) la clave pública queda a la vista en la cadena desde que se reciben los bitcoins, no solo al gastarlos. Hoy no es un riesgo, y la herramienta no lo cuenta como ataque; pero un ordenador cuántico capaz de romper estas claves podría gastar cualquier salida Taproot.',
+        ],
+      },
+    ],
+  },
+  {
     id: 'montar',
     titulo: 'Montar tu esquema',
     resumen: 'De un esquema en blanco al tuyo: keys, ubicaciones, dispositivos, backups, personas y guardarlo cifrado.',
@@ -719,6 +815,9 @@ export const GUIA: readonly Capitulo[] = [
           [n('Bloqueo temporal'), ': los fondos quedan inmovilizados mientras alguien está incapacitado, pero se recuperan cuando heredan.'],
           [n('Custodio'), ': alguien de confianza que guarda algo (una placa, un descriptor) sin ser titular ni heredero.'],
           [n('Entropía'), ': el azar con el que se genera la frase semilla (el generador del dispositivo, dados, una moneda…). ', n('Verificar'), ' es recalcularla en otra herramienta para comprobar que sale de ese azar.'],
+          [n('Key repartida'), ': una key cuyo secreto está en varias ', n('shares'), ', de las que bastan unas cuantas. Con ', n('Shamir'), ' la semilla existe y las shares son su backup; con ', n('FROST'), ' no existe semilla y cada dispositivo firma con la suya (', cap('repartidas', 'Keys repartidas'), ').'],
+          [n('Coordinador'), ': en FROST, el móvil u ordenador emparejado que pide las firmas a los dispositivos (en Frostsnap, también descifra sus shares).'],
+          [n('Taproot'), ': el tipo de dirección más reciente (bc1p…). Una key FROST solo existe en Taproot.'],
         ],
       },
     ],
@@ -744,7 +843,8 @@ export const GUIA: readonly Capitulo[] = [
           ['Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.'],
           ['El ordenador o móvil de firma solo tiene dos extremos (de uso general o dedicado), y su malware se supone capaz de sacar la semilla de un dispositivo conectado con un fallo publicado. No cuenta la contraseña del ordenador ni de la cartera.'],
           ['El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.'],
-          ['Las esperas son relativas (desde el último movimiento de las monedas): no hay fechas absolutas, ni Taproot. Cada cuánto las mueves es un dato que das tú: no se comprueba.'],
+          ['Las esperas son relativas (desde el último movimiento de las monedas): no hay fechas absolutas. Cada cuánto las mueves es un dato que das tú: no se comprueba.'],
+          ['Taproot, solo con una key y sin árbol de scripts. Keys repartidas: Shamir de un solo grupo (sin los grupos de SLIP-39) y hasta 16 shares, y una key FROST solo como política entera. Un móvil robado se da por desbloqueado (no cuenta su bloqueo de pantalla), y el anti-exfil de Frostsnap se da por bueno aunque su app sea del mismo fabricante.'],
           ['Un dispositivo que no firma Miniscript solo resta usabilidad: siempre se puede firmar con otro cargando la frase semilla.'],
           ['Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.'],
         ],

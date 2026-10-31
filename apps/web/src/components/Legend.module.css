@@ -74,6 +74,11 @@
   border: 1px dashed var(--c);
 }
 
+.half {
+  border: 1px solid var(--c);
+  background: linear-gradient(90deg, var(--c) 50%, transparent 50%);
+}
+
 .icon {
   flex-shrink: 0;
   color: var(--text-faint);

@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { ADVISORIES, HARDWARE_MODELS, advisoriesFor, catalogModelByName, compareFirmware, findModel, miniscriptSupport, parseFirmware } from '../src/index.ts';
+import { ADVISORIES, HARDWARE_MODELS, advisoriesFor, catalogModelByName, compareFirmware, findModel, miniscriptSupport, parseFirmware, taprootSupport } from '../src/index.ts';
 
 const ids = (matches: ReturnType<typeof advisoriesFor>) => matches.map((m) => m.advisory.id);
 
@@ -128,6 +128,22 @@ describe('quién firma Miniscript', () => {
     expect(miniscriptSupport({ model: 'Krux', firmware: '25.03.0' })).toBe('yes');
     // Un modelo escrito a mano no se puede comprobar: se da por bueno.
     expect(miniscriptSupport({ model: 'Mi firmador casero' })).toBe('unknown-model');
+  });
+
+  it('Taproot con una sola key: por modelo y firmware', () => {
+    expect(taprootSupport({ model: 'Trezor Safe 5' })).toBe('yes');
+    expect(taprootSupport({ model: 'Trezor Model T', firmware: '2.4.2' })).toBe('old-firmware');
+    expect(taprootSupport({ model: 'Trezor Model T', firmware: '2.4.3' })).toBe('yes');
+    expect(taprootSupport({ model: 'Jade', firmware: '1.0.33' })).toBe('old-firmware');
+    expect(taprootSupport({ model: 'Tapsigner' })).toBe('unsupported');
+    expect(taprootSupport({ model: 'Coldcard Q', firmware: '1.5.0Q' })).toBe('old-firmware');
+    expect(taprootSupport({ model: 'Coldcard Mk4', firmware: '6.3.5X' })).toBe('edge');
+    expect(taprootSupport({ model: 'Mi firmador casero' })).toBe('unknown-model');
+  });
+
+  it('el anti-exfil de Taproot solo se da por bueno si el catálogo lo dice (solo Frostsnap)', () => {
+    expect(HARDWARE_MODELS.filter((m) => m.taproot?.antiExfil).map((m) => m.id)).toEqual(['frostsnap']);
+    expect(HARDWARE_MODELS.filter((m) => m.taproot?.miniscript && !m.taproot.singleSig)).toEqual([]);
   });
 
   it('Coldcard: solo con el firmware Edge', () => {

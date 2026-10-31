@@ -18,6 +18,8 @@ export const CIFRAS: Record<string, Record<Metrica, number>> = {
   'r13-recuperacion-heredera': { security: 55, resilience: 73, usability: 90, inheritance: 82 },
   'r14-2de3-se-relaja': { security: 71, resilience: 78, usability: 80, inheritance: 82 },
   'r15-2de3-se-amplia': { security: 71, resilience: 79, usability: 90, inheritance: 77 },
+  'r16-frostsnap-2de3': { security: 63, resilience: 61, usability: 75, inheritance: 67 },
+  'r17-shamir-trezor': { security: 61, resilience: 70, usability: 100, inheritance: 77 },
   'singlesig-passphrase': { security: 73, resilience: 45, usability: 100, inheritance: 64 },
   'todo-en-casa': { security: 69, resilience: 66, usability: 100, inheritance: 77 },
 };

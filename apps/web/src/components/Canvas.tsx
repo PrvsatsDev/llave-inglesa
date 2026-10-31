@@ -47,11 +47,12 @@ function openFocusedNode(e: KeyboardEvent<HTMLElement>) {
 export function Canvas() {
   const generation = useDocument((s) => s.generation);
   const narrow = useNarrow();
+  const shares = useDocument((s) => s.model.keys.some((k) => k.split !== undefined));
   return (
     <main id="mapa" className={styles.canvas} aria-label={UI.marco.mapa} onKeyDown={openFocusedNode}>
       {/* Cambiar de documento, o girar la pantalla de vertical a horizontal, remonta el lienzo: layout y encuadre desde cero. */}
       <Graph key={`${generation}:${narrow}`} narrow={narrow} />
-      <Legend />
+      <Legend shares={shares} />
       <ScenarioBanner />
     </main>
   );

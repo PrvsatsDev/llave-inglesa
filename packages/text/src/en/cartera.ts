@@ -25,6 +25,7 @@ export const SCRIPT_TEXT: Record<ScriptType, string> = {
   'sh-wsh': 'Wrapped SegWit (3…)',
   wpkh: 'Native SegWit (bc1q…)',
   'sh-wpkh': 'Wrapped SegWit (3…)',
+  tr: 'Taproot (bc1p…)',
 };
 
 export const xpubProblemText: typeof es.xpubProblemText = (p: XpubProblem) => {
@@ -141,6 +142,8 @@ export const walletProblemText: typeof es.walletProblemText = (p: WalletProblem,
       return `${names(p.keys, label)} have the same xpub: each key needs its own.`;
     case 'mixed-networks':
       return 'Mainnet and testnet xpubs are mixed.';
+    case 'frost-needs-taproot':
+      return `${names(p.keys, label)} ${p.keys.length === 1 ? 'is a FROST key, which only exists' : 'are FROST keys, which only exist'} in Taproot and, for now, as the whole policy: the wallet has to be Taproot and with ${p.keys.length === 1 ? 'it' : 'one of them'} alone.`;
   }
 };
 
@@ -152,6 +155,7 @@ const SCRIPT_TECH: Record<ScriptType, string> = {
   'sh-wsh': 'Wrapped SegWit (P2SH-P2WSH)',
   wpkh: 'Native SegWit (P2WPKH)',
   'sh-wpkh': 'Wrapped SegWit (P2SH-P2WPKH)',
+  tr: 'Taproot (P2TR)',
 };
 
 /** "Multisig 2 of 3 · Native SegWit (P2WSH) · mainnet": the header of the descriptor PDF. */

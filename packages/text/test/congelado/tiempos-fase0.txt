@@ -1,0 +1,20 @@
+# Tiempos de analyze() antes de la rama (fase 0, 2026-10-31; mediana de 15 vueltas, ms). npx tsx scripts/tiempos.ts
+    83.2  distribuido-2de3.json
+     2.0  referencia/r01-papel-en-casa.json
+     3.7  referencia/r02-foto-en-la-nube.json
+     3.9  referencia/r03-acero-en-caja-fuerte.json
+    10.3  referencia/r04-acero-y-banco.json
+     7.9  referencia/r05-passphrase-copia-aparte.json
+     1.7  referencia/r06-passphrase-solo-memoria.json
+     3.7  referencia/r07-coldcard-afectada.json
+    22.0  referencia/r08-2de3-todo-en-casa.json
+   150.9  referencia/r09-2de3-distribuido.json
+   208.6  referencia/r10-2de3-custodio.json
+   109.4  referencia/r11-2de3-sin-herencia.json
+    73.6  referencia/r12-2de3-seedsigner.json
+    62.1  referencia/r13-recuperacion-heredera.json
+   214.0  referencia/r14-2de3-se-relaja.json
+   610.3  referencia/r15-2de3-se-amplia.json
+    14.7  singlesig-passphrase.json
+    94.1  todo-en-casa.json
+  1676.1  total
