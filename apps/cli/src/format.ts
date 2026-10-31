@@ -67,6 +67,16 @@ export function formatIssue(i: Issue): string {
     'invalid-home': `vive en un sitio donde no se puede vivir${ref} (física, ni dentro de otra ni caja del banco)`,
     'invalid-computer-place': `ordenador de firma sin sitio o con dos${ref} (en una ubicación o encima de una persona)`,
     'too-deep': 'documento anidado más de lo que puede ser un esquema real: no se lee',
+    'share-threshold-out-of-range': `key repartida que pide más shares de las que tiene${ref}`,
+    'duplicate-share': `key repartida con dos shares con el mismo número${ref}`,
+    'unknown-share': `referencia a una share que no existe${ref}`,
+    'frost-seed': `frase semilla de una key FROST${ref} (en FROST no existe)`,
+    'frost-passphrase': `key FROST con passphrase${ref} (FROST no la admite)`,
+    'frost-key-on-device': `dispositivo que guarda o carga entera una key FROST${ref}`,
+    'device-share-not-frost': `dispositivo con shares de una key que no es FROST${ref}`,
+    'shares-together': `tantas shares como bastan en una misma ubicación${ref}`,
+    'shares-below-threshold': `menos shares de las que bastan${ref}: la key no se puede usar`,
+    'shares-single-vendor': `todas las shares de la key FROST${ref} en dispositivos de un solo fabricante`,
   };
   const tag = i.severity === 'error' ? red('error') : i.severity === 'grave' ? red('grave') : yellow('aviso');
   return `${tag} ${dim(where)} ${text[i.code]}`;

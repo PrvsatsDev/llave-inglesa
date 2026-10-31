@@ -237,6 +237,7 @@ export const secretText: typeof es.secretText = (s: SecretRef, label: Label) => 
     case 'pin': return `PIN of ${label(s.device)}`;
     case 'password': return `password of ${label(s.artifact)}`;
     case 'descriptor': return 'wallet descriptor';
+    case 'share': return `share ${s.share} of ${label(s.key)}`;
   }
 };
 
@@ -314,6 +315,16 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'invalid-home': 'Someone lives somewhere you cannot live (it must be a physical location, not inside another one nor a bank box)',
   'invalid-computer-place': 'A signing computer must be kept in a location or carried by a person (one of the two)',
   'too-deep': 'The document is nested deeper than any real setup could be: it will not be opened',
+  'share-threshold-out-of-range': 'A split key needs more shares than it has',
+  'duplicate-share': 'A split key has two shares with the same number',
+  'unknown-share': 'Something refers to a share that does not exist',
+  'frost-seed': 'There is a seed phrase of a FROST key, and in FROST there is none: each device holds only its share and the full secret is never put together',
+  'frost-passphrase': 'A FROST key cannot have a passphrase',
+  'frost-key-on-device': 'A device holds or loads a whole FROST key, and in FROST each device holds only its share',
+  'device-share-not-frost': 'A device holds shares of a key that is not FROST: with Shamir, the device holds the whole key and the shares are its backup',
+  'shares-together': 'One location has as many shares as are enough: whoever gets in there has the whole key, the split does not split anything',
+  'shares-below-threshold': 'There are fewer shares (on devices, backups or in memory) than are needed: the key can be neither used nor recovered',
+  'shares-single-vendor': 'All the shares of this FROST key are on devices from a single manufacturer: a malicious firmware of theirs, or their app, reaches all of them at once',
 };
 
 export const issueText: typeof es.issueText = (issue: Issue, label: Label) => {

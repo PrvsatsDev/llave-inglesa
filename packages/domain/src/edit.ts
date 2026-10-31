@@ -1,4 +1,4 @@
-import type { Artifact, Computer, CustodyModel, Device, EntropySource, Id, Key, Location, Person, Policy, SecretRef } from './schema.ts';
+import { MAX_SHARES, type Artifact, type Computer, type CustodyModel, type Device, type EntropySource, type Id, type Key, type Location, type Person, type Policy, type SecretRef, type Split } from './schema.ts';
 import { canLiveAt, canNest } from './validate.ts';
 import { spendableWithoutKeys } from './model-index.ts';
 import { addShapeKey, policyShape, removeShapeKey, setShapeThreshold, shapeKeys, shapePolicy, SHAPE_MIN_KEYS, type PolicyShape } from './shape.ts';
@@ -84,6 +84,7 @@ export function renameIds(model: CustodyModel, renames: ReadonlyMap<Id, Id>): Cu
     s.type === 'pin' ? { ...s, device: to(s.device) } : s.type === 'password' ? { ...s, artifact: to(s.artifact) } : s;
   return {
     ...model,
+    keys: model.keys.map((k) => (k.split?.coordinators ? { ...k, split: { ...k.split, coordinators: k.split.coordinators.map(to) } } : k)),
     devices: model.devices.map((d) => ({ ...d, id: to(d.id), location: to(d.location) })),
     artifacts: model.artifacts.map((a) => ({
       ...a,
@@ -121,6 +122,20 @@ export function stripSecrets(model: CustodyModel, remove: (s: SecretRef) => bool
       .map((a) => ({ ...a, contents: keep(a.contents), lockedBy: keep(a.lockedBy) }))
       .filter((a) => a.contents.length > 0),
   };
+}
+
+// ---------- Versión del documento ----------
+
+/** ¿Usa algo que las versiones antiguas no conocen? Keys repartidas o cartera Taproot. */
+export const usesVersion2 = (model: CustodyModel) => model.keys.some((k) => k.split !== undefined) || model.wallet?.script === 'tr';
+
+/**
+ * El modelo con la versión que le toca al guardarlo: 2 si usa algo nuevo, 1 si no (así un documento que no usa nada
+ * nuevo sigue igual que antes, y uno que sí lo rechaza una versión antigua en vez de mutilarlo).
+ */
+export function withDocumentVersion(model: CustodyModel): CustodyModel {
+  const version = usesVersion2(model) ? 2 : 1;
+  return model.version === version ? model : { ...model, version };
 }
 
 // ---------- Documento nuevo ----------
@@ -218,10 +233,22 @@ export function addKeyOutsidePolicy(model: CustodyModel): Created {
   return { model: { ...model, keys: [...model.keys, key] }, id };
 }
 
-/** Desactivar la passphrase conserva quién la sabe o dónde está apuntada (queda latente). */
-export function updateKey(model: CustodyModel, id: Id, patch: Patch<Key>): CustodyModel {
-  return { ...model, keys: replace(model.keys, id, (k) => ({ ...k, ...patch })) };
+/**
+ * Desactivar la passphrase conserva quién la sabe o dónde está apuntada (queda latente). El reparto (`split`) no se
+ * cambia aquí, sino con `splitKey` y las demás, y una key FROST no admite passphrase.
+ */
+export function updateKey(model: CustodyModel, id: Id, patch: Patch<Omit<Key, 'split'>>): CustodyModel {
+  const { split: _, ...rest } = patch as Patch<Key>;
+  return {
+    ...model,
+    keys: replace(model.keys, id, (k) => ({ ...k, ...rest, ...(k.split?.scheme === 'frost' && { passphrase: false }) })),
+  };
 }
+
+const isFrost = (model: CustodyModel, key: Id) => model.keys.some((k) => k.id === key && k.split?.scheme === 'frost');
+
+/** Sin lo que no puede existir: la semilla de una key FROST. */
+const withoutFrostSeeds = (model: CustodyModel, list: readonly SecretRef[]) => list.filter((s) => !(s.type === 'seed' && isFrost(model, s.key)));
 
 /** Procedencia sin rellenar: tal como la deja `addKey`. */
 export function isBlankProvenance(key: Key): boolean {
@@ -266,10 +293,156 @@ export function removeKey(model: CustodyModel, id: Id): CustodyModel {
       ...model,
       keys: model.keys.filter((k) => k.id !== id),
       policy,
-      devices: model.devices.map((d) => ({ ...d, holds: d.holds.filter((k) => k !== id), ...(d.loads && { loads: d.loads.filter((k) => k !== id) }) })),
+      devices: model.devices.map((d) => ({
+        ...d,
+        holds: d.holds.filter((k) => k !== id),
+        ...(d.loads && { loads: d.loads.filter((k) => k !== id) }),
+        ...(d.shares && { shares: d.shares.filter((s) => s.key !== id) }),
+      })),
     },
-    (s) => (s.type === 'seed' || s.type === 'passphrase' || s.type === 'xpub') && s.key === id,
+    (s) => (s.type === 'seed' || s.type === 'passphrase' || s.type === 'xpub' || s.type === 'share') && s.key === id,
   );
+}
+
+// ---------- Keys repartidas (FROST, Shamir) ----------
+
+/**
+ * Por qué una key no puede pasar a FROST (en FROST no existe semilla): tiene la semilla escrita o memorizada, algún
+ * dispositivo la guarda o la carga entera, o lleva passphrase. Vacío: se puede. No se quita nada por su cuenta: la
+ * interfaz explica qué quitar primero.
+ */
+export type FrostBlocker = { type: 'seed-written'; where: Id[] } | { type: 'held-by'; devices: Id[] } | { type: 'passphrase' };
+
+export function frostBlockers(model: CustodyModel, keyId: Id): FrostBlocker[] {
+  const isSeed = (s: SecretRef) => s.type === 'seed' && s.key === keyId;
+  const where = [...model.artifacts.filter((a) => a.contents.some(isSeed)).map((a) => a.id), ...model.people.filter((p) => p.knows.some(isSeed)).map((p) => p.id)];
+  const devices = model.devices.filter((d) => d.holds.includes(keyId) || d.loads?.includes(keyId)).map((d) => d.id);
+  const blockers: FrostBlocker[] = [];
+  if (where.length > 0) blockers.push({ type: 'seed-written', where });
+  if (devices.length > 0) blockers.push({ type: 'held-by', devices });
+  if (model.keys.find((k) => k.id === keyId)?.passphrase) blockers.push({ type: 'passphrase' });
+  return blockers;
+}
+
+/** Shares de una key en dispositivos (solo tiene sentido en FROST). */
+const deviceSharesOf = (model: CustodyModel, keyId: Id) => model.devices.filter((d) => d.shares?.some((s) => s.key === keyId)).map((d) => d.id);
+
+/**
+ * Convierte una key en repartida: `n` shares numeradas del 1 al n, de las que bastan `k` (se ajusta a 1…n). En FROST,
+ * solo si `frostBlockers` no dice nada; si no, no cambia el modelo. Una key ya repartida no se toca (ver
+ * `setSplitScheme`, `addShare`…).
+ */
+export function splitKey(model: CustodyModel, keyId: Id, scheme: Split['scheme'], k: number, n: number): CustodyModel {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (!key || key.split) return model;
+  if (scheme === 'frost' && frostBlockers(model, keyId).length > 0) return model;
+  const total = Math.max(1, Math.min(MAX_SHARES, Math.round(n)));
+  const split: Split = { scheme, k: clamp(k, 1, total), shares: Array.from({ length: total }, (_, i) => i + 1) };
+  return { ...model, keys: replace(model.keys, keyId, (x) => ({ ...x, split })) };
+}
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, Math.round(v)));
+
+/** Vuelve a ser una key normal. Eliminar limpia: las shares desaparecen de backups, memorias y dispositivos. */
+export function unsplitKey(model: CustodyModel, keyId: Id): CustodyModel {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (!key?.split) return model;
+  const { split: _, ...plain } = key;
+  return stripSecrets(
+    { ...model, keys: replace(model.keys, keyId, () => plain), devices: model.devices.map((d) => withoutDeviceShares(d, (s) => s.key === keyId)) },
+    (s) => s.type === 'share' && s.key === keyId,
+  );
+}
+
+function withoutDeviceShares(d: Device, remove: (s: { key: Id; share: number }) => boolean): Device {
+  if (!d.shares?.some(remove)) return d;
+  return { ...d, shares: d.shares.filter((s) => !remove(s)) };
+}
+
+/**
+ * Cambia de FROST a Shamir o al revés. A FROST, con las mismas condiciones que `splitKey`; a Shamir, solo si ningún
+ * dispositivo guarda shares suyas (en Shamir el dispositivo guarda la key entera). Si no se puede, no cambia nada.
+ */
+export function setSplitScheme(model: CustodyModel, keyId: Id, scheme: Split['scheme']): CustodyModel {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (!key?.split || key.split.scheme === scheme) return model;
+  if (scheme === 'frost' && frostBlockers(model, keyId).length > 0) return model;
+  if (scheme === 'shamir' && deviceSharesOf(model, keyId).length > 0) return model;
+  const { coordinators: _, ...rest } = key.split;
+  // Los coordinadores son de FROST: al cambiar de esquema no se conservan.
+  return { ...model, keys: replace(model.keys, keyId, (x) => ({ ...x, split: { ...rest, scheme } })) };
+}
+
+/** Añade una share (la siguiente al número más alto). Hasta MAX_SHARES. */
+export function addShare(model: CustodyModel, keyId: Id): { model: CustodyModel; share: number | null } {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (!key?.split || key.split.shares.length >= MAX_SHARES) return { model, share: null };
+  const share = Math.max(...key.split.shares) + 1;
+  if (share > 255) return { model, share: null };
+  const split = { ...key.split, shares: [...key.split.shares, share] };
+  return { model: { ...model, keys: replace(model.keys, keyId, (x) => ({ ...x, split })) }, share };
+}
+
+/** Quita una share y, en cascada, dónde estuviera. El umbral baja si se pasa. La última no se quita. */
+export function removeShare(model: CustodyModel, keyId: Id, share: number): CustodyModel {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (!key?.split || !key.split.shares.includes(share) || key.split.shares.length <= 1) return model;
+  const shares = key.split.shares.filter((s) => s !== share);
+  const split = { ...key.split, shares, k: Math.min(key.split.k, shares.length) };
+  const gone = (s: { key: Id; share: number }) => s.key === keyId && s.share === share;
+  return stripSecrets(
+    { ...model, keys: replace(model.keys, keyId, (x) => ({ ...x, split })), devices: model.devices.map((d) => withoutDeviceShares(d, gone)) },
+    (s) => s.type === 'share' && gone(s),
+  );
+}
+
+/** Cuántas shares bastan (se ajusta a 1…n). */
+export function setShareThreshold(model: CustodyModel, keyId: Id, k: number): CustodyModel {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (!key?.split) return model;
+  const split = { ...key.split, k: clamp(k, 1, key.split.shares.length) };
+  return { ...model, keys: replace(model.keys, keyId, (x) => ({ ...x, split })) };
+}
+
+/** Móviles u ordenadores emparejados con una key FROST (undefined: sin indicar). Ignora los que no existen. */
+export function setKeyCoordinators(model: CustodyModel, keyId: Id, computers: readonly Id[] | undefined): CustodyModel {
+  const key = model.keys.find((x) => x.id === keyId);
+  if (key?.split?.scheme !== 'frost') return model;
+  const known = computers && [...new Set(computers.filter((c) => model.computers.some((x) => x.id === c)))];
+  const { coordinators: _, ...rest } = key.split;
+  return { ...model, keys: replace(model.keys, keyId, (x) => ({ ...x, split: known ? { ...rest, coordinators: known } : rest })) };
+}
+
+/**
+ * Las shares que guarda un dispositivo (stateful). Solo de keys FROST y que existan; sin repetir. Un dispositivo
+ * stateless no guarda nada.
+ */
+export function setDeviceShares(model: CustodyModel, deviceId: Id, shares: readonly { key: Id; share: number }[]): CustodyModel {
+  const valid = (s: { key: Id; share: number }) => {
+    const split = model.keys.find((k) => k.id === s.key)?.split;
+    return split?.scheme === 'frost' && split.shares.includes(s.share);
+  };
+  const unique = shares.filter((s, i) => valid(s) && shares.findIndex((x) => x.key === s.key && x.share === s.share) === i).map((s) => ({ key: s.key, share: s.share }));
+  return {
+    ...model,
+    devices: replace(model.devices, deviceId, (d) => {
+      if (d.kind !== 'stateful') return d;
+      if (unique.length > 0) return { ...d, shares: unique };
+      const { shares: _, ...rest } = d;
+      return rest;
+    }),
+  };
+}
+
+/** Quita ordenadores de los coordinadores de las keys FROST (al eliminarlos). */
+function withoutCoordinators(model: CustodyModel, gone: ReadonlySet<Id>): CustodyModel {
+  if (!model.keys.some((k) => k.split?.coordinators?.some((c) => gone.has(c)))) return model;
+  return {
+    ...model,
+    keys: model.keys.map((k) =>
+      k.split?.coordinators?.some((c) => gone.has(c)) ? { ...k, split: { ...k.split, coordinators: k.split.coordinators.filter((c) => !gone.has(c)) } } : k,
+    ),
+  };
 }
 
 // ---------- Ubicaciones ----------
@@ -334,8 +507,9 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
   if (model.locations.length <= 1) return model;
   const goneDevices = new Set(model.devices.filter((d) => d.location === id).map((d) => d.id));
   const goneArtifacts = new Set(model.artifacts.filter((a) => a.location === id).map((a) => a.id));
+  const goneComputers = new Set(model.computers.filter((c) => c.location === id).map((c) => c.id));
   return stripSecrets(
-    withValidHomes({
+    withValidHomes(withoutCoordinators({
       ...model,
       // Lo que estaba dentro sigue existiendo, ahora por su cuenta.
       locations: model.locations.filter((l) => l.id !== id).map((l) => (l.inside === id ? withoutKeys(l, 'inside') : l)),
@@ -345,7 +519,7 @@ export function removeLocation(model: CustodyModel, id: Id): CustodyModel {
       computers: model.computers
         .filter((c) => c.location !== id)
         .map((c) => (c.connects ? { ...c, connects: c.connects.filter((d) => !goneDevices.has(d)) } : c)),
-    }),
+    }, goneComputers)),
     (s) => (s.type === 'pin' && goneDevices.has(s.device)) || (s.type === 'password' && goneArtifacts.has(s.artifact)),
   );
 }
@@ -358,7 +532,8 @@ export function addPerson(model: CustodyModel, name = 'Nueva persona', role: Per
 }
 
 export function updatePerson(model: CustodyModel, id: Id, patch: Patch<Omit<Person, 'livesAt'>>): CustodyModel {
-  return { ...model, people: replace(model.people, id, (p) => ({ ...p, ...patch })) };
+  const clean = patch.knows ? { ...patch, knows: withoutFrostSeeds(model, patch.knows) } : patch;
+  return { ...model, people: replace(model.people, id, (p) => ({ ...p, ...clean })) };
 }
 
 /** Dónde vive (undefined = sin indicar). Si no se puede vivir en esa ubicación, no hace nada. */
@@ -371,7 +546,8 @@ export function setPersonHome(model: CustodyModel, id: Id, location: Id | undefi
 export function removePerson(model: CustodyModel, id: Id): CustodyModel {
   const remaining = model.people.filter((p) => p.id !== id);
   if (!remaining.some((p) => p.role === 'owner')) return model;
-  return {
+  const goneComputers = new Set(model.computers.filter((c) => c.carriedBy === id).map((c) => c.id));
+  return withoutCoordinators({
     ...model,
     people: remaining,
     computers: model.computers.filter((c) => c.carriedBy !== id),
@@ -379,7 +555,7 @@ export function removePerson(model: CustodyModel, id: Id): CustodyModel {
       ...l,
       access: l.access.filter((a) => a.person !== id && !(a.when.type !== 'always' && a.when.person === id)),
     })),
-  };
+  }, goneComputers);
 }
 
 // ---------- Dispositivos ----------
@@ -411,7 +587,15 @@ export function addDevice(
  * como latentes: el motor los ignora mientras no apliquen y reaparecen al reactivar.
  */
 export function updateDevice(model: CustodyModel, id: Id, patch: Patch<Device>): CustodyModel {
-  return { ...model, devices: replace(model.devices, id, (d) => ({ ...d, ...patch })) };
+  // Una key FROST no se guarda ni se carga entera: sus dispositivos guardan shares (`setDeviceShares`).
+  const { shares, ...rest } = patch;
+  const clean = {
+    ...rest,
+    ...(rest.holds && { holds: rest.holds.filter((k) => !isFrost(model, k)) }),
+    ...(rest.loads && { loads: rest.loads.filter((k) => !isFrost(model, k)) }),
+  };
+  const next = { ...model, devices: replace(model.devices, id, (d) => ({ ...d, ...clean })) };
+  return shares === undefined ? next : setDeviceShares(next, id, shares);
 }
 
 export function removeDevice(model: CustodyModel, id: Id): CustodyModel {
@@ -431,11 +615,13 @@ export function removeDevice(model: CustodyModel, id: Id): CustodyModel {
 export function addArtifact(model: CustodyModel, location: Id, label = (key: string) => `Backup ${key}`): Created {
   const id = uniqueId(model, 'nuevo-backup');
   const first = model.keys[0]!;
+  // Una key FROST no tiene semilla: su backup es una share.
+  const content: SecretRef = first.split?.scheme === 'frost' ? { type: 'share', key: first.id, share: first.split.shares[0]! } : { type: 'seed', key: first.id };
   const artifact: Artifact = {
     id,
     label: label(first.label),
     medium: 'metal',
-    contents: [{ type: 'seed', key: first.id }],
+    contents: [content],
     lockedBy: [],
     location,
   };
@@ -462,8 +648,9 @@ export function moveItem(model: CustodyModel, item: { kind: 'device' | 'artifact
 
 /** Un backup no puede quedarse sin contenido: esa edición se ignora. */
 export function updateArtifact(model: CustodyModel, id: Id, patch: Patch<Artifact>): CustodyModel {
-  if (patch.contents && patch.contents.length === 0) return model;
-  return { ...model, artifacts: replace(model.artifacts, id, (a) => ({ ...a, ...patch })) };
+  const clean = patch.contents ? { ...patch, contents: withoutFrostSeeds(model, patch.contents) } : patch;
+  if (clean.contents && clean.contents.length === 0) return model;
+  return { ...model, artifacts: replace(model.artifacts, id, (a) => ({ ...a, ...clean })) };
 }
 
 /** Elimina el backup y su contraseña de donde se supiera o estuviera apuntada. */
@@ -516,5 +703,5 @@ export function setComputerPlace(model: CustodyModel, id: Id, place: ComputerPla
 }
 
 export function removeComputer(model: CustodyModel, id: Id): CustodyModel {
-  return { ...model, computers: model.computers.filter((c) => c.id !== id) };
+  return withoutCoordinators({ ...model, computers: model.computers.filter((c) => c.id !== id) }, new Set([id]));
 }

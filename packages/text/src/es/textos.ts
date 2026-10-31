@@ -241,6 +241,7 @@ export function secretText(s: SecretRef, label: Label): string {
     case 'pin': return `PIN de ${label(s.device)}`;
     case 'password': return `contraseña de ${label(s.artifact)}`;
     case 'descriptor': return 'descriptor del wallet';
+    case 'share': return `share ${s.share} de ${label(s.key)}`;
   }
 }
 
@@ -318,6 +319,16 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'invalid-home': 'Alguien vive en un sitio donde no se puede vivir (tiene que ser una ubicación física, ni dentro de otra ni una caja del banco)',
   'invalid-computer-place': 'Un ordenador de firma tiene que estar guardado en una ubicación o llevarlo una persona (una de las dos)',
   'too-deep': 'El documento está anidado más de lo que puede ser un esquema real: no se abre',
+  'share-threshold-out-of-range': 'Una key repartida pide más shares de las que tiene',
+  'duplicate-share': 'Una key repartida tiene dos shares con el mismo número',
+  'unknown-share': 'Algo hace referencia a una share que no existe',
+  'frost-seed': 'Hay una frase semilla de una key FROST, y en FROST no existe: cada dispositivo guarda solo su share y el secreto completo nunca se junta',
+  'frost-passphrase': 'Una key FROST no puede llevar passphrase',
+  'frost-key-on-device': 'Un dispositivo guarda o carga entera una key FROST, y en FROST cada dispositivo guarda solo su share',
+  'device-share-not-frost': 'Un dispositivo guarda shares de una key que no es FROST: con Shamir, el dispositivo guarda la key entera y las shares son su backup',
+  'shares-together': 'Hay en una misma ubicación tantas shares como bastan: quien entre ahí tiene la key entera, el reparto no reparte',
+  'shares-below-threshold': 'Hay menos shares (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar ni recuperar',
+  'shares-single-vendor': 'Todas las shares de esta key FROST están en dispositivos de un solo fabricante: un firmware malicioso suyo, o su app, alcanzan a todas a la vez',
 };
 
 export function issueText(issue: Issue, label: Label): string {

@@ -10,6 +10,8 @@ import { layoutGraph, type Orientation } from './layout.ts';
 /** Vista de un secreto como insignia visual. */
 export type SecretBadge =
   | { kind: 'holds' | 'seed' | 'passphrase' | 'xpub'; key: Id; label: string; color: string }
+  /** Una share de una key repartida: «K1·2», con el color de su key. */
+  | { kind: 'share'; key: Id; share: number; label: string; color: string }
   | { kind: 'pin'; device: Id; label: string }
   | { kind: 'password'; artifact: Id; label: string }
   | { kind: 'descriptor' };
@@ -92,6 +94,8 @@ export function secretBadge(model: CustodyModel, s: SecretRef, label = indexMode
       return { kind: 'password', artifact: s.artifact, label: label(s.artifact) };
     case 'descriptor':
       return { kind: 'descriptor' };
+    case 'share':
+      return { kind: 'share', key: s.key, share: s.share, label: T.etiquetaShare(label(s.key), s.share), color: keyColor(model, s.key) };
   }
 }
 

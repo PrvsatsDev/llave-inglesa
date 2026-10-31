@@ -28,7 +28,27 @@ export type IssueCode =
   | 'invalid-home'
   | 'invalid-computer-place'
   /** Documento anidado más allá de MAX_DEPTH (un fichero hecho para colgar la app): ni se valida. */
-  | 'too-deep';
+  | 'too-deep'
+  /** Key repartida: bastan más shares de las que hay. */
+  | 'share-threshold-out-of-range'
+  /** Key repartida con el mismo número de share dos veces. */
+  | 'duplicate-share'
+  /** Referencia a una share que no existe (o de una key que no está repartida). */
+  | 'unknown-share'
+  /** La semilla de una key FROST escrita o memorizada: en FROST no existe semilla. */
+  | 'frost-seed'
+  /** Passphrase en una key FROST: FROST no la admite. */
+  | 'frost-passphrase'
+  /** Un dispositivo guarda o carga entera una key FROST: en FROST cada dispositivo guarda solo su share. */
+  | 'frost-key-on-device'
+  /** Shares de una key que no es FROST en un dispositivo: en Shamir el dispositivo guarda la key entera. */
+  | 'device-share-not-frost'
+  /** Bastan k shares de una key y hay k o más en una misma ubicación: el reparto no reparte. */
+  | 'shares-together'
+  /** Hay menos shares distintas (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar. */
+  | 'shares-below-threshold'
+  /** Todas las shares de una key FROST en dispositivos de un solo fabricante (su firmware o su app alcanzan a todas). */
+  | 'shares-single-vendor';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -126,7 +146,14 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
         break;
       case 'descriptor':
         break;
+      case 'share': {
+        const split = keys.get(s.key)?.split;
+        if (!keys.has(s.key)) ref(keys, s.key, [...path, 'key']);
+        else if (!split?.shares.includes(s.share)) report('error', 'unknown-share', [...path, 'share'], s.key);
+        break;
+      }
     }
+    if (s.type === 'seed' && keys.get(s.key)?.split?.scheme === 'frost') report('error', 'frost-seed', path, s.key);
   };
 
   // Una key puede firmar en varias ramas (en Miniscript, cada vez con su par de derivación), pero no dos veces en el
@@ -165,8 +192,29 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
     });
   });
 
+  const computers = new Set(model.computers.map((c) => c.id));
+  model.keys.forEach((k, i) => {
+    if (!k.split) return;
+    const { split } = k;
+    if (split.k > split.shares.length) report('error', 'share-threshold-out-of-range', ['keys', i, 'split', 'k'], k.id);
+    split.shares.forEach((n, j) => {
+      if (split.shares.indexOf(n) !== j) report('error', 'duplicate-share', ['keys', i, 'split', 'shares', j], k.id);
+    });
+    split.coordinators?.forEach((c, j) => ref(computers, c, ['keys', i, 'split', 'coordinators', j]));
+    if (split.scheme === 'frost' && k.passphrase) report('error', 'frost-passphrase', ['keys', i, 'passphrase'], k.id);
+  });
+
   model.devices.forEach((d, i) => {
     ref(locations, d.location, ['devices', i, 'location']);
+    const isFrost = (id: Id) => keys.get(id)?.split?.scheme === 'frost';
+    d.holds.forEach((k, j) => isFrost(k) && report('error', 'frost-key-on-device', ['devices', i, 'holds', j], k));
+    d.loads?.forEach((k, j) => isFrost(k) && report('error', 'frost-key-on-device', ['devices', i, 'loads', j], k));
+    d.shares?.forEach((s, j) => {
+      const key = keys.get(s.key);
+      if (!key) ref(keys, s.key, ['devices', i, 'shares', j, 'key']);
+      else if (!key.split?.shares.includes(s.share)) report('error', 'unknown-share', ['devices', i, 'shares', j], s.key);
+      else if (key.split.scheme !== 'frost') report('error', 'device-share-not-frost', ['devices', i, 'shares', j], s.key);
+    });
     d.holds.forEach((k, j) => ref(keys, k, ['devices', i, 'holds', j]));
     d.loads?.forEach((k, j) => ref(keys, k, ['devices', i, 'loads', j]));
     if (d.kind === 'stateful' && d.holds.length === 0) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
@@ -216,6 +264,7 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   });
 
   if (!model.people.some((p) => p.role === 'owner')) report('error', 'no-owner', ['people']);
+  splitWarnings(model).forEach((i) => issues.push(i));
   if (noDescriptorCopy(model)) report('grave', 'multisig-without-descriptor', ['artifacts']);
 
   // Nombres repetidos que no se pueden distinguir (dos objetos iguales en sitios distintos sí: llevan su ubicación).
@@ -233,6 +282,39 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
   const place = (i: (typeof items)[number]) => i.location ?? ('carriedBy' in i ? i.carriedBy : undefined) ?? '';
   sameName(collectionOf, repeated(items, (i) => `${place(i)}\u0000${normalizeLabel(i.label)}`), names);
 
+  return issues;
+}
+
+/**
+ * Avisos de las keys repartidas: dónde está cada share (dispositivos stateful, backups, memorias) comparado con
+ * cuántas bastan, y de qué fabricantes son los dispositivos de una key FROST.
+ */
+function splitWarnings(model: CustodyModel): Issue[] {
+  const issues: Issue[] = [];
+  model.keys.forEach((k, i) => {
+    if (!k.split) return;
+    const { split } = k;
+    const atLocation = new Map<Id, Set<number>>();
+    const all = new Set<number>();
+    const add = (location: Id | null, share: number) => {
+      if (!split.shares.includes(share)) return;
+      all.add(share);
+      if (location === null) return;
+      const set = atLocation.get(location) ?? new Set<number>();
+      set.add(share);
+      atLocation.set(location, set);
+    };
+    const shareDevices = model.devices.filter((d) => d.kind === 'stateful' && d.shares?.some((s) => s.key === k.id));
+    shareDevices.forEach((d) => d.shares!.forEach((s) => s.key === k.id && add(d.location, s.share)));
+    model.artifacts.forEach((a) => a.contents.forEach((s) => s.type === 'share' && s.key === k.id && add(a.location, s.share)));
+    model.people.forEach((p) => p.knows.forEach((s) => s.type === 'share' && s.key === k.id && add(null, s.share)));
+    if (all.size < split.k) issues.push({ severity: 'grave', code: 'shares-below-threshold', path: ['keys', i, 'split'], ref: k.id });
+    else if (split.k > 1 && [...atLocation.values()].some((set) => set.size >= split.k))
+      issues.push({ severity: 'warning', code: 'shares-together', path: ['keys', i, 'split'], ref: k.id });
+    const vendors = new Set(shareDevices.map((d) => d.vendor.trim().toLowerCase()));
+    if (split.scheme === 'frost' && vendors.size === 1 && shareDevices.length > 1)
+      issues.push({ severity: 'warning', code: 'shares-single-vendor', path: ['keys', i, 'split'], ref: k.id });
+  });
   return issues;
 }
 

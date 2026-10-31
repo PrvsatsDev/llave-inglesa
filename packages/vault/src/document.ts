@@ -1,4 +1,4 @@
-import { parseModel, type CustodyModel, type ParseResult } from '@llave-inglesa/domain';
+import { parseModel, withDocumentVersion, type CustodyModel, type ParseResult } from '@llave-inglesa/domain';
 import { isEnvelope, seal, unseal, type Envelope, type VaultKey } from './crypto.ts';
 
 /** Lo que hay dentro de un fichero abierto por el usuario. */
@@ -7,8 +7,9 @@ export type ReadResult =
   | { kind: 'encrypted'; envelope: Envelope }
   | { kind: 'invalid'; reason: 'not-json' | 'unknown-format' };
 
+/** El documento en JSON, con la versión que le toca (ver `withDocumentVersion`). */
 export function serializeModel(model: CustodyModel): string {
-  return JSON.stringify(model, null, 2);
+  return JSON.stringify(withDocumentVersion(model), null, 2);
 }
 
 /** Detecta si el texto es un modelo en claro, un documento cifrado o ninguno de los dos. */

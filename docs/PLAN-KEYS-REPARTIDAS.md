@@ -70,17 +70,22 @@ idénticos. La versión nueva lee los dos.
 // En KeySchema, opcional:
 split?: {
   scheme: 'frost' | 'shamir';
-  k: number;                              // umbral t (1 ≤ k ≤ n)
-  shares: { id: Id; label: string }[];   // n = shares.length
+  k: number;               // umbral t (1 ≤ k ≤ n)
+  shares: number[];        // números de share (1…n), como las «Key Number» de Frostsnap o los miembros de SLIP-39
+  coordinators?: Id[];     // solo FROST: móviles u ordenadores emparejados (ver 9.2)
 }
 
 // Nuevo SecretRef: una share concreta de una key.
-{ type: 'share', key: Id, share: Id }
+{ type: 'share', key: Id, share: number }
 
-// En DeviceSchema, opcionales:
-shares?: { key: Id; share: Id }[];   // shares que guarda (FROST)
-unlockedBy?: Id;                     // móvil (coordinador) sin el que su share no sirve (ver 9.2)
+// En DeviceSchema, opcional:
+shares?: { key: Id; share: number }[];   // shares que guarda (FROST)
 ```
+
+Hecho así (fase 2) en vez de lo previsto al principio (`{ id, label }` por share y `unlockedBy` en cada dispositivo):
+las shares se identifican por su número, que es como las nombran Frostsnap y SLIP-39 y da la etiqueta `K1·2` sin
+guardar nada más; y el móvil emparejado es de la key, no del dispositivo, porque en Frostsnap la clave que descifra las
+shares la aprende el coordinador al emparejarse con la cartera, y con ella desbloquea todos sus dispositivos.
 
 - Las shares van en los backups (`contents`) y en la memoria de las personas (`knows`), como cualquier `SecretRef`.
 - En una key FROST **no existe semilla**: un `seed` suyo en un backup o en `knows` es un error de integridad. El hecho
@@ -103,7 +108,7 @@ unlockedBy?: Id;                     // móvil (coordinador) sin el que su share
   en ningún sitio (si no, la ficha explica qué quitar primero; no se borra nada por su cuenta).
 - `unsplitKey`: vuelve a key normal; **eliminar limpia**: las referencias a sus shares desaparecen en cascada.
 - `addShare`, `removeShare` (cascada en backups, personas y dispositivos; `k` se ajusta a `n` si se pasa),
-  `setShareThreshold`, `renameShare`.
+  `setShareThreshold`, `setSplitScheme`, `setKeyCoordinators`, `setDeviceShares`.
 - `removeKey`, `renameIds`, `tidyIds` y `stripSecrets` tratan las referencias a shares.
 - Test de propiedad: ninguna secuencia de ediciones con shares rompe el modelo (el que ya existe, ampliado).
 
@@ -116,9 +121,9 @@ Para una key repartida K con umbral t:
 | Regla | Premisas | Concluye | Modo |
 |---|---|---|---|
 | `combine-shares` | t secretos `share:K/*` distintos | `seed:K` (el secreto completo) | ambos¹ |
-| `device-share` | dispositivo que guarda la share i y, si tiene `unlockedBy`, ese móvil desbloqueado o t dispositivos de K (9.2) | `share-sign:K/i` | ambos |
+| `device-share` | dispositivo que guarda la share i y, si la key tiene `coordinators`, uno de ellos o t dispositivos de K (9.2) | `share-sign:K/i` | ambos |
 | `frost-sign` | t hechos `share-sign:K/*` distintos | `sign:K` | ambos |
-| `share-xpub` | t dispositivos con shares distintas, o un dispositivo y su `unlockedBy` (el móvil ya la tiene), o `seed:K` | `xpub:K` | ambos |
+| `share-xpub` | t dispositivos con shares distintas, o un coordinador (el móvil ya la tiene), o `seed:K` | `xpub:K` | ambos |
 
 ¹ En modo `secure` (firmar a diario), juntar shares solo vale en Shamir y cargando la semilla en un dispositivo, como
 ya hace `seed-sign-on-device`. Una key FROST **nunca** firma por `seed-sign-on-device`: se excluye de forma explícita.
@@ -228,7 +233,7 @@ Cada fase pasa `npm run check` y el test de resultados congelados. Las fases 1 y
 | 1 | Taproot `tr(KEY)`: `packages/bitcoin`, `wallet.ts`, catálogo `taproot` | no |
 | 2 | Modelo: esquema, `version: 2`, integridad, ediciones con cascada | no |
 | 3 | Motor: Shamir (`combine-shares`, ataques ampliados) | no |
-| 4 | Motor: FROST (`device-share`, `frost-sign`, `share-xpub`, `unlockedBy`) | no |
+| 4 | Motor: FROST (`device-share`, `frost-sign`, `share-xpub`, `coordinators`) | no |
 | 5 | Textos del motor, cartera y carta (es y en) | no |
 | 6 | Interfaz: fichas, mapa, cartera | sí |
 | 7 | Catálogo Frostsnap, ejemplos, guía, CAPACIDADES | sí |
@@ -259,7 +264,7 @@ Fuentes de lo comprobado: frostsnap.com (`/docs/security-architecture/`, `/docs/
    - la extracción física de un dispositivo, aun leyendo la flash, da la share cifrada: sin el móvil o t
      dispositivos, no sirve;
    - las tarjetas de backup son **la share en claro** (25 palabras, formato propio, no BIP-39): sin protección.
-   El campo `unlockedBy` del dispositivo modela el móvil; la regla `device-share` lleva la alternativa de los t
+   El campo `coordinators` de la key modela los móviles emparejados; la regla `device-share` lleva la alternativa de los t
    dispositivos.
 3. **Keys FROST junto a otras keys: no**, al menos en la primera versión. Además, su código no firma hojas de
    tapscript (solo la vía de la key). Una key FROST solo como política entera.

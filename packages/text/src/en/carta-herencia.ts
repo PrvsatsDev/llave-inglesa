@@ -47,6 +47,8 @@ const secretText = (s: SecretRef, label: Label): string => {
       return `the password of ${label(s.artifact)}`;
     case 'descriptor':
       return 'the wallet descriptor (the public list of its keys, without which it cannot be rebuilt)';
+    case 'share':
+      return `share ${s.share} of ${label(s.key)} (one of the parts its secret was split into)`;
   }
 };
 

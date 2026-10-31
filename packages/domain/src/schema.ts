@@ -28,6 +28,8 @@ export const SecretRefSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('descriptor') }),
   /** Contraseña con la que está cifrado un backup (p. ej. un fichero en la nube). */
   z.object({ type: z.literal('password'), artifact: IdSchema }),
+  /** Una share (la número `share`) de una key repartida: su backup, en Shamir o FROST. */
+  z.object({ type: z.literal('share'), key: IdSchema, share: z.number().int().min(1) }),
 ]);
 export type SecretRef = z.infer<typeof SecretRefSchema>;
 
@@ -81,6 +83,30 @@ export const ProvenanceSchema = z.object({
 });
 export type Provenance = z.infer<typeof ProvenanceSchema>;
 
+/** Máximo de shares de una key repartida (SLIP-39 admite 16 por grupo). */
+export const MAX_SHARES = 16;
+
+/**
+ * Key repartida: su secreto no es una semilla, sino `shares` (numeradas, como las «Key Number» de Frostsnap o los
+ * miembros de SLIP-39), de las que bastan `k`.
+ * - frost: las shares se generan entre todos (DKG) y nunca se juntan; cada dispositivo guarda la suya y firman juntos.
+ *   No existe semilla. En la cadena es una sola key Taproot.
+ * - shamir: SLIP-39 (o SSKR): la semilla existe y la guarda el dispositivo; las shares son su backup y se juntan al
+ *   recuperar.
+ */
+export const SplitSchema = z.object({
+  scheme: z.enum(['frost', 'shamir']),
+  k: z.number().int().min(1),
+  shares: z.array(z.number().int().min(1).max(255)).min(1).max(MAX_SHARES),
+  /**
+   * Solo FROST: móviles u ordenadores emparejados (coordinadores). La share de cada dispositivo va cifrada y solo se
+   * usa con uno de ellos desbloqueado, o teniendo `k` dispositivos de la key (así se empareja uno nuevo). Sin indicar:
+   * sin esa protección (ante la duda, lo peor).
+   */
+  coordinators: z.array(IdSchema).optional(),
+});
+export type Split = z.infer<typeof SplitSchema>;
+
 export const KeySchema = z.object({
   id: IdSchema,
   label: z.string().min(1),
@@ -100,6 +126,8 @@ export const KeySchema = z.object({
    */
   passphraseStrength: z.enum(['weak', 'phrase', 'random']).optional(),
   provenance: ProvenanceSchema.default({ sources: [{ kind: 'unknown' }], independentlyVerified: false }),
+  /** Key repartida en shares (FROST o Shamir). Sin indicar: una semilla normal. */
+  split: SplitSchema.optional(),
 });
 export type Key = z.infer<typeof KeySchema>;
 
@@ -114,6 +142,8 @@ export const DeviceSchema = z.object({
   kind: z.enum(['stateful', 'stateless']),
   /** Keys que guarda en memoria (solo stateful). */
   holds: z.array(IdSchema).default([]),
+  /** Shares de keys FROST que guarda (solo stateful): cada una, la key y su número. */
+  shares: z.array(z.object({ key: IdSchema, share: z.number().int().min(1) })).optional(),
   /**
    * Keys cuyas semillas se cargan en él para firmar (stateless o semilla externa).
    * Ausente = sin indicar: en un stateless se asume que cualquier semilla puede pasar por él.
@@ -242,9 +272,15 @@ export const WalletSchema = z.object({
 });
 export type Wallet = z.infer<typeof WalletSchema>;
 
+/**
+ * Versión del documento: 1, o 2 si usa algo que las versiones antiguas no conocen (keys repartidas, cartera Taproot).
+ * Así una versión antigua lo rechaza en vez de leerlo descartando lo que no conoce (y borrarlo al guardar).
+ */
+export const DOCUMENT_VERSIONS = [1, 2] as const;
+
 export const CustodyModelSchema = z.object({
   format: z.literal('llave-inglesa'),
-  version: z.literal(1),
+  version: z.union([z.literal(1), z.literal(2)]),
   name: z.string().min(1),
   description: z.string().optional(),
   keys: z.array(KeySchema).min(1),

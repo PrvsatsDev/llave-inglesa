@@ -46,6 +46,8 @@ const secretText = (s: SecretRef, label: Label): string => {
       return `la contraseña de ${label(s.artifact)}`;
     case 'descriptor':
       return 'el descriptor de la cartera (la lista pública de sus llaves, sin la que no se puede reconstruir)';
+    case 'share':
+      return `la share ${s.share} de ${label(s.key)} (una de las partes en que se repartió su secreto)`;
   }
 };
 

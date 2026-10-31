@@ -243,6 +243,12 @@
   border: 1px dashed var(--key-color);
 }
 
+/* Una share: media key (medio punto lleno). */
+.share .keyDot {
+  border: 1px solid var(--key-color);
+  background: linear-gradient(90deg, var(--key-color) 50%, transparent 50%);
+}
+
 /* ---------- Persona ---------- */
 
 .person {

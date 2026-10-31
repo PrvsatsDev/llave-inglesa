@@ -26,6 +26,8 @@ export function secretId(s: SecretRef): string {
       return `password:${s.artifact}`;
     case 'descriptor':
       return 'descriptor';
+    case 'share':
+      return `share:${s.key}/${s.share}`;
   }
 }
 
