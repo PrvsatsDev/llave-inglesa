@@ -7,14 +7,6 @@ pensarse antes de implementarla. Lo que ya está hecho se describe en [CAPACIDAD
 
 - **Timelocks absolutos (`after`) y esperas por tiempo**: completan los timelocks, que hoy solo son relativos
   (`older`) y por bloques. Además, permitirían importar los descriptores que los usan, que ahora se rechazan.
-- **Keys repartidas (FROST y Shamir) y Taproot (`tr(...)`)**: una key cuyo secreto son n shares de las que bastan
-  t. Con FROST (Frostsnap), las shares nunca se juntan y en la cadena es una sola key Taproot, sin descriptor que
-  guardar. Con Shamir (SLIP-39, SSKR), se juntan al recuperar en un dispositivo que guarda la semilla entera. Taproot
-  entra con ellas: primero `tr(KEY)` y después el árbol de scripts con Miniscript (Liana y Nunchuk ya lo ofrecen).
-  Lo pidió un usuario («T-of-N signing devices and their backups in custom locations and with custom people, with no
-  PINs or passphrases… no descriptor to backup either»). Plan en [PLAN-KEYS-REPARTIDAS.md](PLAN-KEYS-REPARTIDAS.md).
-- **Mapa de UTXOs y coin control** (la «idea 3»): un proyecto aparte, sobre privacidad, que reutilizaría
-  `packages/bitcoin`.
 
 ## Distribución
 
@@ -24,6 +16,16 @@ pensarse antes de implementarla. Lo que ya está hecho se describe en [CAPACIDAD
 
 ## Aparcado
 
+- **Taproot con árbol de scripts** (fase 8 de [PLAN-KEYS-REPARTIDAS.md](PLAN-KEYS-REPARTIDAS.md)): escribir y leer
+  `tr(key interna, {hojas})` con Miniscript en tapscript, como Liana y Nunchuk. Las keys repartidas y `tr(KEY)` ya
+  están hechas (fases 0 a 7). El trabajo iría casi entero a `packages/bitcoin` (reglas de tapscript: `multi_a`, claves
+  x-only, otros límites; las hojas y la raíz de Merkle de BIP-341; la key interna o un punto NUMS; importar el árbol y
+  comprobar que dice lo mismo que la política), con los vectores de BIP-341: más que `tr(KEY)` y parecido al
+  Miniscript en `wsh`. El motor no cambia (la política es la misma) y la interfaz, poco: elegir SegWit o Taproot en una
+  política con esperas, la key interna y los avisos de dispositivos. Aporta poco hoy: casi todo el que usa esperas lo
+  hace en `wsh`, que ya está cubierto; firman Miniscript en tapscript pocos dispositivos (Ledger, Coldcard con Edge,
+  Krux, Specter) y Frostsnap no firma hojas de tapscript. Lo justificaría que alguien pida importar un descriptor
+  Taproot con árbol (hoy se rechaza como no admitido).
 - **QR del descriptor en UR o BBQr**: en papel no cabe un QR animado, pero sí un UR en un solo QR
   estático o varias partes impresas. Solo si alguien lo pide o se encuentra una cartera que lo exija
   (Sparrow, Nunchuk, Specter o Coldcard leen el texto plano); hay dos formatos UR (`crypto-output` y
