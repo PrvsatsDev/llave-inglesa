@@ -131,6 +131,13 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
       add(secret({ type: 'passphrase', key: g.key }), { rule: 'passphrase-bruteforce', premises: [seedId], via: { strength: g.strength } });
     }
 
+    // Keys repartidas: con k shares distintas, el secreto completo.
+    for (const key of index.splitKeys) {
+      const split = key.split!;
+      const shares = split.shares.map((share) => factId(secret({ type: 'share', key: key.id, share }))).filter((id) => facts.has(id));
+      if (shares.length >= split.k) add(secret({ type: 'seed', key: key.id }), { rule: 'combine-shares', premises: shares.slice(0, split.k) });
+    }
+
     for (const a of model.artifacts) {
       const itemId = factId({ kind: 'item', item: a.id });
       if (!facts.has(itemId)) continue;

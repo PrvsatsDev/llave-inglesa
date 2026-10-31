@@ -283,6 +283,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'passphrase-bruteforce': return `adivinada por fuerza bruta a partir de la semilla (passphrase ${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']})`;
     case 'physical-extraction': return `extraída del hardware de ${name(v.device)} pese al PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
+    case 'combine-shares': return 'juntando las shares que bastan';
     case 'descriptor-xpubs': return 'incluida en el descriptor';
     case 'unlock-device': return '';
     case 'device-sign': return 'firma el dispositivo';

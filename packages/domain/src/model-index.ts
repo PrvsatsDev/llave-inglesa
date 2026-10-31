@@ -17,6 +17,8 @@ export interface ModelIndex {
   readonly locations: ReadonlyMap<Id, Location>;
   /** Keys que aparecen en la política, en orden. */
   readonly policyKeys: readonly Id[];
+  /** Keys repartidas (FROST o Shamir), en el orden del modelo. */
+  readonly splitKeys: readonly Key[];
   /** Cada cuánto renueva el titular los timelocks (del modelo). */
   readonly renewal: CustodyModel['renewal'];
   /** Objetos en esa ubicación (no los que alguien lleva encima). */
@@ -114,6 +116,7 @@ export function indexModel(model: CustodyModel): ModelIndex {
     people: byId(model.people),
     locations: byId(model.locations),
     policyKeys: policyKeys(model.policy),
+    splitKeys: model.keys.filter((k) => k.split !== undefined),
     renewal: model.renewal,
     itemsAt: (location) => itemsByLocation.get(location) ?? [],
     carriedBy: (person) => model.computers.filter((c) => c.carriedBy === person),

@@ -93,3 +93,34 @@ export const modelArb: fc.Arbitrary<CustodyModel> = fc
     };
     return parse(input);
   });
+
+/**
+ * Modelos con keys Shamir: cada key elegida pasa a k de n y cada semilla suya escrita o memorizada pasa a ser una
+ * share cualquiera (o varias). Así se generan repartos de todo tipo: juntos, separados, incompletos.
+ */
+export const shamirModelArb: fc.Arbitrary<CustodyModel> = modelArb.chain((m) =>
+  fc
+    .record({
+      split: fc.array(fc.boolean(), { minLength: m.keys.length, maxLength: m.keys.length }),
+      k: fc.integer({ min: 1, max: 3 }),
+      n: fc.integer({ min: 1, max: 4 }),
+      picks: fc.array(fc.subarray([1, 2, 3, 4], { minLength: 1 }), { minLength: 12, maxLength: 12 }),
+    })
+    .map(({ split, k, n, picks }) => {
+      const splitKeys = new Set(m.keys.filter((_, i) => split[i]).map((key) => key.id));
+      const total = Math.max(n, 1);
+      let p = 0;
+      const shares = (s: SecretRef): SecretRef[] => {
+        if (s.type !== 'seed' || !splitKeys.has(s.key)) return [s];
+        const chosen = picks[p++ % picks.length]!.filter((x) => x <= total);
+        return (chosen.length ? chosen : [1]).map((share) => ({ type: 'share' as const, key: s.key, share }));
+      };
+      const input = {
+        ...m,
+        keys: m.keys.map((key) => (splitKeys.has(key.id) ? { ...key, split: { scheme: 'shamir' as const, k: Math.min(k, total), shares: Array.from({ length: total }, (_, i) => i + 1) } } : key)),
+        artifacts: m.artifacts.map((a) => ({ ...a, contents: a.contents.flatMap(shares) })),
+        people: m.people.map((person) => ({ ...person, knows: person.knows.flatMap(shares) })),
+      };
+      return parse(input);
+    }),
+);

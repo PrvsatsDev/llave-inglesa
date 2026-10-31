@@ -1,4 +1,4 @@
-import { catalogModelByName, walletOf, type CustodyModel, type Device, type Id } from '@llave-inglesa/domain';
+import { catalogModelByName, walletOf, type CustodyModel, type Device, type Id, type SecretRef } from '@llave-inglesa/domain';
 
 /**
  * Firmware malicioso de un fabricante (actualización maliciosa o fabricante comprometido).
@@ -9,14 +9,23 @@ import { catalogModelByName, walletOf, type CustodyModel, type Device, type Id }
 
 const vendorKey = (vendor: string) => vendor.trim().toLowerCase();
 
-/** Keys cuyas semillas tienen escritas o memorizadas: las que podrían cargarse en un stateless. */
+/**
+ * Keys cuyas semillas tienen escritas o memorizadas: las que podrían cargarse en un stateless. En Shamir, también las
+ * que tienen escritas o memorizadas al menos k shares distintas (juntándolas sale la semilla); en FROST no, porque no
+ * hay semilla que cargar.
+ */
 export function seedKeys(model: CustodyModel): Set<Id> {
   const keys = new Set<Id>();
-  const add = (s: { type: string; key?: Id }) => {
-    if (s.type === 'seed' && s.key) keys.add(s.key);
+  const shares = new Map<Id, Set<number>>();
+  const add = (s: SecretRef) => {
+    if (s.type === 'seed') keys.add(s.key);
+    if (s.type === 'share') shares.set(s.key, (shares.get(s.key) ?? new Set()).add(s.share));
   };
   model.artifacts.forEach((a) => a.contents.forEach(add));
   model.people.forEach((p) => p.knows.forEach(add));
+  for (const k of model.keys) {
+    if (k.split?.scheme === 'shamir' && (shares.get(k.id)?.size ?? 0) >= k.split.k) keys.add(k.id);
+  }
   return keys;
 }
 

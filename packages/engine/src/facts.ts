@@ -69,6 +69,11 @@ export type RuleId =
   | 'malicious-firmware'
   /** Passphrase adivinada por fuerza bruta a partir de la semilla. */
   | 'passphrase-bruteforce'
+  /**
+   * Key repartida: con k shares distintas se reconstruye el secreto completo (`seed:K`). En Shamir es la semilla; en
+   * FROST, el secreto que nunca existió junto (herramientas como frostsnap-thaw lo reconstruyen).
+   */
+  | 'combine-shares'
   | 'read-artifact'
   | 'descriptor-xpubs'
   | 'unlock-device'

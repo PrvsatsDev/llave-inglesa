@@ -279,6 +279,7 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'passphrase-bruteforce': return `guessed by brute force from the seed (${PASSPHRASE_STRENGTH_TEXT[v.strength ?? 'weak']} passphrase)`;
     case 'physical-extraction': return `extracted from the hardware of ${name(v.device)} despite the PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'written there';
+    case 'combine-shares': return 'putting together enough shares';
     case 'descriptor-xpubs': return 'included in the descriptor';
     case 'unlock-device': return '';
     case 'device-sign': return 'the device signs';
