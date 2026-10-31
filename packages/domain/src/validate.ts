@@ -1,4 +1,5 @@
 import { MAX_MINISCRIPT_DEPTH } from '@llave-inglesa/bitcoin';
+import { catalogModelByName } from './catalog.ts';
 import { normalizeLabel, policyTimelocks, repeated, spendableWithoutKeys } from './model-index.ts';
 import { CustodyModelSchema, type CustodyModel, type Id, type Policy, type SecretRef } from './schema.ts';
 
@@ -48,7 +49,9 @@ export type IssueCode =
   /** Hay menos shares distintas (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar. */
   | 'shares-below-threshold'
   /** Todas las shares de una key FROST en dispositivos de un solo fabricante (su firmware o su app alcanzan a todas). */
-  | 'shares-single-vendor';
+  | 'shares-single-vendor'
+  /** Un dispositivo guarda shares FROST y su modelo, según el catálogo, no es de FROST. */
+  | 'shares-on-non-frost-device';
 
 /** Problema del modelo. Sin texto localizado: la capa de presentación decide cómo contarlo. */
 export interface Issue {
@@ -215,9 +218,11 @@ export function checkIntegrity(model: CustodyModel): Issue[] {
       else if (!key.split?.shares.includes(s.share)) report('error', 'unknown-share', ['devices', i, 'shares', j], s.key);
       else if (key.split.scheme !== 'frost') report('error', 'device-share-not-frost', ['devices', i, 'shares', j], s.key);
     });
+    const catalog = catalogModelByName(d.model);
+    if (d.kind === 'stateful' && d.shares?.length && catalog && !catalog.frost) report('warning', 'shares-on-non-frost-device', ['devices', i, 'shares'], d.id);
     d.holds.forEach((k, j) => ref(keys, k, ['devices', i, 'holds', j]));
     d.loads?.forEach((k, j) => ref(keys, k, ['devices', i, 'loads', j]));
-    if (d.kind === 'stateful' && d.holds.length === 0) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
+    if (d.kind === 'stateful' && d.holds.length === 0 && !d.shares?.length) report('warning', 'stateful-holds-nothing', ['devices', i, 'holds'], d.id);
     // Con PIN que nadie sabe ni está apuntado, el dispositivo no sirve para firmar (y la seguridad sube sin avisar).
     const isPin = (s: SecretRef) => s.type === 'pin' && s.device === d.id;
     if (d.pinProtected && !model.people.some((p) => p.knows.some(isPin)) && !model.artifacts.some((a) => a.contents.some(isPin))) {

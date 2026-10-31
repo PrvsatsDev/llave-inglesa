@@ -336,6 +336,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'device-share-not-frost': 'A device holds shares of a key that is not FROST: with Shamir, the device holds the whole key and the shares are its backup',
   'shares-together': 'One location has as many shares as are enough: whoever gets in there has the whole key, the split does not split anything',
   'shares-below-threshold': 'There are fewer shares (on devices, backups or in memory) than are needed: the key can be neither used nor recovered',
+  'shares-on-non-frost-device': 'A device holds FROST shares and, according to the catalog, its model does not support them',
   'shares-single-vendor': 'All the shares of this FROST key are on devices from a single manufacturer: a malicious firmware of theirs, or their app, reaches all of them at once',
 };
 

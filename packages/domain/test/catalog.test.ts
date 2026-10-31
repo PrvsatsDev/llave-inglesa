@@ -141,8 +141,8 @@ describe('quién firma Miniscript', () => {
     expect(taprootSupport({ model: 'Mi firmador casero' })).toBe('unknown-model');
   });
 
-  it('el anti-exfil de Taproot solo se da por bueno si el catálogo lo dice (ninguno, por ahora)', () => {
-    expect(HARDWARE_MODELS.filter((m) => m.taproot?.antiExfil)).toEqual([]);
+  it('el anti-exfil de Taproot solo se da por bueno si el catálogo lo dice (solo Frostsnap)', () => {
+    expect(HARDWARE_MODELS.filter((m) => m.taproot?.antiExfil).map((m) => m.id)).toEqual(['frostsnap']);
     expect(HARDWARE_MODELS.filter((m) => m.taproot?.miniscript && !m.taproot.singleSig)).toEqual([]);
   });
 

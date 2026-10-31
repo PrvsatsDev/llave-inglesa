@@ -76,6 +76,7 @@ export function formatIssue(i: Issue): string {
     'device-share-not-frost': `dispositivo con shares de una key que no es FROST${ref}`,
     'shares-together': `tantas shares como bastan en una misma ubicación${ref}`,
     'shares-below-threshold': `menos shares de las que bastan${ref}: la key no se puede usar`,
+    'shares-on-non-frost-device': `dispositivo con shares FROST cuyo modelo no las admite${ref}`,
     'shares-single-vendor': `todas las shares de la key FROST${ref} en dispositivos de un solo fabricante`,
   };
   const tag = i.severity === 'error' ? red('error') : i.severity === 'grave' ? red('grave') : yellow('aviso');

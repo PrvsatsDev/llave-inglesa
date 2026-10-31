@@ -6,10 +6,17 @@
  * el catálogo sola: `CATALOG_DATE` indica hasta cuándo está al día.
  */
 
-export const CATALOG_DATE = '2026-09-30';
+export const CATALOG_DATE = '2026-10-31';
 
 /** Comportamiento ante un PIN de coacción: abre otro wallet (señuelo) o borra/inutiliza el dispositivo. */
 export type DuressKind = 'decoy' | 'wipe';
+
+/**
+ * Matices de un modelo que no cambian el análisis pero hay que contar (los textos, en packages/text):
+ * - same-vendor-coordinator: su anti-exfil cuenta con la aleatoriedad que pone la app del móvil, que es del mismo
+ *   fabricante; un fabricante malicioso controla los dos extremos.
+ */
+export type CatalogNote = 'same-vendor-coordinator';
 
 /** Desde qué firmware se admite algo (`since`, si se sabe) y si solo con el firmware experimental Edge (Coldcard). */
 export interface FirmwareSupport {
@@ -34,6 +41,11 @@ export interface CatalogModel {
   antiExfil: boolean;
   /** Se puede montar en casa con piezas compradas por separado (sin que el fabricante toque el aparato). */
   diy: boolean;
+  /** Se protege con PIN. Frostsnap no: lo protege el bloqueo del móvil emparejado. */
+  pin: boolean;
+  /** Guarda shares de keys FROST (y solo eso: no guarda semillas). */
+  frost: boolean;
+  notes: readonly CatalogNote[];
   /**
    * Firma carteras Miniscript en P2WSH (las políticas con espera). `since`: firmware mínimo, si se sabe; `edge`: solo
    * con el firmware experimental Edge (Coldcard), que el fabricante desaconseja para cantidades grandes. Null: no.
@@ -69,6 +81,9 @@ const model = (
   registersMultisig: false,
   antiExfil: false,
   diy: false,
+  pin: true,
+  frost: false,
+  notes: [],
   miniscript: null,
   taproot: null,
   duress: [],
@@ -137,6 +152,17 @@ export const HARDWARE_MODELS: readonly CatalogModel[] = [
   model('keystone-essential', 'Keystone', 'Keystone Essential', { registersMultisig: true, discontinued: true }),
   model('keystone-pro', 'Keystone', 'Keystone Pro', { registersMultisig: true, discontinued: true }),
   // Taproot desde la 1.3.0 (firmware solo Bitcoin), y de momento solo con Sparrow.
+  // Frostsnap: FROST con DKG, sin PIN ni secure element (el móvil emparejado guarda la clave que descifra cada share),
+  // anti-exfil en cada firma con la aleatoriedad del móvil (anti-klepto), firmware firmado y reproducible. Solo
+  // Taproot con una sola key; no firma hojas de tapscript.
+  model('frostsnap', 'Frostsnap', 'Frostsnap', {
+    antiExfil: true,
+    taproot: { singleSig: {}, antiExfil: true },
+    pin: false,
+    frost: true,
+    notes: ['same-vendor-coordinator'],
+  }),
+
   model('keystone-3-pro', 'Keystone', 'Keystone 3 Pro', { registersMultisig: true, taproot: { singleSig: { since: '1.3.0' } } }),
 ];
 
