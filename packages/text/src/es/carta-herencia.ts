@@ -1,5 +1,5 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
-import { flatPolicy, policyTimelocks, walletOf } from '@llave-inglesa/domain';
+import { flatPolicy, policyKeys, policyTimelocks, walletOf } from '@llave-inglesa/domain';
 import type { InheritanceLetter, LetterPiece } from '@llave-inglesa/engine';
 import type { Label } from '../tipos.ts';
 import { listText, waitText } from './textos.ts';
@@ -55,6 +55,8 @@ const secretText = (s: SecretRef, label: Label): string => {
 export function letterPieceText(p: LetterPiece, label: Label): string {
   const parts = p.provides.map((s) => secretText(s, label));
   if (p.signs.length > 0) parts.push(`firma con ${listText(p.signs.map(label))}${p.needsPin ? '; se desbloquea con su PIN' : ''}`);
+  if (p.signsShares) parts.push(`firma su parte de ${listText(p.signsShares.map((s) => `${label(s.key)} (share ${s.share})`))}${p.needsPin ? '; se desbloquea con su PIN' : ''}`);
+  if (p.coordinates) parts.push(`tiene la app emparejada con ${listText(p.coordinates.map(label))}: con ella se piden las firmas a los dispositivos`);
   if (p.hasWallet) parts.push('tiene registrada la cartera');
   if (p.wait > 0) parts.push(`solo sirve cuando los bitcoins llevan ${waitText(p.wait)} sin moverse`);
   return parts.length > 0 ? parts.join('; ') : 'hace falta';
@@ -105,7 +107,8 @@ export function letterSteps(model: CustodyModel, letter: InheritanceLetter): str
       `No hay copia del descriptor: la cartera se reconstruye a partir de las frases semilla de todas sus llaves, por eso hacen falta todas. Es la parte más difícil; aquí sí conviene que te ayude alguien que sepa. Los datos para reconstruirla: ${rebuildData(model)}.`,
       'Cada frase semilla se carga en un dispositivo de firma (una «hardware wallet»), nunca en el ordenador; con ellos, una cartera que admita multisig (por ejemplo Sparrow o Nunchuk) monta la cartera.',
     );
-  } else {
+  } else if (!singleSplit(model)) {
+    // Una key repartida sola: lo cuentan los pasos de las shares (splitSteps).
     steps.push(
       'Carga la frase semilla en un dispositivo de firma (una «hardware wallet»), nunca en un ordenador o un móvil, y conéctalo a su aplicación para ver el saldo.',
     );
@@ -119,7 +122,37 @@ export function letterSteps(model: CustodyModel, letter: InheritanceLetter): str
         (letter.withoutWait ? ' Si no quieres esperar, mira «Sin esperar», más arriba.' : ''),
     );
   }
+  steps.push(...splitSteps(model));
   steps.push('Antes de mover todo, envía una cantidad pequeña y comprueba que llega.');
+  return steps;
+}
+
+/** La política es una sola key, y repartida. */
+const singleSplit = (model: CustodyModel) => {
+  const p = model.policy;
+  return p.type === 'key' && model.keys.some((k) => k.id === p.key && k.split !== undefined);
+};
+
+/** Pasos propios de las keys repartidas de la política: cómo se juntan sus shares. */
+function splitSteps(model: CustodyModel): string[] {
+  const keys = policyKeys(model.policy).flatMap((id) => model.keys.filter((k) => k.id === id && k.split));
+  const of = (scheme: 'frost' | 'shamir') => keys.filter((k) => k.split!.scheme === scheme);
+  const names = (ks: typeof keys) => listText(ks.map((k) => k.label));
+  const steps: string[] = [];
+  const frost = of('frost');
+  if (frost.length > 0) {
+    steps.push(
+      `${names(frost)} ${frost.length === 1 ? 'está repartida' : 'están repartidas'} entre varios dispositivos Frostsnap (FROST): ninguno tiene la llave entera, y firman juntos los que hacen falta. Instala la app de Frostsnap en un móvil o un ordenador; si tienes el móvil que ya la usaba, ábrela en él. Si no, conecta a la app tantos dispositivos como hacen falta y quedará emparejada con ellos.`,
+      'Las tarjetas de backup de Frostsnap se cargan en dispositivos Frostsnap nuevos («en blanco»), nunca en un ordenador ni en un móvil.',
+      'Si algún día no existiera la app de Frostsnap: con tantas tarjetas como hacen falta, unas herramientas abiertas (frostsnap-thaw o frost_backup) reconstruyen una clave que se importa en Sparrow o Bitcoin Core. Hay que hacerlo en un ordenador seguro y desconectado; aquí sí conviene que te ayude alguien que sepa.',
+    );
+  }
+  const shamir = of('shamir');
+  if (shamir.length > 0) {
+    steps.push(
+      `La frase semilla de ${names(shamir)} está repartida en varias partes («shares», con el estándar SLIP-39 o SSKR): no hacen falta todas, solo las que indica la lista. Se juntan en un dispositivo de firma que admita ese formato (SLIP-39: Trezor; SSKR: Keystone o Passport), escribiéndolas en él al restaurar, nunca en un ordenador.`,
+    );
+  }
   return steps;
 }
 
