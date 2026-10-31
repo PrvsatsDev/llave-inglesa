@@ -260,3 +260,12 @@ sus límites.
    dispositivo del fabricante? Propuesta: texto, no motor; el código es abierto (MIT) y el formato está publicado.
 7. **Shamir de dos niveles** (grupos de SLIP-39) y SSKR: fuera de la primera versión.
 8. **`version: 2` solo cuando se usa algo nuevo**: confirmar que es la forma preferida.
+9. **Ordenador cuántico.** En Taproot, la clave pública (ajustada) está en la propia salida: queda expuesta en la
+   cadena desde que se recibe, no desde que se gasta, como en `wpkh`/`wsh`, donde solo se ve un hash hasta gastar.
+   Con un ordenador cuántico capaz de romper el logaritmo discreto, toda salida Taproot se gasta por la vía de la key,
+   aunque la key interna sea NUMS: el árbol de scripts no protege. Matices: en `wpkh`/`wsh` la exposición llega igual
+   al reutilizar direcciones, al gastar (ventana en la mempool) o si se filtra una xpub, algo que el modelo ya sigue
+   (quién tiene cada xpub). Hay propuestas para salidas resistentes (BIP-360). Propuesta mínima: decirlo en la
+   cartera al elegir `tr` y en la guía. A discutir: modelarlo como ataque teórico (un átomo con esfuerzo muy alto que
+   da las semillas de las keys cuya clave pública está a la vista: todas en `tr`, y las de xpub filtrada en
+   `wsh`/`wpkh`), sin que cambie la puntuación de los modelos actuales.
