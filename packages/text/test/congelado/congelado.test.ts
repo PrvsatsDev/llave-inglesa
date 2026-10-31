@@ -12,12 +12,15 @@ const leer = (f: string): unknown => JSON.parse(readFileSync(new URL(f, CARPETA)
 const deEjemplos = leer('esperado-ejemplos.json') as Record<string, unknown>;
 const deAleatorios = leer('esperado-aleatorios.json') as string[];
 
+/** Los ejemplos que había al congelar (los añadidos después no tienen resultado de antes con el que compararse). */
+const congelados = ejemplos().filter(([ruta]) => ruta in deEjemplos);
+
 describe('resultados congelados', () => {
-  it('están todos los ejemplos', () => {
-    expect(Object.keys(deEjemplos)).toEqual(ejemplos().map(([ruta]) => ruta));
+  it('no ha desaparecido ningún ejemplo congelado', () => {
+    expect(congelados.map(([ruta]) => ruta)).toEqual(Object.keys(deEjemplos));
   });
 
-  it.each(ejemplos())('%s', (ruta, doc) => {
+  it.each(congelados)('%s', (ruta, doc) => {
     const ahora = serializar(calcular(doc));
     // Primero la estructura (si falla, se ve la diferencia); después, byte a byte (orden incluido).
     expect(JSON.parse(ahora)).toEqual(deEjemplos[ruta]);

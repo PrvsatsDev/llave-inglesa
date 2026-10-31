@@ -11,10 +11,11 @@ en esta versión. [English version](GUIDE.md).
 3. [Cómo se leen las notas](#notas): Qué mide cada una de las cuatro puntuaciones, con ejemplos que se mueven de un extremo a otro.
 4. [Simular](#simular): Probar ataques y desgracias, combinarlos y leer en el mapa qué pasaría y por qué.
 5. [Casos guiados](#casos): De la frase semilla en un papel a un multisig distribuido: qué falla en cada paso y qué lo arregla.
-6. [Montar tu esquema](#montar): De un esquema en blanco al tuyo: keys, ubicaciones, dispositivos, backups, personas y guardarlo cifrado.
-7. [Conceptos](#conceptos): Las palabras que usa la herramienta, en una línea cada una.
-8. [Límites conocidos](#limites): Lo que el motor simplifica o no tiene en cuenta, para leer las notas con criterio.
-9. [Privacidad y verificación](#verificar): Qué sale de tu equipo (nada), cómo se guarda tu esquema y cómo comprobar que la app es la que dice ser.
+6. [Keys repartidas: Shamir y FROST](#repartidas): Una key cuyo secreto está en varias partes: qué cambia frente a una frase semilla y frente a un multisig.
+7. [Montar tu esquema](#montar): De un esquema en blanco al tuyo: keys, ubicaciones, dispositivos, backups, personas y guardarlo cifrado.
+8. [Conceptos](#conceptos): Las palabras que usa la herramienta, en una línea cada una.
+9. [Límites conocidos](#limites): Lo que el motor simplifica o no tiene en cuenta, para leer las notas con criterio.
+10. [Privacidad y verificación](#verificar): Qué sale de tu equipo (nada), cómo se guarda tu esquema y cómo comprobar que la app es la que dice ser.
 
 <a id="que-es"></a>
 
@@ -186,9 +187,41 @@ En el 2 de 3 normal eso bloquea los fondos, y su resiliencia es **72** (bueno); 
 
 > 💡 Nada de esto es «la respuesta»: es un mapa de compromisos. Abre el que se parezca al tuyo, cambia una cosa cada vez y mira qué nota sube y cuál baja.
 
+<a id="repartidas"></a>
+
+## 6. Keys repartidas: Shamir y FROST
+
+Una key repartida no tiene una frase semilla, sino varias partes (**shares**) de las que bastan unas cuantas: 2 de 3, por ejemplo. Hay dos formas muy distintas de hacerlo, y la diferencia está en dónde están las partes:
+
+- **Shamir** (SLIP-39 en Trezor, SSKR en Keystone o Passport): la semilla existe y el dispositivo la guarda entera; las shares son solo su backup y se juntan al recuperar.
+- **FROST** (Frostsnap): las shares se generan entre todos los dispositivos y nunca se juntan; cada uno guarda la suya y firman juntos los que bastan. No hay semilla: en la cadena es una sola key Taproot, sin descriptor que guardar.
+- **Multisig**: varias keys enteras, cada una con su frase semilla, y un descriptor que las une ([Casos guiados](#casos)).
+
+**Trezor con Shamir.** Un Trezor en casa y su backup en tres shares de metal: en la caja fuerte, en el banco y en casa de los padres.
+
+> ▶ En la app: abre el ejemplo «Trezor con Shamir 2 de 3».
+
+Frente a dos placas con la frase semilla entera (seguridad **49** (flojo)), una share robada ya no da nada: seguridad **61** (aceptable), con una resiliencia parecida (**70** (bueno) frente a **77** (bueno)). Lo que no cambia es el Trezor: guarda la key entera, así que un fallo de su generador o de su firmware la expone igual que antes.
+
+**Frostsnap 2 de 3.** Tres Frostsnap, en casa, en la oficina y en casa de los padres, cada uno con su tarjeta de backup al lado, y el móvil emparejado encima.
+
+> ▶ En la app, con el ejemplo «Frostsnap 2 de 3»: *La llave inglesa en casa*.
+
+En el 2 de 3 distribuido, con los dispositivos en casa, eso bastaba. Aquí no: en casa solo hay una share (la del dispositivo y la de su tarjeta son la misma), y aunque el móvil desbloquea ese dispositivo, falta otra.
+
+> ▶ En la app, con el ejemplo «Frostsnap 2 de 3»: *Dos intrusiones: en casa y en la oficina*.
+
+Con dos dispositivos sí: los Frostsnap no tienen PIN, y con tantos como bastan se empareja un móvil nuevo. Con menos, un dispositivo robado no sirve de nada, porque su share va cifrada con una clave que guarda el móvil emparejado. Las tarjetas de backup, en cambio, son la share en claro.
+
+Seguridad **63** (aceptable), algo menos que el 2 de 3 distribuido (**71** (bueno)): el robo más barato no está en ninguna casa, sino en el generador de Frostsnap, porque todas las shares salen de dispositivos y de una app del mismo fabricante. Su anti-exfil frena a un dispositivo manipulado, no a un fabricante malicioso, que controlaría los dos extremos: la herramienta lo explica, pero no lo cuenta como un ataque más. Firmar exige ir a dos sitios (usabilidad **75** (bueno)) y las tarjetas son de papel: dos incendios se llevan dos shares (resiliencia **61** (aceptable)).
+
+> 💡 Recuperar una key FROST necesita hoy la app de Frostsnap y dispositivos en blanco donde cargar las tarjetas. Si no existiera, con tantas tarjetas como bastan, unas herramientas abiertas (frostsnap-thaw o frost_backup) reconstruyen una clave que se importa en Sparrow o Bitcoin Core. La carta para los herederos lo explica.
+
+**Taproot y el ordenador cuántico.** En Taproot (una key FROST siempre lo es; un single-sig, si lo eliges) la clave pública queda a la vista en la cadena desde que se reciben los bitcoins, no solo al gastarlos. Hoy no es un riesgo, y la herramienta no lo cuenta como ataque; pero un ordenador cuántico capaz de romper estas claves podría gastar cualquier salida Taproot.
+
 <a id="montar"></a>
 
-## 6. Montar tu esquema
+## 7. Montar tu esquema
 
 Empieza con **Archivo → Nuevo esquema** o, mejor, abre el ejemplo que más se parezca al tuyo y cámbialo. Todo se edita en la pestaña **Esquema** o pulsando cualquier elemento del mapa; Ctrl+Z deshace.
 
@@ -212,7 +245,7 @@ No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y
 
 <a id="conceptos"></a>
 
-## 7. Conceptos
+## 8. Conceptos
 
 - **Key**: cada una de las claves que pueden firmar (K1, K2…). Su **frase semilla** son las palabras que la recuperan.
 - **Passphrase**: una palabra o frase extra que, junto a la frase semilla, da otra key. Sin ella, la frase semilla sola no firma.
@@ -227,10 +260,13 @@ No hace falta que sea perfecto a la primera: monta lo esencial, mira las notas y
 - **Bloqueo temporal**: los fondos quedan inmovilizados mientras alguien está incapacitado, pero se recuperan cuando heredan.
 - **Custodio**: alguien de confianza que guarda algo (una placa, un descriptor) sin ser titular ni heredero.
 - **Entropía**: el azar con el que se genera la frase semilla (el generador del dispositivo, dados, una moneda…). **Verificar** es recalcularla en otra herramienta para comprobar que sale de ese azar.
+- **Key repartida**: una key cuyo secreto está en varias **shares**, de las que bastan unas cuantas. Con **Shamir** la semilla existe y las shares son su backup; con **FROST** no existe semilla y cada dispositivo firma con la suya ([Keys repartidas](#repartidas)).
+- **Coordinador**: en FROST, el móvil u ordenador emparejado que pide las firmas a los dispositivos (en Frostsnap, también descifra sus shares).
+- **Taproot**: el tipo de dirección más reciente (bc1p…). Una key FROST solo existe en Taproot.
 
 <a id="limites"></a>
 
-## 8. Límites conocidos
+## 9. Límites conocidos
 
 Un modelo siempre simplifica. Estos son los atajos conscientes de llave-inglesa:
 
@@ -243,13 +279,14 @@ Un modelo siempre simplifica. Estos son los atajos conscientes de llave-inglesa:
 - Cada persona vive en un solo sitio y se le supone allí: no cuenta horarios (estar en el trabajo). Si no indicas dónde vive, se le puede coaccionar en cualquier sitio sin recargo.
 - El ordenador o móvil de firma solo tiene dos extremos (de uso general o dedicado), y su malware se supone capaz de sacar la semilla de un dispositivo conectado con un fallo publicado. No cuenta la contraseña del ordenador ni de la cartera.
 - El catálogo de dispositivos y sus fallos conocidos no se actualiza solo: cada versión lleva el suyo, con su fecha.
-- Las esperas son relativas (desde el último movimiento de las monedas): no hay fechas absolutas, ni Taproot. Cada cuánto las mueves es un dato que das tú: no se comprueba.
+- Las esperas son relativas (desde el último movimiento de las monedas): no hay fechas absolutas. Cada cuánto las mueves es un dato que das tú: no se comprueba.
+- Taproot, solo con una key y sin árbol de scripts. Keys repartidas: Shamir de un solo grupo (sin los grupos de SLIP-39) y hasta 16 shares, y una key FROST solo como política entera. Un móvil robado se da por desbloqueado (no cuenta su bloqueo de pantalla), y el anti-exfil de Frostsnap se da por bueno aunque su app sea del mismo fabricante.
 - Un dispositivo que no firma Miniscript solo resta usabilidad: siempre se puede firmar con otro cargando la frase semilla.
 - Con muchos dispositivos y ubicaciones el análisis tarda unos segundos: es exhaustivo.
 
 <a id="verificar"></a>
 
-## 9. Privacidad y verificación
+## 10. Privacidad y verificación
 
 - **Sin red**: la política de seguridad del contenido de la página prohíbe cualquier petición. No hay cuentas, ni analítica, ni recursos de terceros.
 - **Tu navegador**: esa política no frena lo que el navegador hace por su cuenta. La página le pide que no la traduzca y que no pase lo que escribes por el corrector ni el autocompletado, porque los dos pueden enviarlo a un servidor. Pero una extensión (Grammarly, un gestor de contraseñas, un asistente de IA) puede leer toda la página: úsala en un perfil sin extensiones. Lo que copias, como el descriptor, queda en el historial del portapapeles, que algunos sistemas sincronizan con la nube.

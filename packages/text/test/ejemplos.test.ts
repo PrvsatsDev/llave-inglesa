@@ -17,7 +17,7 @@ const ejemplos = ficheros.map((f) => {
 });
 
 /** Lo que ya vale en inglés tal cual: nombres propios y términos técnicos. */
-const IGUALES = new Set(['iCloud', 'Descriptor']);
+const IGUALES = new Set(['iCloud', 'Descriptor', 'Share 1', 'Share 2', 'Share 3']);
 
 const textos = (m: CustodyModel) => [
   m.name,
@@ -25,6 +25,7 @@ const textos = (m: CustodyModel) => [
   ...m.people.map((p) => p.name),
   ...m.locations.map((l) => l.name),
   ...m.artifacts.map((a) => a.label),
+  ...m.computers.map((c) => c.label),
 ];
 
 describe('ejemplos en inglés', () => {

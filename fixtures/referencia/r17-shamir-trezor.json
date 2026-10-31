@@ -1,0 +1,206 @@
+{
+  "format": "llave-inglesa",
+  "version": 2,
+  "name": "Trezor con Shamir 2 de 3",
+  "description": "Single-sig en un Trezor Safe 5 con el backup repartido en tres shares SLIP-39 de metal: una en la caja fuerte, otra en el banco y otra en casa de los padres. Basta con dos para recuperarla.",
+  "keys": [
+    {
+      "id": "k1",
+      "label": "K1",
+      "passphrase": false,
+      "split": {
+        "scheme": "shamir",
+        "k": 2,
+        "shares": [
+          1,
+          2,
+          3
+        ]
+      },
+      "provenance": {
+        "sources": [
+          {
+            "kind": "device-rng",
+            "vendor": "Trezor",
+            "model": "Trezor Safe 5"
+          }
+        ],
+        "generatedBy": {
+          "vendor": "Trezor",
+          "model": "Trezor Safe 5"
+        },
+        "independentlyVerified": false
+      }
+    }
+  ],
+  "policy": {
+    "type": "key",
+    "key": "k1"
+  },
+  "devices": [
+    {
+      "id": "trezor",
+      "label": "Trezor",
+      "vendor": "Trezor",
+      "model": "Trezor Safe 5",
+      "kind": "stateful",
+      "holds": [
+        "k1"
+      ],
+      "pinProtected": true,
+      "duressPin": false,
+      "acceptsExternalSeed": false,
+      "registeredWallet": false,
+      "location": "casa"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "share-1",
+      "label": "Share 1",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "share",
+          "key": "k1",
+          "share": 1
+        }
+      ],
+      "lockedBy": [],
+      "location": "caja-fuerte"
+    },
+    {
+      "id": "share-2",
+      "label": "Share 2",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "share",
+          "key": "k1",
+          "share": 2
+        }
+      ],
+      "lockedBy": [],
+      "location": "banco"
+    },
+    {
+      "id": "share-3",
+      "label": "Share 3",
+      "medium": "metal",
+      "contents": [
+        {
+          "type": "share",
+          "key": "k1",
+          "share": 3
+        }
+      ],
+      "lockedBy": [],
+      "location": "padres"
+    }
+  ],
+  "computers": [],
+  "people": [
+    {
+      "id": "yo",
+      "name": "Yo",
+      "role": "owner",
+      "knows": [
+        {
+          "type": "pin",
+          "device": "trezor"
+        }
+      ],
+      "livesAt": "casa"
+    },
+    {
+      "id": "pareja",
+      "name": "Pareja",
+      "role": "heir",
+      "knows": [],
+      "livesAt": "casa"
+    }
+  ],
+  "locations": [
+    {
+      "id": "casa",
+      "name": "Casa",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "pareja",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "caja-fuerte",
+      "name": "Caja fuerte",
+      "kind": "physical",
+      "protection": "home-safe",
+      "inside": "casa",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "pareja",
+          "when": {
+            "type": "always"
+          }
+        }
+      ]
+    },
+    {
+      "id": "banco",
+      "name": "Caja en banco",
+      "kind": "physical",
+      "protection": "bank-box",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "pareja",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "padres",
+      "name": "Casa padres",
+      "kind": "physical",
+      "access": [
+        {
+          "person": "yo",
+          "when": {
+            "type": "always"
+          }
+        },
+        {
+          "person": "pareja",
+          "when": {
+            "type": "after-death",
+            "person": "yo"
+          }
+        }
+      ]
+    }
+  ]
+}
