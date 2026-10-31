@@ -7,7 +7,12 @@ pensarse antes de implementarla. Lo que ya está hecho se describe en [CAPACIDAD
 
 - **Timelocks absolutos (`after`) y esperas por tiempo**: completan los timelocks, que hoy solo son relativos
   (`older`) y por bloques. Además, permitirían importar los descriptores que los usan, que ahora se rechazan.
-- **Taproot (`tr(...)`)**: Liana y Nunchuk ya lo ofrecen; hoy el Miniscript solo se escribe e importa en `wsh`.
+- **Keys repartidas (FROST y Shamir) y Taproot (`tr(...)`)**: una key cuyo secreto son n shares de las que bastan
+  t. Con FROST (Frostsnap), las shares nunca se juntan y en la cadena es una sola key Taproot, sin descriptor que
+  guardar. Con Shamir (SLIP-39, SSKR), se juntan al recuperar en un dispositivo que guarda la semilla entera. Taproot
+  entra con ellas: primero `tr(KEY)` y después el árbol de scripts con Miniscript (Liana y Nunchuk ya lo ofrecen).
+  Lo pidió un usuario («T-of-N signing devices and their backups in custom locations and with custom people, with no
+  PINs or passphrases… no descriptor to backup either»). Plan en [PLAN-KEYS-REPARTIDAS.md](PLAN-KEYS-REPARTIDAS.md).
 - **Mapa de UTXOs y coin control** (la «idea 3»): un proyecto aparte, sobre privacidad, que reutilizaría
   `packages/bitcoin`.
 
