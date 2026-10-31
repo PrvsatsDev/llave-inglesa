@@ -249,9 +249,13 @@ export const factText: typeof es.factText = (f: Fact, index: ModelIndex) => {
       if (item.kind === 'computer' && item.value.carriedBy) return `${item.value.label} (carried by ${index.label(item.value.carriedBy)})`;
       return `${item.value.label} (${index.label(itemPlace(item))})`;
     }
-    case 'secret': return secretText(f.secret, index.label);
+    case 'secret':
+      if (f.secret.type === 'seed' && index.keys.get(f.secret.key)?.split?.scheme === 'frost') return `full secret of ${index.label(f.secret.key)}`;
+      return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} unlocked`;
     case 'sign': return `signature with ${index.label(f.key)}`;
+    case 'share-sign': return `signs the part of share ${f.share} of ${index.label(f.key)}`;
+    case 'coordinator': return `coordinator of ${index.label(f.key)} (decrypts its shares and asks them to sign)`;
     case 'timelock': return `The ${waitText(f.blocks)} timelock expires`;
     case 'spend': return 'Can spend the funds';
   }
@@ -280,6 +284,13 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'physical-extraction': return `extracted from the hardware of ${name(v.device)} despite the PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'written there';
     case 'combine-shares': return 'putting together enough shares';
+    case 'paired-coordinator': return `${name(v.item)} is paired with the key`;
+    case 'coordinator-malware': return `the malware on ${name(v.item)}, paired with the key, uses its key`;
+    case 'pair-coordinator': return 'with as many devices as are needed a new phone gets paired';
+    case 'device-share': return `${name(v.device)} signs it`;
+    case 'share-software': return 'loading the share into software or a blank device';
+    case 'frost-sign': return 'putting together the parts of enough shares (FROST)';
+    case 'coordinator-xpub': return 'the coordinator knows it';
     case 'descriptor-xpubs': return 'included in the descriptor';
     case 'unlock-device': return '';
     case 'device-sign': return 'the device signs';

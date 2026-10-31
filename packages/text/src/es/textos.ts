@@ -253,9 +253,14 @@ export function factText(f: Fact, index: ModelIndex): string {
       if (item.kind === 'computer' && item.value.carriedBy) return `${item.value.label} (lo lleva ${index.label(item.value.carriedBy)})`;
       return `${item.value.label} (${index.label(itemPlace(item))})`;
     }
-    case 'secret': return secretText(f.secret, index.label);
+    case 'secret':
+      // En FROST no hay semilla: el hecho es el secreto completo, reconstruido juntando shares.
+      if (f.secret.type === 'seed' && index.keys.get(f.secret.key)?.split?.scheme === 'frost') return `secreto completo de ${index.label(f.secret.key)}`;
+      return secretText(f.secret, index.label);
     case 'unlocked': return `${index.label(f.device)} desbloqueado`;
     case 'sign': return `firma con ${index.label(f.key)}`;
+    case 'share-sign': return `firma la parte de la share ${f.share} de ${index.label(f.key)}`;
+    case 'coordinator': return `coordinador de ${index.label(f.key)} (descifra sus shares y les pide firmar)`;
     case 'timelock': return `Vence el timelock de ${waitText(f.blocks)}`;
     case 'spend': return 'Puede gastar los fondos';
   }
@@ -284,6 +289,13 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'physical-extraction': return `extraída del hardware de ${name(v.device)} pese al PIN (${advisoryShortName(v.advisory ?? '')})`;
     case 'read-artifact': return 'escrito ahí';
     case 'combine-shares': return 'juntando las shares que bastan';
+    case 'paired-coordinator': return `${name(v.item)} está emparejado con la key`;
+    case 'coordinator-malware': return `el malware de ${name(v.item)}, emparejado con la key, usa su clave`;
+    case 'pair-coordinator': return 'con tantos dispositivos como bastan se empareja un móvil nuevo';
+    case 'device-share': return `la firma ${name(v.device)}`;
+    case 'share-software': return 'cargando la share en software o en un dispositivo en blanco';
+    case 'frost-sign': return 'juntando las partes de las shares que bastan (FROST)';
+    case 'coordinator-xpub': return 'la conoce el coordinador';
     case 'descriptor-xpubs': return 'incluida en el descriptor';
     case 'unlock-device': return '';
     case 'device-sign': return 'firma el dispositivo';

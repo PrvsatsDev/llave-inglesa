@@ -142,6 +142,8 @@ export const walletProblemText: typeof es.walletProblemText = (p: WalletProblem,
       return `${names(p.keys, label)} have the same xpub: each key needs its own.`;
     case 'mixed-networks':
       return 'Mainnet and testnet xpubs are mixed.';
+    case 'frost-needs-taproot':
+      return `${names(p.keys, label)} ${p.keys.length === 1 ? 'is a FROST key, which only exists' : 'are FROST keys, which only exist'} in Taproot and, for now, as the whole policy: the wallet has to be Taproot and with ${p.keys.length === 1 ? 'it' : 'one of them'} alone.`;
   }
 };
 

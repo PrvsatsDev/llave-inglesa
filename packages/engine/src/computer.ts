@@ -1,5 +1,5 @@
 import { advisoriesFor, catalogModelByName, type Computer, type CustodyModel, type Device, type Id } from '@llave-inglesa/domain';
-import { keysUsedOn, seedKeys } from './firmware.ts';
+import { keysUsedOn, seedKeys, sharesOn } from './firmware.ts';
 
 /**
  * Malware en un ordenador de firma: lee la cartera (el descriptor) y ataca los dispositivos que se le conectan por
@@ -23,6 +23,8 @@ export interface HostExploit {
   advisory: string;
   /** Keys que pasan por el dispositivo: las que filtraría. */
   keys: Id[];
+  /** Shares de keys FROST que guarda, si alguna (también las filtraría). */
+  shares?: { key: Id; share: number }[];
 }
 
 /** Dispositivos conectados al ordenador que un malware suyo puede explotar. */
@@ -31,7 +33,8 @@ export function hostExploits(model: CustodyModel, computer: Computer): HostExplo
   return connectedDevices(model, computer).flatMap((d) => {
     const advisory = hostExploitAdvisory(d);
     const keys = advisory ? keysUsedOn(d, seeds) : [];
-    return advisory && keys.length > 0 ? [{ device: d.id, advisory, keys }] : [];
+    const shares = advisory ? sharesOn(d) : [];
+    return advisory && (keys.length > 0 || shares.length > 0) ? [{ device: d.id, advisory, keys, ...(shares.length > 0 && { shares }) }] : [];
   });
 }
 

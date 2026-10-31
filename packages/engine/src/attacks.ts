@@ -2,7 +2,7 @@ import { advisoriesFor, catalogModelByName, policyTimelocks, type Device, type I
 import { hostExploits, malwareTargets } from './computer.ts';
 import type { CompromisedSeed, Holdings } from './derive.ts';
 import { entropyOrigins, keyCompromise, originKey, ownEntropyBits, weakEntropyKeys, weakOwnEntropyKeys, type EntropyOrigin } from './entropy.ts';
-import { firmwareDevices, firmwareExposure, keysUsedOn, seedKeys } from './firmware.ts';
+import { firmwareDevices, firmwareExposure, keysUsedOn, seedKeys, sharesOn } from './firmware.ts';
 import { tamperRisk } from './score.ts';
 import { accessibleLocations, itemsAvailableAt, type World } from './world.ts';
 
@@ -51,7 +51,7 @@ export function guessablePassphrase(key: Key): PassphraseGuess | null {
 /** Dispositivos que pudieron llegar manipulados y por los que pasa alguna semilla. */
 export function tamperedDevices(model: World['model']) {
   const seeds = seedKeys(model);
-  return model.devices.filter((d) => tamperRisk(d) !== null && keysUsedOn(d, seeds).length > 0);
+  return model.devices.filter((d) => tamperRisk(d) !== null && (keysUsedOn(d, seeds).length > 0 || sharesOn(d).length > 0));
 }
 
 export function attackAtoms(world: World): AttackAtom[] {
@@ -156,20 +156,27 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
   for (const key of world.model.keys) {
     if (weakOwn.has(key.id)) compromisedSeeds.push({ key: key.id, ownBits: ownEntropyBits(key.provenance.sources) });
   }
-  for (const [k, { vendor, keys }] of firmwareExposure(world.model)) {
-    if (firmware.has(k)) keys.forEach((key) => compromisedSeeds.push({ key, firmware: vendor }));
+  for (const [k, { vendor, keys, shares }] of firmwareExposure(world.model)) {
+    if (!firmware.has(k)) continue;
+    keys.forEach((key) => compromisedSeeds.push({ key, firmware: vendor }));
+    shares?.forEach(({ key, share }) => compromisedSeeds.push({ key, share, firmware: vendor }));
   }
   // Dispositivo manipulado: ante la duda, todas las semillas que pasan por él (ni el anti-exfil ni la entropía propia
   // lo frenan: el aparato entero es del atacante).
   const seeds = seedKeys(world.model);
   for (const d of world.model.devices) {
     const risk = tampered.has(d.id) ? tamperRisk(d) : null;
-    if (risk) keysUsedOn(d, seeds).forEach((key) => compromisedSeeds.push({ key, tampered: d.id, reason: risk.reason }));
+    if (!risk) continue;
+    keysUsedOn(d, seeds).forEach((key) => compromisedSeeds.push({ key, tampered: d.id, reason: risk.reason }));
+    sharesOn(d).forEach(({ key, share }) => compromisedSeeds.push({ key, share, tampered: d.id, reason: risk.reason }));
   }
   // Malware en el ordenador: explota los fallos de los dispositivos que se le conectan.
   for (const c of world.model.computers) {
     if (!malware.has(c.id)) continue;
-    for (const e of hostExploits(world.model, c)) e.keys.forEach((key) => compromisedSeeds.push({ key, advisory: e.advisory, device: e.device, computer: c.id }));
+    for (const e of hostExploits(world.model, c)) {
+      e.keys.forEach((key) => compromisedSeeds.push({ key, advisory: e.advisory, device: e.device, computer: c.id }));
+      e.shares?.forEach(({ key, share }) => compromisedSeeds.push({ key, share, advisory: e.advisory, device: e.device, computer: c.id }));
+    }
   }
   // Extracción física: con el dispositivo en la mano, sus semillas salen aunque tenga PIN.
   // Solo en ataques: un hack de hardware no cuenta como plan de recuperación.
@@ -177,7 +184,12 @@ export function attackHoldings(world: World, atoms: readonly AttackAtom[]): Hold
     for (const item of itemsAvailableAt(world, location)) {
       if (item.kind !== 'device' || item.value.kind !== 'stateful') continue;
       const advisory = extractionAdvisory(item.value);
-      if (advisory) item.value.holds.forEach((key) => compromisedSeeds.push({ key, advisory, device: item.value.id }));
+      if (!advisory) continue;
+      item.value.holds.forEach((key) => compromisedSeeds.push({ key, advisory, device: item.value.id }));
+      // Las shares de una key con coordinadores van cifradas con la clave del coordinador: extraídas, no sirven.
+      for (const { key, share } of sharesOn(item.value)) {
+        if (world.index.keys.get(key)?.split?.coordinators === undefined) compromisedSeeds.push({ key, share, advisory, device: item.value.id });
+      }
     }
   }
   return { people: [...people], locations: [...locations], compromisedSeeds, guessedPassphrases: bruteforce, infectedComputers: [...malware], elapsed };

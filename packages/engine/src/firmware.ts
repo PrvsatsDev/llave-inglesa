@@ -29,6 +29,9 @@ export function seedKeys(model: CustodyModel): Set<Id> {
   return keys;
 }
 
+/** Shares de keys FROST que guarda un dispositivo (solo stateful; en uno stateless quedan latentes). */
+export const sharesOn = (device: Device): { key: Id; share: number }[] => (device.kind === 'stateful' ? (device.shares ?? []) : []);
+
 /** Keys que pasan por un dispositivo al firmar. */
 export function keysUsedOn(device: Device, allSeeds: ReadonlySet<Id>): Id[] {
   const held = device.kind === 'stateful' ? device.holds : [];
@@ -48,26 +51,34 @@ export function hasAntiExfil(device: Device, model: CustodyModel): boolean {
   return walletOf(model).script !== 'tr' || catalog.taproot?.antiExfil === true;
 }
 
-/** Por fabricante (nombre tal cual aparece), las keys que filtraría un firmware malicioso suyo. */
-export function firmwareExposure(model: CustodyModel): Map<string, { vendor: string; keys: Id[] }> {
+/**
+ * Por fabricante (nombre tal cual aparece), las keys que filtraría un firmware malicioso suyo y, si guardan shares de
+ * keys FROST, esas shares (`shares`, solo si hay alguna).
+ */
+export function firmwareExposure(model: CustodyModel): Map<string, { vendor: string; keys: Id[]; shares?: { key: Id; share: number }[] }> {
   const allSeeds = seedKeys(model);
-  const found = new Map<string, { vendor: string; keys: Id[] }>();
+  const found = new Map<string, { vendor: string; keys: Id[]; shares?: { key: Id; share: number }[] }>();
   for (const device of model.devices) {
     if (hasAntiExfil(device, model)) continue;
     const keys = keysUsedOn(device, allSeeds);
-    if (keys.length === 0) continue;
+    const shares = sharesOn(device);
+    if (keys.length === 0 && shares.length === 0) continue;
     const k = vendorKey(device.vendor);
     const entry = found.get(k) ?? { vendor: device.vendor, keys: [] };
     entry.keys = [...new Set([...entry.keys, ...keys])];
+    if (shares.length > 0) entry.shares = uniqueShares([...(entry.shares ?? []), ...shares]);
     found.set(k, entry);
   }
   return found;
 }
 
+export const uniqueShares = (shares: readonly { key: Id; share: number }[]) =>
+  shares.filter((s, i) => shares.findIndex((x) => x.key === s.key && x.share === s.share) === i);
+
 /** Dispositivos por los que un firmware malicioso de `vendor` filtraría alguna semilla. */
 export function firmwareDevices(model: CustodyModel, vendor: string): Id[] {
   const allSeeds = seedKeys(model);
   return model.devices
-    .filter((d) => vendorKey(d.vendor) === vendorKey(vendor) && !hasAntiExfil(d, model) && keysUsedOn(d, allSeeds).length > 0)
+    .filter((d) => vendorKey(d.vendor) === vendorKey(vendor) && !hasAntiExfil(d, model) && (keysUsedOn(d, allSeeds).length > 0 || sharesOn(d).length > 0))
     .map((d) => d.id);
 }
