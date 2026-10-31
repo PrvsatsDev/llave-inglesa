@@ -3,6 +3,7 @@ export const mapa = {
   soportes: { paper: 'papel', metal: 'metal', washers: 'arandelas', digital: 'digital', other: 'otro soporte' },
   cifrado: 'cifrado',
   guardaKeys: 'guarda keys',
+  guardaShares: 'guarda shares',
   sinEstado: 'sin estado',
   usosOrdenador: { daily: 'uso general', dedicated: 'dedicado' },
   conCartera: 'con la cartera',

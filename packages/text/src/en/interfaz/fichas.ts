@@ -71,6 +71,15 @@ export const hardware: typeof es.hardware = {
   firmaMiniscript: (desde?: string) => (desde ? `signs Miniscript from firmware ${desde}` : 'signs Miniscript'),
   miniscriptEdge: 'signs Miniscript only with the Edge firmware',
   noFirmaMiniscript: 'does not sign Miniscript',
+  firmaTaproot: (desde?: string) => (desde ? `signs Taproot from firmware ${desde}` : 'signs Taproot'),
+  taprootEdge: 'signs Taproot only with the Edge firmware',
+  noFirmaTaproot: 'does not sign Taproot',
+  frost: 'holds FROST shares (not seeds)',
+  sinPin: 'no PIN',
+  notas: {
+    'same-vendor-coordinator':
+      'Its anti-exfil relies on the randomness the phone app adds to each signature, and the app is from the same manufacturer: it protects against a tampered device, not against a malicious manufacturer, who would control both ends.',
+  },
   segunCatalogo: (fecha: string, rasgos: readonly string[]) => `According to the catalog (${fecha}): ${rasgos.join(' · ')}.`,
   fuente: 'Source',
 };
@@ -96,6 +105,9 @@ export const dispositivo: typeof es.dispositivo = {
   pistaStateful: 'Stores the keys in its memory (Trezor, Jade, Passport…). Whoever has it and knows the PIN can sign.',
   pistaStateless: 'Stores nothing: the seed has to be loaded every time (SeedSigner, Krux…).',
   keysQueGuarda: 'Keys it stores',
+  sharesQueGuarda: 'FROST shares it stores',
+  pistaShares: 'In FROST, each device stores its share and enough of them sign together; the whole key is on none of them.',
+  sinPin: 'This model has no PIN: its share is protected by the phone paired with the key.',
   keysQueFirmas: 'Keys you sign with on it',
   sinIndicar: 'Unspecified',
   pistaSinIndicar: 'Go back to assuming any seed can go through it',
@@ -205,6 +217,42 @@ export const key: typeof es.key = {
     'Mixing an RNG with your rolls usually cannot be verified: the RNG part is secret and another tool cannot recompute it. To be able to verify, generate the seed phrase from your own entropy only (dice or coin) and recompute it in another tool.',
   eliminar: 'Delete key',
   haceFaltaKey: 'There must be at least one key.',
+  reparto: {
+    titulo: 'What it is',
+    etiqueta: 'What the key is',
+    opciones: { seed: 'Seed', shamir: 'Shamir', frost: 'FROST' },
+    pistas: {
+      seed: 'A seed phrase: whoever has it has the key.',
+      shamir:
+        'The seed exists and the device stores it, but its backup is split into shares (SLIP-39 on Trezor, SSKR on Keystone or Passport): a few of them are enough to recover it.',
+      frost:
+        'The shares are generated among all the devices and never put together (FROST, as in Frostsnap): each device stores its own and enough of them sign together. There is no seed nor passphrase, and on chain it is a single Taproot key.',
+    },
+    bastan: 'Shares needed',
+    deN: (n: number) => `of ${n}`,
+    shares: 'Shares',
+    share: (n: number) => `Share ${n}`,
+    anadirShare: 'Share',
+    quitarShare: (n: number) => `Remove share ${n}`,
+    pistaQuitar: 'Removing a share also removes it from the backups, memories and devices where it was.',
+    pistaASemilla: 'Going back to “Seed” removes the shares from every backup, memory and device.',
+    noFrost: 'It cannot be FROST while:',
+    bloqueos: {
+      'seed-written': (donde: string) => `its seed phrase is in ${donde} (in FROST there is no seed)`,
+      'held-by': (dispositivos: string) => `${dispositivos} stores or loads it whole (in FROST each device stores only its share)`,
+      passphrase: 'it has a passphrase (FROST does not support one)',
+    },
+    noShamir: 'To switch to Shamir, first remove the shares from the devices (in Shamir the device stores the whole key).',
+    moviles: 'Paired phones',
+    sinIndicar: 'Not set',
+    pistaMovilesSinIndicar:
+      'Not set, each device’s share is taken as usable with nothing else (when in doubt, the worst case). In Frostsnap it is encrypted: it is only used with a paired phone or computer, or having as many devices as are needed.',
+    pistaMoviles:
+      'Each device’s share is encrypted with a key that the paired phone keeps (behind its lock screen): without it, it only works having as many devices as are needed, with which a new one gets paired.',
+    sinOrdenadores: 'There is no computer or phone in the setup: add one to pair it.',
+    enDispositivo: (n: number) => `share ${n} on the device`,
+    enBackup: (n: number) => `share ${n}`,
+  },
 };
 
 export const ubicacion: typeof es.ubicacion = {
@@ -290,6 +338,11 @@ export const descriptor: typeof es.descriptor = {
     'Import the descriptor you already have (Sparrow, Nunchuk, Specter, Liana…) or paste the xpub into each key’s panel: you get the descriptor and the first address, to check it matches your wallet. It does not allow spending, but it does reveal your balance.',
   imprimir: 'Print or save as PDF',
   tipoDireccion: 'Address type',
+  frost: 'A FROST key is a single Taproot key: the wallet is written in Taproot (bc1p…) and there is no descriptor to keep, because the shares are enough to recover it. To watch it in other software, Frostsnap exports its own.',
+  noFirmanTaproot: (nombres: string) => `They do not sign Taproot (or not with their firmware) and cannot sign this wallet: ${nombres}.`,
+  taprootEdge: (nombres: string) => `They only sign Taproot with the experimental Edge firmware: ${nombres}.`,
+  cuantico:
+    'In Taproot, the public key is visible on chain from the moment the bitcoin is received, not only when it is spent as in SegWit. Today this is no risk at all, but a quantum computer able to break these keys could spend any Taproot output, including those with a script tree. There are proposals for resistant outputs (BIP-360).',
   ordenImporta: 'With multi (not sortedmulti) the order of the keys matters: it is the policy’s order.',
   miniscript: 'With a wait (or nested thresholds), the wallet is written in Miniscript: always native SegWit (wsh), with no address type to choose. It needs a wallet that supports it, such as Liana, and devices that sign it.',
   privacidad: 'With the xpubs, this document reveals your balance and all your transactions. Keep it encrypted.',

@@ -115,9 +115,17 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     kind: 'device',
     id: d.id,
     label: d.label,
-    subtitle: [d.vendor !== d.label ? vendorText(d.vendor) : null, d.kind === 'stateful' ? T.guardaKeys : T.sinEstado].filter(Boolean).join(' · '),
+    subtitle: [
+      d.vendor !== d.label ? vendorText(d.vendor) : null,
+      d.kind === 'stateless' ? T.sinEstado : d.holds.length === 0 && d.shares?.length ? T.guardaShares : T.guardaKeys,
+    ]
+      .filter(Boolean)
+      .join(' · '),
     icon: d.kind,
-    badges: activeHolds(d).map((key) => ({ kind: 'holds', key, label: label(key), color: keyColor(model, key) })),
+    badges: [
+      ...activeHolds(d).map((key): SecretBadge => ({ kind: 'holds', key, label: label(key), color: keyColor(model, key) })),
+      ...(d.kind === 'stateful' ? (d.shares ?? []) : []).map((s) => badge({ type: 'share', key: s.key, share: s.share })),
+    ],
     pinProtected: d.pinProtected,
     registeredWallet: d.kind === 'stateful' && d.registeredWallet,
     encrypted: false,
@@ -151,7 +159,11 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
     const items = index.itemsAt(l.id).map((i) => (i.kind === 'device' ? deviceView(i.value) : i.kind === 'artifact' ? artifactView(i.value) : computerView(i.value)));
     const keyIds = new Set(
       index.itemsAt(l.id).flatMap((i) =>
-        i.kind === 'device' ? activeHolds(i.value) : i.kind === 'artifact' ? i.value.contents.flatMap((c) => (c.type === 'seed' ? [c.key] : [])) : [],
+        i.kind === 'device'
+          ? [...activeHolds(i.value), ...(i.value.kind === 'stateful' ? (i.value.shares ?? []).map((s) => s.key) : [])]
+          : i.kind === 'artifact'
+            ? i.value.contents.flatMap((c) => (c.type === 'seed' || c.type === 'share' ? [c.key] : []))
+            : [],
       ),
     );
     const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id), wait: keyWaitBlocks(model, k.id) }));

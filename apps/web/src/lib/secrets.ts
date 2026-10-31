@@ -5,7 +5,9 @@ import { secretId } from '@llave-inglesa/engine';
 export function secretOptions(model: CustodyModel): SecretRef[] {
   return [
     ...model.keys.flatMap((k): SecretRef[] => [
-      { type: 'seed', key: k.id },
+      // Una key FROST no tiene semilla: su backup son sus shares.
+      ...(k.split?.scheme === 'frost' ? [] : [{ type: 'seed', key: k.id } as const]),
+      ...(k.split?.shares ?? []).map((share): SecretRef => ({ type: 'share', key: k.id, share })),
       ...(k.passphrase ? [{ type: 'passphrase', key: k.id } as const] : []),
       { type: 'xpub', key: k.id },
     ]),

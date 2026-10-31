@@ -5,6 +5,7 @@ export const mapa: typeof es = {
   soportes: { paper: 'paper', metal: 'metal', washers: 'washers', digital: 'digital', other: 'other medium' },
   cifrado: 'encrypted',
   guardaKeys: 'stores keys',
+  guardaShares: 'stores shares',
   sinEstado: 'stateless',
   usosOrdenador: { daily: 'general-purpose', dedicated: 'dedicated' },
   conCartera: 'with the wallet',

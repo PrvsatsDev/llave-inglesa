@@ -6,7 +6,8 @@ import styles from './Legend.module.css';
 
 const T = UI.marco.leyenda;
 
-export function Legend() {
+/** `shares`: el esquema tiene keys repartidas (solo entonces se explica su insignia). */
+export function Legend({ shares = false }: { shares?: boolean }) {
   // En pantalla estrecha empieza plegada: abierta taparía medio mapa.
   const [open, setOpen] = useState(() => !window.matchMedia?.(NARROW_QUERY).matches);
   return (
@@ -20,6 +21,7 @@ export function Legend() {
           <li><span className={`${styles.dot} ${styles.filled}`} /> {T.key}</li>
           <li><span className={`${styles.dot} ${styles.ring}`} /> {T.passphrase}</li>
           <li><span className={`${styles.dot} ${styles.hollow}`} /> {T.xpub}</li>
+          {shares && <li><span className={`${styles.dot} ${styles.half}`} /> {T.share}</li>}
           <li><Lock size={11} className={styles.icon} /> {T.pin}</li>
           <li><Brain size={11} className={styles.icon} /> {T.memoria}</li>
           <li><span className={`${styles.line} ${styles.solid}`} /> {T.siempre}</li>

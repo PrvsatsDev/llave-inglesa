@@ -53,6 +53,11 @@ export function Schema({ model }: { model: CustodyModel }) {
                 <span className={styles.rowMain}>
                   <KeyChip label={k.label} color={keyColor(model, k.id)} wait={keyWaitBlocks(model, k.id)} />
                   {k.passphrase && <span className={styles.badge}>{T.conPassphrase(k.passphraseStrength ? PASSPHRASE_STRENGTH_TEXT[k.passphraseStrength] : T.sinIndicar)}</span>}
+                  {k.split && (
+                    <span className={styles.badge} title={T.pistaRepartida}>
+                      {T.repartida(k.split.scheme, k.split.k, k.split.shares.length)}
+                    </span>
+                  )}
                   {k.xpub && (
                     <span className={styles.badge} title={T.pistaXpub}>
                       {T.xpub}

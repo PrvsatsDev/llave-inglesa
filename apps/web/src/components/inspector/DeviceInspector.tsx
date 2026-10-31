@@ -1,4 +1,4 @@
-import { advisoriesFor, catalogModelByName, flatPolicy, miniscriptSupport, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
+import { advisoriesFor, catalogModelByName, flatPolicy, miniscriptSupport, setDeviceShares, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
 import { tamperRisk } from '@llave-inglesa/engine';
 import { AlertTriangle, Camera, Cpu } from 'lucide-react';
 import { TAMPER_REASON_TEXT, UI } from '../../lib/text.ts';
@@ -40,7 +40,10 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
   const patch = (p: Partial<Device>, field?: string) => apply((m) => updateDevice(m, id, p), field && `device:${id}:${field}`);
 
   // Reutilizamos el selector de secretos: cada key se muestra como "guardada en el dispositivo".
-  const keyOptions = model.keys.map((k): SecretRef => ({ type: 'seed', key: k.id }));
+  // Una key FROST no se guarda ni se carga entera: sus dispositivos guardan shares.
+  const keyOptions = model.keys.filter((k) => k.split?.scheme !== 'frost').map((k): SecretRef => ({ type: 'seed', key: k.id }));
+  const shareOptions = model.keys.flatMap((k) => (k.split?.scheme === 'frost' ? k.split.shares.map((share): SecretRef => ({ type: 'share', key: k.id, share })) : []));
+  const heldShares = (device.shares ?? []).map((s): SecretRef => ({ type: 'share', key: s.key, share: s.share }));
   const held = device.holds.map((key): SecretRef => ({ type: 'seed', key }));
   const loaded = (device.loads ?? []).map((key): SecretRef => ({ type: 'seed', key }));
 
@@ -56,6 +59,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
             model: m.name,
             kind: m.kind,
             acceptsExternalSeed: m.acceptsExternalSeed,
+            ...(!m.pin && { pinProtected: false, duressPin: false }),
             registeredWallet: m.registersMultisig && device.registeredWallet,
           }
         : { model: undefined },
@@ -80,6 +84,11 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
           {(fid) => <TextInput id={fid} value={device.firmware ?? ''} placeholder={T.pistaFirmware} optional onChange={(v) => patch({ firmware: v || undefined }, 'firmware')} />}
         </Field>
         {catalog && <p className={styles.hint}>{catalogFeatures(catalog)}</p>}
+        {catalog?.notes.map((n) => (
+          <p key={n} className={styles.hint}>
+            {UI.hardware.notas[n]}
+          </p>
+        ))}
         <AdvisoryList matches={advisories} />
         {!flatPolicy(model) && <MiniscriptNote device={device} catalog={catalog} />}
         <Field label={UI.campos.ubicacion}>
@@ -110,6 +119,24 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
               patch({ holds });
             }}
           />
+        </Section>
+      )}
+
+      {device.kind === 'stateful' && (shareOptions.length > 0 || heldShares.length > 0) && (
+        <Section title={T.sharesQueGuarda}>
+          <SecretToggles
+            model={model}
+            options={shareOptions}
+            selected={heldShares}
+            onToggle={(s) => {
+              if (s.type !== 'share') return;
+              const current = device.shares ?? [];
+              const on = current.some((x) => x.key === s.key && x.share === s.share);
+              const next = on ? current.filter((x) => !(x.key === s.key && x.share === s.share)) : [...current, { key: s.key, share: s.share }];
+              apply((m) => setDeviceShares(m, id, next));
+            }}
+          />
+          <p className={styles.hint}>{T.pistaShares}</p>
         </Section>
       )}
 
@@ -147,7 +174,11 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
       )}
 
       <Section title={T.seguridad}>
-        <Switch checked={device.pinProtected} onChange={(pinProtected) => patch({ pinProtected })} label={T.pin} hint={T.pistaPin} />
+        {catalog && !catalog.pin ? (
+          <p className={styles.hint}>{T.sinPin}</p>
+        ) : (
+          <Switch checked={device.pinProtected} onChange={(pinProtected) => patch({ pinProtected })} label={T.pin} hint={T.pistaPin} />
+        )}
         {device.pinProtected && (!catalog || catalog.duress.length > 0) && (
           <Switch
             checked={device.duressPin}

@@ -1,12 +1,37 @@
-import { activeHolds, advisoriesFor, catalogModelByName, indexModel, isBlankProvenance, setKeyGeneratedOn, UNKNOWN_VENDOR, updateKey, type CustodyModel, type EntropySource, type Key, type Provenance } from '@llave-inglesa/domain';
+import {
+  activeHolds,
+  addShare,
+  advisoriesFor,
+  catalogModelByName,
+  frostBlockers,
+  indexModel,
+  isBlankProvenance,
+  MAX_SHARES,
+  removeShare,
+  setKeyCoordinators,
+  setKeyGeneratedOn,
+  setShareThreshold,
+  setSplitScheme,
+  splitKey,
+  UNKNOWN_VENDOR,
+  unsplitKey,
+  updateKey,
+  type CustodyModel,
+  type EntropySource,
+  type Key,
+  type Provenance,
+  type SecretRef,
+} from '@llave-inglesa/domain';
 import { ownEntropyBits, STANDARD_SEED_BITS } from '@llave-inglesa/engine';
 import { useState } from 'react';
 import { AlertTriangle, CircleCheck, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
-import { UI, vendorText } from '../../lib/text.ts';
+import { listText, UI, vendorText } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
 import { useSelection } from '../../store/selection.ts';
 import { Button, DeleteButton, Field, PanelHeader, Section, Segmented, Select, Switch, TextInput } from './fields.tsx';
+import { SecretBadge } from '../../graph/SecretBadge.tsx';
+import { secretBadge } from '../../graph/build.ts';
 import { AdvisoryList, HardwareModelSelect, VendorSelect } from './Hardware.tsx';
 import { PathField, XpubField } from './WalletFields.tsx';
 import styles from './fields.module.css';
@@ -125,11 +150,18 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
   const carriers = model.devices.filter((d) => activeHolds(d).includes(id) || d.loads?.includes(id));
 
   const index = indexModel(model);
+  const R = T.reparto;
   const places = [
     ...model.devices.filter((d) => activeHolds(d).includes(id)).map((d) => ({ item: d.label, location: d.location, how: T.enMemoria })),
+    ...model.devices.flatMap((d) =>
+      d.kind === 'stateful' ? (d.shares ?? []).filter((s) => s.key === id).map((s) => ({ item: d.label, location: d.location, how: R.enDispositivo(s.share) })) : [],
+    ),
     ...model.artifacts
       .filter((a) => a.contents.some((c) => c.type === 'seed' && c.key === id))
       .map((a) => ({ item: a.label, location: a.location, how: T.fraseSemilla })),
+    ...model.artifacts.flatMap((a) =>
+      a.contents.flatMap((c) => (c.type === 'share' && c.key === id ? [{ item: a.label, location: a.location, how: R.enBackup(c.share) }] : [])),
+    ),
   ];
 
   return (
@@ -138,8 +170,10 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
 
       <Section>
         <Field label={UI.campos.nombre}>{(fid) => <TextInput id={fid} value={key.label} onChange={(label) => patch({ label }, 'label')} />}</Field>
-        <Switch checked={key.passphrase} onChange={(passphrase) => patch({ passphrase })} label={T.requierePassphrase} hint={T.pistaPassphrase} />
-        {key.passphrase && (
+        {key.split?.scheme !== 'frost' && (
+          <Switch checked={key.passphrase} onChange={(passphrase) => patch({ passphrase })} label={T.requierePassphrase} hint={T.pistaPassphrase} />
+        )}
+        {key.passphrase && key.split?.scheme !== 'frost' && (
           <>
             <p className={styles.fieldTitle}>{T.comoEsPassphrase}</p>
             <Segmented
@@ -154,6 +188,8 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
           </>
         )}
       </Section>
+
+      <SplitSection model={model} keyEntity={key} />
 
       <Section title={T.enLaCartera}>
         <div className={styles.twoCols}>
@@ -312,6 +348,114 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
         disabled={model.keys.length <= 1}
         reason={T.haceFaltaKey}
       />
+    </>
+  );
+}
+
+type Kind = 'seed' | 'shamir' | 'frost';
+/** Se calcula al pintar: las etiquetas siguen al idioma activo. */
+const kindOptions = () => (['seed', 'shamir', 'frost'] as const).map((value) => ({ value, label: T.reparto.opciones[value] }));
+
+/** Semilla o key repartida (Shamir, FROST): cuántas shares bastan, cuáles hay y, en FROST, los móviles emparejados. */
+function SplitSection({ model, keyEntity: key }: { model: CustodyModel; keyEntity: Key }) {
+  const apply = useDocument((s) => s.apply);
+  const R = T.reparto;
+  const id = key.id;
+  const split = key.split;
+  const kind: Kind = split?.scheme ?? 'seed';
+  const label = indexModel(model).label;
+  const blockers = frostBlockers(model, id);
+  const deviceShares = model.devices.some((d) => d.shares?.some((s) => s.key === id));
+  const choose = (next: Kind) => {
+    if (next === kind) return;
+    if (next === 'seed') apply((m) => unsplitKey(m, id));
+    else if (split) apply((m) => setSplitScheme(m, id, next));
+    else apply((m) => splitKey(m, id, next, 2, 3));
+  };
+  const blockerText = blockers.map((b) =>
+    b.type === 'seed-written' ? R.bloqueos['seed-written'](listText(b.where.map(label))) : b.type === 'held-by' ? R.bloqueos['held-by'](listText(b.devices.map(label))) : R.bloqueos.passphrase,
+  );
+
+  return (
+    <Section title={R.titulo}>
+      <Segmented label={R.etiqueta} value={kind} options={kindOptions()} onChange={choose} />
+      <p className={styles.hint}>{R.pistas[kind]}</p>
+      {kind !== 'frost' && blockers.length > 0 && (
+        <p className={styles.hint}>
+          {R.noFrost} {blockerText.join('; ')}.
+        </p>
+      )}
+      {kind === 'frost' && deviceShares && <p className={styles.hint}>{R.noShamir}</p>}
+      {split && (
+        <>
+          <div className={styles.twoCols}>
+            <Field label={R.bastan}>
+              {(fid) => (
+                <Select
+                  id={fid}
+                  value={String(split.k)}
+                  options={split.shares.map((_, i) => ({ value: String(i + 1), label: `${i + 1} ${R.deN(split.shares.length)}` }))}
+                  onChange={(v) => apply((m) => setShareThreshold(m, id, Number(v)))}
+                />
+              )}
+            </Field>
+          </div>
+          <p className={styles.fieldTitle}>{R.shares}</p>
+          <ul className={styles.list}>
+            {split.shares.map((n) => {
+              const share: SecretRef = { type: 'share', key: id, share: n };
+              return (
+                <li key={n} className={styles.row}>
+                  <span className={styles.rowGrow}>
+                    <SecretBadge badge={secretBadge(model, share)} />
+                  </span>
+                  <button className={styles.iconButton} onClick={() => apply((m) => removeShare(m, id, n))} disabled={split.shares.length <= 1} aria-label={R.quitarShare(n)}>
+                    <X size={14} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <div className={styles.buttonRow}>
+            <Button icon={Plus} onClick={() => apply((m) => addShare(m, id).model)} disabled={split.shares.length >= MAX_SHARES}>
+              {R.anadirShare}
+            </Button>
+          </div>
+          <p className={styles.hint}>
+            {R.pistaQuitar} {R.pistaASemilla}
+          </p>
+          {split.scheme === 'frost' && <Coordinators model={model} keyEntity={key} />}
+        </>
+      )}
+    </Section>
+  );
+}
+
+/** FROST: los móviles u ordenadores emparejados con la key (sin indicar: sin protección). */
+function Coordinators({ model, keyEntity: key }: { model: CustodyModel; keyEntity: Key }) {
+  const apply = useDocument((s) => s.apply);
+  const R = T.reparto;
+  const selected = key.split?.coordinators;
+  const set = (next: string[] | undefined) => apply((m) => setKeyCoordinators(m, key.id, next));
+  return (
+    <>
+      <div className={styles.buttonRow}>
+        <p className={styles.fieldTitle}>{R.moviles}</p>
+        {selected && <Button onClick={() => set(undefined)}>{R.sinIndicar}</Button>}
+      </div>
+      {model.computers.length === 0 ? (
+        <p className={styles.hint}>{R.sinOrdenadores}</p>
+      ) : (
+        model.computers.map((c) => (
+          <Switch
+            key={c.id}
+            checked={selected?.includes(c.id) ?? false}
+            label={c.label}
+            onChange={(on) => set(on ? [...(selected ?? []), c.id] : (selected ?? []).filter((x) => x !== c.id))}
+          />
+        ))
+      )}
+      <p className={styles.hint}>{selected ? R.pistaMoviles : R.pistaMovilesSinIndicar}</p>
     </>
   );
 }

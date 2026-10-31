@@ -1,3 +1,5 @@
+import type { CatalogNote } from '@llave-inglesa/domain';
+
 /** Fichas de cada elemento (columna izquierda): persona, backup, dispositivo, ubicación, key y sus campos. */
 
 export const campos = {
@@ -69,6 +71,15 @@ export const hardware = {
   firmaMiniscript: (desde?: string) => (desde ? `firma Miniscript desde el firmware ${desde}` : 'firma Miniscript'),
   miniscriptEdge: 'firma Miniscript solo con el firmware Edge',
   noFirmaMiniscript: 'no firma Miniscript',
+  firmaTaproot: (desde?: string) => (desde ? `firma Taproot desde el firmware ${desde}` : 'firma Taproot'),
+  taprootEdge: 'firma Taproot solo con el firmware Edge',
+  noFirmaTaproot: 'no firma Taproot',
+  frost: 'guarda shares FROST (no semillas)',
+  sinPin: 'sin PIN',
+  notas: {
+    'same-vendor-coordinator':
+      'Su anti-exfil cuenta con la aleatoriedad que pone en cada firma la app del móvil, que es del mismo fabricante: protege de un dispositivo manipulado, no de un fabricante malicioso, que controlaría los dos extremos.',
+  } as Record<CatalogNote, string>,
   segunCatalogo: (fecha: string, rasgos: readonly string[]) => `Según el catálogo (${fecha}): ${rasgos.join(' · ')}.`,
   fuente: 'Fuente',
 };
@@ -94,6 +105,9 @@ export const dispositivo = {
   pistaStateful: 'Guarda las keys en su memoria (Trezor, Jade, Passport…). Quien lo tenga y sepa el PIN puede firmar.',
   pistaStateless: 'No guarda nada: hay que cargarle la semilla cada vez (SeedSigner, Krux…).',
   keysQueGuarda: 'Keys que guarda',
+  sharesQueGuarda: 'Shares FROST que guarda',
+  pistaShares: 'En FROST, cada dispositivo guarda su share y firman juntos los que bastan; la key entera no está en ninguno.',
+  sinPin: 'Este modelo no tiene PIN: su share la protege el móvil emparejado con la key.',
   keysQueFirmas: 'Keys que firmas con él',
   sinIndicar: 'Sin indicar',
   pistaSinIndicar: 'Volver a asumir que cualquier semilla puede pasar por él',
@@ -204,6 +218,42 @@ export const key = {
     'Mezclando un RNG con tus tiradas, normalmente no se puede verificar: la parte del RNG es secreta y otra herramienta no puede recalcularla. Para poder verificar, genera la frase semilla solo con tu entropía (dados o moneda) y recalcúlala en otra herramienta.',
   eliminar: 'Eliminar key',
   haceFaltaKey: 'Tiene que haber al menos una key.',
+  reparto: {
+    titulo: 'Cómo es',
+    etiqueta: 'Cómo es la key',
+    opciones: { seed: 'Semilla', shamir: 'Shamir', frost: 'FROST' },
+    pistas: {
+      seed: 'Una frase semilla: quien la tiene, tiene la key.',
+      shamir:
+        'La semilla existe y la guarda el dispositivo, pero su backup está repartido en shares (SLIP-39 en Trezor, SSKR en Keystone o Passport): bastan unas cuantas para recuperarla.',
+      frost:
+        'Las shares se generan entre todos los dispositivos y nunca se juntan (FROST, como en Frostsnap): cada dispositivo guarda la suya y firman juntos los que bastan. No hay semilla ni passphrase, y en la cadena es una sola key Taproot.',
+    },
+    bastan: 'Shares que bastan',
+    deN: (n: number) => `de ${n}`,
+    shares: 'Shares',
+    share: (n: number) => `Share ${n}`,
+    anadirShare: 'Share',
+    quitarShare: (n: number) => `Quitar la share ${n}`,
+    pistaQuitar: 'Quitar una share la quita también de los backups, memorias y dispositivos donde estuviera.',
+    pistaASemilla: 'Volver a «Semilla» quita las shares de todos los backups, memorias y dispositivos.',
+    noFrost: 'No puede ser FROST mientras:',
+    bloqueos: {
+      'seed-written': (donde: string) => `su frase semilla esté en ${donde} (en FROST no existe semilla)`,
+      'held-by': (dispositivos: string) => `la guarde o cargue entera ${dispositivos} (en FROST cada dispositivo guarda solo su share)`,
+      passphrase: 'lleve passphrase (FROST no la admite)',
+    },
+    noShamir: 'Para pasar a Shamir, quita antes las shares de los dispositivos (en Shamir el dispositivo guarda la key entera).',
+    moviles: 'Móviles emparejados',
+    sinIndicar: 'Sin indicar',
+    pistaMovilesSinIndicar:
+      'Sin indicar, la share de cada dispositivo se da por usable sin nada más (ante la duda, lo peor). En Frostsnap va cifrada: solo se usa con un móvil u ordenador emparejado, o teniendo tantos dispositivos como bastan.',
+    pistaMoviles:
+      'La share de cada dispositivo va cifrada con una clave que guarda el móvil emparejado (tras su bloqueo de pantalla): sin él, solo sirve teniendo tantos dispositivos como bastan, con los que se empareja uno nuevo.',
+    sinOrdenadores: 'No hay ningún ordenador ni móvil en el esquema: añade uno para emparejarlo.',
+    enDispositivo: (n: number) => `share ${n} en el dispositivo`,
+    enBackup: (n: number) => `share ${n}`,
+  },
 };
 
 export const ubicacion = {
@@ -289,6 +339,11 @@ export const descriptor = {
     'Importa el descriptor que ya tienes (Sparrow, Nunchuk, Specter, Liana…) o pega la xpub en la ficha de cada key: se obtiene el descriptor y la primera dirección, para comprobar que coincide con tu cartera. No permite gastar, pero sí ver tu saldo.',
   imprimir: 'Imprimir o guardar en PDF',
   tipoDireccion: 'Tipo de dirección',
+  frost: 'Una key FROST es una sola key Taproot: la cartera se escribe en Taproot (bc1p…) y no hay que guardar ningún descriptor, porque las shares bastan para recuperarla. Para vigilarla en otro software, Frostsnap exporta el suyo.',
+  noFirmanTaproot: (nombres: string) => `No firman Taproot (o no con su firmware) y no pueden firmar esta cartera: ${nombres}.`,
+  taprootEdge: (nombres: string) => `Solo firman Taproot con el firmware experimental Edge: ${nombres}.`,
+  cuantico:
+    'En Taproot, la clave pública queda a la vista en la cadena desde que se reciben los bitcoins, no solo al gastarlos como en SegWit. Hoy no supone ningún riesgo, pero un ordenador cuántico capaz de romper estas claves podría gastar cualquier salida Taproot, también las que tienen un árbol de scripts. Hay propuestas de salidas resistentes (BIP-360).',
   ordenImporta: 'Con multi (no sortedmulti) el orden de las keys importa: es el de la política.',
   miniscript: 'Con espera (o umbrales anidados), la cartera se escribe en Miniscript: siempre SegWit nativo (wsh), sin elegir tipo de dirección. Hace falta una cartera que lo admita, como Liana, y dispositivos que lo firmen.',
   privacidad: 'Con las xpubs, este documento deja ver tu saldo y todos tus movimientos. Guárdalo cifrado.',
