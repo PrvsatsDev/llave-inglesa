@@ -1,7 +1,7 @@
 # Plan: keys repartidas (FROST, Shamir) y Taproot
 
-Rama `keys-repartidas-taproot`. **Borrador para discutir**: nada de esto es definitivo hasta que se acuerde. Las
-cuestiones abiertas están al final; las que dicen «comprobar» son hechos que hay que verificar antes de programar.
+Rama `keys-repartidas-taproot`. **Plan acordado** el 2026-10-31: las cuestiones del final ya tienen respuesta, y lo
+que había que comprobar está comprobado en la documentación y el código de Frostsnap (9.2 y 9.5).
 
 ## 1. Objetivo
 
@@ -79,7 +79,7 @@ split?: {
 
 // En DeviceSchema, opcionales:
 shares?: { key: Id; share: Id }[];   // shares que guarda (FROST)
-unlockedBy?: Id;                     // ordenador o móvil sin el que su share no sirve (comprobar, ver 9.2)
+unlockedBy?: Id;                     // móvil (coordinador) sin el que su share no sirve (ver 9.2)
 ```
 
 - Las shares van en los backups (`contents`) y en la memoria de las personas (`knows`), como cualquier `SecretRef`.
@@ -116,9 +116,9 @@ Para una key repartida K con umbral t:
 | Regla | Premisas | Concluye | Modo |
 |---|---|---|---|
 | `combine-shares` | t secretos `share:K/*` distintos | `seed:K` (el secreto completo) | ambos¹ |
-| `device-share` | dispositivo desbloqueado que guarda la share i (y, si tiene `unlockedBy`, ver 9.2) | `share-sign:K/i` | ambos |
+| `device-share` | dispositivo que guarda la share i y, si tiene `unlockedBy`, ese móvil desbloqueado o t dispositivos de K (9.2) | `share-sign:K/i` | ambos |
 | `frost-sign` | t hechos `share-sign:K/*` distintos | `sign:K` | ambos |
-| `share-xpub` | un dispositivo desbloqueado con una share, o `seed:K` | `xpub:K` | ambos |
+| `share-xpub` | t dispositivos con shares distintas, o un dispositivo y su `unlockedBy` (el móvil ya la tiene), o `seed:K` | `xpub:K` | ambos |
 
 ¹ En modo `secure` (firmar a diario), juntar shares solo vale en Shamir y cargando la semilla en un dispositivo, como
 ya hace `seed-sign-on-device`. Una key FROST **nunca** firma por `seed-sign-on-device`: se excluye de forma explícita.
@@ -172,7 +172,7 @@ Cada uno añade las shares sin cambiar lo que ya hacía con las keys:
 - Vectores de prueba de BIP-86 (la dirección de «abandon … about»).
 - `walletOf`: single-sig sigue saliendo `wpkh` por defecto. `tr` solo si se elige o si la key es FROST.
 - La cartera de una key FROST: «no hay descriptor que guardar», y si se conoce la xpub agregada, el `tr(...)` para
-  vigilarla (comprobar qué exporta Frostsnap, ver 9.5).
+  vigilarla (Frostsnap lo exporta, ver 9.5).
 
 ### 5.2 Etapa B: `tr(interna, {árbol})` con Miniscript
 
@@ -234,38 +234,50 @@ Cada fase pasa `npm run check` y el test de resultados congelados. Las fases 1 y
 | 7 | Catálogo Frostsnap, ejemplos, guía, CAPACIDADES | sí |
 | 8 | Taproot con árbol de scripts y Miniscript en tapscript | parte |
 
-Propuesta: **dos PR**. El primero, fases 0 a 7 (keys repartidas con `tr(KEY)`); el segundo, la fase 8, que es la más
-grande y no la necesita nadie para usar Frostsnap. `docs/CAPACIDADES.md` se actualiza en cada fase con su parte y
-sus límites.
+Todo se hace **en local**, en esta rama: ni `main` ni `origin` se tocan mientras tanto, y no hay PR. Dos tramos: el
+primero, fases 0 a 7 (keys repartidas con `tr(KEY)`); cuando esté terminado, revisado, probado y entendido, se fusiona
+con `main` en local. Después se decide si se publica o se sigue con la fase 8 (la más grande, que nadie necesita para
+usar Frostsnap). `docs/CAPACIDADES.md` se actualiza en cada fase con su parte y sus límites.
 
-## 9. Cuestiones abiertas
+## 9. Cuestiones abiertas (respondidas)
 
-1. **Anti-exfil en Frostsnap.** El móvil aporta aleatoriedad en cada firma, lo que frena filtrar la share en las
-   firmas. Pero la app es del mismo fabricante: un fabricante malicioso controla los dos extremos. ¿Cuenta como
-   anti-exfil (`antiExfil: true`) o no? Propuesta: no; con un campo que explique por qué.
-2. **Qué protege el móvil (comprobar).** Según la web, los secretos van cifrados con una clave que guarda el móvil, y
-   un móvil nuevo se empareja «visitando un umbral de dispositivos». Si es así, la regla sería: la share de un
-   dispositivo sirve con su móvil **o** teniendo t dispositivos de esa key. Con menos de t dispositivos y sin móvil,
-   el ladrón no consigue nada, pero las tarjetas de backup no tienen esa protección. Hay que confirmar el diseño
-   exacto en su documentación o su código.
-3. **¿Keys FROST junto a otras keys?** En tapscript se podría (`thresh(2, FROST, Coldcard…)`), pero no sé si Frostsnap
-   firma hojas de tapscript. Propuesta: en la primera versión, una key FROST solo como política entera o como key
-   interna de `tr`.
-4. **Extracción física en el ESP32-C3 (comprobar).** No tiene secure element. ¿Hay avisos publicados de extracción
-   por glitching que deban ir al catálogo? Solo con un aviso real; sin él, el motor no supone nada.
-5. **Qué exporta Frostsnap (comprobar).** ¿Da un descriptor `tr(xpub…)` para vigilar la cartera en otro software?
-   ¿Cuál es su `n` máximo? ¿Cómo se actualiza el firmware?
-6. **Recuperar sin Frostsnap.** Hoy la recuperación necesita su app y dispositivos en blanco. En modo `any`, el motor
-   supone que t shares bastan. ¿Basta con advertirlo en la carta y la guía, o los herederos deberían necesitar un
-   dispositivo del fabricante? Propuesta: texto, no motor; el código es abierto (MIT) y el formato está publicado.
+Fuentes de lo comprobado: frostsnap.com (`/docs/security-architecture/`, `/docs/backup-recovery/`,
+`/docs/design-decisions/`) y su código (`docs/key-derivation-design.md`, `frostsnap_coordinator/src/bitcoin.rs`,
+`frostsnap_core/src/coordinator.rs`), consultados el 2026-10-31.
+
+1. **Anti-exfil en Frostsnap: sí** (`antiExfil: true`). El móvil añade su propia aleatoriedad al nonce de cada firma
+   («anti-klepto»), contra la familia de ataques Dark Skippy. Pero la app es del mismo fabricante: un fabricante
+   malicioso controla los dos extremos. Eso va en un campo del catálogo que lo explica (y en el aviso de un solo
+   fabricante), no en el motor.
+2. **Qué protege el móvil: comprobado.** La share de cada dispositivo está cifrada y para descifrarla hacen falta dos
+   cosas: un secreto grabado en el chip del dispositivo, que no se puede leer, y una clave que tiene el coordinador
+   (el móvil, en su secure element, tras su bloqueo de pantalla). Esa clave sale de la «imagen del polinomio raíz»,
+   que un coordinador nuevo aprende **visitando t dispositivos** de la key. Por tanto:
+   - la share de un dispositivo sirve si se tiene su móvil desbloqueado **o** t dispositivos de esa key;
+   - con menos de t dispositivos y sin móvil, el ladrón no consigue nada (ni siquiera la xpub: los dispositivos no
+     guardan claves públicas, solo la imagen de su share);
+   - la extracción física de un dispositivo, aun leyendo la flash, da la share cifrada: sin el móvil o t
+     dispositivos, no sirve;
+   - las tarjetas de backup son **la share en claro** (25 palabras, formato propio, no BIP-39): sin protección.
+   El campo `unlockedBy` del dispositivo modela el móvil; la regla `device-share` lleva la alternativa de los t
+   dispositivos.
+3. **Keys FROST junto a otras keys: no**, al menos en la primera versión. Además, su código no firma hojas de
+   tapscript (solo la vía de la key). Una key FROST solo como política entera.
+4. **Extracción física en el ESP32-C3**: no hay avisos publicados; el motor no supone nada. Lo que sí cuenta es lo
+   de 9.2 (lo extraído está cifrado).
+5. **Qué exporta Frostsnap: comprobado.** Sí exporta descriptor (texto y QR): `tr([fp/0/0]xpub…/<0;1>/*)`, con la xpub
+   de la cuenta y una ruta propia (no BIP-86): `m/0` es la «appkey», `m/0/0` Bitcoin, `m/0/0/0` segwit v1,
+   `m/0/0/0/n` la cuenta. El umbral es un `u16` y se admite t = n; no hay un `n` máximo explícito. El firmware se
+   actualiza desde la app por USB, firmado por Frostsnap y comprobado en cada arranque (secure boot con la clave en
+   eFuse); las compilaciones son reproducibles.
+6. **Recuperar sin Frostsnap: texto, no motor.** Su propia documentación lo prevé: con t tarjetas de backup, las
+   herramientas abiertas `frostsnap-thaw` (Python) y `frost_backup` (Rust) reconstruyen una clave privada extendida
+   que se importa en Bitcoin Core o Sparrow, en un ordenador seguro. La carta y la guía lo dicen.
 7. **Shamir de dos niveles** (grupos de SLIP-39) y SSKR: fuera de la primera versión.
-8. **`version: 2` solo cuando se usa algo nuevo**: confirmar que es la forma preferida.
-9. **Ordenador cuántico.** En Taproot, la clave pública (ajustada) está en la propia salida: queda expuesta en la
-   cadena desde que se recibe, no desde que se gasta, como en `wpkh`/`wsh`, donde solo se ve un hash hasta gastar.
-   Con un ordenador cuántico capaz de romper el logaritmo discreto, toda salida Taproot se gasta por la vía de la key,
-   aunque la key interna sea NUMS: el árbol de scripts no protege. Matices: en `wpkh`/`wsh` la exposición llega igual
-   al reutilizar direcciones, al gastar (ventana en la mempool) o si se filtra una xpub, algo que el modelo ya sigue
-   (quién tiene cada xpub). Hay propuestas para salidas resistentes (BIP-360). Propuesta mínima: decirlo en la
-   cartera al elegir `tr` y en la guía. A discutir: modelarlo como ataque teórico (un átomo con esfuerzo muy alto que
-   da las semillas de las keys cuya clave pública está a la vista: todas en `tr`, y las de xpub filtrada en
-   `wsh`/`wpkh`), sin que cambie la puntuación de los modelos actuales.
+8. **`version: 2` solo cuando se usa algo nuevo**: confirmado.
+9. **Ordenador cuántico: solo decirlo**, sin modelarlo como ataque. En Taproot, la clave pública (ajustada) está en la
+   propia salida: queda expuesta en la cadena desde que se recibe, no desde que se gasta, como en `wpkh`/`wsh`, donde
+   solo se ve un hash hasta gastar. Con un ordenador cuántico capaz de romper el logaritmo discreto, toda salida
+   Taproot se gasta por la vía de la key, aunque la key interna sea NUMS: el árbol de scripts no protege. Matices: en
+   `wpkh`/`wsh` la exposición llega igual al reutilizar direcciones, al gastar (ventana en la mempool) o si se filtra
+   una xpub. Hay propuestas para salidas resistentes (BIP-360). Se dice en la cartera al elegir `tr` y en la guía.
