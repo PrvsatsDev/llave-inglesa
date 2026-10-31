@@ -1,4 +1,4 @@
-import { catalogModelByName, type CustodyModel, type Device, type Id } from '@llave-inglesa/domain';
+import { catalogModelByName, walletOf, type CustodyModel, type Device, type Id } from '@llave-inglesa/domain';
 
 /**
  * Firmware malicioso de un fabricante (actualización maliciosa o fabricante comprometido).
@@ -29,14 +29,22 @@ export function keysUsedOn(device: Device, allSeeds: ReadonlySet<Id>): Id[] {
   return [...new Set([...held, ...loaded])];
 }
 
-export const hasAntiExfil = (device: Device) => catalogModelByName(device.model)?.antiExfil ?? false;
+/**
+ * Anti-exfil del modelo. Con una cartera Taproot (firmas Schnorr) solo cuenta si el catálogo dice que también las
+ * protege: en muchos modelos solo existe para las firmas de SegWit.
+ */
+export function hasAntiExfil(device: Device, model: CustodyModel): boolean {
+  const catalog = catalogModelByName(device.model);
+  if (!catalog?.antiExfil) return false;
+  return walletOf(model).script !== 'tr' || catalog.taproot?.antiExfil === true;
+}
 
 /** Por fabricante (nombre tal cual aparece), las keys que filtraría un firmware malicioso suyo. */
 export function firmwareExposure(model: CustodyModel): Map<string, { vendor: string; keys: Id[] }> {
   const allSeeds = seedKeys(model);
   const found = new Map<string, { vendor: string; keys: Id[] }>();
   for (const device of model.devices) {
-    if (hasAntiExfil(device)) continue;
+    if (hasAntiExfil(device, model)) continue;
     const keys = keysUsedOn(device, allSeeds);
     if (keys.length === 0) continue;
     const k = vendorKey(device.vendor);
@@ -51,6 +59,6 @@ export function firmwareExposure(model: CustodyModel): Map<string, { vendor: str
 export function firmwareDevices(model: CustodyModel, vendor: string): Id[] {
   const allSeeds = seedKeys(model);
   return model.devices
-    .filter((d) => vendorKey(d.vendor) === vendorKey(vendor) && !hasAntiExfil(d) && keysUsedOn(d, allSeeds).length > 0)
+    .filter((d) => vendorKey(d.vendor) === vendorKey(vendor) && !hasAntiExfil(d, model) && keysUsedOn(d, allSeeds).length > 0)
     .map((d) => d.id);
 }

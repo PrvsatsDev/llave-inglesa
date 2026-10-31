@@ -69,6 +69,7 @@ const SCRIPT_PLAIN = {
   'sh-wsh': 'Wrapped SegWit (P2SH-P2WSH, addresses 3…)',
   wpkh: 'Native SegWit (P2WPKH, addresses bc1q…)',
   'sh-wpkh': 'Wrapped SegWit (P2SH-P2WPKH, addresses 3…)',
+  tr: 'Taproot (P2TR, addresses bc1p…)',
 } as const;
 
 /** Public data to rebuild a multisig without a descriptor: type, k of n and derivation (if known). */

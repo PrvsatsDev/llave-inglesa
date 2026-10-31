@@ -227,10 +227,10 @@ export type Location = z.infer<typeof LocationSchema>;
 
 /**
  * Cómo se escribe la cartera como descriptor. Sin indicar: wsh (multisig) o wpkh (single-sig) con sortedmulti, lo
- * habitual hoy. La red no se guarda: sale de las xpubs (xpub o tpub).
+ * habitual hoy; tr (Taproot) solo si se elige. La red no se guarda: sale de las xpubs (xpub o tpub).
  */
 export const WalletSchema = z.object({
-  script: z.enum(['wsh', 'sh-wsh', 'wpkh', 'sh-wpkh']),
+  script: z.enum(['wsh', 'sh-wsh', 'wpkh', 'sh-wpkh', 'tr']),
   /** sortedmulti (claves ordenadas, BIP-67) o multi (el orden de la política importa). */
   sorted: z.boolean().default(true),
   /**

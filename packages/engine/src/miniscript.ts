@@ -1,4 +1,4 @@
-import { flatPolicy, miniscriptSupport, policyKeys, signsMiniscript, type CustodyModel, type Id } from '@llave-inglesa/domain';
+import { flatPolicy, miniscriptSupport, policyKeys, signsMiniscript, taprootSupport, walletOf, type CustodyModel, type Id } from '@llave-inglesa/domain';
 import { keysUsedOn, seedKeys } from './firmware.ts';
 
 /**
@@ -11,4 +11,15 @@ export function devicesWithoutMiniscript(model: CustodyModel): Id[] {
   const keys = new Set(policyKeys(model.policy));
   const seeds = seedKeys(model);
   return model.devices.filter((d) => keysUsedOn(d, seeds).some((k) => keys.has(k)) && !signsMiniscript(miniscriptSupport(d))).map((d) => d.id);
+}
+
+/**
+ * Lo mismo con una cartera Taproot (`tr`): dispositivos que firman alguna key de la política y no firman Taproot.
+ * Null si la cartera no es Taproot (así los modelos de antes no cambian). Cuesta lo mismo: TAPROOT_DEVICE_PENALTY.
+ */
+export function devicesWithoutTaproot(model: CustodyModel): Id[] | null {
+  if (walletOf(model).script !== 'tr') return null;
+  const keys = new Set(policyKeys(model.policy));
+  const seeds = seedKeys(model);
+  return model.devices.filter((d) => keysUsedOn(d, seeds).some((k) => keys.has(k)) && !signsMiniscript(taprootSupport(d))).map((d) => d.id);
 }

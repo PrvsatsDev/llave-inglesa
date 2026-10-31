@@ -70,6 +70,7 @@ const SCRIPT_PLAIN = {
   'sh-wsh': 'SegWit envuelto (P2SH-P2WSH, direcciones 3…)',
   wpkh: 'SegWit nativo (P2WPKH, direcciones bc1q…)',
   'sh-wpkh': 'SegWit envuelto (P2SH-P2WPKH, direcciones 3…)',
+  tr: 'Taproot (P2TR, direcciones bc1p…)',
 } as const;
 
 /** Datos públicos para reconstruir un multisig sin descriptor: tipo, k de n y derivación (si se conoce). */

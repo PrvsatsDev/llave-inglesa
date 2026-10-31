@@ -190,18 +190,24 @@ function resilienceScore(a: EngineAnalysis) {
 
 function usabilityScoreRows(model: CustodyModel, a: EngineAnalysis) {
   const n = a.usability.visits;
-  const b = usabilityBreakdown(n, a.usability.renewal, a.usability.noMiniscript.length > 0);
+  const noTaproot = a.usability.noTaproot ?? [];
+  const b = usabilityBreakdown(n, a.usability.renewal, a.usability.noMiniscript.length > 0, noTaproot.length > 0);
   const label = indexModel(model).label;
   return {
     score: a.usability.score,
     rows: [
       { label: n === null ? T.usabilidad.noPueden : T.usabilidad.firmarExige(n), points: b.base },
       ...b.penalties.map((p) => ({
-        label: p.reason === 'no-miniscript' ? T.usabilidad.sinMiniscript(a.usability.noMiniscript.map(label)) : T.usabilidad.renovar,
+        label:
+          p.reason === 'no-miniscript'
+            ? T.usabilidad.sinMiniscript(a.usability.noMiniscript.map(label))
+            : p.reason === 'no-taproot'
+              ? T.usabilidad.sinTaproot(noTaproot.map(label))
+              : T.usabilidad.renovar,
         points: -p.points,
       })),
     ],
-    how: T.usabilidad.como(),
+    how: T.usabilidad.como(a.usability.noTaproot !== undefined),
   };
 }
 

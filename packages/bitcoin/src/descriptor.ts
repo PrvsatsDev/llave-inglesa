@@ -3,11 +3,12 @@ import { parseXpub, type Network, type XpubProblem } from './xpub.ts';
 
 /**
  * Tipos de script que se saben escribir y leer. wsh: multisig SegWit nativo (bc1q…, largo); sh-wsh: el mismo envuelto en
- * P2SH (3…); wpkh: single-sig SegWit nativo (bc1q…); sh-wpkh: single-sig envuelto (3…). Taproot, todavía no.
+ * P2SH (3…); wpkh: single-sig SegWit nativo (bc1q…); sh-wpkh: single-sig envuelto (3…); tr: Taproot con una sola
+ * key y sin árbol de scripts (bc1p…, BIP-86; también la key agregada de FROST).
  */
-export type ScriptType = 'wsh' | 'sh-wsh' | 'wpkh' | 'sh-wpkh';
+export type ScriptType = 'wsh' | 'sh-wsh' | 'wpkh' | 'sh-wpkh' | 'tr';
 export const MULTISIG_SCRIPTS: readonly ScriptType[] = ['wsh', 'sh-wsh'];
-export const SINGLESIG_SCRIPTS: readonly ScriptType[] = ['wpkh', 'sh-wpkh'];
+export const SINGLESIG_SCRIPTS: readonly ScriptType[] = ['wpkh', 'sh-wpkh', 'tr'];
 export const isMultisigScript = (s: ScriptType) => s === 'wsh' || s === 'sh-wsh';
 
 /** Hasta 16 keys: OP_1…OP_16 en el script multisig. */
@@ -105,6 +106,7 @@ export function formatDescriptor(d: Descriptor, branch: Branch = 'multipath'): s
     'sh-wsh': `sh(wsh(${inner}))`,
     wpkh: `wpkh(${inner})`,
     'sh-wpkh': `sh(wpkh(${inner}))`,
+    tr: `tr(${inner})`,
   }[d.script];
   return `${body}#${descriptorChecksum(body)}`;
 }
@@ -115,7 +117,7 @@ export type DescriptorProblem =
   | { code: 'empty' }
   /** La suma de control no coincide: algo se copió mal. */
   | { code: 'bad-checksum' }
-  /** Taproot, pkh, Miniscript dentro de sh(…), fragmentos que no existen…: no se leen. */
+  /** Taproot con árbol de scripts, pkh, Miniscript dentro de sh(…), fragmentos que no existen…: no se leen. */
   | { code: 'unsupported-script' }
   /**
    * Miniscript que Bitcoin Core no aceptaría: tipos que no encajan, una forma de gastar sin firma, firmas que se
@@ -175,8 +177,8 @@ function parseKey(text: string, index: number, pairs: boolean): KeyResult {
 }
 
 /**
- * Lee un descriptor tal como lo exportan Sparrow, Nunchuk, Bitcoin Core, Coldcard o Liana: wsh/sh-wsh con
- * (sorted)multi, wpkh/sh-wpkh, o wsh con Miniscript. Ignora espacios y saltos de línea. Si trae suma de control, la comprueba.
+ * Lee un descriptor tal como lo exportan Sparrow, Nunchuk, Bitcoin Core, Coldcard, Liana o Frostsnap: wsh/sh-wsh con
+ * (sorted)multi, wpkh/sh-wpkh, wsh con Miniscript, o tr con una sola key (sin árbol de scripts). Ignora espacios y saltos de línea. Si trae suma de control, la comprueba.
  */
 export function parseDescriptor(text: string): DescriptorResult {
   const compact = text.replace(/\s+/g, '');
@@ -190,6 +192,7 @@ export function parseDescriptor(text: string): DescriptorResult {
   const outer = sh ?? body;
   const wsh = unwrap(outer, 'wsh');
   const wpkh = unwrap(outer, 'wpkh');
+  const tr = sh === null ? unwrap(body, 'tr') : null;
   let script: ScriptType;
   let threshold: number | undefined;
   let sorted = true;
@@ -208,6 +211,11 @@ export function parseDescriptor(text: string): DescriptorResult {
   } else if (wpkh !== null) {
     script = sh !== null ? 'sh-wpkh' : 'wpkh';
     keyTexts = [wpkh];
+  } else if (tr !== null) {
+    // Con árbol de scripts (`tr(KEY,{…})`), todavía no.
+    if (tr.includes(',')) return { ok: false, problem: { code: 'unsupported-script' } };
+    script = 'tr';
+    keyTexts = [tr];
   } else {
     return { ok: false, problem: { code: /^[a-z_]+\(/.test(body) ? 'unsupported-script' : 'syntax' } };
   }
