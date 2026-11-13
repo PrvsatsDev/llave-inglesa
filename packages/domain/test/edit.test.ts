@@ -780,6 +780,15 @@ describe('keys repartidas (FROST, Shamir)', () => {
     const backup = (share: number, location = 'casa') => ({ id: `a${share}`, label: `A${share}`, medium: 'metal' as const, contents: [{ type: 'share' as const, key: 'k1', share }], lockedBy: [], location });
     const warnings = (m: CustodyModel) => checkIntegrity(m).map((i) => i.code);
     expect(warnings({ ...frost, artifacts: [backup(1)] })).toContain('shares-below-threshold');
+    // Shamir: la semilla existe. Con la key entera en un dispositivo, escrita o memorizada, el reparto a medias no es grave.
+    const shamir = { ...splitKey(blank, 'k1', 'shamir', 2, 3), devices: [], artifacts: [], people: blank.people.map((p) => ({ ...p, knows: [] })) };
+    const seed = { type: 'seed' as const, key: 'k1' };
+    const holder = { ...addDevice(shamir, 'casa').model.devices[0]!, kind: 'stateful' as const, holds: ['k1'] };
+    expect(warnings(shamir)).toContain('shares-below-threshold');
+    expect(warnings({ ...shamir, devices: [holder] })).not.toContain('shares-below-threshold');
+    expect(warnings({ ...shamir, devices: [{ ...holder, kind: 'stateless' as const }] })).toContain('shares-below-threshold');
+    expect(warnings({ ...shamir, artifacts: [{ ...backup(1), contents: [seed] }] })).not.toContain('shares-below-threshold');
+    expect(warnings({ ...shamir, people: shamir.people.map((p, i) => (i === 0 ? { ...p, knows: [seed] } : p)) })).not.toContain('shares-below-threshold');
     expect(warnings({ ...frost, artifacts: [backup(1), backup(2)] })).toContain('shares-together');
     const two = addLocation({ ...frost, artifacts: [backup(1), backup(2)] }, 'Banco');
     const apart = { ...two.model, artifacts: [backup(1), backup(2, two.id)] };

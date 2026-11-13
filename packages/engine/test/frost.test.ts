@@ -152,9 +152,13 @@ function frostsnap(): { model: CustodyModel; phone: string; devices: string[] } 
 describe('FROST: el coordinador (Frostsnap)', () => {
   const { model, phone, devices } = frostsnap();
 
-  it('la cartera es Taproot por defecto y no admite otra cosa', () => {
+  it('la cartera es Taproot, aunque el documento tuviera guardado otro tipo de dirección, y no admite más keys', () => {
     expect(walletOf(model)).toEqual({ script: 'tr', sorted: true });
-    expect(walletDescriptor({ ...model, wallet: { script: 'wpkh', sorted: true } })).toEqual({ ok: false, problems: [{ code: 'frost-needs-taproot', keys: ['k1'] }] });
+    const old = { ...model, wallet: { script: 'wpkh' as const, sorted: true } };
+    expect(walletOf(old)).toEqual({ script: 'tr', sorted: true });
+    expect(walletDescriptor(old)).toEqual(walletDescriptor(model));
+    const two: CustodyModel = { ...model, keys: [...model.keys, { ...model.keys[0]!, id: 'k2', label: 'K2', split: undefined }], policy: { type: 'thresh', k: 1, of: [{ type: 'key', key: 'k1' }, { type: 'key', key: 'k2' }] } };
+    expect(walletDescriptor(two)).toEqual({ ok: false, problems: [{ code: 'frost-needs-taproot', keys: ['k1'] }] });
   });
 
   it('un dispositivo robado sin su móvil no sirve; con el móvil, firma su parte, pero falta otra', () => {

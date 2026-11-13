@@ -49,9 +49,11 @@ export function flatPolicy(model: CustodyModel): FlatPolicy | null {
 export function walletOf(model: CustodyModel): Wallet {
   const flat = flatPolicy(model);
   if (!flat) return { script: 'wsh', sorted: false };
-  // Una key FROST es una key Taproot: sola, se escribe tr por defecto.
+  // Una key FROST es una key Taproot: sola, se escribe tr, aunque el documento tuviera guardado otro tipo de dirección
+  // (elegido o importado cuando la key aún no era FROST).
   const frost = flat.kind === 'single' && model.keys.some((k) => k.id === flat.key && k.split?.scheme === 'frost');
-  return model.wallet ?? { script: flat.kind === 'single' ? (frost ? 'tr' : 'wpkh') : 'wsh', sorted: true };
+  if (frost) return { sorted: true, ...model.wallet, script: 'tr' };
+  return model.wallet ?? { script: flat.kind === 'single' ? 'wpkh' : 'wsh', sorted: true };
 }
 
 /** Keys FROST de la política. */
@@ -98,8 +100,8 @@ export type WalletProblem =
   /** Unas xpub de mainnet y otras de testnet. */
   | { code: 'mixed-networks' }
   /**
-   * Una key FROST solo existe en Taproot y, de momento, como política entera (`tr(KEY)`): con otro tipo de script, o
-   * junto a otras keys, no hay cartera que la firme.
+   * Una key FROST solo existe en Taproot y, de momento, como política entera (`tr(KEY)`): junto a otras keys, no hay
+   * cartera que la firme. (Sola, la cartera es siempre Taproot: ver `walletOf`.)
    */
   | { code: 'frost-needs-taproot'; keys: Id[] };
 
@@ -113,7 +115,7 @@ export type WalletDescriptorResult =
 /** Construye el descriptor de la cartera a partir del esquema, o explica qué falta. Puro. */
 export function walletDescriptor(model: CustodyModel): WalletDescriptorResult {
   const frost = frostKeysInPolicy(model);
-  if (frost.length > 0 && (model.policy.type !== 'key' || walletOf(model).script !== 'tr')) return { ok: false, problems: [{ code: 'frost-needs-taproot', keys: frost }] };
+  if (frost.length > 0 && model.policy.type !== 'key') return { ok: false, problems: [{ code: 'frost-needs-taproot', keys: frost }] };
   const flat = flatPolicy(model);
   const miniscript = flat ? null : walletMiniscript(model);
   if (!flat && !miniscript) return { ok: false, problems: [{ code: 'no-miniscript', reason: policyMiniscriptReason(model.policy) ?? 'other' }] };

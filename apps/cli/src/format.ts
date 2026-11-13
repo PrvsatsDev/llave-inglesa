@@ -75,7 +75,7 @@ export function formatIssue(i: Issue): string {
     'frost-key-on-device': `dispositivo que guarda o carga entera una key FROST${ref}`,
     'device-share-not-frost': `dispositivo con shares de una key que no es FROST${ref}`,
     'shares-together': `tantas shares como bastan en una misma ubicación${ref}`,
-    'shares-below-threshold': `menos shares de las que bastan${ref}: la key no se puede usar`,
+    'shares-below-threshold': `menos shares de las que bastan${ref} y la key no está entera en ningún sitio: no se puede usar`,
     'shares-on-non-frost-device': `dispositivo con shares FROST cuyo modelo no las admite${ref}`,
     'shares-single-vendor': `todas las shares de la key FROST${ref} en dispositivos de un solo fabricante`,
   };
