@@ -211,9 +211,9 @@ In the distributed 2 of 3, with the devices at home, that was enough. Not here: 
 
 > ▶ In the app, with the example “Frostsnap 2 of 3”: *Two burglaries: at home and at the office*.
 
-With two devices it is: Frostsnap devices have no PIN, and with as many as are needed a new phone gets paired. With fewer, a stolen device is useless, because its share is encrypted with a key that the paired phone keeps. The backup cards, on the other hand, are the share in the clear.
+With two devices it is: Frostsnap devices have no PIN, and with as many as are needed a new phone gets paired. With fewer, a stolen device is useless on its own, because its share is encrypted with a key that the paired phone keeps. The backup cards, on the other hand, are the share in the clear, and loaded into a blank device they count as one more: a device and the card of another share are enough too.
 
-Security **63** (fair), somewhat less than the distributed 2 of 3 (**71** (good)): the cheapest theft is not in any house but in Frostsnap’s generator, because all the shares come from devices and an app from the same manufacturer. Its anti-exfil stops a tampered device, not a malicious manufacturer, who would control both ends: the tool explains it, but does not count it as one more attack. Signing requires going to two places (usability **75** (good)) and the cards are paper: two fires take two shares (resilience **61** (fair)).
+Security **63** (fair), somewhat less than the distributed 2 of 3 (**71** (good)): the cheapest theft is not in any house but in Frostsnap’s generator, because all the shares come from devices and an app from the same manufacturer. Its anti-exfil stops a tampered device, not a malicious manufacturer, who would control both ends: the tool explains it, but does not count it as one more attack. Signing requires going to two places (usability **75** (good)) and the cards are paper: two fires take two shares (resilience **62** (fair)).
 
 > 💡 Recovering a FROST key needs, today, the Frostsnap app and blank devices to load the cards into. If it did not exist, with as many cards as are needed, some open tools (frostsnap-thaw or frost_backup) rebuild a key that can be imported into Sparrow or Bitcoin Core. The letter for the heirs explains it.
 

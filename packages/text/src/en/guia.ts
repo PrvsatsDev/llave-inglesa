@@ -666,7 +666,7 @@ export const GUIA: typeof es = [
       {
         tipo: 'parrafo',
         texto: [
-          'With two devices it is: Frostsnap devices have no PIN, and with as many as are needed a new phone gets paired. With fewer, a stolen device is useless, because its share is encrypted with a key that the paired phone keeps. The backup cards, on the other hand, are the share in the clear.',
+          'With two devices it is: Frostsnap devices have no PIN, and with as many as are needed a new phone gets paired. With fewer, a stolen device is useless on its own, because its share is encrypted with a key that the paired phone keeps. The backup cards, on the other hand, are the share in the clear, and loaded into a blank device they count as one more: a device and the card of another share are enough too.',
         ],
       },
       {

@@ -1,4 +1,4 @@
-import type { CatalogNote } from '@llave-inglesa/domain';
+import type { CatalogNote, Wallet } from '@llave-inglesa/domain';
 
 /** Fichas de cada elemento (columna izquierda): persona, backup, dispositivo, ubicación, key y sus campos. */
 
@@ -46,10 +46,26 @@ export const backup = {
   eliminar: 'Eliminar backup',
 };
 
+/**
+ * Ruta de derivación habitual de cada tipo de cartera (BIP-48, 84, 49 y 86), como ejemplo en el campo vacío. Una key
+ * FROST no tiene ruta estándar: Frostsnap usa la suya y viene en el descriptor que exporta.
+ */
+export const RUTA_HABITUAL: Record<Wallet['script'], string> = {
+  wsh: "m/48'/0'/0'/2'",
+  'sh-wsh': "m/48'/0'/0'/1'",
+  wpkh: "m/84'/0'/0'",
+  'sh-wpkh': "m/49'/0'/0'",
+  tr: "m/86'/0'/0'",
+};
+
 export const cartera = {
   derivacion: 'Derivación',
-  pistaDerivacion: "m/48'/0'/0'/2'",
-  errorDerivacion: "Una ruta como m/48'/0'/0'/2' (con ' o h para las endurecidas).",
+  /** `tipo`: el tipo de cartera, o 'frost' si la key es FROST. */
+  pistaDerivacion: (tipo: Wallet['script'] | 'frost') => (tipo === 'frost' ? 'la del descriptor de Frostsnap' : RUTA_HABITUAL[tipo]),
+  errorDerivacion: (tipo: Wallet['script'] | 'frost') =>
+    tipo === 'frost'
+      ? "Una ruta como m/0/0 (con ' o h para las endurecidas): la que trae el descriptor que exporta Frostsnap."
+      : `Una ruta como ${RUTA_HABITUAL[tipo]} (con ' o h para las endurecidas).`,
   xpub: 'Xpub',
   pistaXpub: 'xpub6…  (también zpub, Zpub, tpub…)',
   convertida: (escrita: string, guardada: string) => `Escrita como ${escrita}: se guarda como ${guardada}, que es la misma clave.`,

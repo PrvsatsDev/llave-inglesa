@@ -16,6 +16,7 @@ import {
   UNKNOWN_VENDOR,
   unsplitKey,
   updateKey,
+  walletOf,
   type CustodyModel,
   type EntropySource,
   type Key,
@@ -198,7 +199,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
               <TextInput id={fid} value={key.fingerprint ?? ''} placeholder={T.opcional} optional onChange={(v) => patch({ fingerprint: v || undefined }, 'fingerprint')} />
             )}
           </Field>
-          <PathField key={`path:${id}`} value={key.derivation} onChange={(derivation) => patch({ derivation }, 'derivation')} />
+          <PathField key={`path:${id}`} value={key.derivation} kind={key.split?.scheme === 'frost' ? 'frost' : walletOf(model).script} onChange={(derivation) => patch({ derivation }, 'derivation')} />
         </div>
         <XpubField key={`xpub:${id}`} value={key.xpub} onChange={(xpub) => patch({ xpub }, 'xpub')} />
         <p className={styles.hint}>{T.pistaCartera}</p>

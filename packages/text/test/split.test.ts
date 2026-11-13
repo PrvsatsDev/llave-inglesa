@@ -71,3 +71,18 @@ describe('carta para los herederos con una key Shamir', () => {
     expect(steps).not.toContain('Carga la frase semilla');
   });
 });
+
+describe('ejemplo de ruta de derivación', () => {
+  it('sigue al tipo de cartera, y en una key FROST remite al descriptor de Frostsnap', async () => {
+    const { cartera: es } = await import('../src/es/interfaz/fichas.ts');
+    const { cartera: en } = await import('../src/en/interfaz/fichas.ts');
+    const tipos = ['wsh', 'sh-wsh', 'wpkh', 'sh-wpkh', 'tr'] as const;
+    expect(tipos.map(es.pistaDerivacion)).toEqual(["m/48'/0'/0'/2'", "m/48'/0'/0'/1'", "m/84'/0'/0'", "m/49'/0'/0'", "m/86'/0'/0'"]);
+    expect(tipos.map(en.pistaDerivacion)).toEqual(tipos.map(es.pistaDerivacion));
+    expect(es.errorDerivacion('tr')).toContain("m/86'/0'/0'");
+    for (const t of [es, en]) {
+      expect(t.pistaDerivacion('frost')).toContain('Frostsnap');
+      expect(t.errorDerivacion('frost')).toContain('Frostsnap');
+    }
+  });
+});

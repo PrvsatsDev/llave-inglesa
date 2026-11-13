@@ -46,7 +46,10 @@ export type IssueCode =
   | 'device-share-not-frost'
   /** Bastan k shares de una key y hay k o más en una misma ubicación: el reparto no reparte. */
   | 'shares-together'
-  /** Hay menos shares distintas (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar. */
+  /**
+   * Hay menos shares distintas (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar. En
+   * Shamir, solo si además la semilla entera no está en ningún sitio (dispositivo, backup o memoria).
+   */
   | 'shares-below-threshold'
   /** Todas las shares de una key FROST en dispositivos de un solo fabricante (su firmware o su app alcanzan a todas). */
   | 'shares-single-vendor'
@@ -313,7 +316,15 @@ function splitWarnings(model: CustodyModel): Issue[] {
     shareDevices.forEach((d) => d.shares!.forEach((s) => s.key === k.id && add(d.location, s.share)));
     model.artifacts.forEach((a) => a.contents.forEach((s) => s.type === 'share' && s.key === k.id && add(a.location, s.share)));
     model.people.forEach((p) => p.knows.forEach((s) => s.type === 'share' && s.key === k.id && add(null, s.share)));
-    if (all.size < split.k) issues.push({ severity: 'grave', code: 'shares-below-threshold', path: ['keys', i, 'split'], ref: k.id });
+    // En Shamir la semilla existe: si un dispositivo la guarda entera, o está escrita o memorizada, la key se usa y se
+    // recupera aunque el backup repartido no llegue.
+    const isSeed = (s: SecretRef) => s.type === 'seed' && s.key === k.id;
+    const whole =
+      split.scheme === 'shamir' &&
+      (model.devices.some((d) => d.kind === 'stateful' && d.holds.includes(k.id)) || model.artifacts.some((a) => a.contents.some(isSeed)) || model.people.some((p) => p.knows.some(isSeed)));
+    if (all.size < split.k && whole) {
+      // Nada que avisar: el reparto está a medias, pero la key no depende de él.
+    } else if (all.size < split.k) issues.push({ severity: 'grave', code: 'shares-below-threshold', path: ['keys', i, 'split'], ref: k.id });
     else if (split.k > 1 && [...atLocation.values()].some((set) => set.size >= split.k))
       issues.push({ severity: 'warning', code: 'shares-together', path: ['keys', i, 'split'], ref: k.id });
     const vendors = new Set(shareDevices.map((d) => d.vendor.trim().toLowerCase()));

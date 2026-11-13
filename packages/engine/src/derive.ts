@@ -198,12 +198,20 @@ export function derive(world: World, holdings: Holdings, mode: SigningMode): Der
         if (facts.has(itemId)) add({ kind: 'coordinator', key: key.id }, { rule: 'paired-coordinator', premises: [itemId], via: { item: c } });
         else if (holdings.infectedComputers?.includes(c)) add({ kind: 'coordinator', key: key.id }, { rule: 'coordinator-malware', premises: [], via: { item: c } });
       }
-      // Dispositivos desbloqueados con cada share (el primero que la tenga).
+      // Con qué se tiene cada share para emparejar un coordinador nuevo: un dispositivo desbloqueado que la guarda (el
+      // primero que la tenga) o, fuera del día a día, su tarjeta en claro, que se carga en un dispositivo en blanco y
+      // cuenta como uno más de la key (la recuperación de Frostsnap admite cualquier mezcla).
       const byShare = new Map<number, FactId>();
       for (const d of model.devices) {
         const unlockedId = factId({ kind: 'unlocked', device: d.id });
         if (d.kind !== 'stateful' || !facts.has(unlockedId)) continue;
         for (const s of d.shares ?? []) if (s.key === key.id && split.shares.includes(s.share) && !byShare.has(s.share)) byShare.set(s.share, unlockedId);
+      }
+      if (mode === 'any') {
+        for (const share of split.shares) {
+          const shareId = factId(secret({ type: 'share', key: key.id, share }));
+          if (facts.has(shareId) && !byShare.has(share)) byShare.set(share, shareId);
+        }
       }
       if (byShare.size >= split.k) add({ kind: 'coordinator', key: key.id }, { rule: 'pair-coordinator', premises: [...new Set([...byShare.values()].slice(0, split.k))] });
       // Sin coordinadores indicados, la share del dispositivo no está protegida (ante la duda, lo peor).

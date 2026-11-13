@@ -291,7 +291,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'combine-shares': return 'juntando las shares que bastan';
     case 'paired-coordinator': return `${name(v.item)} está emparejado con la key`;
     case 'coordinator-malware': return `el malware de ${name(v.item)}, emparejado con la key, usa su clave`;
-    case 'pair-coordinator': return 'con tantos dispositivos como bastan se empareja un móvil nuevo';
+    case 'pair-coordinator': return 'con tantas shares como bastan, en dispositivos o en tarjetas cargadas en uno en blanco, se empareja un móvil nuevo';
     case 'device-share': return `la firma ${name(v.device)}`;
     case 'share-software': return 'cargando la share en software o en un dispositivo en blanco';
     case 'frost-sign': return 'juntando las partes de las shares que bastan (FROST)';
@@ -340,7 +340,7 @@ const ISSUE_TEXT: Record<Issue['code'], string> = {
   'frost-key-on-device': 'Un dispositivo guarda o carga entera una key FROST, y en FROST cada dispositivo guarda solo su share',
   'device-share-not-frost': 'Un dispositivo guarda shares de una key que no es FROST: con Shamir, el dispositivo guarda la key entera y las shares son su backup',
   'shares-together': 'Hay en una misma ubicación tantas shares como bastan: quien entre ahí tiene la key entera, el reparto no reparte',
-  'shares-below-threshold': 'Hay menos shares (en dispositivos, backups o memorias) de las que bastan: la key no se puede usar ni recuperar',
+  'shares-below-threshold': 'Hay menos shares (en dispositivos, backups o memorias) de las que bastan y la key no está entera en ningún sitio: no se puede usar ni recuperar',
   'shares-on-non-frost-device': 'Un dispositivo guarda shares FROST y, según el catálogo, su modelo no las admite',
   'shares-single-vendor': 'Todas las shares de esta key FROST están en dispositivos de un solo fabricante: un firmware malicioso suyo, o su app, alcanzan a todas a la vez',
 };
