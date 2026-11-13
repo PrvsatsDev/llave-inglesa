@@ -1,4 +1,4 @@
-import { looksLikeSeedWords, normalizePath, parseXpub } from '@llave-inglesa/bitcoin';
+import { looksLikeSeedWords, normalizePath, parseXpub, type ScriptType } from '@llave-inglesa/bitcoin';
 import { XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { PRIVADO } from '../../lib/privacidad.ts';
@@ -33,7 +33,8 @@ function useValidatedText(value: string | undefined, show: (v: string) => string
 
 const showPath = (p: string) => `m/${p}`;
 
-export function PathField({ value, onChange }: { value: string | undefined; onChange(v: string | undefined): void }) {
+/** `kind`: el tipo de cartera (o 'frost' si la key lo es), para poner de ejemplo su ruta habitual. */
+export function PathField({ value, kind, onChange }: { value: string | undefined; kind: ScriptType | 'frost'; onChange(v: string | undefined): void }) {
   const { text, setText, message, setMessage, emit } = useValidatedText(value, showPath);
   return (
     <Field label={T.derivacion}>
@@ -43,13 +44,13 @@ export function PathField({ value, onChange }: { value: string | undefined; onCh
             id={fid}
             className={`${styles.input} ${message ? styles.invalid : ''}`}
             value={text}
-            placeholder={T.pistaDerivacion}
+            placeholder={T.pistaDerivacion(kind)}
             {...PRIVADO}
             onChange={(e) => {
               const t = e.target.value;
               setText(t);
               const path = normalizePath(t);
-              setMessage(path === null ? { tone: 'error', text: T.errorDerivacion } : null);
+              setMessage(path === null ? { tone: 'error', text: T.errorDerivacion(kind) } : null);
               emit(path ? path : undefined, onChange);
             }}
           />

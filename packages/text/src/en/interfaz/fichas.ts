@@ -1,4 +1,5 @@
 import type * as es from '../../es/interfaz/fichas.ts';
+import { RUTA_HABITUAL } from '../../es/interfaz/fichas.ts';
 
 /** Each item's panel (left column): person, backup, device, location, key and their fields. */
 
@@ -48,8 +49,11 @@ export const backup: typeof es.backup = {
 
 export const cartera: typeof es.cartera = {
   derivacion: 'Derivation',
-  pistaDerivacion: "m/48'/0'/0'/2'",
-  errorDerivacion: "A path like m/48'/0'/0'/2' (with ' or h for hardened steps).",
+  pistaDerivacion: (tipo) => (tipo === 'frost' ? "the one in Frostsnap's descriptor" : RUTA_HABITUAL[tipo]),
+  errorDerivacion: (tipo) =>
+    tipo === 'frost'
+      ? "A path like m/0/0 (with ' or h for hardened steps): the one in the descriptor Frostsnap exports."
+      : `A path like ${RUTA_HABITUAL[tipo]} (with ' or h for hardened steps).`,
   xpub: 'Xpub',
   pistaXpub: 'xpub6…  (also zpub, Zpub, tpub…)',
   convertida: (escrita: string, guardada: string) => `Written as ${escrita}: it is saved as ${guardada}, which is the same key.`,
