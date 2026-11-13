@@ -84,7 +84,10 @@ export type RuleId =
   | 'paired-coordinator'
   /** FROST: el malware de un móvil u ordenador emparejado usa su clave (`item`). */
   | 'coordinator-malware'
-  /** FROST: con k dispositivos de la key (shares distintas) se empareja un coordinador nuevo. */
+  /**
+   * FROST: con k shares distintas de la key se empareja un coordinador nuevo: dispositivos que las guardan o, solo en
+   * modo `any`, tarjetas en claro cargadas en un dispositivo en blanco (cualquier mezcla).
+   */
   | 'pair-coordinator'
   /** FROST: el dispositivo firma la parte de su share (con un coordinador, si la key los tiene). */
   | 'device-share'

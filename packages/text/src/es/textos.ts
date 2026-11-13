@@ -291,7 +291,7 @@ export function ruleText(j: Justification, index: ModelIndex, policy: Policy): s
     case 'combine-shares': return 'juntando las shares que bastan';
     case 'paired-coordinator': return `${name(v.item)} está emparejado con la key`;
     case 'coordinator-malware': return `el malware de ${name(v.item)}, emparejado con la key, usa su clave`;
-    case 'pair-coordinator': return 'con tantos dispositivos como bastan se empareja un móvil nuevo';
+    case 'pair-coordinator': return 'con tantas shares como bastan, en dispositivos o en tarjetas cargadas en uno en blanco, se empareja un móvil nuevo';
     case 'device-share': return `la firma ${name(v.device)}`;
     case 'share-software': return 'cargando la share en software o en un dispositivo en blanco';
     case 'frost-sign': return 'juntando las partes de las shares que bastan (FROST)';

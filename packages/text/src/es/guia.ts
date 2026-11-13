@@ -666,7 +666,7 @@ export const GUIA: readonly Capitulo[] = [
       {
         tipo: 'parrafo',
         texto: [
-          'Con dos dispositivos sí: los Frostsnap no tienen PIN, y con tantos como bastan se empareja un móvil nuevo. Con menos, un dispositivo robado no sirve de nada, porque su share va cifrada con una clave que guarda el móvil emparejado. Las tarjetas de backup, en cambio, son la share en claro.',
+          'Con dos dispositivos sí: los Frostsnap no tienen PIN, y con tantos como bastan se empareja un móvil nuevo. Con menos, un dispositivo robado no sirve de nada por sí solo, porque su share va cifrada con una clave que guarda el móvil emparejado. Las tarjetas de backup, en cambio, son la share en claro, y cargadas en un dispositivo en blanco cuentan como uno más: un dispositivo y la tarjeta de otra share también bastan.',
         ],
       },
       {

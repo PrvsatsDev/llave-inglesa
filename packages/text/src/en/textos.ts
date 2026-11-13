@@ -286,7 +286,7 @@ export const ruleText: typeof es.ruleText = (j: Justification, index: ModelIndex
     case 'combine-shares': return 'putting together enough shares';
     case 'paired-coordinator': return `${name(v.item)} is paired with the key`;
     case 'coordinator-malware': return `the malware on ${name(v.item)}, paired with the key, uses its key`;
-    case 'pair-coordinator': return 'with as many devices as are needed a new phone gets paired';
+    case 'pair-coordinator': return 'with as many shares as are needed, on devices or on cards loaded into a blank one, a new phone gets paired';
     case 'device-share': return `${name(v.device)} signs it`;
     case 'share-software': return 'loading the share into software or a blank device';
     case 'frost-sign': return 'putting together the parts of enough shares (FROST)';

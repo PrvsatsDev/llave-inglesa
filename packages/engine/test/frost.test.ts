@@ -194,10 +194,19 @@ describe('FROST: el coordinador (Frostsnap)', () => {
     expect([...d.facts.values()].some((f) => f.justification.rule === 'seed-sign-on-device')).toBe(false);
   });
 
-  it('una tarjeta de backup es la share en claro: con un dispositivo y su móvil, basta para robar', () => {
+  it('una tarjeta de backup es la share en claro: con un dispositivo, basta para robar, con el móvil o sin él', () => {
     const card = { id: 'tarjeta', label: 'Tarjeta 2', medium: 'paper' as const, contents: [{ type: 'share' as const, key: 'k1', share: 2 }], lockedBy: [], location: 'casa' };
     const m = { ...model, artifacts: [card] };
-    expect(simulateAttack(m, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(false);
+    // Sin el móvil: la tarjeta se carga en un dispositivo en blanco y, con el robado, se empareja un móvil nuevo.
+    const sinMovil = simulateAttack(m, [{ type: 'burglary', location: 'casa' }]);
+    expect(sinMovil.facts.get('coordinator:k1')?.justification).toEqual({ rule: 'pair-coordinator', premises: ['unlocked:' + devices[0], 'secret:share:k1/2'] });
+    expect(sinMovil.facts.has('share-sign:k1/1')).toBe(true);
+    expect(sinMovil.canSpend).toBe(true);
+    // La tarjeta de la misma share que el dispositivo no añade nada.
+    const misma = { ...model, artifacts: [{ ...card, contents: [{ type: 'share' as const, key: 'k1', share: 1 }] }] };
+    expect(simulateAttack(misma, [{ type: 'burglary', location: 'casa' }]).canSpend).toBe(false);
+    // En el día a día no se cargan tarjetas: el titular, solo con un dispositivo y una tarjeta, no firma de forma segura.
+    expect(derive(createWorld({ ...m, computers: [] }), { people: ['yo'], locations: ['casa'] }, 'secure').canSpend).toBe(false);
     const d = simulateAttack(m, [{ type: 'coercion', person: 'yo', location: 'casa' }]);
     expect(d.facts.get('share-sign:k1/2')?.justification.rule).toBe('share-software');
     expect(d.canSpend).toBe(true);
