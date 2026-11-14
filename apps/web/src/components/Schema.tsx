@@ -11,7 +11,7 @@ import { issueText, PASSPHRASE_STRENGTH_TEXT, plural, provenanceText, UI } from 
 import { useValidation } from '../lib/validation.ts';
 import { useDocument } from '../store/document.ts';
 import { useSelection, type Selection } from '../store/selection.ts';
-import { Button, Field, InfoTip, Section, Segmented, Select, TextArea, TextInput } from './inspector/fields.tsx';
+import { Button, Field, Section, Segmented, Select, TextArea, TextInput } from './inspector/fields.tsx';
 import { KeyChip } from './KeyChip.tsx';
 import { PolicySection } from './Policy.tsx';
 import { WalletSection } from './Wallet.tsx';
@@ -37,11 +37,28 @@ export function Schema({ model }: { model: CustodyModel }) {
   return (
     <>
       <SchemaIndex />
-      {model.description && (
-        <Section icon={Info} title={T.sobre}>
-          <p className={styles.description}>{model.description}</p>
-        </Section>
-      )}
+      {/* Lo primero: qué es este esquema, y ahí mismo, plegado, cambiarle el nombre y la descripción. */}
+      <Section icon={Info} title={T.sobre}>
+        {model.description && <p className={styles.description}>{model.description}</p>}
+        <details className={styles.meta}>
+          <summary>{T.nombreYDescripcion}</summary>
+          <div className={styles.metaBody}>
+            <Field label={T.nombre}>
+              {(id) => <TextInput id={id} value={model.name} onChange={(name) => apply((m) => updateMeta(m, { name }), 'meta:name')} />}
+            </Field>
+            <Field label={T.descripcion}>
+              {(id) => (
+                <TextArea
+                  id={id}
+                  value={model.description ?? ''}
+                  placeholder={T.pistaDescripcion}
+                  onChange={(description) => apply((m) => updateMeta(m, { description: description || undefined }), 'meta:description')}
+                />
+              )}
+            </Field>
+          </div>
+        </details>
+      </Section>
       <Problems model={model} />
 
       <PolicySection model={model} />
@@ -92,25 +109,6 @@ export function Schema({ model }: { model: CustodyModel }) {
         }
       />
       <People model={model} onAdd={() => create((m) => addPerson(m, UI.nuevos.persona), 'person')} />
-
-      <details className={styles.meta}>
-        <summary>{T.nombreYDescripcion}</summary>
-        <div className={styles.metaBody}>
-          <Field label={T.nombre}>
-            {(id) => <TextInput id={id} value={model.name} onChange={(name) => apply((m) => updateMeta(m, { name }), 'meta:name')} />}
-          </Field>
-          <Field label={T.descripcion}>
-            {(id) => (
-              <TextArea
-                id={id}
-                value={model.description ?? ''}
-                placeholder={T.pistaDescripcion}
-                onChange={(description) => apply((m) => updateMeta(m, { description: description || undefined }), 'meta:description')}
-              />
-            )}
-          </Field>
-        </div>
-      </details>
     </>
   );
 }
@@ -184,9 +182,6 @@ function SchemaIndex() {
           {T.indice[entry]}
         </a>
       ))}
-      <span className={styles.indexTip}>
-        <InfoTip text={UI.navegacion.introSeccion.schema} />
-      </span>
     </nav>
   );
 }

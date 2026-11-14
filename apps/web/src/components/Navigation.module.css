@@ -233,22 +233,24 @@
   }
 }
 
-/* La frase que dice qué hay en cada sitio: en escritorio, un icono con la frase al pasar el ratón, para no gastar
-   alto del panel; en pantalla estrecha, donde el panel se desplaza entero, la frase a la vista. */
-.introTip {
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
+/* Escritorio: las secciones van en vertical, en el raíl; el estado de cada una baja a otra línea si no cabe. */
 @media (min-width: 901px) {
-  .intro,
-  .schemaRoot {
-    display: none;
+  .tabsRow {
+    padding: var(--space-2) var(--space-2) 0;
   }
-}
 
-@media (max-width: 900px) {
-  .introTip {
-    display: none;
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab {
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 7px 8px;
+  }
+
+  .fold {
+    margin: auto auto var(--space-2);
   }
 }

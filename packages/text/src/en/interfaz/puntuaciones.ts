@@ -2,7 +2,6 @@ import type { puntuaciones as es } from '../../es/interfaz/puntuaciones.ts';
 
 /** The four score cards at the top of the column. */
 export const puntuaciones: typeof es = {
-  abreviaturas: { security: 'Sec', resilience: 'Res', usability: 'Use', inheritance: 'Inh' },
   ubicaciones: ['location', 'locations'],
   seguridad: {
     sinRobo: (hasta: number) => `no theft with ≤${hasta} attacks`,
@@ -27,7 +26,6 @@ export const puntuaciones: typeof es = {
   pistaTarjeta: (metrica: string, detalle: string) => `${metrica}: ${detalle}. Click to see why`,
   pistaCambio: 'Change since the last analysis',
   medidor: (metrica: string, valor: number, banda: string) => `${metrica}: ${valor} out of 100, ${banda}`,
-  pistaMini: (metrica: string, valor: number, banda: string) => `${metrica}: ${valor} out of 100, ${banda}. Click to see why`,
   nombre: 'Setup scores',
   desplegar: 'Expand the panel',
   analizando: 'Analyzing',

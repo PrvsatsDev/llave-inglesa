@@ -54,18 +54,6 @@
   color: var(--accent-strong);
 }
 
-/* Qué es el Esquema, al pasar el ratón: en escritorio el índice ocupa el sitio de la barra que lo explicaba. */
-.indexTip {
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-@media (max-width: 900px) {
-  .indexTip {
-    display: none;
-  }
-}
-
 /* Fila del índice: pulsarla abre la ficha. */
 .row {
   position: relative;
@@ -225,10 +213,6 @@
   background: var(--warn-soft);
 }
 
-.meta {
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
-}
 
 .meta summary {
   color: var(--text-muted);

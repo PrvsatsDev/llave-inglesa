@@ -12,7 +12,7 @@ import { MetricAnalysis } from './Analysis.tsx';
 import { TryScenario } from './Findings.tsx';
 import { Guide } from './Guide.tsx';
 import { Inspector } from './inspector/Inspector.tsx';
-import { Breadcrumbs, SectionTabs } from './Navigation.tsx';
+import { Breadcrumbs, FoldButton, SectionTabs } from './Navigation.tsx';
 import { ScenarioPanel } from './ScenarioPanel.tsx';
 import { Schema } from './Schema.tsx';
 import { Scoreboard } from './Scoreboard.tsx';
@@ -44,7 +44,7 @@ function exists(model: CustodyModel, s: Selection | null): boolean {
 }
 
 /**
- * Columna izquierda: secciones, puntuaciones, migas de pan y el contenido.
+ * Columna izquierda: un raíl con las secciones y las puntuaciones y, a su lado, las migas de pan y el contenido.
  * La ficha de un elemento se abre encima de la sección en la que se estaba, y "volver" regresa a ella.
  */
 export function Sidebar() {
@@ -65,14 +65,20 @@ export function Sidebar() {
   return (
     <aside className={styles.sidebar} aria-label={UI.marco.panel}>
       <MobileNotice />
-      {!collapsed && <SectionTabs model={model} />}
-      <Scoreboard />
+      {/* Raíl: secciones y notas, siempre a la vista y a todo el alto. En pantalla estrecha no hay raíl: van en cabeza del panel. */}
+      <div className={styles.rail}>
+        <SectionTabs model={model} />
+        <Scoreboard />
+        <FoldButton />
+      </div>
       {!collapsed && (
         <>
-          <div ref={top} />
-          <Breadcrumbs model={model} />
-          <div className={styles.content}>
-            {exists(model, selected) ? <Inspector /> : guide ? <Guide /> : <SectionContent section={section} model={model} />}
+          <div className={styles.body}>
+            <div ref={top} />
+            <Breadcrumbs model={model} />
+            <div className={styles.content}>
+              {exists(model, selected) ? <Inspector /> : guide ? <Guide /> : <SectionContent section={section} model={model} />}
+            </div>
           </div>
           <ResizeHandle />
         </>
@@ -96,7 +102,8 @@ function ResizeHandle() {
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     const handle = e.currentTarget;
-    const left = handle.parentElement!.getBoundingClientRect().left;
+    // El ancho que se elige es el del panel, sin el raíl: se mide desde el borde izquierdo del panel.
+    const left = handle.previousElementSibling!.getBoundingClientRect().left;
     handle.setPointerCapture(e.pointerId);
     const move = (ev: PointerEvent) => setWidth(ev.clientX - left);
     const up = () => {

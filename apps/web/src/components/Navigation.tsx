@@ -1,6 +1,5 @@
 import type { CustodyModel, Issue } from '@llave-inglesa/domain';
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeft, FlaskConical, Gauge, LayoutList, XCircle, type LucideIcon } from 'lucide-react';
-import { InfoTip } from './inspector/fields.tsx';
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FlaskConical, Gauge, LayoutList, XCircle, type LucideIcon } from 'lucide-react';
 import { entityName, KIND_LABEL, METRIC_INTRO, METRIC_LABEL, SECTION_INTRO, SECTION_LABEL } from '../lib/sections.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useLayout } from '../store/layout.ts';
@@ -47,7 +46,7 @@ function TabBadge({ section, issues, simulating }: { section: Section; issues: r
   return null;
 }
 
-/** Las tres secciones de la columna, y el botón para plegarla. */
+/** Las tres secciones: en vertical en el raíl o, en pantalla estrecha, en fila sobre el panel. */
 export function SectionTabs({ model }: { model: CustodyModel }) {
   const current = useNavigation((s) => s.section);
   const goSection = useNavigation((s) => s.goSection);
@@ -64,7 +63,12 @@ export function SectionTabs({ model }: { model: CustodyModel }) {
             key={id}
             className={`${styles.tab} ${current === id ? styles.current : ''}`}
             aria-current={current === id ? 'page' : undefined}
-            onClick={() => (id === 'analysis' ? goMetric(metric) : goSection(id))}
+            onClick={() => {
+              // Con el panel plegado solo queda el raíl: pulsar una sección lo despliega.
+              setCollapsed(false);
+              if (id === 'analysis') goMetric(metric);
+              else goSection(id);
+            }}
           >
             <Icon size={15} aria-hidden />
             {SECTION_LABEL[id]}
@@ -72,10 +76,19 @@ export function SectionTabs({ model }: { model: CustodyModel }) {
           </button>
         ))}
       </div>
-      <button className={styles.fold} onClick={() => setCollapsed(true)} aria-label={T.plegar} title={T.pistaPlegar}>
-        <ChevronsLeft size={16} />
-      </button>
     </nav>
+  );
+}
+
+/** Al pie del raíl: pliega el panel para ver más mapa (quedan las secciones y las notas) o lo despliega. */
+export function FoldButton() {
+  const collapsed = useLayout((s) => s.collapsed);
+  const setCollapsed = useLayout((s) => s.setCollapsed);
+  const label = collapsed ? UI.puntuaciones.desplegar : T.plegar;
+  return (
+    <button className={styles.fold} onClick={() => setCollapsed(!collapsed)} aria-label={label} title={collapsed ? label : T.pistaPlegar}>
+      {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+    </button>
   );
 }
 
@@ -120,11 +133,8 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
   const canGoBack = fichas.length > 0 || guide !== null || (section === 'simulate' && simulatedFrom !== null);
   const intro = fichas.length > 0 || chapter ? null : guide ? T.introGuia : section === 'analysis' ? METRIC_INTRO[metric] : section === 'simulate' && simulatedFrom ? null : SECTION_INTRO[section];
 
-  // En la raíz del Esquema, en escritorio, el índice del Esquema ocupa el sitio de esta barra (lo decide el CSS).
-  const schemaRoot = !guide && section === 'schema' && fichas.length === 0;
-
   return (
-    <div className={`${styles.crumbsBar} ${schemaRoot ? styles.schemaRoot : ''}`}>
+    <div className={styles.crumbsBar}>
       <div className={styles.crumbsRow}>
         {canGoBack && (
           <button className={styles.back} onClick={goBack} title={T.pistaVolver}>
@@ -147,11 +157,6 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
             </li>
           ))}
         </ol>
-        {intro && (
-          <span className={styles.introTip}>
-            <InfoTip text={intro} />
-          </span>
-        )}
         {stepper && (
           <span className={styles.stepper}>
             <button className={styles.step} onClick={() => goRoute(position - 1)} disabled={position === 0} aria-label={T.viaAnterior} title={T.viaAnterior}>

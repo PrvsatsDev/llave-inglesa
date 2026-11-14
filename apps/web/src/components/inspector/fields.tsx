@@ -1,5 +1,5 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
-import { ChevronDown, Info, Trash2, X, type LucideIcon } from 'lucide-react';
+import { ChevronDown, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { secretBadge } from '../../graph/build.ts';
 import { SecretBadge } from '../../graph/SecretBadge.tsx';
@@ -31,21 +31,6 @@ export function PanelHeader({ icon: Icon, kind, title, onClose, closeLabel }: {
         </button>
       )}
     </header>
-  );
-}
-
-/**
- * Un icono ⓘ con una explicación que se abre al pasar el ratón o al enfocarlo, con el estilo de la aplicación (no el
- * `title` del navegador). Para lo que ayuda la primera vez pero no merece gastar alto del panel siempre.
- */
-export function InfoTip({ text }: { text: string }) {
-  return (
-    <span className={styles.infoTip} tabIndex={0} role="note" aria-label={text}>
-      <Info size={14} aria-hidden />
-      <span className={styles.infoBubble} aria-hidden>
-        {text}
-      </span>
-    </span>
   );
 }
 
