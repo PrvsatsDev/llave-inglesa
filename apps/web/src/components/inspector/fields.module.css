@@ -85,6 +85,89 @@
   letter-spacing: 0.08em;
 }
 
+/* Icono ⓘ con su explicación en un globo, al pasar el ratón o enfocarlo. */
+.infoTip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  color: var(--text-faint);
+  cursor: help;
+}
+
+.infoTip:hover,
+.infoTip:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.infoBubble {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  width: 270px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px);
+  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease), visibility var(--duration);
+  pointer-events: none;
+}
+
+.infoTip:hover .infoBubble,
+.infoTip:focus-visible .infoBubble {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+/* Bloque principal (Esquema): la cabecera es una banda de lado a lado, con icono y título grande. */
+.block {
+  scroll-margin-top: 46px;
+}
+
+.blockHeader {
+  flex-wrap: wrap;
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+  padding: 10px var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.blockIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.blockTitle {
+  /* No se parte: si los botones no caben a su lado, bajan ellos a la línea siguiente. */
+  flex: 1 0 auto;
+  white-space: nowrap;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
 .field {
   display: flex;
   flex-direction: column;

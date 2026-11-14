@@ -3,6 +3,7 @@ import type { esquema as es, nuevos as esNuevos } from '../../es/interfaz/esquem
 /** Setup section: policy, keys, locations, people and the setup's details. */
 export const esquema: typeof es = {
   sobre: 'About this setup',
+  indice: { nombre: 'Setup sections', politica: 'Policy', keys: 'Keys', cartera: 'Descriptor', ubicaciones: 'Locations', personas: 'People' },
   politica: 'Spending policy',
   firmasNecesarias: 'Signatures required',
   kDeN: (k: number, n: number) => `${k} of ${n}`,

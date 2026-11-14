@@ -232,3 +232,23 @@
     display: none;
   }
 }
+
+/* La frase que dice qué hay en cada sitio: en escritorio, un icono con la frase al pasar el ratón, para no gastar
+   alto del panel; en pantalla estrecha, donde el panel se desplaza entero, la frase a la vista. */
+.introTip {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+@media (min-width: 901px) {
+  .intro,
+  .schemaRoot {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .introTip {
+    display: none;
+  }
+}

@@ -1,5 +1,6 @@
 import type { CustodyModel, Issue } from '@llave-inglesa/domain';
 import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeft, FlaskConical, Gauge, LayoutList, XCircle, type LucideIcon } from 'lucide-react';
+import { InfoTip } from './inspector/fields.tsx';
 import { entityName, KIND_LABEL, METRIC_INTRO, METRIC_LABEL, SECTION_INTRO, SECTION_LABEL } from '../lib/sections.ts';
 import { useValidation } from '../lib/validation.ts';
 import { useLayout } from '../store/layout.ts';
@@ -119,8 +120,11 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
   const canGoBack = fichas.length > 0 || guide !== null || (section === 'simulate' && simulatedFrom !== null);
   const intro = fichas.length > 0 || chapter ? null : guide ? T.introGuia : section === 'analysis' ? METRIC_INTRO[metric] : section === 'simulate' && simulatedFrom ? null : SECTION_INTRO[section];
 
+  // En la raíz del Esquema, en escritorio, el índice del Esquema ocupa el sitio de esta barra (lo decide el CSS).
+  const schemaRoot = !guide && section === 'schema' && fichas.length === 0;
+
   return (
-    <div className={styles.crumbsBar}>
+    <div className={`${styles.crumbsBar} ${schemaRoot ? styles.schemaRoot : ''}`}>
       <div className={styles.crumbsRow}>
         {canGoBack && (
           <button className={styles.back} onClick={goBack} title={T.pistaVolver}>
@@ -143,6 +147,11 @@ export function Breadcrumbs({ model }: { model: CustodyModel }) {
             </li>
           ))}
         </ol>
+        {intro && (
+          <span className={styles.introTip}>
+            <InfoTip text={intro} />
+          </span>
+        )}
         {stepper && (
           <span className={styles.stepper}>
             <button className={styles.step} onClick={() => goRoute(position - 1)} disabled={position === 0} aria-label={T.viaAnterior} title={T.viaAnterior}>

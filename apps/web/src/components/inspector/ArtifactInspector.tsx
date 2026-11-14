@@ -1,5 +1,5 @@
 import { setArtifactPassword, updateArtifact, type Artifact, type CustodyModel, type SecretRef } from '@llave-inglesa/domain';
-import { RectangleHorizontal } from 'lucide-react';
+import { Lock, RectangleHorizontal, ScrollText } from 'lucide-react';
 import { sameSecret, secretOptions, toggleSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
@@ -35,12 +35,12 @@ export function ArtifactInspector({ model, artifact }: { model: CustodyModel; ar
         </div>
       </Section>
 
-      <Section title={T.queContiene}>
+      <Section icon={ScrollText} title={T.queContiene}>
         <SecretToggles model={model} options={options} selected={artifact.contents} onToggle={(s) => patch({ contents: toggleSecret(artifact.contents, s) })} />
         <p className={styles.hint}>{T.pistaContenido}</p>
       </Section>
 
-      <Section title={T.cifrado}>
+      <Section icon={Lock} title={T.cifrado}>
         <Switch
           checked={hasPassword}
           onChange={(enabled) => apply((m) => setArtifactPassword(m, id, enabled))}

@@ -1,6 +1,6 @@
 import { advisoriesFor, catalogModelByName, flatPolicy, miniscriptSupport, setDeviceShares, updateDevice, type CatalogModel, type CustodyModel, type Device, type SecretRef } from '@llave-inglesa/domain';
 import { tamperRisk } from '@llave-inglesa/engine';
-import { AlertTriangle, Camera, Cpu } from 'lucide-react';
+import { AlertTriangle, Camera, Cpu, KeyRound, PackageSearch, PenLine, Puzzle, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { TAMPER_REASON_TEXT, UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
@@ -98,7 +98,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
         </Field>
       </Section>
 
-      <Section title={T.tipoTitulo}>
+      <Section icon={SlidersHorizontal} title={T.tipoTitulo}>
         <Segmented label={T.tipoDispositivo} value={device.kind} options={kindOptions()} onChange={(kind) => patch({ kind })} />
         <p className={styles.hint}>
           {device.kind === 'stateful'
@@ -108,7 +108,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
       </Section>
 
       {device.kind === 'stateful' && (
-        <Section title={T.keysQueGuarda}>
+        <Section icon={KeyRound} title={T.keysQueGuarda}>
           <SecretToggles
             model={model}
             options={keyOptions}
@@ -123,7 +123,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
       )}
 
       {device.kind === 'stateful' && (shareOptions.length > 0 || heldShares.length > 0) && (
-        <Section title={T.sharesQueGuarda}>
+        <Section icon={Puzzle} title={T.sharesQueGuarda}>
           <SecretToggles
             model={model}
             options={shareOptions}
@@ -142,6 +142,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
 
       {(device.kind === 'stateless' || device.acceptsExternalSeed) && (
         <Section
+          icon={PenLine}
           title={T.keysQueFirmas}
           action={
             device.kind === 'stateless' &&
@@ -173,7 +174,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
         </Section>
       )}
 
-      <Section title={T.seguridad}>
+      <Section icon={ShieldCheck} title={T.seguridad}>
         {catalog && !catalog.pin ? (
           <p className={styles.hint}>{T.sinPin}</p>
         ) : (
@@ -208,7 +209,7 @@ export function DeviceInspector({ model, device }: { model: CustodyModel; device
         )}
       </Section>
 
-      <Section title={T.procedencia}>
+      <Section icon={PackageSearch} title={T.procedencia}>
         {catalog?.diy && (
           <Segmented
             label={T.montaje}

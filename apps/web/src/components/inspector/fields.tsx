@@ -1,5 +1,5 @@
 import type { CustodyModel, SecretRef } from '@llave-inglesa/domain';
-import { ChevronDown, Trash2, X, type LucideIcon } from 'lucide-react';
+import { ChevronDown, Info, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { secretBadge } from '../../graph/build.ts';
 import { SecretBadge } from '../../graph/SecretBadge.tsx';
@@ -34,12 +34,36 @@ export function PanelHeader({ icon: Icon, kind, title, onClose, closeLabel }: {
   );
 }
 
-export function Section({ title, children, action }: { title?: string; children: ReactNode; action?: ReactNode }) {
+/**
+ * Un icono ⓘ con una explicación que se abre al pasar el ratón o al enfocarlo, con el estilo de la aplicación (no el
+ * `title` del navegador). Para lo que ayuda la primera vez pero no merece gastar alto del panel siempre.
+ */
+export function InfoTip({ text }: { text: string }) {
   return (
-    <section className={styles.section}>
+    <span className={styles.infoTip} tabIndex={0} role="note" aria-label={text}>
+      <Info size={14} aria-hidden />
+      <span className={styles.infoBubble} aria-hidden>
+        {text}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Con `icon`, es un bloque principal (los del Esquema): cabecera en banda, con icono y título grande, para
+ * distinguirlo de un vistazo de las subsecciones de una ficha. `id` permite saltar a él desde un índice.
+ */
+export function Section({ title, children, action, icon: Icon, id }: { title?: string; children: ReactNode; action?: ReactNode; icon?: LucideIcon; id?: string }) {
+  return (
+    <section id={id} className={`${styles.section} ${Icon ? styles.block : ''}`}>
       {(title || action) && (
-        <div className={styles.sectionHeader}>
-          {title && <h3 className={styles.sectionTitle}>{title}</h3>}
+        <div className={`${styles.sectionHeader} ${Icon ? styles.blockHeader : ''}`}>
+          {Icon && (
+            <span className={styles.blockIcon} aria-hidden>
+              <Icon size={15} />
+            </span>
+          )}
+          {title && <h3 className={Icon ? styles.blockTitle : styles.sectionTitle}>{title}</h3>}
           {action}
         </div>
       )}
