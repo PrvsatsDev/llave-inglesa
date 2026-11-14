@@ -1,6 +1,8 @@
 /** Sección Esquema: política, keys, ubicaciones, personas y datos del esquema. */
 export const esquema = {
   sobre: 'Sobre este esquema',
+  /** Índice fijo arriba del Esquema: salta a cada sección. Nombres cortos, para que quepan en una línea. */
+  indice: { nombre: 'Secciones del esquema', politica: 'Política', keys: 'Keys', cartera: 'Descriptor', ubicaciones: 'Ubicaciones', personas: 'Personas' },
   politica: 'Política de gasto',
   firmasNecesarias: 'Firmas necesarias',
   kDeN: (k: number, n: number) => `${k} de ${n}`,

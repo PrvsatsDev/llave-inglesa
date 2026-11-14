@@ -31,7 +31,7 @@ import {
   type ShapeKind,
 } from '@llave-inglesa/domain';
 import { renewsInTime, spendStages } from '@llave-inglesa/engine';
-import { AlertTriangle, Check, Plus, X } from 'lucide-react';
+import { AlertTriangle, Check, ListTree, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { policyText, spendStageText, UI, walletProblemText } from '../lib/text.ts';
 import { useDocument } from '../store/document.ts';
@@ -66,7 +66,7 @@ export function PolicySection({ model }: { model: CustodyModel }) {
   const timelocks = policyTimelocks(model.policy);
 
   return (
-    <Section title={T.politica}>
+    <Section id="esquema-politica" icon={ListTree} title={T.politica}>
       <p className={styles.description}>{policyText(model.policy, label)}</p>
       <Field label={T.forma} hint={form === FREE ? T.pistaFormaLibre : T.pistaForma[form]}>
         {(id) => (

@@ -3,13 +3,14 @@
   grid-template-areas:
     'header header'
     'panel canvas';
-  grid-template-columns: min(var(--panel-width), 45vw) minmax(0, 1fr);
+  /* La columna es el raíl (secciones y notas) más el panel, cuyo ancho se elige arrastrando su borde. */
+  grid-template-columns: min(calc(var(--panel-rail-width) + var(--panel-width)), 60vw) minmax(0, 1fr);
   grid-template-rows: var(--header-height) minmax(0, 1fr);
   height: 100%;
 }
 
 .collapsed {
-  --panel-width: var(--panel-rail-width);
+  grid-template-columns: var(--panel-rail-width) minmax(0, 1fr);
 }
 
 /*

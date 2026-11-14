@@ -1,5 +1,5 @@
 import { addArtifact, addComputer, addDevice, canNest, setLocationInside, setLocationProtection, updateLocation, type CustodyModel, type Location } from '@llave-inglesa/domain';
-import { Camera, Cpu, MapPin, Monitor, Plus, RectangleHorizontal, X } from 'lucide-react';
+import { Camera, Cpu, DoorOpen, MapPin, Monitor, Package, Plus, RectangleHorizontal, Shield, X } from 'lucide-react';
 import { locationIcon } from '../../graph/LocationNode.tsx';
 import { UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
@@ -68,7 +68,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
       </Section>
 
       {location.kind === 'physical' && (
-        <Section title={T.proteccion}>
+        <Section icon={Shield} title={T.proteccion}>
           <Segmented
             label={T.proteccion}
             value={location.protection ?? 'none'}
@@ -109,6 +109,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
       )}
 
       <Section
+        icon={DoorOpen}
         title={T.quienEntra}
         action={
           withoutAccess.length > 0 && (
@@ -155,7 +156,7 @@ export function LocationInspector({ model, location }: { model: CustodyModel; lo
         </ul>
       </Section>
 
-      <Section title={T.queHay}>
+      <Section icon={Package} title={T.queHay}>
         <ul className={styles.list}>
           {items.map((item) => (
             <li key={item.id}>

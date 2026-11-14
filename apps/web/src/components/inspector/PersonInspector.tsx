@@ -1,5 +1,5 @@
 import { addComputer, canLiveAt, setPersonHome, updatePerson, type CustodyModel, type Person } from '@llave-inglesa/domain';
-import { MapPin, Smartphone, User } from 'lucide-react';
+import { Brain, DoorOpen, MapPin, Smartphone, User } from 'lucide-react';
 import { secretOptions, toggleSecret } from '../../lib/secrets.ts';
 import { UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
@@ -52,7 +52,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
         </Field>
       </Section>
 
-      <Section title={T.sabeDeMemoria}>
+      <Section icon={Brain} title={T.sabeDeMemoria}>
         <SecretToggles
           model={model}
           options={secretOptions(model)}
@@ -62,7 +62,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
         <p className={styles.hint}>{T.pistaMemoria}</p>
       </Section>
 
-      <Section title={T.puedeEntrar}>
+      <Section icon={DoorOpen} title={T.puedeEntrar}>
         {access.length === 0 && <p className={styles.hint}>{T.enNingunSitio}</p>}
         <ul className={styles.list}>
           {access.map(({ location, when }) => (
@@ -81,7 +81,7 @@ export function PersonInspector({ model, person }: { model: CustodyModel; person
         </ul>
       </Section>
 
-      <Section title={T.llevaEncima} action={<Button icon={Smartphone} onClick={addPhone}>{T.movil}</Button>}>
+      <Section icon={Smartphone} title={T.llevaEncima} action={<Button icon={Smartphone} onClick={addPhone}>{T.movil}</Button>}>
         {carried.length === 0 && <p className={styles.hint}>{T.pistaLlevaEncima}</p>}
         <ul className={styles.list}>
           {carried.map((c) => (

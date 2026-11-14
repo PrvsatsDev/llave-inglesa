@@ -1,6 +1,5 @@
 /** Las cuatro tarjetas de puntuación de cabeza de la columna. */
 export const puntuaciones = {
-  abreviaturas: { security: 'Seg', resilience: 'Res', usability: 'Usa', inheritance: 'Her' },
   ubicaciones: ['ubicación', 'ubicaciones'] as [string, string],
   seguridad: {
     sinRobo: (hasta: number) => `ningún robo con ≤${hasta} ataques`,
@@ -25,7 +24,6 @@ export const puntuaciones = {
   pistaTarjeta: (metrica: string, detalle: string) => `${metrica}: ${detalle}. Pulsa para ver por qué`,
   pistaCambio: 'Cambio respecto al último análisis',
   medidor: (metrica: string, valor: number, banda: string) => `${metrica}: ${valor} de 100, ${banda}`,
-  pistaMini: (metrica: string, valor: number, banda: string) => `${metrica}: ${valor} de 100, ${banda}. Pulsa para ver por qué`,
   nombre: 'Puntuaciones del esquema',
   desplegar: 'Desplegar el panel',
   analizando: 'Analizando',

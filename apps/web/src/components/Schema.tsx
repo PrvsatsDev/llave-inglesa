@@ -1,6 +1,6 @@
 import { addArtifact, addComputer, addDevice, addKey, addLocation, addPerson, indexModel, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
-import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, MapPin, Plus, RectangleHorizontal, Smartphone, User, UserPlus, X, XCircle } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, Info, KeyRound, ListTree, MapPin, Plus, RectangleHorizontal, Smartphone, User, UserPlus, Users, Wallet, X, XCircle, type LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
 import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.tsx';
 import { ROLE } from '../graph/PersonNode.tsx';
@@ -36,16 +36,34 @@ export function Schema({ model }: { model: CustodyModel }) {
 
   return (
     <>
-      {model.description && (
-        <Section title={T.sobre}>
-          <p className={styles.description}>{model.description}</p>
-        </Section>
-      )}
+      <SchemaIndex />
+      {/* Lo primero: qué es este esquema, y ahí mismo, plegado, cambiarle el nombre y la descripción. */}
+      <Section icon={Info} title={T.sobre}>
+        {model.description && <p className={styles.description}>{model.description}</p>}
+        <details className={styles.meta}>
+          <summary>{T.nombreYDescripcion}</summary>
+          <div className={styles.metaBody}>
+            <Field label={T.nombre}>
+              {(id) => <TextInput id={id} value={model.name} onChange={(name) => apply((m) => updateMeta(m, { name }), 'meta:name')} />}
+            </Field>
+            <Field label={T.descripcion}>
+              {(id) => (
+                <TextArea
+                  id={id}
+                  value={model.description ?? ''}
+                  placeholder={T.pistaDescripcion}
+                  onChange={(description) => apply((m) => updateMeta(m, { description: description || undefined }), 'meta:description')}
+                />
+              )}
+            </Field>
+          </div>
+        </details>
+      </Section>
       <Problems model={model} />
 
       <PolicySection model={model} />
 
-      <Section title={T.keys(model.keys.length)} action={<Button icon={Plus} onClick={() => create(addKey, 'key')}>{T.key}</Button>}>
+      <Section id="esquema-keys" icon={KeyRound} title={T.keys(model.keys.length)} action={<Button icon={Plus} onClick={() => create(addKey, 'key')}>{T.key}</Button>}>
         <ul className={styles.list}>
           {model.keys.map((k) => (
             <li key={k.id}>
@@ -91,26 +109,80 @@ export function Schema({ model }: { model: CustodyModel }) {
         }
       />
       <People model={model} onAdd={() => create((m) => addPerson(m, UI.nuevos.persona), 'person')} />
-
-      <details className={styles.meta}>
-        <summary>{T.nombreYDescripcion}</summary>
-        <div className={styles.metaBody}>
-          <Field label={T.nombre}>
-            {(id) => <TextInput id={id} value={model.name} onChange={(name) => apply((m) => updateMeta(m, { name }), 'meta:name')} />}
-          </Field>
-          <Field label={T.descripcion}>
-            {(id) => (
-              <TextArea
-                id={id}
-                value={model.description ?? ''}
-                placeholder={T.pistaDescripcion}
-                onChange={(description) => apply((m) => updateMeta(m, { description: description || undefined }), 'meta:description')}
-              />
-            )}
-          </Field>
-        </div>
-      </details>
     </>
+  );
+}
+
+type IndexEntry = 'politica' | 'keys' | 'cartera' | 'ubicaciones' | 'personas';
+
+/** Los bloques del Esquema a los que salta el índice, en el orden en que se pintan; cada uno, con el icono de su cabecera. */
+const BLOCKS: readonly { entry: IndexEntry; id: string; icon: LucideIcon }[] = [
+  { entry: 'politica', id: 'esquema-politica', icon: ListTree },
+  { entry: 'keys', id: 'esquema-keys', icon: KeyRound },
+  { entry: 'cartera', id: 'esquema-cartera', icon: Wallet },
+  { entry: 'ubicaciones', id: 'esquema-ubicaciones', icon: MapPin },
+  { entry: 'personas', id: 'esquema-personas', icon: Users },
+];
+
+/**
+ * Índice fijo arriba del Esquema: salta a cada bloque y marca en cuál se está. Se está en el último bloque cuya
+ * cabecera ha pasado bajo el índice; el que se acaba de pulsar manda mientras siga a la vista (al final de la lista
+ * no siempre puede subir hasta arriba), hasta que se vuelve a desplazar a mano.
+ */
+function SchemaIndex() {
+  const nav = useRef<HTMLElement>(null);
+  const pinned = useRef<string | null>(null);
+  const [current, setCurrent] = useState(BLOCKS[0]!.id);
+
+  useEffect(() => {
+    const update = () => {
+      const line = (nav.current?.getBoundingClientRect().bottom ?? 0) + 8;
+      const pin = pinned.current && document.getElementById(pinned.current)?.getBoundingClientRect();
+      if (pin && pin.top < window.innerHeight && pin.bottom > line) return setCurrent(pinned.current!);
+      let found = BLOCKS[0]!.id;
+      for (const { id } of BLOCKS) {
+        const box = document.getElementById(id)?.getBoundingClientRect();
+        if (box && box.top <= line) found = id;
+      }
+      setCurrent(found);
+    };
+    const unpin = () => {
+      pinned.current = null;
+    };
+    update();
+    // El desplazamiento no burbujea: se escucha en la captura, sea cual sea el contenedor que se mueve.
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('wheel', unpin, { passive: true });
+    window.addEventListener('touchmove', unpin, { passive: true });
+    window.addEventListener('keydown', unpin);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('wheel', unpin);
+      window.removeEventListener('touchmove', unpin);
+      window.removeEventListener('keydown', unpin);
+    };
+  }, []);
+
+  return (
+    <nav ref={nav} className={styles.index} aria-label={T.indice.nombre}>
+      {BLOCKS.map(({ entry, id, icon: Icon }) => (
+        <a
+          key={id}
+          href={`#${id}`}
+          className={styles.indexLink}
+          aria-current={current === id ? 'true' : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            pinned.current = id;
+            setCurrent(id);
+            document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          }}
+        >
+          <Icon size={13} aria-hidden />
+          {T.indice[entry]}
+        </a>
+      ))}
+    </nav>
   );
 }
 
@@ -124,7 +196,7 @@ function Problems({ model }: { model: CustodyModel }) {
   if (issues.length === 0) return null;
   const label = indexModel(model).label;
   return (
-    <Section title={!valid ? T.errores : issues.some((i) => i.severity === 'grave') ? T.graves : T.avisos}>
+    <Section icon={AlertTriangle} title={!valid ? T.errores : issues.some((i) => i.severity === 'grave') ? T.graves : T.avisos}>
       <ul className={styles.issues}>
         {bySeverity(issues).map((i, n) => (
           <li key={n} className={i.severity === 'warning' ? styles.warning : styles.error}>
@@ -198,6 +270,8 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
 
   return (
     <Section
+      id="esquema-ubicaciones"
+      icon={MapPin}
       title={T.ubicaciones(locations.length)}
       action={
         <span className={styles.actions}>
@@ -274,7 +348,7 @@ function People({ model, onAdd }: { model: CustodyModel; onAdd(): void }) {
   const people = useGraph(model).nodes.filter((n): n is PersonNode => n.type === 'person');
   const entries = (id: string) => model.locations.filter((l) => l.access.some((a) => a.person === id)).length;
   return (
-    <Section title={T.personas(people.length)} action={<Button icon={UserPlus} onClick={onAdd}>{T.persona}</Button>}>
+    <Section id="esquema-personas" icon={Users} title={T.personas(people.length)} action={<Button icon={UserPlus} onClick={onAdd}>{T.persona}</Button>}>
       <ul className={styles.list}>
         {people.map(({ id, data }) => {
           const Avatar = data.role === 'owner' ? Crown : User;

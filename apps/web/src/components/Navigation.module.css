@@ -232,3 +232,25 @@
     display: none;
   }
 }
+
+/* Escritorio: las secciones van en vertical, en el raíl; el estado de cada una baja a otra línea si no cabe. */
+@media (min-width: 901px) {
+  .tabsRow {
+    padding: var(--space-2) var(--space-2) 0;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab {
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 7px 8px;
+  }
+
+  .fold {
+    margin: auto auto var(--space-2);
+  }
+}

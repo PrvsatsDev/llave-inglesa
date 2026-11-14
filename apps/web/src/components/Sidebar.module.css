@@ -2,14 +2,32 @@
   grid-area: panel;
   position: relative;
   display: flex;
-  flex-direction: column;
   min-width: 0;
   min-height: 0;
   background: var(--bg);
   border-right: 1px solid var(--border);
 }
 
-/* Solo el contenido se desplaza: las puntuaciones quedan siempre a la vista. */
+/* Raíl: secciones y puntuaciones a todo el alto, para que el panel entero sea espacio de trabajo. */
+.rail {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--panel-rail-width);
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Solo el contenido se desplaza: las migas quedan siempre a la vista. */
 .content {
   display: flex;
   flex-direction: column;
@@ -39,8 +57,15 @@
 @media (max-width: 900px) {
   .sidebar {
     grid-area: main;
+    flex-direction: column;
     overflow-y: auto;
     border-right: 0;
+  }
+
+  /* Sin raíl: secciones, notas, migas y contenido, uno debajo de otro. */
+  .rail,
+  .body {
+    display: contents;
   }
 
   :global([data-view='map']) > .sidebar {

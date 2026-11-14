@@ -1,5 +1,5 @@
 import { setComputerConnects, setComputerPlace, updateComputer, type Computer, type ComputerPlace, type CustodyModel } from '@llave-inglesa/domain';
-import { Monitor, Smartphone } from 'lucide-react';
+import { Cable, Monitor, Settings2, Smartphone } from 'lucide-react';
 import { hostExploitAdvisory } from '@llave-inglesa/engine';
 import { advisoryShortName, UI } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
@@ -35,7 +35,7 @@ export function ComputerInspector({ model, computer }: { model: CustodyModel; co
         </Field>
       </Section>
 
-      <Section title={T.uso}>
+      <Section icon={Settings2} title={T.uso}>
         <Segmented label={T.uso} value={computer.use} options={useOptions()} onChange={(use) => patch({ use })} />
         <p className={styles.hint}>{T.pistasUso[computer.use]}</p>
       </Section>
@@ -45,6 +45,7 @@ export function ComputerInspector({ model, computer }: { model: CustodyModel; co
       </Section>
 
       <Section
+        icon={Cable}
         title={T.conectados}
         action={
           computer.connects && (

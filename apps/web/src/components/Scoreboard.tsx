@@ -1,5 +1,5 @@
 import { scoreBand, type Analysis, type ScoreBand } from '@llave-inglesa/engine';
-import { AlertTriangle, BadgeCheck, ChevronsRight, Loader2, ShieldAlert, ShieldCheck, ShieldX, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Loader2, ShieldAlert, ShieldCheck, ShieldX, type LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { METRIC_LABEL } from '../lib/sections.ts';
 import { plural, SCORE_BAND_TEXT, UI } from '../lib/text.ts';
@@ -29,8 +29,6 @@ export function level(score: number): { level: ScoreBand; icon: LucideIcon; text
 interface Metric {
   id: MetricId;
   label: string;
-  /** Abreviatura para la barra plegada. */
-  short: string;
   score: number;
   detail: string;
 }
@@ -43,10 +41,10 @@ function metrics(a: Analysis): Metric[] {
       ? T.seguridad.sinRobo(sec.searchedUpTo)
       : T.seguridad.roboMasBarato(num(sec.minEffort)) + (sec.cheapRoutes > 1 ? ` · ${T.seguridad.vias(sec.cheapRoutes)}` : '');
   return [
-    { id: 'security', label: METRIC_LABEL.security, short: T.abreviaturas.security, score: sec.score, detail: secDetail },
+    { id: 'security', label: METRIC_LABEL.security, score: sec.score, detail: secDetail },
     {
       id: 'resilience',
-      label: METRIC_LABEL.resilience, short: T.abreviaturas.resilience,
+      label: METRIC_LABEL.resilience,
       score: a.resilience.score,
       detail: !a.resilience.recoverableNow
         ? T.resiliencia.yaNoRecuperable
@@ -57,13 +55,13 @@ function metrics(a: Analysis): Metric[] {
     },
     {
       id: 'usability',
-      label: METRIC_LABEL.usability, short: T.abreviaturas.usability,
+      label: METRIC_LABEL.usability,
       score: a.usability.score,
       detail: a.usability.locations ? T.usabilidad.firmarEn(plural(a.usability.visits!, ...T.ubicaciones)) : T.usabilidad.noPuede,
     },
     {
       id: 'inheritance',
-      label: METRIC_LABEL.inheritance, short: T.abreviaturas.inheritance,
+      label: METRIC_LABEL.inheritance,
       score: inh.score,
       detail:
         inh.status === 'ok'
@@ -80,10 +78,15 @@ function Tile({ metric, previous, stale, current }: { metric: Metric; previous: 
   const { level: lvl, icon: Icon, text } = level(metric.score);
   const delta = previous === null ? 0 : metric.score - previous;
   const goMetric = useNavigation((s) => s.goMetric);
+  const setCollapsed = useLayout((s) => s.setCollapsed);
   return (
     <button
       className={`${styles.tile} ${styles[lvl]} ${stale ? styles.stale : ''} ${current ? styles.current : ''}`}
-      onClick={() => goMetric(metric.id)}
+      // Con el panel plegado solo queda el raíl: pulsar una nota lo despliega en su análisis.
+      onClick={() => {
+        setCollapsed(false);
+        goMetric(metric.id);
+      }}
       aria-current={current ? 'page' : undefined}
       title={T.pistaTarjeta(metric.label, metric.detail)}
     >
@@ -116,51 +119,13 @@ function Tile({ metric, previous, stale, current }: { metric: Metric; previous: 
   );
 }
 
-/** Versión mínima de una tarjeta para la columna plegada: abreviatura, número e icono de estado. */
-function MiniTile({ metric, stale }: { metric: Metric; stale: boolean }) {
-  const { level: lvl, icon: Icon, text } = level(metric.score);
-  const goMetric = useNavigation((s) => s.goMetric);
-  const setCollapsed = useLayout((s) => s.setCollapsed);
-  return (
-    <button
-      className={`${styles.mini} ${styles[lvl]} ${stale ? styles.stale : ''}`}
-      onClick={() => {
-        setCollapsed(false);
-        goMetric(metric.id);
-      }}
-      title={T.pistaMini(metric.label, metric.score, text)}
-    >
-      <span className={styles.label}>{metric.short}</span>
-      <span className={styles.miniValue}>{metric.score}</span>
-      <Icon size={13} className={styles.miniIcon} aria-label={text} />
-    </button>
-  );
-}
-
-/** Las cuatro puntuaciones, recalculadas en vivo, en cabeza de la columna. */
+/** Las cuatro puntuaciones, recalculadas en vivo: en el raíl de la izquierda o, en pantalla estrecha, en cabeza del panel. */
 export function Scoreboard() {
   const { status, analysis, previous, ms } = useAnalysis();
-  const collapsed = useLayout((s) => s.collapsed);
-  const setCollapsed = useLayout((s) => s.setCollapsed);
   const section = useNavigation((s) => s.section);
   const metricShown = useNavigation((s) => s.metric);
   const selected = useSelection((s) => s.selected !== null);
   const stale = status !== 'ready';
-
-  if (collapsed) {
-    return (
-      <section className={styles.rail} aria-label={T.nombre} aria-live="polite">
-        <button className={styles.foldButton} onClick={() => setCollapsed(false)} aria-label={T.desplegar} title={T.desplegar}>
-          <ChevronsRight size={16} />
-        </button>
-        {analysis ? (
-          metrics(analysis).map((m) => <MiniTile key={m.id} metric={m} stale={stale} />)
-        ) : (
-          <Loader2 size={14} className={styles.spin} aria-label={T.analizando} />
-        )}
-      </section>
-    );
-  }
 
   if (!analysis) {
     return (

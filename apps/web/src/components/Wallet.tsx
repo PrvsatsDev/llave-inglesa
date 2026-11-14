@@ -13,7 +13,7 @@ import {
   type Match,
 } from '@llave-inglesa/domain';
 import { devicesWithoutMiniscript, devicesWithoutTaproot } from '@llave-inglesa/engine';
-import { AlertTriangle, Check, Copy, Eye, FileInput, GitBranch, Printer, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Eye, FileInput, GitBranch, Printer, Wallet, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { PRIVADO } from '../lib/privacidad.ts';
 import {
@@ -73,6 +73,8 @@ export function WalletSection({ model }: { model: CustodyModel }) {
 
   return (
     <Section
+      id="esquema-cartera"
+      icon={Wallet}
       title={T.titulo}
       action={
         <Button icon={FileInput} onClick={() => setImporting((v) => !v)}>

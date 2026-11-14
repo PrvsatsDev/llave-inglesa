@@ -34,12 +34,21 @@ export function PanelHeader({ icon: Icon, kind, title, onClose, closeLabel }: {
   );
 }
 
-export function Section({ title, children, action }: { title?: string; children: ReactNode; action?: ReactNode }) {
+/**
+ * Con `icon`, es un bloque principal (los del Esquema): cabecera en banda, con icono y título grande, para
+ * distinguirlo de un vistazo de las subsecciones de una ficha. `id` permite saltar a él desde un índice.
+ */
+export function Section({ title, children, action, icon: Icon, id }: { title?: string; children: ReactNode; action?: ReactNode; icon?: LucideIcon; id?: string }) {
   return (
-    <section className={styles.section}>
+    <section id={id} className={`${styles.section} ${Icon ? styles.block : ''}`}>
       {(title || action) && (
-        <div className={styles.sectionHeader}>
-          {title && <h3 className={styles.sectionTitle}>{title}</h3>}
+        <div className={`${styles.sectionHeader} ${Icon ? styles.blockHeader : ''}`}>
+          {Icon && (
+            <span className={styles.blockIcon} aria-hidden>
+              <Icon size={15} />
+            </span>
+          )}
+          {title && <h3 className={Icon ? styles.blockTitle : styles.sectionTitle}>{title}</h3>}
           {action}
         </div>
       )}

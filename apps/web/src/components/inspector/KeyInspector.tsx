@@ -25,7 +25,7 @@ import {
 } from '@llave-inglesa/domain';
 import { ownEntropyBits, STANDARD_SEED_BITS } from '@llave-inglesa/engine';
 import { useState } from 'react';
-import { AlertTriangle, CircleCheck, Cpu, KeyRound, MapPin, Plus, X } from 'lucide-react';
+import { AlertTriangle, CircleCheck, Cpu, Dices, KeyRound, MapPin, Plus, Split, Wallet, X } from 'lucide-react';
 import { listText, UI, vendorText } from '../../lib/text.ts';
 import { removeElement } from '../../lib/remove.ts';
 import { useDocument } from '../../store/document.ts';
@@ -192,7 +192,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
 
       <SplitSection model={model} keyEntity={key} />
 
-      <Section title={T.enLaCartera}>
+      <Section icon={Wallet} title={T.enLaCartera}>
         <div className={styles.twoCols}>
           <Field label={T.fingerprint}>
             {(fid) => (
@@ -205,7 +205,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
         <p className={styles.hint}>{T.pistaCartera}</p>
       </Section>
 
-      <Section title={T.dondeEsta}>
+      <Section icon={MapPin} title={T.dondeEsta}>
         {places.length === 0 && <p className={styles.hint}>{T.enNingunSitio}</p>}
         <ul className={styles.list}>
           {places.map((p, i) => (
@@ -223,6 +223,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
       </Section>
 
       <Section
+        icon={Dices}
         title={T.entropia}
         action={
           <Button
@@ -261,7 +262,7 @@ export function KeyInspector({ model, keyEntity: key }: { model: CustodyModel; k
         )}
       </Section>
 
-      <Section title={T.generacion}>
+      <Section icon={Cpu} title={T.generacion}>
         {isBlankProvenance(key) && carriers.length > 0 && (
           <div className={styles.suggestion}>
             <p>
@@ -378,7 +379,7 @@ function SplitSection({ model, keyEntity: key }: { model: CustodyModel; keyEntit
   );
 
   return (
-    <Section title={R.titulo}>
+    <Section icon={Split} title={R.titulo}>
       <Segmented label={R.etiqueta} value={kind} options={kindOptions()} onChange={choose} />
       <p className={styles.hint}>{R.pistas[kind]}</p>
       {kind !== 'frost' && blockers.length > 0 && (

@@ -85,6 +85,40 @@
   letter-spacing: 0.08em;
 }
 
+/* Bloque principal (Esquema): la cabecera es una banda de lado a lado, con icono y título grande. */
+.block {
+  scroll-margin-top: 46px;
+}
+
+.blockHeader {
+  flex-wrap: wrap;
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+  padding: 10px var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.blockIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.blockTitle {
+  /* No se parte: si los botones no caben a su lado, bajan ellos a la línea siguiente. */
+  flex: 1 0 auto;
+  white-space: nowrap;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
 .field {
   display: flex;
   flex-direction: column;
