@@ -24,6 +24,20 @@ describe('buildGraph', () => {
     expect(location('banco').data.keys.map((k) => k.id)).toEqual(['k1']);
   });
 
+  it('una ubicación con shares que no bastan no dice que la key está ahí: dice qué shares hay y cuántas bastan', () => {
+    const shamir = fixture('referencia/r17-shamir-trezor');
+    const at = (model: CustodyModel, id: string) => buildGraph(model).nodes.find((n): n is LocationNode => n.id === id && n.type === 'location')!.data.keys;
+    // El Trezor guarda la key entera; cada placa, una share de las dos que bastan.
+    expect(at(shamir, 'casa')).toMatchObject([{ id: 'k1' }]);
+    expect(at(shamir, 'casa')[0]!.shares).toBeUndefined();
+    expect(at(shamir, 'caja-fuerte')[0]!.shares).toEqual({ here: [1], needed: 2 });
+    // Con las dos que bastan en la misma ubicación, la key está ahí.
+    const juntas = { ...shamir, artifacts: shamir.artifacts.map((a) => (a.id === 'share-2' ? { ...a, location: 'caja-fuerte' } : a)) };
+    expect(at(juntas, 'caja-fuerte')[0]!.shares).toBeUndefined();
+    // Frostsnap: el dispositivo y su tarjeta llevan la misma share, que cuenta una vez.
+    expect(at(fixture('referencia/r16-frostsnap-2de3'), 'casa')[0]!.shares).toEqual({ here: [1], needed: 2 });
+  });
+
   it('las personas llevan lo que saben de memoria', () => {
     expect(person('yo').data.knows).toEqual([{ kind: 'pin', device: 'keystone', label: 'Keystone 3 Pro' }]);
   });

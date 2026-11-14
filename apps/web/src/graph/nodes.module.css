@@ -106,6 +106,26 @@
   line-height: 1.5;
 }
 
+/* Solo shares que no bastan: no es la key entera. Sin relleno, con el medio punto de las shares y sus números. */
+.keyTagShares {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, var(--key-color) 55%, transparent);
+  background: color-mix(in srgb, var(--key-color) 10%, transparent);
+  box-shadow: none;
+  color: var(--key-color);
+}
+
+.keyTagHalf {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--key-color);
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--key-color) 50%, transparent 50%);
+}
+
 .items {
   list-style: none;
   margin: 0;

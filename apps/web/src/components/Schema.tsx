@@ -1,5 +1,5 @@
 import { addArtifact, addComputer, addDevice, addKey, addLocation, addPerson, indexModel, updateMeta, type CustodyModel, type Id, type Issue } from '@llave-inglesa/domain';
-import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Cpu, Crown, Info, KeyRound, ListTree, MapPin, Plus, RectangleHorizontal, Smartphone, User, UserPlus, Users, Wallet, X, XCircle, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Brain, ChevronRight, Crown, Info, KeyRound, ListTree, MapPin, Plus, Smartphone, User, UserPlus, Users, Wallet, X, XCircle, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildGraph, type LocationNode, type PersonNode } from '../graph/build.ts';
 import { ITEM_ICONS, locationIcon, locationMeta } from '../graph/LocationNode.tsx';
@@ -275,9 +275,9 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
       title={T.ubicaciones(locations.length)}
       action={
         <span className={styles.actions}>
-          <Button icon={MapPin} onClick={onAdd}>{T.ubicacion}</Button>
-          <Button icon={Cpu} onClick={() => startFromHeader('stateful')}>{T.dispositivo}</Button>
-          <Button icon={RectangleHorizontal} onClick={() => startFromHeader('artifact')}>{T.backup}</Button>
+          <Button icon={Plus} onClick={onAdd}>{T.ubicacion}</Button>
+          <Button icon={Plus} onClick={() => startFromHeader('stateful')}>{T.dispositivo}</Button>
+          <Button icon={Plus} onClick={() => startFromHeader('artifact')}>{T.backup}</Button>
         </span>
       }
     >
@@ -303,7 +303,14 @@ function Places({ model, onAdd, onAddItem }: { model: CustodyModel; onAdd(): voi
                   <span className={styles.name}>{data.name || UI.comun.sinNombre}</span>
                   <span className={styles.keys}>
                     {data.keys.map((k) => (
-                      <KeyChip key={k.id} label={k.label} color={k.color} size="sm" wait={k.wait} />
+                      <KeyChip
+                        key={k.id}
+                        label={k.shares ? UI.mapa.etiquetaShares(k.label, k.shares.here) : k.label}
+                        color={k.color}
+                        size="sm"
+                        wait={k.wait}
+                        half={k.shares && UI.mapa.sharesAqui(k.label, k.shares.here.length, k.shares.needed)}
+                      />
                     ))}
                   </span>
                 </span>

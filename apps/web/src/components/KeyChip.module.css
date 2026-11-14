@@ -29,6 +29,13 @@
   box-shadow: 0 0 8px var(--key-color);
 }
 
+/* Shares que no bastan: media key, como en las insignias del mapa. */
+.half {
+  border: 1px solid var(--key-color);
+  background: linear-gradient(90deg, var(--key-color) 50%, transparent 50%);
+  box-shadow: none;
+}
+
 /* Espera de una key que solo sirve tras un timelock. */
 .wait {
   display: inline-flex;

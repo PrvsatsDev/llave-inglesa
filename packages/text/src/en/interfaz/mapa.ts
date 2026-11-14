@@ -33,6 +33,8 @@ export const mapa: typeof es = {
   sabeDeMemoria: 'Knows by heart',
   viveEn: 'Lives at',
   etiquetaShare: (key: string, share: number) => `${key}·${share}`,
+  etiquetaShares: (key: string, shares: readonly number[]) => `${key}·${shares.join(',')}`,
+  sharesAqui: (key: string, n: number, bastan: number) => `${n === 1 ? '1 share' : `${n} shares`} of ${key} here: not the whole key, ${bastan} are enough`,
   insignias: {
     pin: 'PIN',
     pistaPin: (dispositivo: string) => `PIN of ${dispositivo}`,

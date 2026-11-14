@@ -222,11 +222,12 @@ export function LocationNode({ id, data }: NodeProps<LocationNodeType>) {
           {data.keys.map((k) => (
             <span
               key={k.id}
-              className={styles.keyTag}
+              className={`${styles.keyTag} ${k.shares ? styles.keyTagShares : ''}`}
               style={{ '--key-color': k.color } as CSSProperties}
-              title={k.wait ? `${T.keyAqui(k.label)}. ${T.soloTrasEsperar(waitText(k.wait))}` : T.keyAqui(k.label)}
+              title={[k.shares ? T.sharesAqui(k.label, k.shares.here.length, k.shares.needed) : T.keyAqui(k.label), ...(k.wait ? [T.soloTrasEsperar(waitText(k.wait))] : [])].join('. ')}
             >
-              {k.label}
+              {k.shares && <span className={styles.keyTagHalf} aria-hidden />}
+              {k.shares ? T.etiquetaShares(k.label, k.shares.here) : k.label}
               {k.wait && (
                 <span className={styles.keyWait}>
                   <Hourglass size={10} aria-hidden />

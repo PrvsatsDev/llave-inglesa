@@ -34,6 +34,9 @@ export const mapa = {
   viveEn: 'Vive en',
   /** Una share de una key repartida, con su número: «K1·2». */
   etiquetaShare: (key: string, share: number) => `${key}·${share}`,
+  /** En la cabecera de una ubicación con shares de una key que no bastan para tenerla: «K1·1,3». */
+  etiquetaShares: (key: string, shares: readonly number[]) => `${key}·${shares.join(',')}`,
+  sharesAqui: (key: string, n: number, bastan: number) => `Aquí hay ${n === 1 ? '1 share' : `${n} shares`} de ${key}: no es la key entera, bastan ${bastan}`,
   insignias: {
     pin: 'PIN',
     pistaPin: (dispositivo: string) => `PIN de ${dispositivo}`,

@@ -38,7 +38,17 @@ export type ItemView = {
   canLose?: boolean;
 };
 
-export type KeyTag = { id: Id; label: string; color: string; wait?: number | undefined };
+export type KeyTag = {
+  id: Id;
+  label: string;
+  color: string;
+  wait?: number | undefined;
+  /**
+   * Solo si aquí no está la key entera, sino shares suyas que no bastan para tenerla: cuáles hay y cuántas bastan.
+   * Con las que bastan en la misma ubicación, la key está aquí (la regla del motor) y no lleva esto.
+   */
+  shares?: { here: number[]; needed: number };
+};
 export type Tone = ScenarioView['tone'];
 
 export type LocationNodeData = {
@@ -157,16 +167,22 @@ export function buildGraph(model: CustodyModel, orientation: Orientation = 'hori
 
   const locationData = model.locations.map((l): { id: Id; data: LocationNodeData } => {
     const items = index.itemsAt(l.id).map((i) => (i.kind === 'device' ? deviceView(i.value) : i.kind === 'artifact' ? artifactView(i.value) : computerView(i.value)));
-    const keyIds = new Set(
-      index.itemsAt(l.id).flatMap((i) =>
-        i.kind === 'device'
-          ? [...activeHolds(i.value), ...(i.value.kind === 'stateful' ? (i.value.shares ?? []).map((s) => s.key) : [])]
-          : i.kind === 'artifact'
-            ? i.value.contents.flatMap((c) => (c.type === 'seed' || c.type === 'share' ? [c.key] : []))
-            : [],
-      ),
+    // La key entera (un dispositivo que la guarda, su frase semilla) y, aparte, las shares de cada key que hay aquí.
+    const whole = new Set(
+      index.itemsAt(l.id).flatMap((i) => (i.kind === 'device' ? activeHolds(i.value) : i.kind === 'artifact' ? i.value.contents.flatMap((c) => (c.type === 'seed' ? [c.key] : [])) : [])),
     );
-    const keys = model.keys.filter((k) => keyIds.has(k.id)).map((k) => ({ id: k.id, label: k.label, color: keyColor(model, k.id), wait: keyWaitBlocks(model, k.id) }));
+    const sharesHere = new Map<Id, Set<number>>();
+    for (const i of index.itemsAt(l.id)) {
+      const shares = i.kind === 'device' ? (i.value.kind === 'stateful' ? (i.value.shares ?? []) : []) : i.kind === 'artifact' ? i.value.contents.flatMap((c) => (c.type === 'share' ? [c] : [])) : [];
+      for (const s of shares) sharesHere.set(s.key, (sharesHere.get(s.key) ?? new Set()).add(s.share));
+    }
+    const keys = model.keys
+      .filter((k) => whole.has(k.id) || sharesHere.has(k.id))
+      .map((k): KeyTag => {
+        const here = [...(sharesHere.get(k.id) ?? [])].sort((a, b) => a - b);
+        const partial = !whole.has(k.id) && k.split !== undefined && here.length < k.split.k;
+        return { id: k.id, label: k.label, color: keyColor(model, k.id), wait: keyWaitBlocks(model, k.id), ...(partial && { shares: { here, needed: k.split!.k } }) };
+      });
     const insideName = l.inside === undefined ? undefined : index.locations.get(l.inside)?.name;
     return { id: l.id, data: { name: l.name, kind: l.kind, ...(l.protection && { protection: l.protection }), ...(insideName !== undefined && { insideName }), items, keys } };
   });
